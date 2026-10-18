@@ -1,12 +1,15 @@
+# Read at startup: a later `ros2 param set` is refused; restart the node. Integers are fine.
 # Thresholds of the three stimulus adapters (plan 5.5). Loaded by launch/adapters.launch.py.
 drive_stimulus:
   ros__parameters:
     moving_mps: 0.05              # |v| above this counts as moving
     stop_after_s: 1.0             # below moving_mps this long after moving: stopped (once)
     being_driven_period_s: 1.0    # at most one being_driven per period while moving
-    # being_driven intensity = |v| / max_speed_mps, clamped to 1. Set this from the drive's
+    # being_driven intensity = peak speed / max_speed_mps, clamped to 1. Set this from the drive's
     # real top speed (1.0 is a placeholder), or intensity saturates or stays too low.
     max_speed_mps: 1.0
+    confirm_s: 0.25               # first being_driven only after this much continuous motion
+    wheel_separation: 0.572       # m (my_controllers.yaml); a spin in place counts as |wz|*this/2
 
 dome_stimulus:
   ros__parameters:
@@ -16,7 +19,8 @@ dome_stimulus:
     max_omega: 6.65               # rad/s, measured dome top speed (ros2_roamadome README)
     command_timeout_s: 0.5        # a command older than this counts as 0
     pushed_period_s: 1.0          # at most one dome_pushed per period
-    settle_s: 0.5                 # ignore the dome's own coast after a command ends
+    settle_s: 1.5                 # no push before this long after a command ends (the dome
+                                  # coasts 0.6-1.0 s); it must then be seen at rest first
     window_s: 0.4                 # velocity is taken over this much position history
     min_span_s: 0.25              # shortest history that gives a velocity
 

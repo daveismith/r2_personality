@@ -28,18 +28,19 @@ class DriveStimulus(AdapterNode):
 
     def __init__(self):
         super().__init__('drive_stimulus')
-        self.declare_parameter('moving_mps', 0.05)
-        self.declare_parameter('stop_after_s', 1.0)
-        self.declare_parameter('being_driven_period_s', 1.0)
-        self.declare_parameter('max_speed_mps', 1.0)
-        self._detector = DriveDetector(
-            **{k: self.get_parameter(k).value for k in (
-                'moving_mps', 'stop_after_s', 'being_driven_period_s', 'max_speed_mps')})
+        params = self.declare_numbers({
+            'moving_mps': 0.05, 'stop_after_s': 1.0, 'being_driven_period_s': 1.0,
+            'max_speed_mps': 1.0, 'confirm_s': 0.25, 'wheel_separation': 0.572,
+        }, may_be_zero=('confirm_s',))
+        self._half_track = params.pop('wheel_separation') / 2.0
+        self._detector = DriveDetector(**params)
         self.create_subscription(Odometry, '/diff_cont/odom', self._on_odom, SENSOR_QOS)
 
     def _on_odom(self, msg):
-        v = msg.twist.twist.linear
-        speed = math.hypot(v.x, v.y)
+        twist = msg.twist.twist
+        # A spin in place is driving too: the wheels move at |wz| * track / 2.
+        speed = max(math.hypot(twist.linear.x, twist.linear.y),
+                    abs(twist.angular.z) * self._half_track)
         now = self.get_clock().now().nanoseconds * 1e-9
         for kind, intensity in self._detector.update(speed, now):
             self.emit(kind, intensity)

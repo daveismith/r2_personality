@@ -19,6 +19,8 @@ import sys
 
 from astromech_msgs.msg import Stimulus
 from r2_stimulus.stimulate import _try_shutdown
+from rcl_interfaces.msg import ParameterDescriptor
+from rcl_interfaces.msg import SetParametersResult
 import rclpy
 from rclpy._rclpy_pybind11 import RCLError
 from rclpy.executors import ExternalShutdownException
@@ -39,6 +41,36 @@ class AdapterNode(Node):
         super().__init__(name)
         self._pub = self.create_publisher(
             Stimulus, '/stimuli', QoSProfile(depth=50, reliability=ReliabilityPolicy.RELIABLE))
+
+    def declare_numbers(self, defaults, may_be_zero=()):
+        """
+        Declare numeric parameters (ints accepted) and return their values as floats.
+
+        A bool or non-number, or a value that is not finite and > 0 (>= 0 for the names
+        in ``may_be_zero``), raises ValueError. Call it once, in the constructor: the
+        values are read at startup and any later ``ros2 param set`` is refused.
+        """
+        loose = ParameterDescriptor(dynamic_typing=True)
+        values = {}
+        for name, default in defaults.items():
+            self.declare_parameter(name, default, loose)
+            value = self.get_parameter(name).value
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise ValueError('%s must be a number, got %r' % (name, value))
+            value = float(value)
+            low_ok = name in may_be_zero
+            if not math.isfinite(value) or value < 0.0 or (value == 0.0 and not low_ok):
+                raise ValueError('%s must be %s, got %r' % (
+                    name, '>= 0' if low_ok else '> 0', value))
+            values[name] = value
+        # Registered after TimeSource's callback, so it runs first and a refused
+        # use_sim_time never reaches TimeSource.
+        self.add_on_set_parameters_callback(self._refuse_changes)
+        return values
+
+    @staticmethod
+    def _refuse_changes(params):
+        return SetParametersResult(successful=False, reason='read at startup; restart the node')
 
     def emit(self, kind, intensity, subject='', extra=''):
         """Publish one Stimulus (bearing unknown, confidence 1, default ttl) and log it."""
@@ -61,7 +93,11 @@ def run(node_class, args=None):
     """Spin node_class until SIGINT/SIGTERM; return the exit code."""
     rclpy.init(args=args)
     try:
-        node = node_class()
+        try:
+            node = node_class()
+        except ValueError as exc:
+            rclpy.logging.get_logger(node_class.__name__).error('cannot start: %s' % exc)
+            return 1
         executor = SingleThreadedExecutor()
         executor.add_node(node)
         try:

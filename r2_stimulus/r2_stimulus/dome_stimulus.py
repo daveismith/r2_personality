@@ -23,22 +23,17 @@ from std_msgs.msg import Float64MultiArray
 
 DOME_JOINT = 'dome_joint'
 
-PARAMS = ('pushed_omega', 'commanded_eps', 'pushed_after_s', 'max_omega',
-          'command_timeout_s', 'pushed_period_s', 'settle_s', 'window_s', 'min_span_s')
-
 
 class DomeStimulus(AdapterNode):
     """Listen to the dome's joint state and velocity command only."""
 
     def __init__(self):
         super().__init__('dome_stimulus')
-        defaults = {'pushed_omega': 0.3, 'commanded_eps': 0.02, 'pushed_after_s': 0.3,
-                    'max_omega': 6.65, 'command_timeout_s': 0.5, 'pushed_period_s': 1.0,
-                    'settle_s': 0.5, 'window_s': 0.4, 'min_span_s': 0.25}
-        for name, value in defaults.items():
-            self.declare_parameter(name, value)
-        self._detector = DomePushDetector(
-            **{k: self.get_parameter(k).value for k in PARAMS})
+        self._detector = DomePushDetector(**self.declare_numbers({
+            'pushed_omega': 0.3, 'commanded_eps': 0.02, 'pushed_after_s': 0.3,
+            'max_omega': 6.65, 'command_timeout_s': 0.5, 'pushed_period_s': 1.0,
+            'settle_s': 1.5, 'window_s': 0.4, 'min_span_s': 0.25,
+        }, may_be_zero=('pushed_after_s', 'settle_s')))
         self.create_subscription(
             JointState, '/dome_state_broadcaster/joint_states', self._on_state, SENSOR_QOS)
         self.create_subscription(

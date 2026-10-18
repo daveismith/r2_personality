@@ -36,7 +36,8 @@ Notes:
 
 Three nodes turn existing signals into stimuli. Started together by
 `ros2 launch r2_stimulus adapters.launch.py [use_sim_time:=true] [config:=PATH]` (or by
-`r2_bringup`'s `personality.launch.py`, which passes `use_sim_time`). Thresholds are ROS
+`r2_bringup`'s `personality.launch.py`, which passes `use_sim_time` and its
+`stimulus_config` as `config`). Thresholds are ROS
 parameters in `config/stimulus.yaml`, one section per node; the pure logic is in
 `r2_stimulus/detect.py` (no ROS imports, time passed in).
 
@@ -55,21 +56,43 @@ INFO line is logged per stimulus.
 | `dome_stimulus` | `/dome_state_broadcaster/joint_states` (`dome_joint`), `/dome_controller/commands` (`data[0]` rad/s) | `dome_pushed` |
 | `button_stimulus` | `/dome/buttons/sequence` (`DomeButtonSequence`) | `button_sequence` |
 
-`drive_stimulus`: `being_driven` (intensity `min(1, |v|/max_speed_mps)`) at most once per
-`being_driven_period_s` (1.0) while `|v| > moving_mps` (0.05); `stopped` (intensity 1) once
-when the speed has been below `moving_mps` for `stop_after_s` (1.0) after having moved.
-`max_speed_mps` (1.0) is a placeholder: set it from the drive's real top speed.
+`drive_stimulus`: speed = max(planar `|v|`, `|angular.z| * wheel_separation / 2`), so a spin
+in place counts as driving (`wheel_separation` 0.572 m, from `my_controllers.yaml`).
+`being_driven` (intensity `min(1, peak speed / max_speed_mps)`) at most once per
+`being_driven_period_s` (1.0) while speed > `moving_mps` (0.05). diff_cont's odometry ramps
+over about 0.2 s, so the first one is emitted only after `confirm_s` (0.25) of continuous
+motion and carries the peak speed seen, not the first weak sample; a drive shorter than
+that emits nothing, not even `stopped`. `stopped` (intensity 1) once when the speed has been
+below `moving_mps` for `stop_after_s` (1.0) after confirmed motion. `max_speed_mps` (1.0)
+is a placeholder: set it from the drive's real top speed.
 
 `dome_stimulus`: `dome_pushed` (intensity `min(1, |omega|/max_omega)`, `max_omega` 6.65
 rad/s, the measured dome top speed) when the measured dome speed exceeds `pushed_omega`
 (0.3 rad/s) while the commanded `|omega|` is below `commanded_eps` (0.02) continuously for
 `pushed_after_s` (0.3), at most once per `pushed_period_s` (1.0). A command older than
-`command_timeout_s` (0.5) counts as 0, and nothing is emitted for `settle_s` (0.5) after a
-non-zero command ends, so the dome's own coast is not a push. The speed is computed from the
-10 Hz, roughly 1-degree-quantised positions as the unwrapped displacement over the last
-`window_s` (0.4 s) of samples divided by the time spanned (at least `min_span_s`, 0.25 s),
-so quantisation costs at most about 0.05 rad/s and the 0 / 2 pi wrap is handled. This
-reaction is therefore about 0.6 s after a push starts, not instant.
+`command_timeout_s` (0.5) counts as 0. The real dome coasts 0.6 to 1.0 s and up to 74
+degrees after a command ends (ros2_roamadome bench results, 2026-10-16), and its position
+stream lags, so a push is only reported after `settle_s` (1.5) since the last non-zero
+command AND once the windowed speed has been seen at or below `pushed_omega` since then
+(the coast is over). A push within about 1.5 s of a command is therefore missed.
+The speed is the unwrapped displacement over the last `window_s` (0.4 s) of the 10 Hz,
+roughly 1-degree-quantised positions divided by the time spanned (at least `min_span_s`,
+0.25 s); the 0 / 2 pi wrap is handled. Quantisation noise is at most about 0.05 rad/s over
+the full 0.4 s window and 0.07 rad/s at the 0.25 s minimum, against the 0.3 threshold.
+A push is reported about 0.6 s after it starts, not instantly.
+Why `commanded_eps` 0.02 is safe: the plugin's rad/s to percent mapping is linear
+(`velocityToPercentage` in `roamadome_control.cpp`) and rounds anything under about
+0.03 rad/s to 0 %, and the firmware's MinSpeed stops anything under about 1 rad/s anyway.
+Revisit if the mapping ever gains a minimum percent.
+
+Limitations: any dome motion without a command on `/dome_controller/commands` (bench sweeps
+with `dome_bench:=true`, firmware homing or autonomous moves) reads as `dome_pushed`. A
+non-finite value in any input is ignored, and a clock jump backwards (sim reset, looping
+bag) resets the detector state.
+
+Parameters are read at startup: integers are accepted (`settle_s: 1`), a bool, a non-number
+or an out-of-range value exits the node with an error, and a later `ros2 param set` is
+refused ("read at startup; restart the node").
 
 `button_stimulus`: one `button_sequence` per message, `subject` = `taps`, intensity
 `min(1, len(taps)/6)`, `extra` = `{"value":..,"id":..,"source":..}`. The subscription is
@@ -82,7 +105,7 @@ topic to private names, so it is safe with a live sim on the graph).
 
 | adapter | in sim (`ros2 launch r2_sim sim_foxglove.launch.py`, adapters start with it) | on the robot |
 |---|---|---|
-| `drive_stimulus` | Foxglove Teleop panel on `/cmd_vel_joy`, or `ros2 topic pub -r 10 /cmd_vel_joy geometry_msgs/msg/TwistStamped "{header: {frame_id: base_link}, twist: {linear: {x: 0.3}}}"`; expect `being_driven` about once a second, then `stopped` 1 s after you stop | drive with the joystick |
+| `drive_stimulus` | (the Foxglove Teleop panel publishes a plain Twist, which `twist_mux` does not take on `/cmd_vel_joy`) `ros2 topic pub -r 10 /cmd_vel_joy geometry_msgs/msg/TwistStamped "{header: {frame_id: base_link}, twist: {linear: {x: 0.3}}}"`; expect `being_driven` about once a second, then `stopped` 1 s after you stop; `angular: {z: 1.0}` instead of linear x spins in place and must not produce `stopped` | drive with the joystick |
 | `dome_stimulus` | negative: `ros2 topic pub -r 10 /cmd_vel_dome_foxglove geometry_msgs/msg/Twist "{angular: {z: 1.0}}"` turns the dome and emits nothing; positive: a Gazebo wrench on the dome link with the dome idle (the dome velocity controller may hold the joint; the unit tests are the primary check) | turn the dome by hand with the controller idle (keep hands clear of the gear ring); drive it with the trigger for the negative case |
 | `button_stimulus` | `ros2 topic pub --once /dome/buttons/sequence astromech_msgs/msg/DomeButtonSequence "{value: 4, taps: LRR, id: 1, source: 1}"` | tap the dome buttons |
 

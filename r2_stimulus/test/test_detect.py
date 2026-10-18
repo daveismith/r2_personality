@@ -38,9 +38,9 @@ def test_being_driven_cadence_one_per_period():
 
 
 def test_intensity_scaling_and_clamp():
-    det = DriveDetector(max_speed_mps=2.0)
+    det = DriveDetector(max_speed_mps=2.0, confirm_s=0.0)
     assert det.update(0.5, 0.0) == [('being_driven', 0.25)]
-    det = DriveDetector(max_speed_mps=0.4)
+    det = DriveDetector(max_speed_mps=0.4, confirm_s=0.0)
     assert det.update(-3.0, 0.0) == [('being_driven', 1.0)]
 
 
@@ -61,16 +61,58 @@ def test_no_stopped_without_motion():
 
 def test_brief_pause_does_not_stop_and_nan_ignored():
     det = DriveDetector()
-    out = _run_drive(det, [0.4] * 3 + [0.0] * 5 + [0.4] * 3 + [math.nan] * 30)
-    assert all(kind == 'being_driven' for _, (kind, _) in out)
+    out = _run_drive(det, [0.4] * 6 + [0.0] * 5 + [0.4] * 6 + [math.nan] * 30)
+    # The 0.5 s pause neither stops nor restarts: one per 1 s period, and no stopped.
+    assert [k for _, (k, _) in out] == ['being_driven', 'being_driven']
     assert det.update(math.nan, 100.0) == []
 
 
 def test_moving_again_after_stop_restarts():
     det = DriveDetector()
-    out = _run_drive(det, [0.4] * 3 + [0.0] * 20 + [0.4] * 3)
+    out = _run_drive(det, [0.4] * 5 + [0.0] * 20 + [0.4] * 5)
     kinds = [k for _, (k, _) in out]
     assert kinds == ['being_driven', 'stopped', 'being_driven']
+
+
+def test_inf_speed_ignored():
+    det = DriveDetector(confirm_s=0.0)
+    assert det.update(math.inf, 0.0) == []
+    assert det.update(-math.inf, 0.1) == []
+    assert det.update(0.5, 0.2) == [('being_driven', 0.5)]
+
+
+def test_spin_in_place_is_driving_not_stopped():
+    # The node feeds max(|v|, |wz| * track / 2); here: forward, then a spin at 0.3 m/s.
+    det = DriveDetector()
+    out = _run_drive(det, [0.4] * 5 + [0.3] * 40)
+    kinds = [k for _, (k, _) in out]
+    assert 'stopped' not in kinds
+    assert kinds.count('being_driven') >= 4
+
+
+def _ramp(peak, rise_s, hold_s, rate_hz=50.0):
+    n = int((rise_s + hold_s) * rate_hz)
+    return [min(peak, peak * i / (rise_s * rate_hz)) for i in range(n)]
+
+
+def test_ramped_odom_first_intensity_is_the_peak():
+    det = DriveDetector(max_speed_mps=1.0)
+    out = _run_drive(det, _ramp(0.5, 0.2, 1.5), dt=0.02)
+    first = out[0][1]
+    assert first[0] == 'being_driven' and abs(first[1] - 0.5) < 0.01
+
+
+def test_drive_shorter_than_confirm_emits_nothing():
+    det = DriveDetector()
+    out = _run_drive(det, _ramp(0.5, 0.1, 0.1) + [0.0] * 200, dt=0.02)
+    assert out == []
+
+
+def test_drive_clock_jump_back_resets():
+    det = DriveDetector()
+    assert [k for _, (k, _) in _run_drive(det, [0.5] * 5, t0=1000.0)] == ['being_driven']
+    out = _run_drive(det, [0.5] * 5, t0=0.0)         # a sim reset: time starts over
+    assert [k for _, (k, _) in out] == ['being_driven']
 
 
 # ---- dome -------------------------------------------------------------------------------
@@ -163,7 +205,8 @@ def test_wrap_across_two_pi_both_directions():
     for omega in (0.5, -0.5):
         det = DomePushDetector()
         start = 2 * math.pi - 0.3 if omega > 0 else 0.3
-        out = _stream(det, 0.0, 3.0, omega, start=start)
+        _stream(det, 0.0, 1.0, 0.0, start=start)             # at rest first (arms)
+        out = _stream(det, 1.1, 4.0, omega, start=start - omega * 1.1)
         assert out, 'wrap broke the velocity for omega=%s' % omega
         assert abs(abs(det.velocity()) - 0.5) < 0.06
 
@@ -175,13 +218,73 @@ def test_slow_drift_below_threshold_emits_nothing():
 
 def test_intensity_clamped():
     det = DomePushDetector(max_omega=0.4)
-    out = _stream(det, 0.0, 3.0, 0.8)
+    _stream(det, 0.0, 1.0, 0.0)
+    out = _stream(det, 1.1, 4.0, 0.8, start=-0.8 * 1.1)
     assert out and out[0][1][1] == 1.0
 
 
 def test_wrap_pi():
     assert abs(wrap_pi(2 * math.pi - 0.1) + 0.1) < 1e-9
     assert abs(wrap_pi(-2 * math.pi + 0.1) - 0.1) < 1e-9
+
+
+def _coast_stream(det, lag, settle_end=8.0):
+    """Command 0.5 rad/s until t=2, then the -35 % bench coast; positions lag by `lag`."""
+    v0, T, dist = 1.867, 0.77, math.radians(36.0)    # 107 deg/s decaying to rest, 36 deg
+    k = v0 * T / dist - 1.0
+    out = []
+    for n in range(0, int(settle_end / STEP)):
+        t = n * STEP
+        if t <= 2.0 + 1e-9:
+            det.command(0.5, t)
+        else:
+            det.command(0.0, t)
+        te = max(0.0, t - lag)                      # when the reported position was true
+        if te <= 2.0:
+            pos = 0.5 * te                          # a steady run at 0.5 rad/s
+        else:
+            x = min(1.0, (te - 2.0) / T)
+            pos = 0.5 * 2.0 + dist * (1.0 - (1.0 - x) ** (k + 1.0))
+        out += det.position(_quantise(pos) % (2 * math.pi), t)
+    return out
+
+
+def test_measured_coast_with_position_lag_emits_nothing():
+    for lag in (0.0, 0.1, 0.2):
+        assert _coast_stream(DomePushDetector(), lag) == [], lag
+        # Even with the old short settle, the arming rule alone must hold.
+        assert _coast_stream(DomePushDetector(settle_s=0.5), lag) == [], lag
+
+
+def test_push_after_the_dome_came_to_rest_is_emitted():
+    det = DomePushDetector()
+    assert _coast_stream(det, 0.1, settle_end=6.0) == []
+    out = []
+    for n in range(61, 100):                          # t = 6.1 .. 9.9, pushed at 0.5 rad/s
+        t = n * STEP
+        det.command(0.0, t)
+        out += det.position(_quantise(1.0 + 0.5 * (t - 6.1) + 0.9) % (2 * math.pi), t)
+    assert out and out[0][0] == 'dome_pushed'
+
+
+def test_non_finite_inputs_are_ignored_and_do_not_poison_the_detector():
+    det = DomePushDetector()
+    assert det.position(math.inf, 0.0) == []
+    assert det.position(-math.inf, 0.1) == []
+    det.command(math.inf, 0.1)                        # not a command
+    det.command(math.nan, 0.1)
+    assert _stream(det, 0.2, 1.0, 0.0) == []
+    out = _stream(det, 1.1, 4.0, 0.5, start=-0.5 * 1.1)
+    assert out and out[0][1][0] == 'dome_pushed'      # inf did not count as commanded
+
+
+def test_dome_clock_jump_back_resets_and_window_stays_bounded():
+    det = DomePushDetector()
+    _stream(det, 100.0, 105.0, 0.0)
+    out = _stream(det, 0.0, 3.0, 0.0)
+    assert out == [] and len(det._samples) <= 8
+    out = _stream(det, 3.1, 6.0, 0.5, start=-0.5 * 3.1)
+    assert out
 
 
 # ---- buttons ----------------------------------------------------------------------------

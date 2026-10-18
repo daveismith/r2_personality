@@ -76,15 +76,15 @@ def ros():
     }
     for exe in ('drive_stimulus', 'dome_stimulus', 'button_stimulus'):
         procs[exe] = _start(exe)
-    # Wait until every adapter has subscribed to its private input.
-    end = time.monotonic() + 20.0
-    while time.monotonic() < end:
-        rclpy.spin_once(node, timeout_sec=0.05)
-        if all(p.get_subscription_count() >= 1 for p in pubs.values()):
-            break
-    else:
-        pytest.fail('adapters did not come up')
     try:
+        # Wait until every adapter has subscribed to its private input.
+        end = time.monotonic() + 20.0
+        while time.monotonic() < end:
+            rclpy.spin_once(node, timeout_sec=0.05)
+            if all(p.get_subscription_count() >= 1 for p in pubs.values()):
+                break
+        else:
+            pytest.fail('adapters did not come up')
         yield node, pubs, got, procs
     finally:
         # `ros2 run` is a wrapper: signal its whole process group so the node dies too.
@@ -180,11 +180,11 @@ def test_dome_adapter(ros):
     pos = _feed_dome(node, pubs, 3.0, 0.5, 0.5, 6.0)
     assert _of(got, name) == []
     # Command ends; the dome stands still for a while, then is pushed at 0.5 rad/s.
-    pos = _feed_dome(node, pubs, 1.5, 0.0, 0.0, pos)
+    pos = _feed_dome(node, pubs, 3.0, 0.0, 0.0, pos)      # past settle_s (1.5), at rest
     assert _of(got, name) == []
-    _feed_dome(node, pubs, 2.0, 0.5, 0.0, pos)
+    _feed_dome(node, pubs, 2.5, 0.5, 0.0, pos)
     mine = _of(got, name)
-    assert 1 <= len(mine) <= 3
+    assert 1 <= len(mine) <= 4
     m = mine[0]
     assert m.kind == 'dome_pushed' and m.source == name
     assert abs(m.intensity - 0.5 / 6.65) < 0.04
@@ -204,3 +204,58 @@ def test_publishers_are_only_stimuli(ros):
         assert P + '/stimuli' in topics, (exe, topics)
         assert topics <= ALLOWED_PUBLISHERS, (exe, topics)
         assert procs[exe][1].poll() is None
+
+
+def _run_node(executable, *params):
+    name = '%s_p%d' % (executable, PID)
+    cmd = ['ros2', 'run', 'r2_stimulus', executable, '--ros-args', '-r', '__node:=' + name]
+    for src, dst in TOPICS.items():
+        cmd += ['-r', '%s:=%s' % (src, dst)]
+    for key, value in params:
+        cmd += ['-p', '%s:=%s' % (key, value)]
+    return name, subprocess.Popen(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, start_new_session=True,
+        text=True)
+
+
+def _stop(proc):
+    if proc.poll() is None:
+        os.killpg(proc.pid, signal.SIGINT)
+    try:
+        return proc.communicate(timeout=10)[0]
+    except subprocess.TimeoutExpired:
+        os.killpg(proc.pid, signal.SIGKILL)
+        return proc.communicate()[0]
+
+
+def test_integer_parameters_are_accepted_and_changes_refused():
+    name, proc = _run_node('dome_stimulus', ('settle_s', '1'), ('pushed_omega', '1'))
+    try:
+        end = time.monotonic() + 15.0
+        refused = None
+        while time.monotonic() < end and refused is None:
+            res = subprocess.run(
+                ['ros2', 'param', 'set', '/' + name, 'settle_s', '2.0'],
+                capture_output=True, text=True, timeout=20)
+            if 'not found' not in (res.stdout + res.stderr).lower() and (
+                    res.stdout + res.stderr).strip():
+                refused = res.stdout + res.stderr
+            else:
+                time.sleep(0.3)
+        assert proc.poll() is None, 'node died on integer parameters'
+        assert refused and 'read at startup' in refused, refused
+    finally:
+        _stop(proc)
+
+
+@pytest.mark.parametrize('bad', ['true', '-1', 'abc'])
+def test_bad_parameter_exits_with_error(bad):
+    name, proc = _run_node('drive_stimulus', ('moving_mps', bad))
+    try:
+        proc.wait(timeout=20)
+    except subprocess.TimeoutExpired:
+        pytest.fail('node did not exit on moving_mps:=%s' % bad)
+    finally:
+        out = _stop(proc)
+    assert proc.returncode == 1, out
+    assert 'cannot start' in out
