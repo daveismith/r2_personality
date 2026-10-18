@@ -28,7 +28,8 @@ if PKG_ROOT not in sys.path:
 from r2_affect.config import load_config, parse_config  # noqa: E402
 from r2_affect.model import AffectModel, distance  # noqa: E402
 from r2_affect.model import DROP_LOW_CONFIDENCE, DROP_REFRACTORY  # noqa: E402
-from r2_affect.model import DROP_UNKNOWN_KIND, NOT_APPLIED_LOCKED  # noqa: E402
+from r2_affect.model import DROP_RESERVED_KIND, DROP_UNKNOWN_KIND  # noqa: E402
+from r2_affect.model import NOT_APPLIED_LOCKED  # noqa: E402
 
 NAN = float('nan')
 DT = 0.1
@@ -485,7 +486,8 @@ def test_focus_expires_at_ttl():
     r = stim(m, 'poke', 0.05, subject='dave', bearing=0.8, ttl=1.0)
     assert r.focus_updated
     results = run(m, DT, 1.1)
-    assert all(x.state.focus_subject == 'dave' for x in results[:-2])
+    assert all(x.state.focus_subject == 'dave' for x in results[:-1])   # ticks 0.1 .. 1.0
+    assert not any(x.focus_expired for x in results[:-1])
     assert results[-1].focus_expired
     s = results[-1].state
     assert s.focus_subject == '' and math.isnan(s.focus_bearing)
@@ -494,9 +496,9 @@ def test_focus_expires_at_ttl():
 def test_focus_ttl_zero_uses_the_default():
     m = model()
     stim(m, 'poke', 0.0, subject='dave', ttl=0.0)
-    run(m, DT, 1.9)
+    run(m, DT, 2.0)
     assert m.state.focus_subject == 'dave'
-    m.tick(2.0)
+    m.tick(2.1)
     assert m.state.focus_subject == ''
 
 
@@ -588,3 +590,175 @@ def test_models_share_no_state():
     run(a, DT, 2.0)
     assert b.state.arousal == shipped.temperament['arousal']
     assert not b.state.locked and b.state.focus_subject == '' and b.state.idle_s == 0.0
+
+
+# --- review additions -------------------------------------------------------------------
+
+def test_backwards_clock_shifts_pending_label_lock_and_focus_times():
+    m = AffectModel(config())
+    m.tick(999.9)
+    stim(m, 'lift', 1000.0, subject='dave', ttl=2.0)        # focus until 1002
+    m.set_mood('', True, 5.0, 'console', 1000.0)            # lock until 1005
+    m.tick(1000.0)                                          # 'up' pending since 1000
+    reset = m.tick(0.0)                                     # the clock restarts at 0
+    assert reset.dt_clamped and reset.dt == 0.0
+    assert m.state.lock_until == pytest.approx(5.0)
+    results = {round(k * DT, 6): r for k, r in enumerate(run(m, DT, 5.0), start=1)}
+    assert results[0.9].state.mood == 'neutral'
+    assert results[1.0].state.mood == 'up'                  # dwell 1.0 after 0 (was 1000)
+    assert results[2.0].state.focus_subject == 'dave'
+    assert results[2.1].focus_expired                       # 2 s after 0 (was 1000)
+    assert results[4.9].state.locked
+    assert results[5.0].lock_expired                        # 5 s after 0 (was 1000)
+
+
+def test_backwards_clock_shifts_refractory_times():
+    m = model()
+    m.tick(1000.0)
+    stim(m, 'pat', 1000.0)
+    m.tick(0.0)
+    assert stim(m, 'pat', 0.5).reason == DROP_REFRACTORY
+    assert stim(m, 'pat', 1.0).applied
+
+
+def test_idle_kind_is_reserved_and_dropped_before_idle_reset_and_focus():
+    m = model()
+    run(m, DT, 1.0)
+    r = stim(m, 'idle', 1.0, subject='dave', bearing=0.3)
+    assert not r.accepted and not r.applied and r.reason == DROP_RESERVED_KIND
+    assert all(v == 0.0 for v in r.delta.values()) and not r.focus_updated
+    assert m.state.idle_s == pytest.approx(1.0)
+    assert m.state.focus_subject == '' and m.state.arousal == 0.0
+
+
+def test_dwell_timer_restarts_when_the_candidate_changes():
+    m = model(impulses={'half': {'arousal': 0.5}},
+              moods={'neutral': {'arousal': 0.0}, 'mid': {'arousal': 0.5},
+                     'up': {'arousal': 1.0}})
+    stim(m, 'half', 0.05)                                   # 'mid' pending from 0.1
+    run(m, DT, 0.8)
+    stim(m, 'half', 0.85)                                   # 'up' nearest from 0.9
+    results = run(m, 0.9, 1.9)
+    assert [r.state.mood for r in results[:-1]] == ['neutral'] * 10   # 0.9 .. 1.8
+    assert results[-1].state.mood == 'up'                   # a full dwell as candidate
+    assert results[-1].transition.old == 'neutral'
+
+
+def test_margin_boundary_at_exact_equality_does_not_switch():
+    # Dyadic values, so the distances are exact: d_up 0.25 == d_neutral 0.5 - margin 0.25.
+    m = model(relax_tau_s={'arousal': 1e300},
+              hysteresis={'margin': 0.25, 'dwell_s': 0.0},
+              impulses={'nudge': {'arousal': 0.5}},
+              moods={'neutral': {'arousal': 0.0}, 'up': {'arousal': 0.75}})
+    stim(m, 'nudge', 0.0)
+    assert m.distances() == {'neutral': 0.5, 'up': 0.25}
+    assert all(r.state.mood == 'neutral' for r in run(m, DT, 1.0))
+    stim(m, 'nudge', 1.0, intensity=0.125)                  # arousal 0.5625: now past it
+    assert m.tick(1.1).state.mood == 'up'
+
+
+def test_confidence_equal_to_min_confidence_is_accepted():
+    m = model(min_confidence=0.5)
+    assert stim(m, 'poke', 0.0, confidence=0.5).applied
+
+
+@pytest.mark.parametrize('bad', [-1.0, float('inf'), float('-inf'), NAN])
+def test_min_confidence_must_be_finite_and_non_negative(bad):
+    with pytest.raises(ValueError):
+        AffectModel(config(), min_confidence=bad)
+
+
+@pytest.mark.parametrize('ttl', [-1.0, float('inf')])
+def test_negative_and_infinite_ttl_fall_back_to_the_default(ttl):
+    m = model()
+    stim(m, 'poke', 0.0, subject='dave', ttl=ttl)
+    run(m, DT, 2.0)
+    assert m.state.focus_subject == 'dave'
+    m.tick(2.1)
+    assert m.state.focus_subject == ''
+
+
+def test_infinite_bearing_becomes_nan():
+    m = model()
+    assert not stim(m, 'poke', 0.0, bearing=float('inf')).focus_updated
+    stim(m, 'poke', 0.0, subject='dave', bearing=float('-inf'))
+    assert m.state.focus_subject == 'dave' and math.isnan(m.state.focus_bearing)
+
+
+def test_focus_expires_while_locked():
+    m = model()
+    m.set_mood('', True, 0.0, 'console', 0.0)
+    stim(m, 'poke', 0.0, subject='dave', ttl=1.0)
+    run(m, DT, 1.1)
+    assert m.state.locked and m.state.focus_subject == ''
+
+
+def test_zero_refractory_never_drops():
+    m = model(impulses={'tap': {'valence': 0.1, 'refractory_s': 0.0}})
+    assert all(stim(m, 'tap', 0.0).applied for _ in range(5))
+    assert m.state.valence == pytest.approx(0.5)
+
+
+def test_reload_clears_a_pending_label_change():
+    m = model()
+    stim(m, 'lift', 0.05)
+    run(m, DT, 0.9)                                         # 'up' pending since 0.1
+    m.reload(config())
+    results = run(m, 1.0, 2.0)
+    assert [r.state.mood for r in results[:-1]] == ['neutral'] * 10
+    assert results[-1].state.mood == 'up'                   # dwell counted from 1.0
+
+
+def test_zero_dwell_switches_on_the_first_tick_past_the_margin():
+    m = model(hysteresis={'dwell_s': 0.0})
+    stim(m, 'lift', 0.05)
+    r = m.tick(DT)
+    assert r.state.mood == 'up' and r.transition.new == 'up'
+
+
+def test_classification_continues_under_an_empty_mood_lock():
+    m = model()
+    stim(m, 'lift', 0.0)
+    m.set_mood('', True, 0.0, 'console', 0.0)
+    results = run(m, DT, 1.1)
+    assert results[-1].state.mood == 'up' and results[-1].state.locked
+    assert results[-1].state.arousal == 0.8
+
+
+def test_another_sources_force_with_lock_is_refused_while_locked():
+    m = model()
+    m.set_mood('up', True, 0.0, 'console', 0.0)
+    before = m.state
+    accepted, reason = m.set_mood('down', True, 0.0, 'other', 0.5)
+    assert not accepted and "'console'" in reason
+    assert_same_state(m.state, before)
+
+
+def test_dt_of_zero_defers_lock_and_focus_expiry():
+    m = AffectModel(config())                               # no time base yet
+    m.set_mood('', True, 1.0, 'console', 0.0)
+    stim(m, 'poke', 0.0, subject='dave', ttl=1.0)
+    first = m.tick(5.0)                                     # first tick: dt 0
+    assert not first.lock_expired and not first.focus_expired
+    assert first.state.locked and first.state.focus_subject == 'dave'
+    second = m.tick(5.1)
+    assert second.lock_expired and second.focus_expired
+
+
+def test_stimulus_after_lock_until_reports_the_expiry_and_is_applied():
+    m = model()
+    m.set_mood('', True, 1.0, 'console', 0.0)
+    run(m, DT, 0.9)
+    r = stim(m, 'poke', 1.05)
+    assert r.lock_expired and r.applied and not r.state.locked
+    assert r.delta['arousal'] == pytest.approx(0.4)
+    assert not stim(m, 'poke', 1.06).lock_expired
+
+
+def test_set_mood_lock_expiry_is_seen_by_comparing_locked():
+    m = model()
+    m.set_mood('', True, 1.0, 'console', 0.0)
+    was_locked = m.state.locked
+    accepted, _ = m.set_mood('grumpy', False, 0.0, 'other', 1.05)   # refused, but...
+    assert not accepted
+    assert was_locked and not m.state.locked                # ...the lapsed lock is gone

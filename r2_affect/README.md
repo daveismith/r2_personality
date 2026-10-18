@@ -27,30 +27,42 @@ sets the time base. There is no global state, so many models can run in one proc
 **Tick** (`tick(now)`, 10 Hz in the node):
 
 1. `dt` = now − previous tick, clamped to `[0, max_dt_s]`; the result says when it was
-   clamped (sim paused, clock jump) so the node can warn. `dt` = 0 changes nothing.
+   clamped (sim paused, clock jump) so the node can warn. `dt` = 0 changes nothing, not
+   even expiry. If the clock went backwards (sim restart), every stored time (lock end,
+   focus end, dwell start, refractory) shifts with it, so each falls due at the same
+   relative time on the new clock.
 2. Unless locked: each axis relaxes toward its temperament, `x += (baseline − x)·dt/τ`
    (explicit Euler, factor capped at 1). After `idle.after_s` without a stimulus, the
    `idle` impulse is applied as a rate, `x += impulse · min(1, (idle_s − after_s)/ramp_s) · dt`.
    Axes are clamped to their ranges.
-3. A timed lock past `lock_until` expires; a focus past its ttl expires.
+3. A timed lock expires on the first tick at or after `lock_until`; a focus expires on
+   the first tick after its ttl (a tick at exactly the end still shows it).
 4. Classification: distance to a prototype is Euclidean over the axes **it specifies**,
    each difference divided by the axis's half-range and multiplied by its
    `distance_weights` entry. The nearest prototype (first in file order on a tie) is the
    candidate; the label moves to it only after `d_candidate < d_label − margin` has held
-   at every tick for `dwell_s`. `mood_strength = clamp(1 − d_label/strength_radius, 0, 1)`.
+   at every tick for `dwell_s` with the same candidate (the timer restarts when the
+   condition lapses or the candidate changes).
+   `mood_strength = clamp(1 − d_label/strength_radius, 0, 1)`.
 
 **Stimulus** (`stimulus(kind, intensity, confidence, subject, bearing_rad, ttl_s, now)`):
 
+0. Kind `idle`: dropped as `reserved_kind`, nothing else happens (that entry is the idle
+   drift rate, not a stimulus).
 1. `confidence < min_confidence`: dropped, nothing else happens.
 2. Otherwise `idle_s` resets, even if the stimulus is dropped below (it is evidence of
    the world).
-3. A subject or a bearing makes it the focus for `ttl_s` (`focus.default_ttl_s` when 0),
-   replacing the previous focus. This happens even when locked.
+3. A subject or a bearing makes it the focus for `ttl_s` (`focus.default_ttl_s` when 0,
+   negative or infinite). The focus is a single record replaced by the latest stimulus
+   that names a subject or a bearing, so a bearing-only stimulus blanks
+   `focus_subject`. This happens even when locked.
 4. Unknown kind: dropped (legal, so producers can exist before their tuning). A kind with
    `refractory_s`: dropped if the last *accepted* one is younger than that.
 5. Unless locked, `impulse · intensity` (intensity clamped to [0, 1]) is added to each
    axis the kind names, then clamped. The result reports accepted/applied, the reason for
-   a drop (`low_confidence`, `unknown_kind`, `refractory`, `locked`) and the actual delta.
+   a drop (`reserved_kind`, `low_confidence`, `unknown_kind`, `refractory`, `locked`),
+   the actual delta, and `lock_expired` when the stimulus arrived after `lock_until` but
+   before the tick that would have expired the lock (it is then applied).
 
 **Force and lock** (`set_mood(mood, lock, duration_s, source, now)` → `(accepted, reason)`),
 the `SetMood` semantics:
@@ -64,6 +76,8 @@ the `SetMood` semantics:
 - While one source holds the lock, any other request from another source is refused and
   the reason names the holder. Unknown labels and negative durations are refused. A
   refused request changes nothing. An empty `source` is recorded as `unknown`.
+- A timed lock that has run out is expired at the start of the call, even if the request
+  is then refused; the caller sees that by comparing `state.locked` before and after.
 
 `reload(config)` swaps the configuration and keeps the state (vector, idle, lock, focus,
 refractory history); a label that no longer exists becomes the nearest mood.
@@ -74,7 +88,7 @@ refractory history); a label that no longer exists becomes the nearest mood.
 |---|---|---|---|
 | `temperament` | yes | | every axis, inside its range |
 | `relax_tau_s` | yes | | every axis, seconds, > 0 |
-| `distance_weights` | no | 1.0 per axis | any subset of axes, >= 0 |
+| `distance_weights` | no | 1.0 per axis | any subset of axes, > 0 |
 | `strength_radius` | no | 0.5 | > 0 |
 | `hysteresis` | no | `{margin: 0.15, dwell_s: 1.5}` | both >= 0 |
 | `focus` | no | `{default_ttl_s: 5.0}` | > 0 |
@@ -89,7 +103,11 @@ in `impulses` are legal to receive.
 ## Tests
 
 ```bash
-# from the workspace root, in the dev container
+# from the workspace root on the Mac (runs in the dev container)
+make build PKGS=r2_affect
+make test PKGS=r2_affect
+
+# inside the dev container those are
 colcon build --symlink-install --packages-select r2_affect
 source ./setup.bash
 colcon test --packages-select r2_affect && colcon test-result --verbose

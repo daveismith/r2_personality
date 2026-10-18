@@ -28,31 +28,41 @@ temperament, labelled with the nearest mood.
 Each tick (:meth:`AffectModel.tick`):
 
 1. ``dt`` is ``now`` minus the previous tick, clamped to ``[0, max_dt_s]``
-   (``dt_clamped`` in the result says so). A ``dt`` of 0 changes nothing.
-   ``idle_s`` grows by ``dt``.
+   (``dt_clamped`` in the result says so). A ``dt`` of 0 changes nothing,
+   expiry included. When the clock has gone backwards (a sim restart), every
+   stored time (lock end, focus end, dwell start, refractory) is shifted by
+   the same amount, so they fall due at the same relative times on the new
+   clock. ``idle_s`` grows by ``dt``.
 2. Unless locked: each axis relaxes toward its baseline,
    ``x += (baseline - x) * dt / tau`` (explicit Euler; the factor is capped
    at 1 so a ``tau`` shorter than ``dt`` cannot overshoot). Then, once
    ``idle_s > idle.after_s``, the ``idle`` impulse is applied as a rate,
    ``x += impulse * intensity * dt`` with
    ``intensity = min(1, (idle_s - after_s) / ramp_s)``. Axes are clamped.
-3. A timed lock whose ``lock_until`` has come expires; so does a focus whose
-   ttl has run out.
+3. A timed lock expires on the first tick at or after ``lock_until`` (its
+   last interval was still frozen, so it froze exactly ``duration_s``). A
+   focus expires on the first tick after its ttl has run out; a tick at
+   exactly the end still shows it.
 4. Classification. The distance to a prototype is Euclidean over the axes it
    specifies, each difference divided by the axis's half-range and multiplied
    by its ``distance_weights`` entry. The nearest prototype (the first in file
    order on a tie) is the candidate. The label moves to it only once
    ``d_candidate < d_label - hysteresis.margin`` has held at every tick for
-   ``hysteresis.dwell_s``; the timer restarts whenever the condition lapses.
+   ``hysteresis.dwell_s`` with the same candidate; the timer restarts whenever
+   the condition lapses or the candidate changes.
    ``mood_strength = clamp(1 - d_label / strength_radius, 0, 1)``.
 
 Each stimulus (:meth:`AffectModel.stimulus`), in order:
 
+0. Dropped if its kind is ``idle``: that entry is the drift rate, not a
+   stimulus. Nothing else happens.
 1. Dropped if ``confidence < min_confidence``; nothing else happens.
 2. Otherwise ``idle_s`` resets to 0, whatever happens next: the stimulus is
    evidence of the world even if it is then dropped.
 3. If it names a subject or a bearing it becomes the focus, for ``ttl_s``
-   (``focus.default_ttl_s`` when ``ttl_s`` is 0). Also when locked.
+   (``focus.default_ttl_s`` when ``ttl_s`` is 0). The focus is one record:
+   a stimulus with a bearing and no subject replaces it and blanks the
+   subject. Also when locked.
 4. Dropped if its kind is not in ``impulses``, or if the kind has a
    ``refractory_s`` and the last *accepted* stimulus of that kind is younger
    than it.
@@ -72,6 +82,11 @@ Force and lock (:meth:`AffectModel.set_mood`), as ``SetMood``:
   the holder named in the reason. An unknown label, or a negative or
   non-finite ``duration_s``, is refused. A refused request changes nothing.
   An empty ``source`` is recorded as ``unknown``.
+
+A timed lock is also expired by a stimulus or a ``set_mood`` that arrives
+after ``lock_until`` but before the next tick, so it never holds anything
+off past its time. A stimulus reports that in ``StimulusResult.lock_expired``;
+for ``set_mood`` the caller compares ``state.locked`` before and after.
 """
 
 from dataclasses import dataclass
@@ -89,6 +104,7 @@ TIME_EPS = 1e-9
 DROP_LOW_CONFIDENCE = 'low_confidence'
 DROP_UNKNOWN_KIND = 'unknown_kind'
 DROP_REFRACTORY = 'refractory'
+DROP_RESERVED_KIND = 'reserved_kind'
 NOT_APPLIED_LOCKED = 'locked'
 
 UNKNOWN_SOURCE = 'unknown'
@@ -147,10 +163,11 @@ class StimulusResult:
     kind: str
     accepted: bool                # passed the confidence, kind and refractory gates
     applied: bool                 # accepted and its impulse added (not when locked)
-    reason: str                   # '' when applied, else one of DROP_* / NOT_APPLIED_LOCKED
+    reason: str                   # '' if applied, else one of DROP_* / NOT_APPLIED_LOCKED
     intensity: float              # as used, clamped to [0, 1]
     delta: Mapping[str, float]    # change of every axis, after clamping to the ranges
     focus_updated: bool
+    lock_expired: bool            # this stimulus ended a timed lock that had run out
     state: AffectState
 
 
@@ -190,9 +207,13 @@ class AffectModel:
 
     def __init__(self, config, min_confidence=0.0, max_dt_s=0.5):
         max_dt_s = float(max_dt_s)
-        if not max_dt_s >= 0.0:
-            raise ValueError('max_dt_s must be >= 0, got %r' % max_dt_s)
-        self.min_confidence = float(min_confidence)
+        if not (math.isfinite(max_dt_s) and max_dt_s >= 0.0):
+            raise ValueError('max_dt_s must be a finite number >= 0, got %r' % max_dt_s)
+        min_confidence = float(min_confidence)
+        if not (math.isfinite(min_confidence) and min_confidence >= 0.0):
+            raise ValueError('min_confidence must be a finite number >= 0, got %r'
+                             % min_confidence)
+        self.min_confidence = min_confidence
         self.max_dt_s = max_dt_s
         self._config = config
         self._x = {axis: float(config.temperament[axis]) for axis in AXES}
@@ -205,7 +226,7 @@ class AffectModel:
         self._focus_bearing = math.nan
         self._focus_until = None
         self._last_accepted = {}       # kind -> time of its last accepted stimulus
-        self._pending_since = None     # when the hysteresis condition started holding
+        self._pending = None           # (candidate, since): the hysteresis condition holding
         self._mood = self._nearest()[0]
 
     # --- read-only views -------------------------------------------------------------------
@@ -246,6 +267,8 @@ class AffectModel:
         now = _check_time(now)
         raw_dt = 0.0 if self._last_tick is None else now - self._last_tick
         self._last_tick = now
+        if raw_dt < 0.0:
+            self._shift_times(raw_dt)
         dt = _clamp(raw_dt, 0.0, self.max_dt_s)
         clamped = dt != raw_dt
         if dt == 0.0:
@@ -260,7 +283,8 @@ class AffectModel:
 
         lock_expired = self._expire_lock(now)
         focus_expired = False
-        if self._focus_until is not None and now >= self._focus_until - TIME_EPS:
+        # A focus is still shown on a tick at exactly its end; it is gone after.
+        if self._focus_until is not None and now > self._focus_until + TIME_EPS:
             self._clear_focus()
             focus_expired = True
 
@@ -274,43 +298,59 @@ class AffectModel:
         now = _check_time(now)
         kind = kind or ''
         intensity = _unit(intensity)
+
+        def result(accepted, applied, reason, delta=_ZERO_DELTA, focus_updated=False,
+                   lock_expired=False):
+            return StimulusResult(kind=kind, accepted=accepted, applied=applied, reason=reason,
+                                  intensity=intensity, delta=delta,
+                                  focus_updated=focus_updated, lock_expired=lock_expired,
+                                  state=self.state)
+
+        if kind == IDLE_KIND:
+            return result(False, False, DROP_RESERVED_KIND)
         try:
             confidence = float(confidence)
         except (TypeError, ValueError):
             confidence = math.nan
         if not confidence >= self.min_confidence:      # NaN fails the gate too
-            return self._stimulus_result(kind, False, False, DROP_LOW_CONFIDENCE, intensity,
-                                         _ZERO_DELTA, False)
+            return result(False, False, DROP_LOW_CONFIDENCE)
 
         self._idle_s = 0.0
-        self._expire_lock(now)
+        lock_expired = self._expire_lock(now)
 
         focus_updated = self._update_focus(subject, bearing_rad, ttl_s, now)
 
         impulse = self._config.impulses.get(kind)
         if impulse is None:
-            return self._stimulus_result(kind, False, False, DROP_UNKNOWN_KIND, intensity,
-                                         _ZERO_DELTA, focus_updated)
+            return result(False, False, DROP_UNKNOWN_KIND, focus_updated=focus_updated,
+                          lock_expired=lock_expired)
         if impulse.refractory_s:
             last = self._last_accepted.get(kind)
             # A clock that went backwards (sim reset) does not hold a kind off forever.
             if last is not None and 0.0 <= now - last < impulse.refractory_s - TIME_EPS:
-                return self._stimulus_result(kind, False, False, DROP_REFRACTORY, intensity,
-                                             _ZERO_DELTA, focus_updated)
+                return result(False, False, DROP_REFRACTORY, focus_updated=focus_updated,
+                              lock_expired=lock_expired)
         self._last_accepted[kind] = now
 
         if self._locked:
-            return self._stimulus_result(kind, True, False, NOT_APPLIED_LOCKED, intensity,
-                                         _ZERO_DELTA, focus_updated)
+            return result(True, False, NOT_APPLIED_LOCKED, focus_updated=focus_updated,
+                          lock_expired=lock_expired)
         before = dict(self._x)
         for axis, value in impulse.deltas.items():
             self._x[axis] += value * intensity
         self._clamp_axes()
         delta = MappingProxyType({axis: self._x[axis] - before[axis] for axis in AXES})
-        return self._stimulus_result(kind, True, True, '', intensity, delta, focus_updated)
+        return result(True, True, '', delta=delta, focus_updated=focus_updated,
+                      lock_expired=lock_expired)
 
     def set_mood(self, mood, lock, duration_s, source, now):
-        """Force, lock or clear as ``SetMood`` does; return ``(accepted, reason)``."""
+        """
+        Force, lock or clear as ``SetMood`` does; return ``(accepted, reason)``.
+
+        A timed lock that has run out is expired first, even if the request is
+        then refused; a caller that reports lock expiry compares
+        ``state.locked`` before and after the call.
+        """
         now = _check_time(now)
         mood = mood or ''
         lock = bool(lock)
@@ -341,7 +381,7 @@ class AffectModel:
             for axis, value in self._config.moods[mood].center.items():
                 self._x[axis] = value
             self._mood = mood
-            self._pending_since = None
+            self._pending = None
         if lock:
             self._locked = True
             self._lock_source = source
@@ -364,9 +404,19 @@ class AffectModel:
                                if kind in config.impulses}
         if self._mood not in config.moods:
             self._mood = self._nearest()[0]
-        self._pending_since = None
+        self._pending = None
 
     # --- internals -------------------------------------------------------------------------
+
+    def _shift_times(self, offset):
+        """Move every stored absolute time by ``offset`` (the clock went backwards)."""
+        if self._pending is not None:
+            self._pending = (self._pending[0], self._pending[1] + offset)
+        if self._lock_until is not None:
+            self._lock_until += offset
+        if self._focus_until is not None:
+            self._focus_until += offset
+        self._last_accepted = {kind: t + offset for kind, t in self._last_accepted.items()}
 
     def _relax(self, dt):
         cfg = self._config
@@ -446,17 +496,11 @@ class AffectModel:
         candidate, d_candidate = self._nearest()
         margin = self._config.hysteresis.margin
         if candidate == self._mood or not d_candidate < self._label_distance() - margin:
-            self._pending_since = None
+            self._pending = None
             return None
-        if self._pending_since is None:
-            self._pending_since = now
-        if now - self._pending_since < self._config.hysteresis.dwell_s - TIME_EPS:
+        if self._pending is None or self._pending[0] != candidate:
+            self._pending = (candidate, now)            # a new candidate starts its own dwell
+        if now - self._pending[1] < self._config.hysteresis.dwell_s - TIME_EPS:
             return None
-        old, self._mood, self._pending_since = self._mood, candidate, None
+        old, self._mood, self._pending = self._mood, candidate, None
         return MoodTransition(old=old, new=candidate, distance=d_candidate)
-
-    def _stimulus_result(self, kind, accepted, applied, reason, intensity, delta,
-                         focus_updated):
-        return StimulusResult(kind=kind, accepted=accepted, applied=applied, reason=reason,
-                              intensity=intensity, delta=delta, focus_updated=focus_updated,
-                              state=self.state)

@@ -247,13 +247,18 @@ def test_rejects_prototype_with_no_axes():
 
 @pytest.mark.parametrize('key,value,fragment', [
     ('strength_radius', 0.0, '> 0'),
-    ('distance_weights', {'arousal': -1.0}, '>= 0'),
     ('hysteresis', {'margin': -0.1}, '>= 0'),
     ('focus', {'default_ttl_s': 0.0}, '> 0'),
     ('idle', {'ramp_s': 0.0}, '> 0'),
 ])
 def test_rejects_values_the_model_cannot_use(key, value, fragment):
     rejected(minimal(**{key: value}), key, fragment)
+
+
+@pytest.mark.parametrize('weight', [0.0, -1.0])
+def test_rejects_non_positive_distance_weight(weight):
+    rejected(minimal(distance_weights={'arousal': 1.0, 'curiosity': weight}),
+             'distance_weights.curiosity', '> 0')
 
 
 def test_rejects_duplicate_keys():

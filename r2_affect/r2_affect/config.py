@@ -23,7 +23,7 @@ Pure Python (PyYAML, no ROS imports). The result is an immutable
 * ``relax_tau_s`` (required): the relaxation time constant of each axis, in
   seconds, one value per axis, each > 0.
 * ``distance_weights`` (optional): a per-axis weight for mood classification;
-  axes left out weigh 1.0. Each >= 0.
+  axes left out weigh 1.0. Each > 0.
 * ``strength_radius`` (optional, 0.5): the distance at which ``mood_strength``
   reaches 0. > 0.
 * ``hysteresis`` (optional): ``margin`` (0.15, >= 0) and ``dwell_s``
@@ -206,7 +206,7 @@ def parse_config(data):
     weights = {axis: 1.0 for axis in AXES}
     if 'distance_weights' in data:
         weights.update(_axis_values(data['distance_weights'], 'distance_weights',
-                                    require_all=False, check=_non_negative))
+                                    require_all=False, check=_positive))
     strength_radius = DEFAULT_STRENGTH_RADIUS
     if 'strength_radius' in data:
         strength_radius = _number(data['strength_radius'], 'strength_radius')
