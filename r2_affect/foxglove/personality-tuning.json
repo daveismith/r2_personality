@@ -1,0 +1,212 @@
+{
+  "configById": {
+    "Plot!moodaxes": {
+      "paths": [
+        {
+          "value": "/mood/state.arousal",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "label": "arousal",
+          "color": "#e5534b",
+          "showLine": true,
+          "lineSize": 1.5
+        },
+        {
+          "value": "/mood/state.valence",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "label": "valence",
+          "color": "#57ab5a",
+          "showLine": true,
+          "lineSize": 1.5
+        },
+        {
+          "value": "/mood/state.curiosity",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "label": "curiosity",
+          "color": "#539bf5",
+          "showLine": true,
+          "lineSize": 1.5
+        },
+        {
+          "value": "/mood/state.confidence",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "label": "confidence",
+          "color": "#c69026",
+          "showLine": true,
+          "lineSize": 1.5
+        },
+        {
+          "value": "/mood/state.mood_strength",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "label": "mood_strength",
+          "color": "#8b949e",
+          "showLine": true,
+          "lineSize": 1.5
+        }
+      ],
+      "minYValue": -1,
+      "maxYValue": 1,
+      "showLegend": true,
+      "legendDisplay": "floating",
+      "showPlotValuesInLegend": true,
+      "showXAxisLabels": true,
+      "showYAxisLabels": true,
+      "isSynced": true,
+      "xAxisVal": "timestamp",
+      "followingViewWidth": 120,
+      "sidebarDimension": 240,
+      "foxglovePanelTitle": "Mood axes (/mood/state)"
+    },
+    "StateTransitions!moodlabel": {
+      "paths": [
+        {
+          "value": "/mood/state.mood",
+          "timestampMethod": "receiveTime",
+          "label": "mood",
+          "enabled": true
+        },
+        {
+          "value": "/mood/state.locked",
+          "timestampMethod": "receiveTime",
+          "label": "locked",
+          "enabled": true
+        }
+      ],
+      "isSynced": true,
+      "xAxisRange": 120,
+      "showPoints": false,
+      "foxglovePanelTitle": "Mood label"
+    },
+    "RawMessages!moodstate": {
+      "topicPath": "/mood/state",
+      "diffTopicPath": "",
+      "diffMethod": "custom",
+      "diffEnabled": false,
+      "showFullMessageForDiff": false,
+      "expansion": "all",
+      "foxglovePanelTitle": "Mood state"
+    },
+    "Publish!bump": {
+      "topicName": "/stimuli",
+      "datatype": "astromech_msgs/msg/Stimulus",
+      "buttonText": "bump",
+      "buttonTooltip": "Publish this Stimulus on /stimuli",
+      "buttonColor": "#e5534b",
+      "advancedView": true,
+      "value": "{\n  \"header\": {\"stamp\": {\"sec\": 0, \"nanosec\": 0}, \"frame_id\": \"\"},\n  \"kind\": \"bump\",\n  \"source\": \"foxglove\",\n  \"intensity\": 1,\n  \"confidence\": 1,\n  \"subject\": \"\",\n  \"bearing_rad\": 1e999,\n  \"ttl_s\": 0,\n  \"extra\": \"\"\n}",
+      "foxglovePanelTitle": "Stimulus: bump"
+    },
+    "Publish!faceknown": {
+      "topicName": "/stimuli",
+      "datatype": "astromech_msgs/msg/Stimulus",
+      "buttonText": "face_known dave",
+      "buttonTooltip": "Publish this Stimulus on /stimuli",
+      "buttonColor": "#57ab5a",
+      "advancedView": true,
+      "value": "{\n  \"header\": {\"stamp\": {\"sec\": 0, \"nanosec\": 0}, \"frame_id\": \"\"},\n  \"kind\": \"face_known\",\n  \"source\": \"foxglove\",\n  \"intensity\": 1,\n  \"confidence\": 1,\n  \"subject\": \"dave\",\n  \"bearing_rad\": 0.8,\n  \"ttl_s\": 0,\n  \"extra\": \"\"\n}",
+      "foxglovePanelTitle": "Stimulus: face_known (dave)"
+    },
+    "Publish!buttonseq": {
+      "topicName": "/stimuli",
+      "datatype": "astromech_msgs/msg/Stimulus",
+      "buttonText": "button_sequence LRR",
+      "buttonTooltip": "Publish this Stimulus on /stimuli",
+      "buttonColor": "#539bf5",
+      "advancedView": true,
+      "value": "{\n  \"header\": {\"stamp\": {\"sec\": 0, \"nanosec\": 0}, \"frame_id\": \"\"},\n  \"kind\": \"button_sequence\",\n  \"source\": \"foxglove\",\n  \"intensity\": 1,\n  \"confidence\": 1,\n  \"subject\": \"LRR\",\n  \"bearing_rad\": 1e999,\n  \"ttl_s\": 0,\n  \"extra\": \"\"\n}",
+      "foxglovePanelTitle": "Stimulus: button_sequence (LRR)"
+    },
+    "Publish!touched": {
+      "topicName": "/stimuli",
+      "datatype": "astromech_msgs/msg/Stimulus",
+      "buttonText": "touched",
+      "buttonTooltip": "Publish this Stimulus on /stimuli",
+      "buttonColor": "#c69026",
+      "advancedView": true,
+      "value": "{\n  \"header\": {\"stamp\": {\"sec\": 0, \"nanosec\": 0}, \"frame_id\": \"\"},\n  \"kind\": \"touched\",\n  \"source\": \"foxglove\",\n  \"intensity\": 1,\n  \"confidence\": 1,\n  \"subject\": \"\",\n  \"bearing_rad\": 1e999,\n  \"ttl_s\": 0,\n  \"extra\": \"\"\n}",
+      "foxglovePanelTitle": "Stimulus: touched"
+    },
+    "CallService!moodset": {
+      "serviceName": "/mood/set",
+      "requestPayload": "{\n  \"mood\": \"sleepy\",\n  \"lock\": true,\n  \"duration_s\": 0,\n  \"source\": \"foxglove\"\n}",
+      "layout": "vertical",
+      "buttonText": "Call /mood/set",
+      "buttonTooltip": "astromech_msgs/srv/SetMood: force, lock or clear the mood",
+      "buttonColor": "#986ee2",
+      "foxglovePanelTitle": "Set mood (/mood/set)"
+    },
+    "CallService!reload": {
+      "serviceName": "/mood/reload_config",
+      "requestPayload": "{}",
+      "layout": "vertical",
+      "buttonText": "Reload affect.yaml",
+      "buttonTooltip": "std_srvs/srv/Trigger: re-read and validate the config",
+      "buttonColor": "#986ee2",
+      "foxglovePanelTitle": "Reload config (/mood/reload_config)"
+    },
+    "RosOut!affectlog": {
+      "searchTerms": [
+        "r2_affect"
+      ],
+      "minLogLevel": 1,
+      "topicToRender": "/rosout",
+      "nameFilter": {},
+      "foxglovePanelTitle": "r2_affect log (/rosout)"
+    }
+  },
+  "globalVariables": {},
+  "userNodes": {},
+  "playbackConfig": {
+    "speed": 1
+  },
+  "layout": {
+    "direction": "column",
+    "first": {
+      "direction": "row",
+      "first": {
+        "direction": "column",
+        "first": "Plot!moodaxes",
+        "second": {
+          "direction": "row",
+          "first": "StateTransitions!moodlabel",
+          "second": "RawMessages!moodstate",
+          "splitPercentage": 55
+        },
+        "splitPercentage": 55
+      },
+      "second": {
+        "direction": "row",
+        "first": {
+          "direction": "column",
+          "first": "Publish!bump",
+          "second": {
+            "direction": "column",
+            "first": "Publish!faceknown",
+            "second": {
+              "direction": "column",
+              "first": "Publish!buttonseq",
+              "second": "Publish!touched",
+              "splitPercentage": 50.0
+            },
+            "splitPercentage": 33.33
+          },
+          "splitPercentage": 25.0
+        },
+        "second": {
+          "direction": "column",
+          "first": "CallService!moodset",
+          "second": "CallService!reload",
+          "splitPercentage": 50.0
+        },
+        "splitPercentage": 50
+      },
+      "splitPercentage": 56
+    },
+    "second": "RosOut!affectlog",
+    "splitPercentage": 75
+  }
+}

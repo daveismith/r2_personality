@@ -5,16 +5,18 @@ four numbers around, the numbers relax back toward R2's temperament, and the nea
 handful of mood prototypes gives the label (`calm`, `curious`, `scared`, ...) that later
 layers read. Everything is configured from `config/affect.yaml`.
 
-Phase 0, step 2 delivered the pure-Python core, step 3 the ROS node around it:
+Phase 0, step 2 delivered the pure-Python core, step 3 the ROS node around it, step 6 the
+tuning tools (`docs/personality-phase0-plan.md` in `r2_dev`):
 
 | file | what |
 |---|---|
 | `r2_affect/model.py` | `AffectModel`: dynamics, impulses, refractory, classification with hysteresis, force/lock, focus, idle. No ROS imports. |
 | `r2_affect/config.py` | `load_config()`: reads and validates `affect.yaml` into frozen dataclasses; every rejection raises `AffectConfigError` naming the key. |
+| `r2_affect/node.py`, `r2_affect/mood_cli.py` | the `r2_affect` node and the `mood` CLI. |
+| `r2_affect/replay.py` | `replay`: runs a recorded session's stimuli through the model offline (see [Tuning loop](#tuning-loop)). |
 | `config/affect.yaml` | the shipped configuration (plan §5.4). |
-
-The bag replay tool and the Foxglove tuning layout arrive in later steps of the phase 0
-plan (`docs/personality-phase0-plan.md` in `r2_dev`).
+| `foxglove/personality-tuning.json` | the Foxglove tuning layout, installed to `share/r2_affect/foxglove/`. |
+| `docs/sessions/` | notes from tuning sessions. |
 
 ## Running the node
 
@@ -88,6 +90,143 @@ ros2 service call /mood/reload_config std_srvs/srv/Trigger
 The file is read and validated first; only a valid file is swapped in, and the state
 (vector, label, lock, focus, idle time) is kept. A broken file answers
 `success: false` with the problem (the key and why) and the old config stays in use.
+
+## Tuning loop
+
+Tuning means poking R2 (or the sim) with stimuli, watching what the mood does, then trying
+other values in `affect.yaml` until the transitions look right. The loop:
+
+1. Open the layout in Foxglove and connect to the sim or the robot.
+2. Record a session: `ros2 bag record ... /stimuli /mood/state /rosout` (see
+   [Recording](#recording) for the flags).
+3. Drive a scenario: the Publish panels, `stimulate`, or the robot itself. The acceptance
+   script in plan §8 works as one.
+4. Check the model reproduces the recording: `ros2 run r2_affect replay <bag> --compare`.
+5. Copy `affect.yaml`, edit it, and preview it on the same session:
+   `ros2 run r2_affect replay <bag> --config new.yaml --csv new.csv`. Repeat until the
+   transitions read right.
+6. Put the values into the live `affect.yaml` and apply them without a restart:
+   `ros2 service call /mood/reload_config std_srvs/srv/Trigger` (or the Reload panel).
+   Then repeat live.
+7. Write down what you changed and why in `docs/sessions/` (see its README).
+
+### The Foxglove layout
+
+`foxglove/personality-tuning.json`, installed to
+`install/r2_affect/share/r2_affect/foxglove/personality-tuning.json`. In Foxglove, use
+**Layouts → Import from file…** and pick it. Then open a Foxglove WebSocket connection:
+
+| | run | connect to |
+|---|---|---|
+| sim | `ros2 launch r2_sim sim_foxglove.launch.py` (starts `r2_affect` on sim time) | `ws://localhost:8766` |
+| robot | `launch_robot.launch.py` on the robot; the dev container's `foxglove` service is the bridge | `ws://localhost:8765` |
+
+The same layout works for both connections.
+
+| panel | what it does |
+|---|---|
+| Mood axes (Plot) | `arousal`, `valence`, `curiosity`, `confidence` and `mood_strength` from `/mood/state`, y fixed to −1..1, last 120 s |
+| Mood label (State Transitions) | `/mood/state.mood` over time, with `locked` under it |
+| Mood state (Raw Messages) | the whole `/mood/state`: `locked`, `lock_source`, `lock_until`, `focus_subject`, `focus_bearing_rad`, `idle_s` |
+| Stimulus: bump, face_known (dave), button_sequence (LRR), touched (Publish) | each click publishes one `Stimulus` on `/stimuli` with `source: "foxglove"`, `confidence: 1`, `ttl_s: 0`. You can edit the body (intensity, subject, bearing) first. |
+| Set mood (Call Service) | `/mood/set`, preset to force and lock `sleepy` as `foxglove`. Clear it with `{"mood": "", "lock": false, "duration_s": 0, "source": "foxglove"}`; the other bodies are in [Setting the mood](#setting-the-mood). |
+| Reload config (Call Service) | `/mood/reload_config` with an empty request; the response says `success` and why not |
+| r2_affect log (Log) | `/rosout` with the search term `r2_affect`: one INFO line per stimulus (delta and vector after), label changes, lock set/cleared/expired, reloads, warnings. The term matches the logger name or the text, so another node's line that mentions `r2_affect` also shows. |
+
+**Stimuli without a bearing.** `bearing_rad` should be NaN when unknown, but Foxglove's
+Publish and Call Service editors parse with `JSON.parse`, which has no NaN. The bodies of
+`bump`, `button_sequence` and `touched` use `1e999` instead. `JSON.parse` reads that as
+Infinity and sends it as float +inf. `r2_affect` treats any non-finite bearing as no
+bearing, just like NaN, so the focus doesn't change. Don't use `0` here: it is a real
+bearing (straight ahead) and it would move the focus. This was checked against
+`foxglove_bridge` 3.6 with a CDR client publish, which Foxglove uses when the bridge offers
+`cdr` first, as this one does. If a client published the same body as JSON, Infinity would
+become `null`, and the bridge drops that message. Use `1e999` only in these hand-driven
+panels. The adapters publish NaN.
+
+### Recording
+
+```bash
+# robot (wall clock everywhere)
+ros2 bag record --include-unpublished-topics -o <name> /stimuli /mood/state /rosout
+# sim: also --use-sim-time
+ros2 bag record --use-sim-time --include-unpublished-topics -o <name> /stimuli /mood/state /rosout
+```
+
+Wait for `All requested topics are subscribed` before the first stimulus. Ctrl-C stops the
+recording and closes the bag.
+
+- `--include-unpublished-topics`: without it, the recorder subscribes to `/stimuli` only
+  after it sees a publisher. `stimulate` publishes one message and exits, so the recorder
+  misses its first stimulus. In the dry run, a bump went missing this way and `--compare`
+  flagged it as a 0.6 arousal mismatch.
+- `--use-sim-time` (sim only): the bag's receive timestamps then come from `/clock`, the
+  clock `r2_affect` runs on. Pausing Gazebo while recording pauses the bag's clock too, so
+  the replay sees the same time the node did. Without the flag the stamps are wall time,
+  and the replay counts a pause as time passing (relaxing toward the temperament) when the
+  node was frozen. Even without a pause, Gazebo's real-time factor (about 0.96 in the
+  container) makes each replayed `dt` about 4 % longer than the node's. In the dry run, a
+  26 s session recorded on wall time compared at 0.013, and one recorded with
+  `--use-sim-time` at 0.00006. On the robot the node and the recorder both use wall time,
+  so no flag is needed.
+
+### Replaying
+
+```bash
+ros2 run r2_affect replay <bag> --compare                          # does the model reproduce the run?
+ros2 run r2_affect replay <bag> --config new.yaml --csv new.csv    # what would new values have done?
+```
+
+| option | default | meaning |
+|---|---|---|
+| `bag` | | the bag directory (mcap or sqlite3) |
+| `--config` | installed `share/r2_affect/config/affect.yaml` | the YAML to replay with |
+| `--csv OUT` | none | one row per tick: `t_rel`, the four axes, `mood`, `mood_strength`, `idle_s`, `locked` (`-` for stdout) |
+| `--compare` | off | check against the recorded `/mood/state`; exit 1 if any axis is off by 0.02 or more |
+| `--rate-hz` | 10 | tick rate (the node's `rate_hz`) |
+| `--max-dt` | 0.5 | the node's `max_dt_s` |
+| `--start` | `recorded` | `recorded` starts from the first `/mood/state` in the bag; `temperament` starts from the config's temperament |
+
+The replay works like the node, on the bag's *receive* timestamps (never
+`header.stamp`). It ticks every `1/rate_hz`, and applies each stimulus at its receive time,
+in order, before the next tick. It prints every stimulus with what it did (the delta per
+axis, or why it was dropped), the label transitions, and the end state.
+
+**Where it starts.** The node has usually been running before the recording starts, so by
+default the model starts from the first recorded `/mood/state`: the vector, the label, the
+idle time, and the lock if there is one. The tick grid starts at that message, in phase
+with the node's ticks. A state message can't carry the refractory history, a label change
+already in progress, or the focus ttl, so those start empty. A bump less than 2 s before
+the recording, or a label in mid-dwell, can therefore differ for a moment. With no
+`/mood/state` in the bag, or with `--start temperament`, the model starts at the
+temperament and the grid starts at the first message.
+
+**`--compare`** pairs each recorded state with the nearest replayed tick that has seen the
+same stimuli. Without that rule, a stimulus landing between a node tick and a replay tick
+would show up as a one-tick spike. It prints the largest difference per axis and when it
+happened, the number of ticks where the labels disagree, and both lists of transitions.
+Near a transition the node and the replay can switch one tick apart, so a few label
+disagreements are normal. With the YAML that was running, the difference should be about 0:
+the node and the replay run the same code on the same stimuli. A difference of 0.02 or
+more fails, and the output names the axis. Common causes are a stimulus missing from the
+bag, a different YAML, a wall-clock recording of the sim, or a `SetMood` call.
+`/mood/set` calls (force, lock, clear) are not in a bag, so they are not replayed. When a
+recorded state is locked, the tool says so, because the comparison means nothing across a
+lock. A force without a lock shows up as a mismatch from that moment on.
+
+### Applying the values live
+
+The node re-reads the file at its `config` parameter. With `--symlink-install` that file is
+`config/affect.yaml` in this package, so edit it in place (or put a copy anywhere and launch
+with `affect_config:=` / `config:=`). Then:
+
+```bash
+ros2 service call /mood/reload_config std_srvs/srv/Trigger
+```
+
+or use the Reload config panel. The reload keeps the state, and a broken file is refused
+with the reason (see [Reloading the config](#reloading-the-config)). Don't commit a tuned
+`affect.yaml` without a note in `docs/sessions/`.
 
 ## The model
 
@@ -187,6 +326,10 @@ colcon test --packages-select r2_affect && colcon test-result --verbose
 # or just the unit tests, no build needed
 python3 -m pytest src/r2_personality/r2_affect/test -q
 ```
+
+The node tests start their own `r2_affect` on the default names (`/stimuli`, `/mood/*`).
+With the sim or the robot on the same graph they talk to its node too and fail, so give them
+a graph of their own: `ROS_DOMAIN_ID=57 colcon test --packages-select r2_affect`.
 
 The model tests drive `now` by hand with short time constants, so nothing sleeps. The
 lint tests (flake8, pep257, copyright) need `/opt/ros/jazzy/setup.bash` sourced.

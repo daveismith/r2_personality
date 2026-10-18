@@ -27,6 +27,7 @@ setup(
         (f'share/{package_name}', ['package.xml', 'README.md']),
         (f'share/{package_name}/config', glob('config/*.yaml')),
         (f'share/{package_name}/launch', glob('launch/*.launch.py')),
+        (f'share/{package_name}/foxglove', glob('foxglove/*.json')),
     ],
     install_requires=['setuptools', 'PyYAML'],
     zip_safe=True,
@@ -40,11 +41,11 @@ setup(
             'pytest',
         ],
     },
-    # The replay tool arrives in a later step.
     entry_points={
         'console_scripts': [
             'r2_affect = r2_affect.node:main',
             'mood = r2_affect.mood_cli:main',
+            'replay = r2_affect.replay:main',
         ],
     },
 )
