@@ -106,6 +106,16 @@ def _spin_for(node, seconds):
         rclpy.spin_once(node, timeout_sec=0.02)
 
 
+def _try_shutdown():
+    """Shut rclpy down unless a signal handler already did."""
+    import rclpy
+    from rclpy._rclpy_pybind11 import RCLError
+    try:
+        rclpy.try_shutdown()
+    except RCLError:
+        pass
+
+
 def main(args=None):
     """Entry point."""
     import rclpy
@@ -140,8 +150,7 @@ def main(args=None):
         _spin_for(node, FLUSH_S)
         node.destroy_node()
     finally:
-        if rclpy.ok():
-            rclpy.shutdown()
+        _try_shutdown()
     return 0
 
 

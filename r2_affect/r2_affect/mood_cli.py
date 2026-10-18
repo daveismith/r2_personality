@@ -31,6 +31,8 @@ import sys
 from astromech_msgs.msg import MoodState
 from astromech_msgs.srv import SetMood
 import rclpy
+from rclpy._rclpy_pybind11 import RCLError
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import QoSProfile
 from rclpy.qos import ReliabilityPolicy
@@ -126,10 +128,19 @@ def run_watch(node):
         MoodState, '/mood/state', lambda msg: print(format_state(msg), flush=True),
         QoSProfile(depth=10, reliability=ReliabilityPolicy.RELIABLE))
     try:
-        rclpy.spin(node)
-    except KeyboardInterrupt:
+        while rclpy.ok():                 # a timeout, so SIGTERM is noticed with no traffic
+            rclpy.spin_once(node, timeout_sec=0.2)
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     return 0
+
+
+def _try_shutdown():
+    """Shut rclpy down unless a signal handler already did."""
+    try:
+        rclpy.try_shutdown()
+    except RCLError:
+        pass
 
 
 def main(args=None):
@@ -147,8 +158,7 @@ def main(args=None):
         finally:
             node.destroy_node()
     finally:
-        if rclpy.ok():
-            rclpy.shutdown()
+        _try_shutdown()
 
 
 if __name__ == '__main__':

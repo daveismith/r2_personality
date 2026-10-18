@@ -79,9 +79,10 @@ Force and lock (:meth:`AffectModel.set_mood`), as ``SetMood``:
   passes (0: until cleared); focus and ``idle_s`` keep going.
 * ``mood`` "" and ``lock`` false: clear. Always accepted, from any source.
 * Any other request while another source holds the lock is refused, with
-  the holder named in the reason. An unknown label, or a negative or
-  non-finite ``duration_s``, is refused. A refused request changes nothing.
-  An empty ``source`` is recorded as ``unknown``.
+  the holder named in the reason. An unknown label, or a negative,
+  non-finite or above-a-day (:data:`MAX_DURATION_S`) ``duration_s``, is
+  refused. A refused request changes nothing. An empty ``source`` is
+  recorded as ``unknown``.
 
 A timed lock is also expired by a stimulus or a ``set_mood`` that arrives
 after ``lock_until`` but before the next tick, so it never holds anything
@@ -100,6 +101,9 @@ HALF_RANGE = MappingProxyType({axis: (hi - lo) / 2.0 for axis, (lo, hi) in AXIS_
 
 # Tolerance on time comparisons so that 15 ticks of 0.1 s count as 1.5 s.
 TIME_EPS = 1e-9
+
+# Longest lock a request may ask for; also keeps lock_until inside a ROS Time.
+MAX_DURATION_S = 86400.0
 
 DROP_LOW_CONFIDENCE = 'low_confidence'
 DROP_UNKNOWN_KIND = 'unknown_kind'
@@ -371,6 +375,8 @@ class AffectModel:
             duration_s = math.nan
         if not (math.isfinite(duration_s) and duration_s >= 0.0):
             return False, 'duration_s must be a finite number >= 0, got %r' % duration_s
+        if duration_s > MAX_DURATION_S:
+            return False, 'duration_s above one day'
         if self._locked and self._lock_source != source:
             return False, 'locked by %r%s' % (
                 self._lock_source,

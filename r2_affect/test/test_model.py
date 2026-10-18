@@ -29,7 +29,7 @@ from r2_affect.config import load_config, parse_config  # noqa: E402
 from r2_affect.model import AffectModel, distance  # noqa: E402
 from r2_affect.model import DROP_LOW_CONFIDENCE, DROP_REFRACTORY  # noqa: E402
 from r2_affect.model import DROP_RESERVED_KIND, DROP_UNKNOWN_KIND  # noqa: E402
-from r2_affect.model import NOT_APPLIED_LOCKED  # noqa: E402
+from r2_affect.model import MAX_DURATION_S, NOT_APPLIED_LOCKED  # noqa: E402
 
 NAN = float('nan')
 DT = 0.1
@@ -431,6 +431,16 @@ def test_negative_duration_is_refused_and_changes_nothing():
     accepted, _ = m.set_mood('up', True, -1.0, 'console', 0.0)
     assert not accepted
     assert_same_state(m.state, before)
+
+
+@pytest.mark.parametrize('duration', [MAX_DURATION_S + 1.0, 1e10, 1e20])
+def test_duration_above_one_day_is_refused_and_changes_nothing(duration):
+    m = model()
+    before = m.state
+    accepted, reason = m.set_mood('up', True, duration, 'console', 0.0)
+    assert not accepted and reason == 'duration_s above one day'
+    assert_same_state(m.state, before)
+    assert m.set_mood('up', True, MAX_DURATION_S, 'console', 0.0) == (True, '')
 
 
 # --- idle -------------------------------------------------------------------------------

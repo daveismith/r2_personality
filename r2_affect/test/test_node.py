@@ -43,11 +43,12 @@ from std_srvs.srv import Trigger
 CONFIG = """
 temperament:      {{arousal: 0.0, valence: 0.2, curiosity: 0.4, confidence: 0.6}}
 relax_tau_s:      {{arousal: {tau}, valence: {tau}, curiosity: {tau}, confidence: {tau}}}
-hysteresis:       {{margin: 0.15, dwell_s: 30}}
+hysteresis:       {{margin: 0.15, dwell_s: {dwell}}}
 focus:            {{default_ttl_s: 5.0}}
 idle:             {{after_s: 3000, ramp_s: 100}}
 impulses:
   bump:           {{arousal: {bump}, valence: -0.2}}
+  cheer:          {{arousal: 0.8, valence: 0.6}}
   slow:           {{arousal: 0.1, refractory_s: 100}}
   idle:           {{arousal: -0.02}}
 moods:
@@ -57,10 +58,15 @@ moods:
 """
 
 STARTUP_TIMEOUT_S = 30.0
+_counter = 0
 
 
-def write_config(path, tau=1000.0, bump=0.3):
-    path.write_text(CONFIG.format(tau=tau, bump=bump))
+def render(tau=1000.0, bump=0.3, dwell=30):
+    return CONFIG.format(tau=tau, bump=bump, dwell=dwell)
+
+
+def write_config(path, tau=1000.0, bump=0.3, dwell=30):
+    path.write_text(render(tau, bump, dwell))
     return str(path)
 
 
@@ -69,25 +75,37 @@ class Harness:
 
     def __init__(self, config_path, extra_args=()):
         self.config_path = config_path
+        # A live stack (the sim, the robot) may have its own /r2_affect on the graph, so
+        # this node gets its own name and topics.
+        global _counter
+        _counter += 1
+        tag = '%d_%d' % (os.getpid(), _counter)
+        self.node_name = 'r2_affect_t%s' % tag
+        self.topics = {name: '/t%s%s' % (tag, name)
+                       for name in ('/stimuli', '/mood/state', '/mood/set',
+                                    '/mood/reload_config')}
+        self.clock_topic = '/t%s/clock' % tag
+        remaps = ['-r', '__node:=%s' % self.node_name, '-r', '/clock:=%s' % self.clock_topic]
+        for name, target in self.topics.items():
+            remaps += ['-r', '%s:=%s' % (name, target)]
         self.proc = subprocess.Popen(
             ['ros2', 'run', 'r2_affect', 'r2_affect', '--ros-args', '-p',
-             'config:=%s' % config_path, *extra_args],
+             'config:=%s' % config_path, *remaps, *extra_args],
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
             start_new_session=True)
         self.output = []
         threading.Thread(target=self._drain, daemon=True).start()
 
-        self.node = rclpy.create_node('r2_affect_test')
+        self.node = rclpy.create_node('r2_affect_test_%s' % tag)
         self.lock = threading.Lock()
         self.states = []
         reliable = QoSProfile(depth=50, reliability=ReliabilityPolicy.RELIABLE)
-        self.node.create_subscription(MoodState, '/mood/state', self._on_state, reliable)
-        self.stim_pub = self.node.create_publisher(Stimulus, '/stimuli', reliable)
-        # Other nodes on a shared graph (a simulator) may publish /clock: use a private one.
-        self.clock_topic = '/clock_r2_affect_test_%d' % os.getpid()
+        self.node.create_subscription(
+            MoodState, self.topics['/mood/state'], self._on_state, reliable)
+        self.stim_pub = self.node.create_publisher(Stimulus, self.topics['/stimuli'], reliable)
         self.clock_pub = self.node.create_publisher(Clock, self.clock_topic, 10)
-        self.set_client = self.node.create_client(SetMood, '/mood/set')
-        self.reload_client = self.node.create_client(Trigger, '/mood/reload_config')
+        self.set_client = self.node.create_client(SetMood, self.topics['/mood/set'])
+        self.reload_client = self.node.create_client(Trigger, self.topics['/mood/reload_config'])
         self.executor = SingleThreadedExecutor()
         self.executor.add_node(self.node)
         self.spinner = threading.Thread(target=self.executor.spin, daemon=True)
@@ -132,6 +150,16 @@ class Harness:
         raise AssertionError('timed out waiting for %s\nnode output:\n%s' % (
             what, ''.join(self.output[-30:])))
 
+    def wait_log(self, text, timeout=5.0):
+        """Wait until the node's output has a line containing ``text``; return all output."""
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            joined = ''.join(self.output)
+            if text in joined:
+                return joined
+            time.sleep(0.05)
+        raise AssertionError('no %r in node output:\n%s' % (text, ''.join(self.output)))
+
     def next_state(self, timeout=5.0):
         return self.wait_for(lambda m: True, timeout, 'a /mood/state message')
 
@@ -155,7 +183,7 @@ class Harness:
                 self.publish_clock(sim_t0 + 0.1 * step)
                 time.sleep(0.1)
                 with self.lock:
-                    if len(self.states) > seen:
+                    if any(m.header.stamp.sec > 0 for m in self.states[seen:]):
                         self.sim_t = sim_t0 + 0.1 * step
                         break
             else:
@@ -163,13 +191,15 @@ class Harness:
         assert self.set_client.wait_for_service(timeout_sec=10.0)
         assert self.reload_client.wait_for_service(timeout_sec=10.0)
 
-    def stimulate(self, kind, intensity=1.0, confidence=1.0, source='test'):
+    def stimulate(self, kind, intensity=1.0, confidence=1.0, source='test', subject='',
+                  bearing=math.nan):
         msg = Stimulus()
+        msg.subject = subject
         msg.kind = kind
         msg.source = source
         msg.intensity = float(intensity)
         msg.confidence = float(confidence)
-        msg.bearing_rad = math.nan
+        msg.bearing_rad = bearing
         self.stim_pub.publish(msg)
 
     def call(self, client, request, timeout=10.0):
@@ -207,8 +237,8 @@ def start_node(tmp_path, request):
     """Return a factory that starts a node on a fresh YAML; finalisers kill it."""
     harnesses = []
 
-    def start(tau=1000.0, bump=0.3, extra_args=(), sim_t0=None):
-        config = write_config(tmp_path / ('affect%d.yaml' % len(harnesses)), tau, bump)
+    def start(tau=1000.0, bump=0.3, extra_args=(), sim_t0=None, dwell=30):
+        config = write_config(tmp_path / ('affect%d.yaml' % len(harnesses)), tau, bump, dwell)
         harness = Harness(config, extra_args)
         harnesses.append(harness)
         harness.wait_up(sim_t0)
@@ -322,7 +352,7 @@ def test_reload_changes_the_next_impulse_and_refuses_a_broken_file(start_node, t
     two = h.wait_for(lambda m: m.arousal > before.arousal + 0.05, what='the doubled bump')
     assert two.arousal - before.arousal == pytest.approx(0.4, abs=2e-3)
 
-    broken = CONFIG.format(tau=1000.0, bump=0.9).replace('valence: -0.2}', 'valencex: -0.2}')
+    broken = render(bump=0.9).replace('valence: -0.2}', 'valencex: -0.2}')
     (tmp_path / 'affect0.yaml').write_text(broken)
     reply = h.reload()
     assert not reply.success
@@ -339,7 +369,7 @@ def test_reload_changes_the_next_impulse_and_refuses_a_broken_file(start_node, t
 
 def test_invalid_config_at_startup_exits_non_zero(tmp_path):
     bad = tmp_path / 'bad.yaml'
-    bad.write_text(CONFIG.format(tau=1000.0, bump=0.3).replace('excited', 'excitedx')
+    bad.write_text(render().replace('excited', 'excitedx')
                    .replace('arousal: 0.8,', 'arousalx: 0.8,'))
     proc = subprocess.run(
         ['ros2', 'run', 'r2_affect', 'r2_affect', '--ros-args', '-p', 'config:=%s' % bad],
@@ -350,8 +380,7 @@ def test_invalid_config_at_startup_exits_non_zero(tmp_path):
 
 def test_sim_time_drives_the_node(start_node):
     tau = 20.0
-    h = start_node(tau=tau, sim_t0=100.0, extra_args=(
-        '-p', 'use_sim_time:=true', '-r', '/clock:=/clock_r2_affect_test_%d' % os.getpid()))
+    h = start_node(tau=tau, sim_t0=100.0, extra_args=('-p', 'use_sim_time:=true'))
     t0 = h.sim_t
     publish_clock = h.publish_clock
     reply = h.set_mood('excited')
@@ -360,20 +389,29 @@ def test_sim_time_drives_the_node(start_node):
     assert forced_at == pytest.approx(t0, abs=0.2)
     start_vector = vector(reply.result)
 
-    # Clock stopped: 2 s of wall time must change nothing.
+    # Clock stopped: 2 s of wall time must change nothing, but the heartbeat goes on.
     time.sleep(0.3)
     with h.lock:
         mark = len(h.states)
     time.sleep(2.0)
     with h.lock:
         quiet = list(h.states[mark:])
+    assert len(quiet) >= 15, 'expected a steady heartbeat, got %d messages' % len(quiet)
     for msg in quiet:
         assert vector(msg) == pytest.approx(start_vector, abs=1e-6)
+        assert msg.header.stamp == quiet[0].header.stamp
 
-    # Advance 10 s in 100 ms steps.
+    # Advance 10 s in 100 ms steps (50 ms apart in wall time: the node ticks every 100 ms).
+    with h.lock:
+        mark = len(h.states)
     for i in range(1, 101):
         publish_clock(t0 + 0.1 * i)
-        time.sleep(0.01)
+        time.sleep(0.05)
+    with h.lock:
+        resumed = next(m for m in h.states[mark:]
+                       if m.header.stamp != quiet[0].header.stamp)
+    # The first message after the resume has relaxed by one tick at most (about 0.2 s).
+    assert resumed.arousal == pytest.approx(start_vector[0], abs=0.02)
     end = time.monotonic() + 15.0
     while True:
         with h.lock:
@@ -403,9 +441,145 @@ def test_only_expected_publishers(start_node):
     deadline = time.monotonic() + 10.0
     topics = set()
     while time.monotonic() < deadline:
-        pubs = h.node.get_publisher_names_and_types_by_node('r2_affect', '/')
+        pubs = h.node.get_publisher_names_and_types_by_node(h.node_name, '/')
         topics = {name for name, _ in pubs}
-        if '/mood/state' in topics:
+        if h.topics['/mood/state'] in topics:
             break
         time.sleep(0.1)
-    assert topics == {'/mood/state', '/rosout', '/parameter_events'}
+    assert topics == {h.topics['/mood/state'], '/rosout', '/parameter_events'}
+
+
+def test_huge_duration_is_refused_and_the_node_survives(start_node):
+    h = start_node()
+    for duration in (1e10, 1e20, 86401.0):
+        reply = h.set_mood('', lock=True, duration=duration)
+        assert not reply.accepted and reply.reason == 'duration_s above one day'
+        assert not reply.result.locked
+    reply = h.set_mood('', lock=True, duration=86400.0)
+    assert reply.accepted and reply.result.lock_until.sec > 0
+    assert h.proc.poll() is None
+
+
+def test_non_utf8_config_is_refused_on_reload(start_node, tmp_path):
+    h = start_node(bump=0.2)
+    (tmp_path / 'affect0.yaml').write_bytes(render().encode() + b'# stray \xb0 byte\n')
+    reply = h.reload()
+    assert not reply.success and 'UTF-8' in reply.message
+    assert h.proc.poll() is None
+    before = h.next_state()
+    h.stimulate('bump')
+    after = h.wait_for(lambda m: m.arousal > before.arousal + 0.05, what='a bump on old config')
+    assert after.arousal - before.arousal == pytest.approx(0.2, abs=2e-3)
+
+
+def test_int_rate_parameter_is_accepted(start_node):
+    h = start_node(extra_args=('-p', 'rate_hz:=10'))
+    with h.lock:
+        start = len(h.states)
+    time.sleep(1.5)
+    with h.lock:
+        assert len(h.states) - start >= 10
+
+
+def test_startup_parameters_cannot_be_changed_later(start_node):
+    from rcl_interfaces.msg import Parameter as ParameterMsg
+    from rcl_interfaces.msg import ParameterType
+    from rcl_interfaces.msg import ParameterValue
+    from rcl_interfaces.srv import SetParameters
+    h = start_node()
+    client = h.node.create_client(SetParameters, '/%s/set_parameters' % h.node_name)
+    assert client.wait_for_service(timeout_sec=10.0)
+    request = SetParameters.Request()
+    request.parameters = [ParameterMsg(
+        name='rate_hz', value=ParameterValue(type=ParameterType.PARAMETER_DOUBLE,
+                                             double_value=20.0))]
+    result = h.call(client, request).results[0]
+    assert not result.successful
+    assert 'restart the node' in result.reason
+
+
+def test_unknown_and_reserved_kinds_warn_once(start_node):
+    h = start_node()
+    h.next_state()
+    for _ in range(3):
+        h.stimulate('nonsense')
+        h.stimulate('idle')
+    h.stimulate('bump')               # a marker: everything before it has been handled
+    h.wait_log('stimulus bump from')
+    out = ''.join(h.output)
+    assert out.count('[WARN]') == 2, out
+    assert out.count("unknown stimulus kind 'nonsense'") == 1
+    assert out.count("stimulus kind 'idle' is reserved") == 1
+
+
+def test_applied_stimulus_and_transition_are_logged_at_info(start_node):
+    h = start_node(dwell=0.3)
+    h.next_state()
+    h.stimulate('cheer', source='unit')
+    h.wait_for(lambda m: m.mood == 'excited', timeout=5.0, what='the label to change')
+    out = h.wait_log('mood: calm -> excited')
+    stimulus_lines = [line for line in out.splitlines() if 'stimulus cheer from unit' in line]
+    assert len(stimulus_lines) == 1 and '[INFO]' in stimulus_lines[0]
+    assert 'aro+0.80' in stimulus_lines[0] and 'val+0.60' in stimulus_lines[0]
+    assert out.count('mood: calm -> excited') == 1
+
+
+def test_refractory_drop_is_logged_once_per_window(start_node):
+    h = start_node()
+    h.next_state()
+    h.stimulate('slow')
+    for _ in range(3):
+        h.stimulate('slow')
+    h.stimulate('bump')
+    out = h.wait_log('stimulus bump from')
+    assert out.count('dropped: refractory') == 1
+    assert [line for line in out.splitlines() if 'dropped: refractory' in line][0].count(
+        '[INFO]') == 1
+
+
+def test_focus_updates_while_locked(start_node):
+    h = start_node()
+    assert h.set_mood('sleepy', lock=True).accepted
+    locked = h.wait_for(lambda m: m.locked)
+    h.stimulate('bump', subject='dave', bearing=0.8)
+    seen = h.wait_for(lambda m: m.focus_subject == 'dave', what='the focus')
+    assert seen.focus_bearing_rad == pytest.approx(0.8, abs=1e-5)
+    assert vector(seen) == pytest.approx(vector(locked), abs=1e-6)
+    assert seen.locked
+
+
+def test_low_confidence_stimulus_is_dropped_and_idle_not_reset(start_node):
+    h = start_node(extra_args=('-p', 'min_confidence:=0.5'))
+    time.sleep(1.0)
+    before = h.next_state()
+    assert before.idle_s > 0.8
+    h.stimulate('bump', confidence=0.1)
+    time.sleep(0.5)
+    after = h.next_state()
+    assert after.idle_s > before.idle_s
+    assert vector(after) == pytest.approx(vector(before), abs=1e-4)
+    h.stimulate('bump', confidence=0.9)
+    h.wait_for(lambda m: m.idle_s < 0.5, what='idle_s to reset on an accepted stimulus')
+
+
+@pytest.mark.parametrize('sig', [signal.SIGINT, signal.SIGTERM])
+def test_signals_stop_the_node_quietly(tmp_path, sig):
+    from ament_index_python.packages import get_package_prefix
+    exe = os.path.join(get_package_prefix('r2_affect'), 'lib', 'r2_affect', 'r2_affect')
+    tag = 'sig%d_%d' % (os.getpid(), sig)
+    proc = subprocess.Popen(
+        [exe, '--ros-args', '-r', '__node:=r2_affect_%s' % tag,
+         '-r', '/mood/state:=/%s/state' % tag, '-r', '/stimuli:=/%s/stimuli' % tag,
+         '-r', '/mood/set:=/%s/set' % tag, '-r', '/mood/reload_config:=/%s/reload' % tag,
+         '-p', 'config:=%s' % write_config(tmp_path / 'sig.yaml')],
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    try:
+        time.sleep(3.0)
+        assert proc.poll() is None
+        proc.send_signal(sig)
+        out, _ = proc.communicate(timeout=10)
+    finally:
+        if proc.poll() is None:
+            proc.kill()
+    assert proc.returncode == 0, out
+    assert 'Traceback' not in out

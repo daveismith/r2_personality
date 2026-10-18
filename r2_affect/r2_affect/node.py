@@ -41,11 +41,21 @@ from r2_affect.model import DROP_REFRACTORY
 from r2_affect.model import DROP_RESERVED_KIND
 from r2_affect.model import DROP_UNKNOWN_KIND
 from r2_affect.model import NOT_APPLIED_LOCKED
+from r2_affect.model import TIME_EPS
+from rcl_interfaces.msg import ParameterDescriptor
+from rcl_interfaces.msg import SetParametersResult
 import rclpy
+from rclpy._rclpy_pybind11 import RCLError
+from rclpy.clock import Clock
+from rclpy.clock import ClockType
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import QoSProfile
 from rclpy.qos import ReliabilityPolicy
 from std_srvs.srv import Trigger
+
+
+STARTUP_PARAMETERS = ('rate_hz', 'min_confidence', 'max_dt_s')
 
 
 def default_config_path():
@@ -55,6 +65,7 @@ def default_config_path():
 
 def seconds_to_time(seconds):
     """Convert float seconds to ``builtin_interfaces/Time``."""
+    seconds = min(max(seconds, -2147483648.0), 2147483647.0)      # int32 sec
     sec = int(math.floor(seconds))
     return Time(sec=sec, nanosec=min(int(round((seconds - sec) * 1e9)), 999999999))
 
@@ -89,9 +100,11 @@ class AffectNode(Node):
     def __init__(self):
         super().__init__('r2_affect')
         self.declare_parameter('config', default_config_path())
-        self.declare_parameter('rate_hz', 10.0)
-        self.declare_parameter('min_confidence', 0.0)
-        self.declare_parameter('max_dt_s', 0.5)
+        # Dynamic typing so `-p rate_hz:=10` (an int) is accepted; read once at startup.
+        loose = ParameterDescriptor(dynamic_typing=True)
+        self.declare_parameter('rate_hz', 10.0, loose)
+        self.declare_parameter('min_confidence', 0.0, loose)
+        self.declare_parameter('max_dt_s', 0.5, loose)
 
         rate_hz = float(self.get_parameter('rate_hz').value)
         if not (math.isfinite(rate_hz) and rate_hz > 0.0):
@@ -106,6 +119,7 @@ class AffectNode(Node):
         self._warned_kinds = set()
         self._warned_reserved = False
         self._warned_clamp = False
+        self._refractory_logged = {}      # kind -> time of the last INFO about its drops
 
         reliable = QoSProfile(depth=10, reliability=ReliabilityPolicy.RELIABLE)
         self._pub = self.create_publisher(MoodState, '/mood/state', reliable)
@@ -114,7 +128,11 @@ class AffectNode(Node):
             QoSProfile(depth=50, reliability=ReliabilityPolicy.RELIABLE))
         self.create_service(SetMood, '/mood/set', self._on_set_mood)
         self.create_service(Trigger, '/mood/reload_config', self._on_reload)
-        self.create_timer(1.0 / rate_hz, self._on_tick)
+        self.add_on_set_parameters_callback(self._on_parameters)
+        # The timer runs on the steady clock so /mood/state keeps its heartbeat when the
+        # sim clock is paused; the model's time still comes from the node clock.
+        self.create_timer(1.0 / rate_hz, self._on_tick,
+                          clock=Clock(clock_type=ClockType.STEADY_TIME))
 
         state = self._model.state
         self.get_logger().info(
@@ -124,7 +142,21 @@ class AffectNode(Node):
     def _now(self):
         return self.get_clock().now().nanoseconds * 1e-9
 
+    def _on_parameters(self, params):
+        for param in params:
+            if param.name in STARTUP_PARAMETERS:
+                return SetParametersResult(
+                    successful=False, reason='read at startup; restart the node')
+        return SetParametersResult(successful=True)
+
     def _on_tick(self):
+        stamp = self.get_clock().now().to_msg()
+        clock = self.get_clock()
+        if clock.ros_time_is_active and clock.now().nanoseconds == 0:
+            # Sim time and no /clock yet: nothing to advance, but say we are alive.
+            self._pub.publish(state_to_msg(self._model.state, stamp))
+            return
+        # dt is 0 when the clock is stopped: the model then changes nothing.
         result = self._model.tick(self._now())
         log = self.get_logger()
         if result.dt_clamped and not self._warned_clamp:
@@ -136,7 +168,7 @@ class AffectNode(Node):
             log.info('mood: %s -> %s (d=%.2f)' % (t.old, t.new, t.distance))
         if result.lock_expired:
             log.info('lock expired')
-        self._pub.publish(state_to_msg(result.state, self.get_clock().now().to_msg()))
+        self._pub.publish(state_to_msg(result.state, stamp))
 
     def _on_stimulus(self, msg):
         result = self._model.stimulus(
@@ -150,7 +182,7 @@ class AffectNode(Node):
             log.debug('stimulus %s from %s dropped: confidence %.2f below minimum %.2f' % (
                 msg.kind, msg.source, msg.confidence, self._model.min_confidence))
         elif reason == DROP_REFRACTORY:
-            log.debug('stimulus %s from %s dropped: refractory' % (msg.kind, msg.source))
+            self._log_refractory(msg)
         elif reason == DROP_UNKNOWN_KIND:
             if msg.kind not in self._warned_kinds:
                 self._warned_kinds.add(msg.kind)
@@ -169,6 +201,20 @@ class AffectNode(Node):
                 msg.kind, msg.source or '-', result.intensity, deltas or 'no change',
                 _vector_text(result.state), note))
 
+    def _log_refractory(self, msg):
+        """Say at INFO that a stimulus was held off, once per kind per refractory window."""
+        now = self._now()
+        window = self._model.config.impulses[msg.kind].refractory_s or 0.0
+        last = self._refractory_logged.get(msg.kind)
+        if last is None or not 0.0 <= now - last < window:
+            self._refractory_logged[msg.kind] = now
+            self.get_logger().info(
+                'stimulus %s from %s dropped: refractory (%.1f s window; further drops in '
+                'this window are not logged)' % (msg.kind, msg.source or '-', window))
+        else:
+            self.get_logger().debug('stimulus %s from %s dropped: refractory' % (
+                msg.kind, msg.source))
+
     def _on_set_mood(self, request, response):
         before = self._model.state
         now = self._now()
@@ -177,7 +223,9 @@ class AffectNode(Node):
         after = self._model.state
         log = self.get_logger()
         source = request.source or 'unknown'
-        if before.locked and not after.locked and not (not request.mood and not request.lock):
+        expired = (before.locked and before.lock_until is not None and
+                   now >= before.lock_until - TIME_EPS)
+        if expired:
             log.info('lock held by %s expired' % before.lock_source)
         if not accepted:
             log.info('mood set refused for %s: %s' % (source, reason))
@@ -190,7 +238,7 @@ class AffectNode(Node):
             log.info('mood locked in place by %s%s' % (
                 source, ' for %.1f s' % request.duration_s if request.duration_s > 0.0 else ''))
         else:
-            log.info('lock cleared by %s' % source if before.locked and not after.locked
+            log.info('lock cleared by %s' % source if before.locked and not expired
                      else 'clear requested by %s (nothing locked)' % source)
         response.accepted = accepted
         response.reason = reason
@@ -201,7 +249,7 @@ class AffectNode(Node):
         path = str(self.get_parameter('config').value)
         try:
             config = load_config(path)
-        except AffectConfigError as exc:
+        except Exception as exc:     # a bad file must never take the node down
             self.get_logger().error('reload refused, keeping the old config: %s' % exc)
             response.success = False
             response.message = 'reload refused, old config kept: %s' % exc
@@ -214,24 +262,36 @@ class AffectNode(Node):
         return response
 
 
+def _try_shutdown():
+    """Shut rclpy down unless a signal handler already did."""
+    try:
+        rclpy.try_shutdown()
+    except RCLError:
+        pass
+
+
 def main(args=None):
     """Run the node; exit 1 on an invalid config at startup."""
     rclpy.init(args=args)
     try:
         try:
             node = AffectNode()
-        except (AffectConfigError, ValueError) as exc:
+        except (AffectConfigError, ValueError, TypeError) as exc:
             rclpy.logging.get_logger('r2_affect').error('cannot start: %s' % exc)
             return 1
         try:
-            rclpy.spin(node)
-        except KeyboardInterrupt:
+            # spin_once with a timeout, so SIGINT/SIGTERM are noticed on an idle node.
+            while rclpy.ok():
+                rclpy.spin_once(node, timeout_sec=0.2)
+        except (KeyboardInterrupt, ExternalShutdownException):
             pass
+        except RCLError:
+            if rclpy.ok():        # not just a signal shutting the context mid-callback
+                raise
         finally:
             node.destroy_node()
     finally:
-        if rclpy.ok():
-            rclpy.shutdown()
+        _try_shutdown()
     return 0
 
 

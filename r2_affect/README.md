@@ -43,6 +43,11 @@ ros2 run r2_affect r2_affect --ros-args -p config:=/path/to/affect.yaml
 | `/mood/set` | `astromech_msgs/SetMood` | service: force, lock, clear |
 | `/mood/reload_config` | `std_srvs/Trigger` | service: re-read the YAML |
 
+`rate_hz`, `min_confidence` and `max_dt_s` are read once at startup (an integer such as
+`-p rate_hz:=10` is fine); `ros2 param set` on them is refused with "read at startup;
+restart the node". `/mood/state` keeps its 10 Hz heartbeat when the sim clock is paused
+(same stamp, same vector). `duration_s` above one day is refused.
+
 All time is the node clock; a stimulus's `header.stamp` is ignored. The node publishes
 nothing but `/mood/state` (and `/rosout`, `/parameter_events`). An invalid config at
 startup is logged and the node exits with status 1.
@@ -50,7 +55,7 @@ startup is logged and the node exits with status 1.
 Logs: one INFO line per applied stimulus (kind, source, intensity, the change per axis,
 the vector after), INFO on label changes (`mood: calm -> curious (d=0.21)`) and on lock
 set, cleared or expired, WARN once per unknown kind, once for the reserved `idle` kind
-and once for a clamped time step; low-confidence and refractory drops are DEBUG.
+and once for a clamped time step; a refractory drop is INFO, at most once per kind per refractory window (more are DEBUG); low-confidence drops are DEBUG.
 
 ## Setting the mood
 
@@ -61,17 +66,17 @@ source, with the holder named in the reason; a clear works from any source.
 
 | | `mood` CLI | Foxglove Service Call panel, service `/mood/set` |
 |---|---|---|
-| force (dynamics resume) | `mood set sleepy` | `{"mood": "sleepy", "lock": false, "duration_s": 0, "source": "foxglove"}` |
-| force and lock | `mood set sleepy --lock` | `{"mood": "sleepy", "lock": true, "duration_s": 0, "source": "foxglove"}` |
-| lock in place | `mood lock` | `{"mood": "", "lock": true, "duration_s": 0, "source": "foxglove"}` |
-| timed lock | `mood set excited --lock --duration 30` or `mood lock --duration 30` | `{"mood": "excited", "lock": true, "duration_s": 30, "source": "foxglove"}` |
-| clear | `mood clear` | `{"mood": "", "lock": false, "duration_s": 0, "source": "foxglove"}` |
-| watch | `mood watch` | add `/mood/state` to a Raw Messages panel |
+| force (dynamics resume) | `ros2 run r2_affect mood set sleepy` | `{"mood": "sleepy", "lock": false, "duration_s": 0, "source": "foxglove"}` |
+| force and lock | `ros2 run r2_affect mood set sleepy --lock` | `{"mood": "sleepy", "lock": true, "duration_s": 0, "source": "foxglove"}` |
+| lock in place | `ros2 run r2_affect mood lock` | `{"mood": "", "lock": true, "duration_s": 0, "source": "foxglove"}` |
+| timed lock | `ros2 run r2_affect mood set excited --lock --duration 30` or `ros2 run r2_affect mood lock --duration 30` | `{"mood": "excited", "lock": true, "duration_s": 30, "source": "foxglove"}` |
+| clear | `ros2 run r2_affect mood clear` | `{"mood": "", "lock": false, "duration_s": 0, "source": "foxglove"}` |
+| watch | `ros2 run r2_affect mood watch` | add `/mood/state` to a Raw Messages panel |
 
 Every CLI subcommand takes `--source NAME` (default `mood_cli`) and, like any node,
 `--ros-args -p use_sim_time:=true`. `set`, `lock` and `clear` print `accepted` or
 `refused: <reason>` and the resulting label, and exit 0 when accepted, 1 otherwise.
-`mood watch` prints one line per message: stamp, label (strength), the four axes,
+`ros2 run r2_affect mood watch` prints one line per message: stamp, label (strength), the four axes,
 `locked(<source>)` or `unlocked`, `focus=<subject>@<bearing>` and `idle`.
 
 In Foxglove, a Raw Messages panel on `/mood/state` shows `locked` and `lock_source` (and
@@ -327,9 +332,9 @@ colcon test --packages-select r2_affect && colcon test-result --verbose
 python3 -m pytest src/r2_personality/r2_affect/test -q
 ```
 
-The node tests start their own `r2_affect` on the default names (`/stimuli`, `/mood/*`).
-With the sim or the robot on the same graph they talk to its node too and fail, so give them
-a graph of their own: `ROS_DOMAIN_ID=57 colcon test --packages-select r2_affect`.
+The node tests start their own node with a unique node name and remapped topics and
+services, so they are isolated by remapping and run alongside a live stack (the sim or the
+robot with its own `/r2_affect`) on the default domain.
 
 The model tests drive `now` by hand with short time constants, so nothing sleeps. The
 lint tests (flake8, pep257, copyright) need `/opt/ros/jazzy/setup.bash` sourced.

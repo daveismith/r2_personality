@@ -175,6 +175,8 @@ def load_config(path):
             text = stream.read()
     except OSError as exc:
         raise AffectConfigError('%s: cannot read: %s' % (path, exc.strerror or exc)) from exc
+    except UnicodeDecodeError as exc:
+        raise AffectConfigError('%s: not valid UTF-8: %s' % (path, exc)) from exc
     return load_config_string(text, source=str(path))
 
 
