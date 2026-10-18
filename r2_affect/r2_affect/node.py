@@ -49,13 +49,15 @@ from rclpy._rclpy_pybind11 import RCLError
 from rclpy.clock import Clock
 from rclpy.clock import ClockType
 from rclpy.executors import ExternalShutdownException
+from rclpy.executors import SingleThreadedExecutor
 from rclpy.node import Node
 from rclpy.qos import QoSProfile
 from rclpy.qos import ReliabilityPolicy
 from std_srvs.srv import Trigger
 
 
-STARTUP_PARAMETERS = ('rate_hz', 'min_confidence', 'max_dt_s')
+# Read once at startup; a later `ros2 param set` of any of these is refused (plan 5.2).
+STARTUP_PARAMETERS = ('config', 'rate_hz', 'min_confidence', 'max_dt_s', 'use_sim_time')
 
 
 def default_config_path():
@@ -106,20 +108,20 @@ class AffectNode(Node):
         self.declare_parameter('min_confidence', 0.0, loose)
         self.declare_parameter('max_dt_s', 0.5, loose)
 
-        rate_hz = float(self.get_parameter('rate_hz').value)
+        rate_hz = self._number_parameter('rate_hz')
         if not (math.isfinite(rate_hz) and rate_hz > 0.0):
             raise ValueError('rate_hz must be > 0, got %r' % rate_hz)
         self._config_path = str(self.get_parameter('config').value)
         config = load_config(self._config_path)           # AffectConfigError: main() exits
         self._model = AffectModel(
             config,
-            min_confidence=float(self.get_parameter('min_confidence').value),
-            max_dt_s=float(self.get_parameter('max_dt_s').value))
+            min_confidence=self._number_parameter('min_confidence'),
+            max_dt_s=self._number_parameter('max_dt_s'))
 
         self._warned_kinds = set()
         self._warned_reserved = False
         self._warned_clamp = False
-        self._refractory_logged = {}      # kind -> time of the last INFO about its drops
+        self._refractory_logged = set()   # kinds whose drop since the last acceptance was logged
 
         reliable = QoSProfile(depth=10, reliability=ReliabilityPolicy.RELIABLE)
         self._pub = self.create_publisher(MoodState, '/mood/state', reliable)
@@ -128,6 +130,8 @@ class AffectNode(Node):
             QoSProfile(depth=50, reliability=ReliabilityPolicy.RELIABLE))
         self.create_service(SetMood, '/mood/set', self._on_set_mood)
         self.create_service(Trigger, '/mood/reload_config', self._on_reload)
+        # Registered after TimeSource's own callback, so it runs first (rclpy calls the
+        # newest first) and a refused use_sim_time never reaches TimeSource.
         self.add_on_set_parameters_callback(self._on_parameters)
         # The timer runs on the steady clock so /mood/state keeps its heartbeat when the
         # sim clock is paused; the model's time still comes from the node clock.
@@ -141,6 +145,14 @@ class AffectNode(Node):
 
     def _now(self):
         return self.get_clock().now().nanoseconds * 1e-9
+
+    def _number_parameter(self, name):
+        """Return a numeric parameter as float; a bool or a string is refused."""
+        value = self.get_parameter(name).value
+        # bool is an int in Python: without this, `-p rate_hz:=true` would be 1 Hz.
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError('%s must be a number, got %r' % (name, value))
+        return float(value)
 
     def _on_parameters(self, params):
         for param in params:
@@ -178,6 +190,9 @@ class AffectNode(Node):
         if result.lock_expired:
             log.info('lock expired')
         reason = result.reason
+        if result.accepted:
+            # The next drop of this kind starts a new refractory window: log it at INFO.
+            self._refractory_logged.discard(msg.kind)
         if reason == DROP_LOW_CONFIDENCE:
             log.debug('stimulus %s from %s dropped: confidence %.2f below minimum %.2f' % (
                 msg.kind, msg.source, msg.confidence, self._model.min_confidence))
@@ -202,12 +217,10 @@ class AffectNode(Node):
                 _vector_text(result.state), note))
 
     def _log_refractory(self, msg):
-        """Say at INFO that a stimulus was held off, once per kind per refractory window."""
-        now = self._now()
+        """Say at INFO that a stimulus was held off: the first drop after each acceptance."""
         window = self._model.config.impulses[msg.kind].refractory_s or 0.0
-        last = self._refractory_logged.get(msg.kind)
-        if last is None or not 0.0 <= now - last < window:
-            self._refractory_logged[msg.kind] = now
+        if msg.kind not in self._refractory_logged:
+            self._refractory_logged.add(msg.kind)
             self.get_logger().info(
                 'stimulus %s from %s dropped: refractory (%.1f s window; further drops in '
                 'this window are not logged)' % (msg.kind, msg.source or '-', window))
@@ -279,16 +292,19 @@ def main(args=None):
         except (AffectConfigError, ValueError, TypeError) as exc:
             rclpy.logging.get_logger('r2_affect').error('cannot start: %s' % exc)
             return 1
+        executor = SingleThreadedExecutor()
+        executor.add_node(node)
         try:
             # spin_once with a timeout, so SIGINT/SIGTERM are noticed on an idle node.
             while rclpy.ok():
-                rclpy.spin_once(node, timeout_sec=0.2)
+                executor.spin_once(timeout_sec=0.2)
         except (KeyboardInterrupt, ExternalShutdownException):
             pass
         except RCLError:
             if rclpy.ok():        # not just a signal shutting the context mid-callback
                 raise
         finally:
+            executor.shutdown(timeout_sec=0)
             node.destroy_node()
     finally:
         _try_shutdown()

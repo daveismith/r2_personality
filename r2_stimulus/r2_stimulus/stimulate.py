@@ -99,11 +99,11 @@ def _wait_for_listener(publisher):
     return publisher.get_subscription_count() > 0
 
 
-def _spin_for(node, seconds):
+def _spin_for(executor, seconds):
     import rclpy
     end = time.monotonic() + seconds
     while time.monotonic() < end and rclpy.ok():
-        rclpy.spin_once(node, timeout_sec=0.02)
+        executor.spin_once(timeout_sec=0.02)
 
 
 def _try_shutdown():
@@ -119,6 +119,7 @@ def _try_shutdown():
 def main(args=None):
     """Entry point."""
     import rclpy
+    from rclpy.executors import SingleThreadedExecutor
     from rclpy.node import Node
     from rclpy.qos import QoSProfile
     from rclpy.qos import ReliabilityPolicy
@@ -132,6 +133,8 @@ def main(args=None):
     rclpy.init(args=args)
     try:
         node = Node('stimulate_%d' % os.getpid())
+        executor = SingleThreadedExecutor()
+        executor.add_node(node)
         publisher = node.create_publisher(
             Stimulus, '/stimuli', QoSProfile(depth=50, reliability=ReliabilityPolicy.RELIABLE))
         if not _wait_for_listener(publisher):
@@ -146,8 +149,9 @@ def main(args=None):
                 msg.kind, msg.intensity, msg.subject,
                 'unknown' if math.isnan(msg.bearing_rad) else '%.2f' % msg.bearing_rad))
             if i + 1 < ns.repeat:
-                _spin_for(node, ns.every)
-        _spin_for(node, FLUSH_S)
+                _spin_for(executor, ns.every)
+        _spin_for(executor, FLUSH_S)
+        executor.shutdown(timeout_sec=0)
         node.destroy_node()
     finally:
         _try_shutdown()

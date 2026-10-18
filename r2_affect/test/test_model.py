@@ -772,3 +772,49 @@ def test_set_mood_lock_expiry_is_seen_by_comparing_locked():
     accepted, _ = m.set_mood('grumpy', False, 0.0, 'other', 1.05)   # refused, but...
     assert not accepted
     assert was_locked and not m.state.locked                # ...the lapsed lock is gone
+
+
+# --- copy and restore (for replay) ------------------------------------------------------
+
+def test_copy_is_independent():
+    m = model()
+    stim(m, 'pat', 0.5)
+    c = m.copy()
+    stim(c, 'poke', 0.6)
+    run(c, 0.7, 1.0)
+    assert m.state.arousal == 0.0 and c.state.arousal == pytest.approx(0.4)
+    assert stim(m, 'pat', 1.0).reason == DROP_REFRACTORY        # history copied, not shared
+    assert stim(c, 'pat', 1.6).applied
+
+
+def test_restore_sets_the_state_as_if_ticked_at_now():
+    import dataclasses
+    m = model()
+    snap = dataclasses.replace(
+        m.state, arousal=0.7, valence=-0.3, curiosity=0.2, confidence=0.9, mood='up',
+        idle_s=12.0, locked=True, lock_source='console', lock_until=7.0,
+        focus_subject='dave', focus_bearing=0.5)
+    m.restore(snap, 5.0)
+    s = m.state
+    assert (s.arousal, s.valence, s.curiosity, s.confidence) == (0.7, -0.3, 0.2, 0.9)
+    assert s.mood == 'up' and s.idle_s == 12.0
+    assert s.locked and s.lock_source == 'console' and s.lock_until == 7.0
+    assert s.focus_subject == 'dave' and s.focus_bearing == 0.5
+    assert m.tick(5.1).dt == pytest.approx(0.1)                # the time base is now
+    assert m.tick(7.0).lock_expired
+    assert m.tick(7.0 + 2.0 + 0.1).focus_expired               # default ttl from now (5 + 2)
+
+
+def test_restore_clamps_unknown_labels_and_clears_lock_and_focus():
+    import dataclasses
+    m = model()
+    m.set_mood('', True, 0.0, 'console', 0.0)
+    stim(m, 'poke', 0.0, subject='dave')
+    snap = dataclasses.replace(m.state, arousal=-3.0, mood='gone', locked=False,
+                               focus_subject='', focus_bearing=float('nan'))
+    m.restore(snap, 1.0)
+    s = m.state
+    assert s.arousal == -1.0 and s.mood == 'down'
+    assert not s.locked and s.lock_source == '' and s.focus_subject == ''
+    with pytest.raises(ValueError):
+        m.restore(snap, float('nan'))

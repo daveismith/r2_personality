@@ -43,9 +43,10 @@ ros2 run r2_affect r2_affect --ros-args -p config:=/path/to/affect.yaml
 | `/mood/set` | `astromech_msgs/SetMood` | service: force, lock, clear |
 | `/mood/reload_config` | `std_srvs/Trigger` | service: re-read the YAML |
 
-`rate_hz`, `min_confidence` and `max_dt_s` are read once at startup (an integer such as
-`-p rate_hz:=10` is fine); `ros2 param set` on them is refused with "read at startup;
-restart the node". `/mood/state` keeps its 10 Hz heartbeat when the sim clock is paused
+`config`, `rate_hz`, `min_confidence`, `max_dt_s` and `use_sim_time` are read once at
+startup (an integer such as `-p rate_hz:=10` is fine, a bool such as `rate_hz:=true` is
+refused); `ros2 param set` on any of them is refused with "read at startup; restart the
+node". `/mood/state` keeps its 10 Hz heartbeat when the sim clock is paused
 (same stamp, same vector). `duration_s` above one day is refused.
 
 All time is the node clock; a stimulus's `header.stamp` is ignored. The node publishes
@@ -55,7 +56,8 @@ startup is logged and the node exits with status 1.
 Logs: one INFO line per applied stimulus (kind, source, intensity, the change per axis,
 the vector after), INFO on label changes (`mood: calm -> curious (d=0.21)`) and on lock
 set, cleared or expired, WARN once per unknown kind, once for the reserved `idle` kind
-and once for a clamped time step; a refractory drop is INFO, at most once per kind per refractory window (more are DEBUG); low-confidence drops are DEBUG.
+and once for a clamped time step; the first refractory drop after each accepted stimulus
+of a kind is INFO (further drops in that window are DEBUG); low-confidence drops are DEBUG.
 
 ## Setting the mood
 
@@ -102,7 +104,7 @@ Tuning means poking R2 (or the sim) with stimuli, watching what the mood does, t
 other values in `affect.yaml` until the transitions look right. The loop:
 
 1. Open the layout in Foxglove and connect to the sim or the robot.
-2. Record a session: `ros2 bag record ... /stimuli /mood/state /rosout` (see
+2. Record a session: `ros2 bag record ... --topics /stimuli /mood/state /rosout` (see
    [Recording](#recording) for the flags).
 3. Drive a scenario: the Publish panels, `stimulate`, or the robot itself. The acceptance
    script in plan §8 works as one.
@@ -152,28 +154,24 @@ panels. The adapters publish NaN.
 ### Recording
 
 ```bash
-# robot (wall clock everywhere)
-ros2 bag record --include-unpublished-topics -o <name> /stimuli /mood/state /rosout
-# sim: also --use-sim-time
-ros2 bag record --use-sim-time --include-unpublished-topics -o <name> /stimuli /mood/state /rosout
+# robot
+ros2 bag record --include-unpublished-topics -o <name> --topics /stimuli /mood/state /rosout
+# sim: --use-sim-time as well, so the bag's own timeline is sim time
+ros2 bag record --use-sim-time --include-unpublished-topics -o <name> --topics /stimuli /mood/state /rosout
 ```
 
 Wait for `All requested topics are subscribed` before the first stimulus. Ctrl-C stops the
-recording and closes the bag.
+recording and closes the bag. (Positional topics still work in Jazzy but are deprecated.)
 
 - `--include-unpublished-topics`: without it, the recorder subscribes to `/stimuli` only
   after it sees a publisher. `stimulate` publishes one message and exits, so the recorder
-  misses its first stimulus. In the dry run, a bump went missing this way and `--compare`
-  flagged it as a 0.6 arousal mismatch.
-- `--use-sim-time` (sim only): the bag's receive timestamps then come from `/clock`, the
-  clock `r2_affect` runs on. Pausing Gazebo while recording pauses the bag's clock too, so
-  the replay sees the same time the node did. Without the flag the stamps are wall time,
-  and the replay counts a pause as time passing (relaxing toward the temperament) when the
-  node was frozen. Even without a pause, Gazebo's real-time factor (about 0.96 in the
-  container) makes each replayed `dt` about 4 % longer than the node's. In the dry run, a
-  26 s session recorded on wall time compared at 0.013, and one recorded with
-  `--use-sim-time` at 0.00006. On the robot the node and the recorder both use wall time,
-  so no flag is needed.
+  misses its first stimulus. In the first dry run a bump went missing this way, and
+  `--compare` flagged it as a 0.6 arousal mismatch.
+- `--use-sim-time` (sim): the bag's receive times then follow `/clock`, so the bag plays
+  back in sim time and a Gazebo pause is a pause in the bag too. The replay does not depend
+  on it: it ticks at the node's own stamps (below), so a wall-clock recording of the sim
+  replays just as exactly. Note that with this flag the recorder writes nothing until the
+  first `/clock`.
 
 ### Replaying
 
@@ -188,36 +186,65 @@ ros2 run r2_affect replay <bag> --config new.yaml --csv new.csv    # what would 
 | `--config` | installed `share/r2_affect/config/affect.yaml` | the YAML to replay with |
 | `--csv OUT` | none | one row per tick: `t_rel`, the four axes, `mood`, `mood_strength`, `idle_s`, `locked` (`-` for stdout) |
 | `--compare` | off | check against the recorded `/mood/state`; exit 1 if any axis is off by 0.02 or more |
-| `--rate-hz` | 10 | tick rate (the node's `rate_hz`) |
+| `--min-confidence` | 0 | the node's `min_confidence` |
 | `--max-dt` | 0.5 | the node's `max_dt_s` |
+| `--rate-hz` | 10 | tick rate, only for a bag without `/mood/state` |
 | `--start` | `recorded` | `recorded` starts from the first `/mood/state` in the bag; `temperament` starts from the config's temperament |
 
-The replay works like the node, on the bag's *receive* timestamps (never
-`header.stamp`). It ticks every `1/rate_hz`, and applies each stimulus at its receive time,
-in order, before the next tick. It prints every stimulus with what it did (the delta per
-axis, or why it was dropped), the label transitions, and the end state.
+Exit status: 0 for a replay (and a comparison within 0.02), 1 for a comparison mismatch, 2
+for a bag or config it cannot use: not a bag, no `/stimuli` topic, a topic of the wrong
+type, nothing to replay, or `--compare` without `/mood/state`.
+
+It prints every stimulus with what it did (the delta per axis, or why it was dropped), the
+`SetMood` calls it inferred, the label transitions and the end state.
+
+**Ticks.** The replay ticks exactly where the node did: at each recorded `/mood/state`'s
+`header.stamp`, the node's own clock at that tick. The node's timer runs on a steady clock,
+so under sim time it ticks every 0.1 s of wall time and each `dt` is whatever the sim clock
+did meanwhile. That is less than 0.1 s when Gazebo runs slower than real time, and 0 while
+it is paused (the heartbeat repeats the stamp). States stamped 0 (a sim-time node before its
+first `/clock`) are skipped. A bag without `/mood/state` gets a grid every `1/rate_hz` of
+receive time from its first stimulus, starting from the temperament.
+
+**Stimuli.** A stimulus's `header.stamp` is never used, as in the node. Which tick a
+stimulus goes before comes from the recorded idle time: the node resets `idle_s` when it
+handles a stimulus (`SetMood` never does), so the state near the stimulus's receive time
+that shows the reset is the right one. On a loaded machine the bag's order of a stimulus
+and a state can be wrong by tens of milliseconds either way; in the second dry run one
+stimulus was received 10 ms before a state the node had published before handling it. Its
+time on the node clock is interpolated from the states received around it. With no visible
+reset (a low-confidence stimulus, two stimuli during a pause) and a state within 10 ms,
+both orders are tried, and the one closer to the recorded state is kept.
 
 **Where it starts.** The node has usually been running before the recording starts, so by
-default the model starts from the first recorded `/mood/state`: the vector, the label, the
-idle time, and the lock if there is one. The tick grid starts at that message, in phase
-with the node's ticks. A state message can't carry the refractory history, a label change
-already in progress, or the focus ttl, so those start empty. A bump less than 2 s before
-the recording, or a label in mid-dwell, can therefore differ for a moment. With no
-`/mood/state` in the bag, or with `--start temperament`, the model starts at the
-temperament and the grid starts at the first message.
+default the model starts from the first recorded state: the vector, the label, the idle
+time, the lock with its `lock_until`, and the focus. A state message can't carry the
+refractory history, a label change already in progress, or the focus ttl, so those start
+empty (the focus gets the default ttl). A bump less than 2 s before the recording, or a
+label in mid-dwell, can therefore differ for a moment.
 
-**`--compare`** pairs each recorded state with the nearest replayed tick that has seen the
-same stimuli. Without that rule, a stimulus landing between a node tick and a replay tick
-would show up as a one-tick spike. It prints the largest difference per axis and when it
-happened, the number of ticks where the labels disagree, and both lists of transitions.
-Near a transition the node and the replay can switch one tick apart, so a few label
-disagreements are normal. With the YAML that was running, the difference should be about 0:
-the node and the replay run the same code on the same stimuli. A difference of 0.02 or
-more fails, and the output names the axis. Common causes are a stimulus missing from the
-bag, a different YAML, a wall-clock recording of the sim, or a `SetMood` call.
-`/mood/set` calls (force, lock, clear) are not in a bag, so they are not replayed. When a
-recorded state is locked, the tool says so, because the comparison means nothing across a
-lock. A force without a lock shows up as a mismatch from that moment on.
+**SetMood.** `/mood/set` calls are not in a bag, so the replay infers them from the
+recorded states and replays them before the tick that first shows them:
+
+- a lock that appears or changes (`locked`, `lock_source`, `lock_until`);
+- a lock that disappears before its `lock_until`, which is a clear (one that disappears at
+  its `lock_until` simply expires, in the replay as in the node);
+- a force: the label changes with `mood_strength` ≥ 0.98, or an axis jumps by more than 0.2
+  with no stimulus around.
+
+A force is replayed with `set_mood`, so with `--config new.yaml` it moves to the new
+config's prototype. A call the state does not show (forcing the label it already has, at
+its prototype) is missed.
+
+**`--compare`** pairs each recorded state with the replayed tick at its stamp. It prints
+the largest difference per axis and when it happened, the number of ticks where the labels
+disagree, and both lists of transitions. With the YAML that was running, the difference is
+float32 rounding: the node and the replay run the same code on the same inputs at the same
+times. In the second dry run (a 33 s sim session with four stimuli, a force and a timed
+lock, the sim at about 0.86 real time), the largest difference was 4e-8, both with
+`--use-sim-time` and in a wall-clock bag of the same session. A difference of 0.02 or more
+fails, and the output names the axis. Common causes are a stimulus missing from the bag, a
+different YAML or `--min-confidence`, and a `SetMood` the state does not show.
 
 ### Applying the values live
 

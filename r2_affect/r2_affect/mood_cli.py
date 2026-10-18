@@ -33,6 +33,7 @@ from astromech_msgs.srv import SetMood
 import rclpy
 from rclpy._rclpy_pybind11 import RCLError
 from rclpy.executors import ExternalShutdownException
+from rclpy.executors import SingleThreadedExecutor
 from rclpy.node import Node
 from rclpy.qos import QoSProfile
 from rclpy.qos import ReliabilityPolicy
@@ -81,7 +82,7 @@ def format_state(msg):
                             msg.curiosity, msg.confidence, lock, focus, msg.idle_s))
 
 
-def call_set_mood(node, request):
+def call_set_mood(node, executor, request):
     """Call /mood/set; return the response or None (message printed) if unavailable."""
     client = node.create_client(SetMood, '/mood/set')
     if not client.wait_for_service(timeout_sec=SERVICE_WAIT_S):
@@ -89,14 +90,14 @@ def call_set_mood(node, request):
               % SERVICE_WAIT_S, file=sys.stderr)
         return None
     future = client.call_async(request)
-    rclpy.spin_until_future_complete(node, future, timeout_sec=SERVICE_REPLY_S)
+    executor.spin_until_future_complete(future, timeout_sec=SERVICE_REPLY_S)
     if not future.done():
         print('mood: no reply from /mood/set', file=sys.stderr)
         return None
     return future.result()
 
 
-def run_set(node, args):
+def run_set(node, executor, args):
     """Run set, lock and clear; return the exit code."""
     request = SetMood.Request()
     request.source = args.source
@@ -107,7 +108,7 @@ def run_set(node, args):
     elif args.command == 'lock':
         request.lock = True
         request.duration_s = args.duration
-    response = call_set_mood(node, request)
+    response = call_set_mood(node, executor, request)
     if response is None:
         return 1
     result = response.result
@@ -122,14 +123,14 @@ def run_set(node, args):
     return 1
 
 
-def run_watch(node):
+def run_watch(node, executor):
     """Print every /mood/state message until interrupted."""
     node.create_subscription(
         MoodState, '/mood/state', lambda msg: print(format_state(msg), flush=True),
         QoSProfile(depth=10, reliability=ReliabilityPolicy.RELIABLE))
     try:
         while rclpy.ok():                 # a timeout, so SIGTERM is noticed with no traffic
-            rclpy.spin_once(node, timeout_sec=0.2)
+            executor.spin_once(timeout_sec=0.2)
     except (KeyboardInterrupt, ExternalShutdownException):
         pass
     return 0
@@ -151,11 +152,16 @@ def main(args=None):
     try:
         node = Node('mood_cli_%s' % ('watch' if parsed.command == 'watch' else 'set'),
                     start_parameter_services=False)
+        # One executor for the node's life, rather than rclpy.spin_once adding and
+        # removing the node from the global executor on every call.
+        executor = SingleThreadedExecutor()
+        executor.add_node(node)
         try:
             if parsed.command == 'watch':
-                return run_watch(node)
-            return run_set(node, parsed)
+                return run_watch(node, executor)
+            return run_set(node, executor, parsed)
         finally:
+            executor.shutdown(timeout_sec=0)
             node.destroy_node()
     finally:
         _try_shutdown()

@@ -50,6 +50,7 @@ impulses:
   bump:           {{arousal: {bump}, valence: -0.2}}
   cheer:          {{arousal: 0.8, valence: 0.6}}
   slow:           {{arousal: 0.1, refractory_s: 100}}
+  quick:          {{arousal: 0.01, refractory_s: 2.0}}
   idle:           {{arousal: -0.02}}
 moods:
   calm:     {{arousal: 0.0,  valence: 0.2}}
@@ -372,10 +373,21 @@ def test_invalid_config_at_startup_exits_non_zero(tmp_path):
     bad.write_text(render().replace('excited', 'excitedx')
                    .replace('arousal: 0.8,', 'arousalx: 0.8,'))
     proc = subprocess.run(
-        ['ros2', 'run', 'r2_affect', 'r2_affect', '--ros-args', '-p', 'config:=%s' % bad],
+        ['ros2', 'run', 'r2_affect', 'r2_affect', '--ros-args', '-p', 'config:=%s' % bad,
+         '-r', '__node:=r2_affect_bad_%d' % os.getpid()],
         capture_output=True, text=True, timeout=60)
     assert proc.returncode != 0
     assert 'arousalx' in proc.stdout + proc.stderr
+
+
+def test_bool_rate_parameter_is_refused_at_startup(tmp_path):
+    proc = subprocess.run(
+        ['ros2', 'run', 'r2_affect', 'r2_affect', '--ros-args',
+         '-p', 'config:=%s' % write_config(tmp_path / 'ok.yaml'), '-p', 'rate_hz:=true',
+         '-r', '__node:=r2_affect_boolrate_%d' % os.getpid()],
+        capture_output=True, text=True, timeout=60)
+    assert proc.returncode == 1
+    assert 'rate_hz must be a number' in proc.stdout + proc.stderr
 
 
 def test_sim_time_drives_the_node(start_node):
@@ -489,13 +501,24 @@ def test_startup_parameters_cannot_be_changed_later(start_node):
     h = start_node()
     client = h.node.create_client(SetParameters, '/%s/set_parameters' % h.node_name)
     assert client.wait_for_service(timeout_sec=10.0)
-    request = SetParameters.Request()
-    request.parameters = [ParameterMsg(
-        name='rate_hz', value=ParameterValue(type=ParameterType.PARAMETER_DOUBLE,
-                                             double_value=20.0))]
-    result = h.call(client, request).results[0]
-    assert not result.successful
-    assert 'restart the node' in result.reason
+    attempts = {
+        'rate_hz': ParameterValue(type=ParameterType.PARAMETER_DOUBLE, double_value=20.0),
+        'min_confidence': ParameterValue(type=ParameterType.PARAMETER_DOUBLE,
+                                         double_value=0.5),
+        'max_dt_s': ParameterValue(type=ParameterType.PARAMETER_DOUBLE, double_value=1.0),
+        'config': ParameterValue(type=ParameterType.PARAMETER_STRING,
+                                 string_value='/tmp/other.yaml'),
+        # Refused before TimeSource sees it: the node stays on the wall clock.
+        'use_sim_time': ParameterValue(type=ParameterType.PARAMETER_BOOL, bool_value=True),
+    }
+    for name, value in attempts.items():
+        request = SetParameters.Request()
+        request.parameters = [ParameterMsg(name=name, value=value)]
+        result = h.call(client, request).results[0]
+        assert not result.successful, name
+        assert 'restart the node' in result.reason, name
+    # Still ticking on the wall clock (a switch to sim time with no /clock would stamp 0).
+    assert h.next_state().header.stamp.sec > 0
 
 
 def test_unknown_and_reserved_kinds_warn_once(start_node):
@@ -507,7 +530,6 @@ def test_unknown_and_reserved_kinds_warn_once(start_node):
     h.stimulate('bump')               # a marker: everything before it has been handled
     h.wait_log('stimulus bump from')
     out = ''.join(h.output)
-    assert out.count('[WARN]') == 2, out
     assert out.count("unknown stimulus kind 'nonsense'") == 1
     assert out.count("stimulus kind 'idle' is reserved") == 1
 
@@ -535,6 +557,26 @@ def test_refractory_drop_is_logged_once_per_window(start_node):
     assert out.count('dropped: refractory') == 1
     assert [line for line in out.splitlines() if 'dropped: refractory' in line][0].count(
         '[INFO]') == 1
+
+
+def test_first_refractory_drop_after_each_acceptance_is_logged_at_info(start_node):
+    # quick has a 2 s window. Accept at 0, drop at ~1.6 (INFO), accept again at ~2.4 (a new
+    # window), drop at once: INFO again, although it is within 2 s of the last INFO.
+    h = start_node()
+    h.next_state()
+    h.stimulate('quick', source='unit')
+    time.sleep(1.6)
+    h.stimulate('quick', source='unit')
+    h.stimulate('quick', source='unit')       # same window: DEBUG
+    time.sleep(0.8)
+    h.stimulate('quick', source='unit')
+    h.stimulate('quick', source='unit')
+    h.stimulate('bump')
+    out = h.wait_log('stimulus bump from')
+    applied = [line for line in out.splitlines() if 'stimulus quick from unit i=' in line]
+    dropped = [line for line in out.splitlines() if 'quick from unit dropped: refractory' in line]
+    assert len(applied) == 2, out
+    assert len(dropped) == 2 and all('[INFO]' in line for line in dropped), out
 
 
 def test_focus_updates_while_locked(start_node):

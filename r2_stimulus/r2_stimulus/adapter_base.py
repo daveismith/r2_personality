@@ -22,6 +22,7 @@ from r2_stimulus.stimulate import _try_shutdown
 import rclpy
 from rclpy._rclpy_pybind11 import RCLError
 from rclpy.executors import ExternalShutdownException
+from rclpy.executors import SingleThreadedExecutor
 from rclpy.node import Node
 from rclpy.qos import QoSProfile
 from rclpy.qos import ReliabilityPolicy
@@ -61,16 +62,19 @@ def run(node_class, args=None):
     rclpy.init(args=args)
     try:
         node = node_class()
+        executor = SingleThreadedExecutor()
+        executor.add_node(node)
         try:
             # spin_once with a timeout, so SIGINT/SIGTERM are noticed on an idle node.
             while rclpy.ok():
-                rclpy.spin_once(node, timeout_sec=0.2)
+                executor.spin_once(timeout_sec=0.2)
         except (KeyboardInterrupt, ExternalShutdownException):
             pass
         except RCLError:
             if rclpy.ok():
                 raise
         finally:
+            executor.shutdown(timeout_sec=0)
             node.destroy_node()
     finally:
         _try_shutdown()

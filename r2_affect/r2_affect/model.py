@@ -90,6 +90,7 @@ off past its time. A stimulus reports that in ``StimulusResult.lock_expired``;
 for ``set_mood`` the caller compares ``state.locked`` before and after.
 """
 
+import copy as _copy
 from dataclasses import dataclass
 import math
 from types import MappingProxyType
@@ -411,6 +412,58 @@ class AffectModel:
         if self._mood not in config.moods:
             self._mood = self._nearest()[0]
         self._pending = None
+
+    def copy(self):
+        """Return an independent copy of the model (the immutable config is shared)."""
+        other = _copy.copy(self)
+        other._x = dict(self._x)
+        other._last_accepted = dict(self._last_accepted)
+        return other
+
+    def restore(self, snapshot, now):
+        """
+        Set the state from ``snapshot`` as if the model had just ticked at ``now``.
+
+        ``snapshot`` has :class:`AffectState`'s fields (an ``AffectState``, or a
+        recorded ``MoodState`` mapped onto them): the four axes (clamped to
+        their ranges), ``mood`` (the nearest mood if the config lacks it),
+        ``idle_s``, ``locked``, ``lock_source``, ``lock_until`` (``None``: until
+        cleared) and ``focus_subject``/``focus_bearing``. A focus that differs
+        from the current one gets ``focus.default_ttl_s`` from ``now``, as its
+        ttl is not part of a state. A pending label change is dropped when the
+        label changes; refractory history is kept. This is for replaying a
+        recording (``replay.py``); the node only moves the model by its inputs.
+        """
+        now = _check_time(now)
+        for axis in AXES:
+            lo, hi = AXIS_RANGES[axis]
+            self._x[axis] = _clamp(float(getattr(snapshot, axis)), lo, hi)
+        mood = snapshot.mood if snapshot.mood in self._config.moods else self._nearest()[0]
+        if mood != self._mood:
+            self._mood = mood
+            self._pending = None
+        self._idle_s = max(0.0, float(snapshot.idle_s))
+        if snapshot.locked:
+            self._locked = True
+            self._lock_source = snapshot.lock_source or UNKNOWN_SOURCE
+            self._lock_until = (None if snapshot.lock_until is None
+                                else float(snapshot.lock_until))
+        else:
+            self._unlock()
+        subject = snapshot.focus_subject or ''
+        bearing = float(snapshot.focus_bearing)
+        if not math.isfinite(bearing):
+            bearing = math.nan
+        same = (subject == self._focus_subject and
+                (bearing == self._focus_bearing or
+                 (math.isnan(bearing) and math.isnan(self._focus_bearing))))
+        if not subject and math.isnan(bearing):
+            self._clear_focus()
+        elif not same or self._focus_until is None:
+            self._focus_subject = subject
+            self._focus_bearing = bearing
+            self._focus_until = now + self._config.focus.default_ttl_s
+        self._last_tick = now
 
     # --- internals -------------------------------------------------------------------------
 
