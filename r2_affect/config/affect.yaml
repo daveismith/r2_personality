@@ -1,0 +1,34 @@
+# affect.yaml: the whole configuration of R2's mood model (r2_affect).
+# Temperament, relaxation, mood prototypes and the impulse each stimulus kind gives.
+# Schema and defaults: r2_affect/README.md. Edit, then reload without a restart:
+#   ros2 service call /mood/reload_config std_srvs/srv/Trigger
+# Axes: arousal, valence in [-1, 1]; curiosity, confidence in [0, 1].
+
+temperament:      {arousal: 0.0, valence: 0.2, curiosity: 0.4, confidence: 0.6}
+relax_tau_s:      {arousal: 45, valence: 120, curiosity: 60, confidence: 300}
+distance_weights: {arousal: 1.0, valence: 1.0, curiosity: 1.0, confidence: 1.0}  # optional
+strength_radius:  0.5
+hysteresis:       {margin: 0.15, dwell_s: 1.5}
+focus:            {default_ttl_s: 5.0}
+idle:             {after_s: 30, ramp_s: 120}       # the `idle` impulse is a rate, per second
+impulses:
+  button_sequence: {arousal: +0.2, valence: +0.2, refractory_s: 1.0}
+  being_driven:    {arousal: +0.3, valence: +0.2, confidence: +0.1, refractory_s: 2.0}
+  stopped:         {arousal: -0.1}
+  dome_pushed:     {arousal: +0.4, valence: -0.2, confidence: -0.2, refractory_s: 2.0}
+  bump:            {arousal: +0.6, valence: -0.4, confidence: -0.3, refractory_s: 2.0}
+  loud_sound:      {arousal: +0.4, curiosity: +0.4}
+  face_known:      {arousal: +0.5, valence: +0.6, curiosity: +0.3, refractory_s: 20}
+  face_unknown:    {arousal: +0.3, curiosity: +0.6, confidence: -0.2}
+  touched:         {valence: +0.4, confidence: +0.1}
+  low_battery:     {arousal: -0.4, valence: -0.3}
+  idle:            {arousal: -0.02}
+moods:
+  calm:     {arousal: 0.0,  valence: 0.2}
+  curious:  {arousal: 0.3,  valence: 0.2, curiosity: 0.8}
+  excited:  {arousal: 0.8,  valence: 0.8}
+  playful:  {arousal: 0.5,  valence: 0.6, confidence: 0.8}
+  annoyed:  {arousal: 0.4,  valence: -0.6}
+  scared:   {arousal: 0.7,  valence: -0.6, confidence: 0.1}
+  sleepy:   {arousal: -0.8, valence: 0.0}
+  sulking:  {arousal: -0.3, valence: -0.5}
