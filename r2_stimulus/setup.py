@@ -43,6 +43,9 @@ setup(
     entry_points={
         'console_scripts': [
             'stimulate = r2_stimulus.stimulate:main',
+            'drive_stimulus = r2_stimulus.drive_stimulus:main',
+            'dome_stimulus = r2_stimulus.dome_stimulus:main',
+            'button_stimulus = r2_stimulus.button_stimulus:main',
         ],
     },
 )
