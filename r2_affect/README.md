@@ -5,7 +5,7 @@ four numbers around, the numbers relax back toward R2's temperament, and the nea
 handful of mood prototypes gives the label (`calm`, `curious`, `scared`, ...) that later
 layers read. Everything is configured from `config/affect.yaml`.
 
-This step (phase 0, step 2) delivers the pure-Python core:
+Phase 0, step 2 delivered the pure-Python core, step 3 the ROS node around it:
 
 | file | what |
 |---|---|
@@ -13,9 +13,81 @@ This step (phase 0, step 2) delivers the pure-Python core:
 | `r2_affect/config.py` | `load_config()`: reads and validates `affect.yaml` into frozen dataclasses; every rejection raises `AffectConfigError` naming the key. |
 | `config/affect.yaml` | the shipped configuration (plan §5.4). |
 
-The `r2_affect` node (`/stimuli` → `/mood/state`, `/mood/set`, `/mood/reload_config`),
-its launch file, the `mood` CLI, the bag replay tool and the Foxglove tuning layout arrive
-in later steps of the phase 0 plan (`docs/personality-phase0-plan.md` in `r2_dev`).
+The bag replay tool and the Foxglove tuning layout arrive in later steps of the phase 0
+plan (`docs/personality-phase0-plan.md` in `r2_dev`).
+
+## Running the node
+
+```bash
+ros2 launch r2_affect affect.launch.py                       # robot / real time
+ros2 launch r2_affect affect.launch.py use_sim_time:=true    # with the simulator
+ros2 launch r2_affect affect.launch.py config:=/path/to/affect.yaml rate_hz:=10.0
+# or without the launch file
+ros2 run r2_affect r2_affect --ros-args -p config:=/path/to/affect.yaml
+```
+
+| parameter | default | meaning |
+|---|---|---|
+| `config` | installed `share/r2_affect/config/affect.yaml` | the YAML to load, and to re-read on reload |
+| `rate_hz` | 10.0 | tick and `/mood/state` publish rate |
+| `min_confidence` | 0.0 | stimuli below this confidence are dropped |
+| `max_dt_s` | 0.5 | longest time step one tick takes (a longer gap is clamped and warned about once) |
+| `use_sim_time` | false | follow `/clock`; with the clock stopped the state does not change |
+
+| name | type | |
+|---|---|---|
+| `/stimuli` | `astromech_msgs/Stimulus` | subscribed, reliable, depth 50 |
+| `/mood/state` | `astromech_msgs/MoodState` | published every tick, reliable, depth 10 |
+| `/mood/set` | `astromech_msgs/SetMood` | service: force, lock, clear |
+| `/mood/reload_config` | `std_srvs/Trigger` | service: re-read the YAML |
+
+All time is the node clock; a stimulus's `header.stamp` is ignored. The node publishes
+nothing but `/mood/state` (and `/rosout`, `/parameter_events`). An invalid config at
+startup is logged and the node exits with status 1.
+
+Logs: one INFO line per applied stimulus (kind, source, intensity, the change per axis,
+the vector after), INFO on label changes (`mood: calm -> curious (d=0.21)`) and on lock
+set, cleared or expired, WARN once per unknown kind, once for the reserved `idle` kind
+and once for a clamped time step; low-confidence and refractory drops are DEBUG.
+
+## Setting the mood
+
+`SetMood` fields: `mood` (a label from `affect.yaml`, or empty), `lock`, `duration_s`
+(0: until cleared), `source` (who asks; the holder of a lock is recorded as `lock_source`).
+A force switches the label at once; a lock held by one source is refused for any other
+source, with the holder named in the reason; a clear works from any source.
+
+| | `mood` CLI | Foxglove Service Call panel, service `/mood/set` |
+|---|---|---|
+| force (dynamics resume) | `mood set sleepy` | `{"mood": "sleepy", "lock": false, "duration_s": 0, "source": "foxglove"}` |
+| force and lock | `mood set sleepy --lock` | `{"mood": "sleepy", "lock": true, "duration_s": 0, "source": "foxglove"}` |
+| lock in place | `mood lock` | `{"mood": "", "lock": true, "duration_s": 0, "source": "foxglove"}` |
+| timed lock | `mood set excited --lock --duration 30` or `mood lock --duration 30` | `{"mood": "excited", "lock": true, "duration_s": 30, "source": "foxglove"}` |
+| clear | `mood clear` | `{"mood": "", "lock": false, "duration_s": 0, "source": "foxglove"}` |
+| watch | `mood watch` | add `/mood/state` to a Raw Messages panel |
+
+Every CLI subcommand takes `--source NAME` (default `mood_cli`) and, like any node,
+`--ros-args -p use_sim_time:=true`. `set`, `lock` and `clear` print `accepted` or
+`refused: <reason>` and the resulting label, and exit 0 when accepted, 1 otherwise.
+`mood watch` prints one line per message: stamp, label (strength), the four axes,
+`locked(<source>)` or `unlocked`, `focus=<subject>@<bearing>` and `idle`.
+
+In Foxglove, a Raw Messages panel on `/mood/state` shows `locked` and `lock_source` (and
+`lock_until`, zero when the lock lasts until cleared). The response of a Service Call
+carries the same state in `result`. A timed lock needs no action to end: it expires on the
+first tick after its time and the node logs it.
+
+## Reloading the config
+
+Edit the YAML at the `config` parameter, then:
+
+```bash
+ros2 service call /mood/reload_config std_srvs/srv/Trigger
+```
+
+The file is read and validated first; only a valid file is swapped in, and the state
+(vector, label, lock, focus, idle time) is kept. A broken file answers
+`success: false` with the problem (the key and why) and the old config stays in use.
 
 ## The model
 

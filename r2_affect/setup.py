@@ -40,8 +40,11 @@ setup(
             'pytest',
         ],
     },
-    # The r2_affect node, mood CLI and replay tool arrive in later steps.
+    # The replay tool arrives in a later step.
     entry_points={
-        'console_scripts': [],
+        'console_scripts': [
+            'r2_affect = r2_affect.node:main',
+            'mood = r2_affect.mood_cli:main',
+        ],
     },
 )
