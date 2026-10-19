@@ -40,3 +40,12 @@ Tuning observations for step 6 item 4 (no values changed yet):
   entirely. Probably right for the camera, surprising from a button.
 - A bump at `calm` lands on `sulking` (from `sleepy`) or `annoyed`/`scared` (from `calm`),
   which reads well. Confidence clamps to 0 after two bumps.
+
+**Change made 2026-10-19 (first tuning change):** `idle.after_s` 30 → 180, `idle.ramp_s`
+120 → 300, rate unchanged. Simulated from `calm` with nothing happening, the label now flips
+to `sleepy` at about 6 min 35 s instead of 2 min 20 s, and arousal reaches −0.8 at about
+8 min 13 s (3 min 20 s before). Three minutes of unchanged calm covers the normal gaps
+between people at an event; a slower slide into sleep gives the phase 4 head droop something
+to follow. Candidates tried (after_s/ramp_s → sleepy at): 120/180 → 4:26, 240/240 → 7:00,
+300/300 → 8:35; a rate of −0.015 was rejected because its equilibrium (−0.675) sits too close
+to the flip point near −0.5.
