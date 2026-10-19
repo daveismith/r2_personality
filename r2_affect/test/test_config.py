@@ -38,7 +38,7 @@ SPEC_5_4 = {
     'strength_radius': 0.5,
     'hysteresis': {'margin': 0.15, 'dwell_s': 1.5},
     'focus': {'default_ttl_s': 5.0},
-    'idle': {'after_s': 30, 'ramp_s': 120},
+    'idle': {'after_s': 180, 'ramp_s': 300},
     'impulses': {
         'button_sequence': {'arousal': 0.2, 'valence': 0.2, 'refractory_s': 1.0},
         'being_driven': {'arousal': 0.3, 'valence': 0.2, 'confidence': 0.1,

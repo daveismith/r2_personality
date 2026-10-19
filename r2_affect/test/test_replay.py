@@ -426,7 +426,7 @@ def test_doubling_an_impulse_doubles_its_delta():
 
 def test_starting_from_the_temperament_does_not_reproduce_a_running_node():
     config = shipped()
-    recorded = fake_node(config, SCENARIO, -100.0, 30.0, 0.03)
+    recorded = fake_node(config, SCENARIO, -400.0, 30.0, 0.03)
     result = replay(config, list(SCENARIO), recorded, start='temperament')
     assert result.seed is None
     assert max_diff(recorded, result) > TOLERANCE
