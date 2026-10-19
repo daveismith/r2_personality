@@ -80,10 +80,12 @@ roughly 1-degree-quantised positions divided by the time spanned (at least `min_
 0.25 s); the 0 / 2 pi wrap is handled. Quantisation noise is at most about 0.05 rad/s over
 the full 0.4 s window and 0.07 rad/s at the 0.25 s minimum, against the 0.3 threshold.
 A push is reported about 0.6 s after it starts, not instantly.
-Why `commanded_eps` 0.02 is safe: the plugin's rad/s to percent mapping is linear
-(`velocityToPercentage` in `roamadome_control.cpp`) and rounds anything under about
-0.03 rad/s to 0 %, and the firmware's MinSpeed stops anything under about 1 rad/s anyway.
-Revisit if the mapping ever gains a minimum percent.
+Why `commanded_eps` 0.02 is safe: the dome plugin's rad/s to percent mapping
+(`velocity_map` in `ros2_roamadome`, parameters in `r2_bringup/urdf/ros2_control.xacro`) sends
+0 % for any command whose fitted percent falls below `min_percent` (20 and 22 on this robot,
+about 0.44 rad/s) because `velocity_map.below_minimum` is left at its default `zero`. A command
+under `commanded_eps` therefore never moves the dome. Revisit if `below_minimum` is ever set to
+`minimum`, which would make every non-zero command turn the dome at `min_percent`.
 
 Limitations: any dome motion without a command on `/dome_controller/commands` (bench sweeps
 with `dome_bench:=true`, firmware homing or autonomous moves) reads as `dome_pushed`. A
