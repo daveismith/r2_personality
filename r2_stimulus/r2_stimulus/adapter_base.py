@@ -31,8 +31,9 @@ from rclpy.node import Node
 from rclpy.qos import QoSProfile
 from rclpy.qos import ReliabilityPolicy
 
-# Best effort matches both reliable and best-effort publishers of the drive topics.
-SENSOR_QOS = QoSProfile(depth=10, reliability=ReliabilityPolicy.BEST_EFFORT)
+# Best effort matches both reliable and best-effort publishers of the drive topics. Depth 1:
+# the nodes are polled, so only the latest sample of a stream is wanted at each poll.
+SENSOR_QOS = QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT)
 EVENT_QOS = QoSProfile(depth=10, reliability=ReliabilityPolicy.RELIABLE)
 
 
@@ -41,8 +42,17 @@ class AdapterNode(Node):
 
     def __init__(self, name):
         super().__init__(name)
+        self.poll_period_s = 0.0
+        self.handled = 0     # callbacks run so far; the polled drain stops when it is unchanged
         self._pub = self.create_publisher(
             Stimulus, '/stimuli', QoSProfile(depth=50, reliability=ReliabilityPolicy.RELIABLE))
+
+    def create_subscription(self, msg_type, topic, callback, qos_profile, **kwargs):
+        """Create the subscription with a callback that counts its calls (see ``handled``)."""
+        def counted(msg):
+            self.handled += 1
+            callback(msg)
+        return super().create_subscription(msg_type, topic, counted, qos_profile, **kwargs)
 
     def declare_numbers(self, defaults, may_be_zero=()):
         """
@@ -65,6 +75,8 @@ class AdapterNode(Node):
                 raise ValueError('%s must be %s, got %r' % (
                     name, '>= 0' if low_ok else '> 0', value))
             values[name] = value
+        if 'poll_period_s' in values:
+            self.poll_period_s = values.pop('poll_period_s')
         # Registered after TimeSource's callback, so it runs first and a refused
         # use_sim_time never reaches TimeSource.
         self.add_on_set_parameters_callback(self._refuse_changes)
@@ -91,14 +103,32 @@ class AdapterNode(Node):
             kind, msg.intensity, ' subject=%s' % subject if subject else ''))
 
 
-# Only there so SIGINT/SIGTERM are noticed on an idle process: shutdown latency is this long.
+# Blocking mode (poll_period_s 0) only: how long an idle spin_once waits, for signal handling.
 SPIN_TIMEOUT_S = 0.5
+# Polled mode: at most this many callbacks are drained per poll.
+DRAIN_LIMIT = 32
 
 
-def _spin(executor):
+def _spin(executor, nodes):
+    """
+    Run the executor until shutdown, polled or blocking per the nodes' poll_period_s.
+
+    Polled: sleep ``poll_period_s``, then run ready callbacks with a zero timeout until a
+    call runs none (at most DRAIN_LIMIT). A message costs no wake-up of its own; with
+    depth-1 subscriptions only the newest sample of a stream is seen at each poll.
+    """
+    period = min(n.poll_period_s for n in nodes)
     try:
         while rclpy.ok():
-            executor.spin_once(timeout_sec=SPIN_TIMEOUT_S)
+            if period <= 0.0:
+                executor.spin_once(timeout_sec=SPIN_TIMEOUT_S)
+                continue
+            time.sleep(period)
+            for _ in range(DRAIN_LIMIT):
+                before = sum(n.handled for n in nodes)
+                executor.spin_once(timeout_sec=0.0)
+                if sum(n.handled for n in nodes) == before:
+                    break
     except (KeyboardInterrupt, ExternalShutdownException):
         pass
     except RCLError:
@@ -112,7 +142,7 @@ def run_nodes(node_classes, args=None, threaded=False):
 
     With ``threaded`` each node gets its own SingleThreadedExecutor in its own thread: a
     shared executor rebuilds a wait set of every node's entities on every wake-up, which
-    costs more than three processes (measured). Otherwise all nodes share the first one's.
+    costs more than three processes (measured). Otherwise all nodes share one executor.
     """
     rclpy.init(args=args)
     nodes = []
@@ -123,14 +153,16 @@ def run_nodes(node_classes, args=None, threaded=False):
         except ValueError as exc:
             rclpy.logging.get_logger(node_class.__name__).error('cannot start: %s' % exc)
             return 1
+        groups = [[n] for n in nodes] if threaded else [nodes]
         executors = []
-        for node in nodes:
-            if threaded or not executors:
-                executors.append(SingleThreadedExecutor())
-            executors[-1].add_node(node)
+        for group in groups:
+            executors.append(SingleThreadedExecutor())
+            for node in group:
+                executors[-1].add_node(node)
         try:
             if threaded:
-                threads = [threading.Thread(target=_spin, args=(e,)) for e in executors]
+                threads = [threading.Thread(target=_spin, args=(e, g))
+                           for e, g in zip(executors, groups)]
                 for t in threads:
                     t.start()
                 try:
@@ -141,7 +173,7 @@ def run_nodes(node_classes, args=None, threaded=False):
                 for t in threads:
                     t.join()
             else:
-                _spin(executors[0])
+                _spin(executors[0], nodes)
         finally:
             for e in executors:
                 e.shutdown(timeout_sec=0)

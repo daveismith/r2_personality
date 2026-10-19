@@ -33,8 +33,8 @@ class DriveStimulus(AdapterNode):
         params = self.declare_numbers({
             'moving_mps': 0.05, 'stop_after_s': 1.0, 'being_driven_period_s': 1.0,
             'max_speed_mps': 1.0, 'confirm_s': 0.25, 'wheel_separation': 0.572,
-            'odom_decimate': 5,
-        }, may_be_zero=('confirm_s',))
+            'odom_decimate': 1, 'poll_period_s': 0.1,
+        }, may_be_zero=('confirm_s', 'poll_period_s'))
         every = params.pop('odom_decimate')
         if every != int(every):
             raise ValueError('odom_decimate must be a whole number, got %r' % every)

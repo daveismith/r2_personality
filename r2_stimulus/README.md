@@ -108,17 +108,40 @@ Measured on the Pi 5 (27 min, `ps` lifetime average): `drive_stimulus` 3.8 %, `d
 3 %. The cost is mostly rclpy per message (28 Hz odometry, 10 Hz joint states, 20 Hz
 commands) and the deserialisation of `Odometry` with its two 36-double covariances. The fix:
 
-- `drive_stimulus` subscribes raw and deserialises one message in `odom_decimate` (default 5,
-  so about 5.6 Hz reach the detector; 1 = every message). The detector is unchanged.
+- `drive_stimulus` subscribes raw and deserialises one message in `odom_decimate` (default 1:
+  with polling the detector sees every polled sample, about 10 Hz). The detector is unchanged.
 - `stimulus_adapters` hosts the three nodes in one process (one executor and thread per node,
   so a wake-up only rebuilds that node's wait set). `adapters.launch.py` starts it by default;
   `separate:=true` starts `drive_stimulus`, `dome_stimulus` and `button_stimulus` as three
   processes, which are also fine to run on their own.
-- The executor wakes every 0.5 s (was 0.2 s) only to notice SIGINT/SIGTERM.
+- Polled spinning: each node sleeps `poll_period_s` (default 0.1 s, a parameter of every node;
+  0 = block in `spin_once` as before), then runs ready callbacks with a zero timeout until one
+  call runs none (at most 32 per poll). The odometry, joint-state and dome-command
+  subscriptions are best effort with depth 1, so only the newest sample of each stream is
+  processed per poll (the rest are dropped by the middleware, never deserialised). The button
+  subscription stays reliable with depth 10 and is drained fully: no sequence is lost (tested
+  with five sequences 10 ms apart). Stimuli are therefore up to one `poll_period_s` late, and
+  SIGINT/SIGTERM are noticed within one period. The dome detector copes with the 10 Hz stream
+  arriving on a 10 Hz poll with skipped samples (`test_detect.py`, source periods 0.095 to
+  0.105 s); its thresholds are unchanged.
+- In blocking mode the executor wakes every 0.5 s (was 0.2 s) only to notice signals.
 
-In the dev container (synthetic inputs at 28/10/20 Hz, steady state): old three processes 7.5-7.6 %
-of a core, new `stimulus_adapters` 5.9-6.0 % (ratio 0.79); `drive_stimulus` alone 4.3 % -> 3.3 %. The
-remaining cost is mostly rclpy's per-wake-up executor work, not deserialisation.
+In the dev container (synthetic inputs at 28 Hz Odometry, 10 Hz JointState, 20 Hz commands;
+steady state over 45 s from /proc ticks; two runs each):
+
+| setup | % of a core |
+|---|---|
+| old: three processes, blocking, no decimation | 6.9-7.6 |
+| `stimulus_adapters`, blocking, `odom_decimate` 5 | 5.6-5.8 |
+| `stimulus_adapters`, `poll_period_s` 0.1 | 3.6-3.9 |
+| `stimulus_adapters`, `poll_period_s` 0.05 | 5.7-5.9 |
+| `drive_stimulus` alone, `poll_period_s` 0.1 | 2.0-2.2 |
+| `drive_stimulus` alone, `poll_period_s` 0.05 | 2.9-3.1 |
+
+That is about 0.5 of the old total. A profile of the polled node shows about 2 s of Python in
+30 s, mostly start-up; what remains is largely the middleware receiving about 58 messages a
+second, which no Python change removes. `poll_period_s` trades latency against CPU roughly
+linearly.
 
 Re-measure on the robot with `ps -o pcpu,args -C python3` (or `top -H`) after 10 minutes of
 driving.

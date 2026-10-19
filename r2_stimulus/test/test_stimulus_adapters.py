@@ -24,6 +24,7 @@ import signal
 import subprocess
 import time
 
+from astromech_msgs.msg import DomeButtonSequence
 from astromech_msgs.msg import Stimulus
 from nav_msgs.msg import Odometry
 import pytest
@@ -65,15 +66,16 @@ def ros():
     got = []
     node.create_subscription(Stimulus, STIMULI, got.append, RELIABLE)
     pub = node.create_publisher(Odometry, ODOM, RELIABLE)
+    btn = node.create_publisher(DomeButtonSequence, P + '/buttons', RELIABLE)
     try:
         end = time.monotonic() + 20.0
         while time.monotonic() < end:
             rclpy.spin_once(node, timeout_sec=0.05)
-            if pub.get_subscription_count() >= 1:
+            if pub.get_subscription_count() >= 1 and btn.get_subscription_count() >= 1:
                 break
         else:
             pytest.fail('stimulus_adapters did not come up')
-        yield node, pub, got, proc
+        yield node, (pub, btn), got, proc
     finally:
         os.killpg(proc.pid, signal.SIGINT)
         try:
@@ -96,7 +98,7 @@ def test_three_nodes_in_one_process(ros):
 
 
 def test_drive_detection_through_raw_path(ros):
-    node, pub, got, _ = ros
+    node, (pub, _), got, _ = ros
     name = NAMES['drive_stimulus']
     got.clear()
     msg = Odometry()
@@ -112,3 +114,17 @@ def test_drive_detection_through_raw_path(ros):
     assert kinds.count('being_driven') >= 1, kinds
     assert kinds.count('stopped') == 1 and kinds[-1] == 'stopped', kinds
     assert all(m.source in NAMES.values() for m in got)
+
+
+def test_button_sequences_published_while_polling_are_not_lost(ros):
+    node, (_, btn), got, _ = ros
+    name = NAMES['button_stimulus']
+    got.clear()
+    for i in range(5):       # 10 ms apart: all five arrive inside one 100 ms poll period
+        btn.publish(DomeButtonSequence(value=i, taps='LR', id=i, source=1))
+        _spin(node, 0.01)
+    end = time.monotonic() + 5.0
+    while time.monotonic() < end and len([m for m in got if m.source == name]) < 5:
+        _spin(node, 0.05)
+    mine = [m for m in got if m.source == name]
+    assert len(mine) == 5, len(mine)

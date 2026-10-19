@@ -29,11 +29,12 @@ class DomeStimulus(AdapterNode):
 
     def __init__(self):
         super().__init__('dome_stimulus')
-        self._detector = DomePushDetector(**self.declare_numbers({
+        params = self.declare_numbers({
             'pushed_omega': 0.3, 'commanded_eps': 0.02, 'pushed_after_s': 0.3,
             'max_omega': 6.65, 'command_timeout_s': 0.5, 'pushed_period_s': 1.0,
-            'settle_s': 1.5, 'window_s': 0.4, 'min_span_s': 0.25,
-        }, may_be_zero=('pushed_after_s', 'settle_s')))
+            'settle_s': 1.5, 'window_s': 0.4, 'min_span_s': 0.25, 'poll_period_s': 0.1,
+        }, may_be_zero=('pushed_after_s', 'settle_s', 'poll_period_s'))
+        self._detector = DomePushDetector(**params)
         self.create_subscription(
             JointState, '/dome_state_broadcaster/joint_states', self._on_state, SENSOR_QOS)
         self.create_subscription(

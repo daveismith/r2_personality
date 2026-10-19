@@ -310,3 +310,50 @@ def test_decimator_one_passes_all_and_rejects_zero():
     assert all(d.take() for _ in range(10))
     with pytest.raises(ValueError):
         Decimator(0)
+
+
+def _polled(det, t_from, t_to, omega, pos0, source_period=0.1, poll=0.1, phase=0.037):
+    """
+    Feed samples the way a polled depth-1 subscription sees a source_period stream.
+
+    Each poll delivers only the newest sample sent since the previous one, stamped with the
+    poll time; with a source period slightly off the poll period, samples are skipped
+    now and then and others arrive up to one poll late.
+    """
+    out = []
+    last = -1
+    for k in range(int(round(t_from / poll)), int(round(t_to / poll)) + 1):
+        now = k * poll
+        n = int(math.floor((now - phase) / source_period))
+        if n < 0 or n == last:
+            continue
+        last = n
+        t_sample = n * source_period + phase
+        pos = _quantise(pos0 + omega * t_sample) % (2 * math.pi)
+        out += [(now, e) for e in det.position(pos, now)]
+    return out
+
+
+def test_polled_stream_with_skipped_samples_still_detects_a_push():
+    for period in (0.1, 0.099, 0.101, 0.095, 0.105):
+        det = DomePushDetector(max_omega=6.65)
+        assert _polled(det, 0.0, 2.0, 0.0, 0.0, period) == []
+        out = _polled(det, 2.0, 6.0, 0.5, -1.0, period)
+        assert out, 'push not detected at source period %s' % period
+        assert out[0][1][0] == 'dome_pushed'
+        assert abs(out[0][1][1] - 0.5 / 6.65) < 0.03, (period, out[0])
+
+
+def test_polled_stream_idle_and_commanded_emit_nothing():
+    for period in (0.1, 0.099, 0.101, 0.095, 0.105):
+        det = DomePushDetector(max_omega=6.65)
+        assert _polled(det, 0.0, 10.0, 0.0, 1.0, period) == []
+        det = DomePushDetector(max_omega=6.65)
+        for n in range(0, 100):
+            det.command(0.5, n * 0.1)
+        # commanded 0.5 rad/s while moving at 0.5: not a push even with skipped samples
+        out = []
+        for k in range(0, 60):
+            det.command(0.5, k * 0.1)
+            out += _polled(det, k * 0.1, k * 0.1, 0.5, 0.0, period)
+        assert out == []

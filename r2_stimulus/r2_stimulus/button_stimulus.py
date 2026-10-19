@@ -26,6 +26,7 @@ class ButtonStimulus(AdapterNode):
 
     def __init__(self):
         super().__init__('button_stimulus')
+        self.declare_numbers({'poll_period_s': 0.1}, may_be_zero=('poll_period_s',))
         self.create_subscription(
             DomeButtonSequence, '/dome/buttons/sequence', self._on_sequence, EVENT_QOS)
 
