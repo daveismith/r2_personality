@@ -34,8 +34,9 @@ Notes:
 
 ## Adapters
 
-Three nodes turn existing signals into stimuli. Started together by
-`ros2 launch r2_stimulus adapters.launch.py [use_sim_time:=true] [config:=PATH]` (or by
+Three nodes turn existing signals into stimuli. Started together, in one process
+(`stimulus_adapters`, the three nodes keep their names), by
+`ros2 launch r2_stimulus adapters.launch.py [use_sim_time:=true] [config:=PATH] [separate:=true]` (or by
 `r2_bringup`'s `personality.launch.py`, which passes `use_sim_time` and its
 `stimulus_config` as `config`). Thresholds are ROS
 parameters in `config/stimulus.yaml`, one section per node; the pure logic is in
@@ -99,6 +100,28 @@ refused ("read at startup; restart the node").
 `button_stimulus`: one `button_sequence` per message, `subject` = `taps`, intensity
 `min(1, len(taps)/6)`, `extra` = `{"value":..,"id":..,"source":..}`. The subscription is
 reliable, depth 10.
+
+### CPU
+
+Measured on the Pi 5 (27 min, `ps` lifetime average): `drive_stimulus` 3.8 %, `dome_stimulus`
+1.3 %, `button_stimulus` 0.3 %, plus `r2_affect` 1.4 %: 6.8 % of a core against a target of
+3 %. The cost is mostly rclpy per message (28 Hz odometry, 10 Hz joint states, 20 Hz
+commands) and the deserialisation of `Odometry` with its two 36-double covariances. The fix:
+
+- `drive_stimulus` subscribes raw and deserialises one message in `odom_decimate` (default 5,
+  so about 5.6 Hz reach the detector; 1 = every message). The detector is unchanged.
+- `stimulus_adapters` hosts the three nodes in one process (one executor and thread per node,
+  so a wake-up only rebuilds that node's wait set). `adapters.launch.py` starts it by default;
+  `separate:=true` starts `drive_stimulus`, `dome_stimulus` and `button_stimulus` as three
+  processes, which are also fine to run on their own.
+- The executor wakes every 0.5 s (was 0.2 s) only to notice SIGINT/SIGTERM.
+
+In the dev container (synthetic inputs at 28/10/20 Hz, steady state): old three processes 7.5-7.6 %
+of a core, new `stimulus_adapters` 5.9-6.0 % (ratio 0.79); `drive_stimulus` alone 4.3 % -> 3.3 %. The
+remaining cost is mostly rclpy's per-wake-up executor work, not deserialisation.
+
+Re-measure on the robot with `ps -o pcpu,args -C python3` (or `top -H`) after 10 minutes of
+driving.
 
 ### Testing
 

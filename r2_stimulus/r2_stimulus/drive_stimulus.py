@@ -20,7 +20,9 @@ from nav_msgs.msg import Odometry
 from r2_stimulus.adapter_base import AdapterNode
 from r2_stimulus.adapter_base import main_for
 from r2_stimulus.adapter_base import SENSOR_QOS
+from r2_stimulus.detect import Decimator
 from r2_stimulus.detect import DriveDetector
+from rclpy.serialization import deserialize_message
 
 
 class DriveStimulus(AdapterNode):
@@ -31,10 +33,21 @@ class DriveStimulus(AdapterNode):
         params = self.declare_numbers({
             'moving_mps': 0.05, 'stop_after_s': 1.0, 'being_driven_period_s': 1.0,
             'max_speed_mps': 1.0, 'confirm_s': 0.25, 'wheel_separation': 0.572,
+            'odom_decimate': 5,
         }, may_be_zero=('confirm_s',))
+        every = params.pop('odom_decimate')
+        if every != int(every):
+            raise ValueError('odom_decimate must be a whole number, got %r' % every)
+        self._decimator = Decimator(int(every))
         self._half_track = params.pop('wheel_separation') / 2.0
         self._detector = DriveDetector(**params)
-        self.create_subscription(Odometry, '/diff_cont/odom', self._on_odom, SENSOR_QOS)
+        # Raw: the serialized bytes, deserialised only for every odom_decimate-th message.
+        self.create_subscription(
+            Odometry, '/diff_cont/odom', self._on_raw_odom, SENSOR_QOS, raw=True)
+
+    def _on_raw_odom(self, data):
+        if self._decimator.take():
+            self._on_odom(deserialize_message(data, Odometry))
 
     def _on_odom(self, msg):
         twist = msg.twist.twist

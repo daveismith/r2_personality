@@ -117,7 +117,7 @@ def test_drive_adapter(ros):
     got.clear()
     msg = Odometry()
     msg.twist.twist.linear.x = 0.5
-    end = time.monotonic() + 1.5
+    end = time.monotonic() + 2.0   # odom is decimated 1 in 5
     while time.monotonic() < end:
         msg.header.stamp = node.get_clock().now().to_msg()
         pubs['odom'].publish(msg)

@@ -9,6 +9,7 @@ drive_stimulus:
     # real top speed (1.0 is a placeholder), or intensity saturates or stays too low.
     max_speed_mps: 1.0
     confirm_s: 0.25               # first being_driven only after this much continuous motion
+    odom_decimate: 5              # deserialise 1 odom message in N (28 Hz -> ~5.6 Hz); 1 = all
     wheel_separation: 0.572       # m (my_controllers.yaml); a spin in place counts as |wz|*this/2
 
 dome_stimulus:

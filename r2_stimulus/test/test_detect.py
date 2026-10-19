@@ -15,7 +15,9 @@
 import json
 import math
 
+import pytest
 from r2_stimulus.detect import button_stimulus
+from r2_stimulus.detect import Decimator
 from r2_stimulus.detect import DomePushDetector
 from r2_stimulus.detect import DriveDetector
 from r2_stimulus.detect import wrap_pi
@@ -295,3 +297,16 @@ def test_button_mapping():
     assert abs(intensity - 0.5) < 1e-9
     assert json.loads(extra) == {'value': 4, 'id': 1, 'source': 1}
     assert button_stimulus('LLRLRLRL', 0, 2, 0)[2] == 1.0
+
+
+def test_decimator_passes_first_then_every_nth():
+    d = Decimator(5)
+    passed = [i for i in range(23) if d.take()]
+    assert passed == [0, 5, 10, 15, 20]
+
+
+def test_decimator_one_passes_all_and_rejects_zero():
+    d = Decimator(1)
+    assert all(d.take() for _ in range(10))
+    with pytest.raises(ValueError):
+        Decimator(0)

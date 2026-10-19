@@ -16,6 +16,8 @@
 
 import math
 import sys
+import threading
+import time
 
 from astromech_msgs.msg import Stimulus
 from r2_stimulus.stimulate import _try_shutdown
@@ -89,32 +91,70 @@ class AdapterNode(Node):
             kind, msg.intensity, ' subject=%s' % subject if subject else ''))
 
 
-def run(node_class, args=None):
-    """Spin node_class until SIGINT/SIGTERM; return the exit code."""
+# Only there so SIGINT/SIGTERM are noticed on an idle process: shutdown latency is this long.
+SPIN_TIMEOUT_S = 0.5
+
+
+def _spin(executor):
+    try:
+        while rclpy.ok():
+            executor.spin_once(timeout_sec=SPIN_TIMEOUT_S)
+    except (KeyboardInterrupt, ExternalShutdownException):
+        pass
+    except RCLError:
+        if rclpy.ok():
+            raise
+
+
+def run_nodes(node_classes, args=None, threaded=False):
+    """
+    Spin one node per class until SIGINT/SIGTERM; return the exit code.
+
+    With ``threaded`` each node gets its own SingleThreadedExecutor in its own thread: a
+    shared executor rebuilds a wait set of every node's entities on every wake-up, which
+    costs more than three processes (measured). Otherwise all nodes share the first one's.
+    """
     rclpy.init(args=args)
+    nodes = []
     try:
         try:
-            node = node_class()
+            for node_class in node_classes:
+                nodes.append(node_class())
         except ValueError as exc:
             rclpy.logging.get_logger(node_class.__name__).error('cannot start: %s' % exc)
             return 1
-        executor = SingleThreadedExecutor()
-        executor.add_node(node)
+        executors = []
+        for node in nodes:
+            if threaded or not executors:
+                executors.append(SingleThreadedExecutor())
+            executors[-1].add_node(node)
         try:
-            # spin_once with a timeout, so SIGINT/SIGTERM are noticed on an idle node.
-            while rclpy.ok():
-                executor.spin_once(timeout_sec=0.2)
-        except (KeyboardInterrupt, ExternalShutdownException):
-            pass
-        except RCLError:
-            if rclpy.ok():
-                raise
+            if threaded:
+                threads = [threading.Thread(target=_spin, args=(e,)) for e in executors]
+                for t in threads:
+                    t.start()
+                try:
+                    while rclpy.ok():
+                        time.sleep(SPIN_TIMEOUT_S)
+                except KeyboardInterrupt:
+                    pass
+                for t in threads:
+                    t.join()
+            else:
+                _spin(executors[0])
         finally:
-            executor.shutdown(timeout_sec=0)
-            node.destroy_node()
+            for e in executors:
+                e.shutdown(timeout_sec=0)
     finally:
+        for node in nodes:
+            node.destroy_node()
         _try_shutdown()
     return 0
+
+
+def run(node_class, args=None):
+    """Spin node_class until SIGINT/SIGTERM; return the exit code."""
+    return run_nodes([node_class], args)
 
 
 def main_for(node_class):

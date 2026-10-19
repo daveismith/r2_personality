@@ -234,3 +234,19 @@ def button_stimulus(taps, value, seq_id, source):
     extra = json.dumps({'value': int(value), 'id': int(seq_id), 'source': int(source)},
                        separators=(',', ':'))
     return ('button_sequence', taps, min(1.0, len(taps) / 6.0), extra)
+
+
+class Decimator:
+    """Pass the first sample and then every ``every``-th one (1 passes all)."""
+
+    def __init__(self, every):
+        if every < 1:
+            raise ValueError('every must be >= 1, got %r' % every)
+        self._every = every
+        self._count = 0
+
+    def take(self):
+        """Count one sample; return True if it is to be processed."""
+        take = self._count == 0
+        self._count = (self._count + 1) % self._every
+        return take

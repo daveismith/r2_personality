@@ -46,6 +46,7 @@ setup(
             'drive_stimulus = r2_stimulus.drive_stimulus:main',
             'dome_stimulus = r2_stimulus.dome_stimulus:main',
             'button_stimulus = r2_stimulus.button_stimulus:main',
+            'stimulus_adapters = r2_stimulus.stimulus_adapters:main',
         ],
     },
 )
