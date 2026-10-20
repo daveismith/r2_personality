@@ -47,7 +47,7 @@ def harness():
     h.claim_service_magic = '/test_express_%s/claim_magic' % tag
     h.console_topic = '/test_express_%s/mock/console' % tag
     h.calls, h.magic_calls, h.intents, h.consoles = [], [], [], []
-    h.accept = True
+    h.accept, h.reason = True, 'held by someone'
     qos = QoSProfile(depth=10, reliability=ReliabilityPolicy.RELIABLE)
     node.create_subscription(ExpressionIntent, h.intent_topic, h.intents.append, qos)
     node.create_subscription(String, h.console_topic, h.consoles.append, qos)
@@ -56,7 +56,7 @@ def harness():
     def claim(request, response, calls=h.calls):
         calls.append(request)
         response.accepted = h.accept
-        response.reason = '' if h.accept else 'held by someone'
+        response.reason = '' if h.accept else h.reason
         response.status.channel = request.channel
         response.status.state = ChannelStatus.STATE_CLAIMED
         return response
@@ -121,6 +121,16 @@ def test_claim_accepted_and_refused_exit_codes(harness):
     assert harness.calls[-1].lease_s == 0.0
 
 
+def test_release_by_a_non_holder_exits_1_and_prints_the_real_holder(harness):
+    harness.accept, harness.reason = False, "no claim by 'express' on fld"
+    code, out, _ = run(harness, 'release', 'fld')
+    assert code == 1
+    line = [ln for ln in out.splitlines() if ln.startswith('refused')]
+    assert line and "no claim by 'express' on fld" in line[0]
+    assert line[0].split(': ', 2)[2].startswith('fld')       # then the status line
+    assert harness.calls[-1].owner == 'express' and harness.calls[-1].lease_s == 0.0
+
+
 def test_magic_claim_and_release_use_the_magic_service(harness):
     code, out, _ = run(harness, 'claim', 'magic', '--owner', 'me')
     assert code == 0 and accepted(out)
@@ -149,6 +159,13 @@ def test_dome_publishes_a_console_line_on_a_private_device(harness):
     code, _, _ = run(harness, 'dome', 'leds run fld fire', '--device', device)
     assert code == 0
     assert [m.data for m in harness.consoles] == ['leds run fld fire']
+
+
+def test_a_sequence_goes_out_with_end_blank_by_default(harness):
+    code, _, _ = run(harness, 'sequence', 'magic', '44', '--duration', '3')
+    assert code == 0
+    (m,) = harness.intents
+    assert json.loads(m.params) == {'id': 44, 'repeat': 1, 'end': 'blank'}
 
 
 def test_no_listener_exits_1(harness):

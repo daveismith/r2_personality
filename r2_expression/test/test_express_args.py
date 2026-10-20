@@ -73,13 +73,22 @@ def test_params_per_action():
         {'lines': ['hi', 'there'], 'motion': 'loop', 'on_black': True}
     assert params('configure', 'rld', '--drift', 'lively', '--brightness', '40') == \
         {'drift': 'lively', 'brightness': 40}
-    assert params('sequence', 'magic', '44', '--end', 'blank') == \
-        {'id': 44, 'repeat': 1, 'end': 'blank'}
+    assert params('sequence', 'magic', '44', '--end', 'leave') == \
+        {'id': 44, 'repeat': 1, 'end': 'leave'}
     assert params('sequence', 'magic', 'sparkle', '--repeat', '3') == \
-        {'name': 'sparkle', 'repeat': 3}
+        {'name': 'sparkle', 'repeat': 3, 'end': 'blank'}
     assert params('stop', 'fld') == {}
     assert intent('stop', 'fld')['params'] == ''
     assert params('stop', 'magic', '--mode', 'freeze') == {'mode': 'freeze'}
+
+
+def test_a_sequence_ends_blank_after_one_run_by_default():
+    assert params('sequence', 'magic', '44') == {'id': 44, 'repeat': 1, 'end': 'blank'}
+
+
+def test_dome_targets_the_sim_mock_by_default_never_the_real_dome():
+    ns = parse_args(['dome', 'leds run rld rainbow'])
+    assert ns.device == '/dome_mock'
 
 
 def test_magic_configure_is_the_brightness_action():
@@ -128,6 +137,7 @@ def test_drift_is_accepted_on_the_logic_displays():
     ['text', 'rld', 'a', 'b'],
     ['clip', 'tfld', 'wave'],
     ['text', 'fld', 'x' * 64],
+    ['text', 'fld', '\u00e9' * 40],          # 80 bytes in UTF-8, the device's strlen
     ['text', 'psi', 'hi'],
     ['sequence', 'fld', '44'],
     ['sequence', 'magic', '256'],

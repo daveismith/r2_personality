@@ -153,7 +153,7 @@ CALL_MAGIC_STOP = 'magic_stop'              # StopMagicSequence
 CALL_MAGIC_BRIGHTNESS = 'magic_brightness'  # ConfigureMagicPanel (takes no priority)
 CALLS = (CALL_RUN, CALL_SAY, CALL_STOP, CALL_CONFIGURE, CALL_START, CALL_MAGIC_STOP,
          CALL_MAGIC_BRIGHTNESS)
-_RUN_CALLS = (CALL_RUN, CALL_SAY, CALL_START)
+RUN_CALLS = (CALL_RUN, CALL_SAY, CALL_START)
 
 LED_ACTIONS = ('effect', 'clip', 'text', 'configure', 'stop')
 MAGIC_ACTIONS = ('sequence', 'brightness', 'stop')
@@ -397,8 +397,10 @@ def _params(raw):
     if isinstance(raw, str):
         try:
             value = json.loads(raw)
-        except ValueError as exc:
-            raise _Refuse('params: not JSON: %s' % exc) from exc
+        except (ValueError, RecursionError, MemoryError, TypeError) as exc:
+            # RecursionError: deeply nested text
+            raise _Refuse('params: not JSON: %s' % (
+                exc if isinstance(exc, ValueError) else type(exc).__name__)) from exc
         if isinstance(value, dict):
             return value
     raise _Refuse('params: must be a JSON object')
@@ -605,6 +607,7 @@ class Arbiter:
                 if elsewhere:
                     return refuse('%r holds %s, not %s: release that channel'
                                   % (owner, elsewhere[0], channel))
+                return refuse('no claim by %r on %s' % (owner, channel))
             cs.claims.pop(owner, None)
             actions = self._settle(now)
             return ClaimResult(True, '', self.status(channel, now), tuple(actions))
@@ -715,7 +718,7 @@ class Arbiter:
         run = cs.run if cs.run is not None and cs.run.intent_id == action.intent_id else None
         what = '%s: %s on %s' % (action.channel, action.call, action.target)
         if accepted:
-            if run is not None and action.call in _RUN_CALLS:
+            if run is not None and action.call in RUN_CALLS:
                 run.confirmed_at = now
                 run.displaced = []
             elif run is not None and run.stopping and action.call in (CALL_STOP,
@@ -724,7 +727,7 @@ class Arbiter:
                 if not run.surfaces:
                     self._end_run(cs, now)
             return '%s: %s' % (what, reason) if reason else ''
-        if run is not None and action.call in _RUN_CALLS:
+        if run is not None and action.call in RUN_CALLS:
             run.surfaces.discard(action.target)
             if not run.surfaces:
                 self._end_run(cs, now)
@@ -1150,7 +1153,11 @@ class Arbiter:
             if not 0 <= ref <= 255:
                 raise _Refuse('out of range')
             repeat = _int_param(params, 'repeat', 1, 0, 255)
-            end = params.get('end', 0)
+            if f.source in CAPPED_SOURCES and (
+                    repeat == 0 or (self._catalogue is not None and
+                                    ref in self._catalogue.unbounded)):
+                raise _Refuse('unbounded sequence')
+            end = params.get('end', END_VALUES['blank'])    # a run never leaves the panel lit
             end = END_VALUES.get(end, end) if isinstance(end, str) else end
             if end not in (0, 1) or isinstance(end, bool):
                 raise _Refuse('out of range')

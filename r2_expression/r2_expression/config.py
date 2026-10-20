@@ -45,9 +45,10 @@ non-empty list of ``picks``. A pick names a ``channel`` (one of
 :data:`PICK_CHANNELS`) and exactly one of ``effect`` or ``clip`` (LED
 channels; no clips on ``tfld``/``bfld``) or ``sequence`` (``magic``: an id
 0-255 or a catalogue name), with optional ``weight`` (> 0, default 1),
-``rgb`` (0-0xFFFFFF) and ``speed`` (1-9) for the LEDs, ``repeat`` (0-255) and
-``end`` (``leave`` or ``blank``) for the panel, and ``duration_ms`` (>= 1;
-values above ``defaults.max_duration_ms`` are capped to it; absent: the cap).
+``rgb`` (0-0xFFFFFF) and ``speed`` (1-9) for the LEDs, ``repeat`` (1-255: 0 would
+run until stopped) and ``end`` (``leave`` or ``blank``, default ``blank``) for the panel,
+and ``duration_ms`` (>= 1; values above ``defaults.max_duration_ms`` are capped to it;
+absent: the cap).
 A pick never carries ``duration_ms`` 0 (rule 3: the personality never sends
 0). Effect, clip and sequence names are checked against the device's
 catalogue at runtime, not here (:func:`r2_expression.palette.validate_picks`).
@@ -478,7 +479,7 @@ def _pick(value, path, defaults):
     if 'speed' in mapping:
         fields['speed'] = _integer(mapping['speed'], '%s.speed' % path, 1, 9)
     if 'repeat' in mapping:
-        fields['repeat'] = _integer(mapping['repeat'], '%s.repeat' % path, 0, 255)
+        fields['repeat'] = _integer(mapping['repeat'], '%s.repeat' % path, 1, 255)
     if 'end' in mapping:
         end = mapping['end']
         if end not in END_MODES:

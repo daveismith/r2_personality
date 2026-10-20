@@ -37,7 +37,7 @@ from r2_expression.core import CALL_SAY
 from r2_expression.core import CALL_STOP
 from r2_expression.render_common import build
 from r2_expression.render_common import check_attribution
-from r2_expression.render_common import MAX_LINE_CHARS
+from r2_expression.render_common import MAX_LINE_BYTES
 from r2_expression.render_common import MAX_NAME_BYTES
 from r2_expression.render_common import REFUSE_NAME
 from r2_expression.render_common import REFUSE_TEXT
@@ -84,5 +84,5 @@ def _check_text(fields):
         raise RenderRefusal(NO_TEXT)
     if len(lines) > (2 if surface == 'fld' else 1):
         raise RenderRefusal(TOO_MANY_LINES)
-    if any(len(line) > MAX_LINE_CHARS for line in lines):
+    if any(too_long(line, MAX_LINE_BYTES) for line in lines):
         raise RenderRefusal(REFUSE_TEXT)

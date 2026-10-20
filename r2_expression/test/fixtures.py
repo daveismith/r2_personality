@@ -67,8 +67,10 @@ LED_CAT = LedCatalogue(
     effects=frozenset({'rainbow', 'fire', 'lightsout', 'wipe', 'cycle', 'roam'}),
     clips={name: frozenset({'fld', 'psi', 'rld'})
            for name in ('pulse', 'flash', 'hscan', 'alarm')})
-MAGIC_CAT = MagicCatalogue(sequences={0: 'All off', 23: 'Eye scan', 27: 'Flash halves',
-                                      44: 'Smile', 56: 'Random show'})
+MAGIC_CAT = MagicCatalogue(
+    sequences={0: 'All off', 23: 'Eye scan', 27: 'Flash halves', 44: 'Smile',
+               56: 'Random show'},
+    unbounded=frozenset({56}))
 
 
 def base_data(**changes):

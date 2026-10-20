@@ -36,7 +36,8 @@ overlapping channels, because the device replaces any run sharing a display.
    above its slot, priority 0, an unknown source or action: dropped and counted.
 3. **Claims** (`/expression/claim/led`, `/expression/claim/magic`): accepted unless another owner holds the channel, or
    an overlapping one, at an equal or higher priority (the refusal names the holder). The
-   same owner renews; `lease_s` 0 releases (on the channel the claim is on; any priority);
+   same owner renews; `lease_s` 0 releases (on the channel the claim is on; any priority; an
+   owner with no claim there is refused `no claim by '<owner>' on <channel>`);
    leases are capped at `max_lease_s`. Claims
    layer: a lower claim holds again when a higher one goes. Owner `manual` is reserved for
    the auto-claim of rule 4. An accepted claim stops our
@@ -79,7 +80,16 @@ overlapping channels, because the device replaces any run sharing a display.
     the two together keep the mood's rate and weights.
 11. **Own runs survive a restart.** A run the state topic shows with `source: ros, owner:
     r2_expression` on the first message is adopted with `max_duration_ms` from then, and
-    stopped then if still running.
+    stopped then if still running. The device cannot tell an operator's unbounded manual run
+    (`express ... --duration 0`, sent through the arbiter, so `owner r2_expression`) from the
+    arbiter's own: after an arbiter restart it is adopted too, becomes an idle-priority run and
+    is stopped at `max_duration_ms`.
+12. **A sequence ends blank, and nothing unbounded is personality.** A Magic Panel sequence the
+    arbiter starts carries `end: blank` unless the intent says `end: leave` (a flourish is
+    never left lit). An `idle` or `behavior` intent with `repeat` 0, or naming a sequence the
+    catalogue flags as looping (`FLAG_LOOPS`: the random shows), is dropped as `unbounded
+    sequence`; a `manual` one is allowed, and stopped at its duration if it has one. A pick in
+    `expression.yaml` may not say `repeat: 0`.
 
 Status precedence: `OFFLINE`, `DARK`, `FOREIGN`, `RUNNING`, `CLAIMED`, `STALE`, `IDLE`.
 
@@ -182,12 +192,18 @@ With a real dome on the graph, test against a mock under another name (`ros2 lau
 dome_mock.launch.py node_name:=dome_mock`) and pass that name as `device`; remap the
 `/expression/*` and `/mood/state` names too if a live stack is running.
 
+**One arbiter pair per graph.** At startup an arbiter looks for another node of its own name
+(`/led_arbiter`, `/magic_arbiter`) and, if there is one, logs an ERROR naming it and exits 1:
+two pairs would fight over one device with the same owner (a Mac container beside the robot).
+`-p allow_duplicate:=true` skips the check (the tests start two on purpose).
+
 Parameters, all read at startup (a later `ros2 param set` is refused, as in `r2_affect`):
 
 | parameter | default | |
 |---|---|---|
 | `config` | the installed `expression.yaml` | settings and palettes |
 | `device` | `/r2_dome` | the dome device node; services are `<device>/leds/...` or `<device>/magic/...` |
+| `allow_duplicate` | false | start although another node of this name is on the graph |
 | `use_sim_time` | false | node clock follows `/clock`; the 10 Hz tick runs on the steady clock |
 
 | | `led_arbiter` | `magic_arbiter` |
@@ -237,10 +253,14 @@ hold, not a refusal) is sent again after `device_stale_s`. The device queue is b
 action that waited longer than `device_stale_s` when the worker reaches it (the device was
 stalled or slow) is dropped, reported to the core as refused `stale` and logged as
 one WARN per burst plus one INFO with the count; `manual` and `safety` actions (priority above
-100) and stops are always sent. The executor thread (subscriptions, the claim service,
+100) and stops are always sent. A run, say or start also replaces one still queued for the same
+channel and surface (reported as refused `superseded`, quiet): a device that wedges and
+recovers replays at most one run per target. Stops and configures are never replaced. An
+exception in a callback (intent, mood, state, claim, tick) or in the worker is logged once a
+minute per callback and the node carries on. The executor thread (subscriptions, the claim service,
 the tick) never waits on the device; the core is guarded by one lock. Before a request is sent
-the renderer checks what it can: text on a PSI, more than two lines, a line of 64 characters
-or more, a name over 63 bytes (`name too long`: the device never answers it), an owner over 31
+the renderer checks what it can: text on a PSI, more than two lines, a line of 64 bytes (UTF-8, as the
+device's `strlen` counts) or more, a name over 63 bytes (`name too long`: the device never answers it), an owner over 31
 bytes; a refusal is local, logged, and reported to the core as the device's refusal would be.
 
 ### Logging
@@ -293,7 +313,7 @@ Two ways, same messages: the `express` CLI and the Foxglove tab
 | stop | `express stop fld` | Publish "stop fld" |
 | hold a channel | `express claim fld --owner me --lease 30` / `express release fld` (`magic` for the panel) | Call Service `/expression/claim/led` and `/expression/claim/magic` (a claim and a release panel each) |
 | why is it quiet | `express status [--watch]` | State Transitions on `/expression/status{channel=="fld"}.state` |
-| see the lights (sim) | `express dome "leds run fld fire"` | Raw Messages `/r2_dome/mock/picture`, Image `/r2_dome/mock/image` |
+| see the lights (sim) | `express dome "leds run fld fire"` | Raw Messages `/dome_mock/mock/picture`, Image `/dome_mock/mock/image` |
 
 `configure --drift` works on `fld`, `tfld`, `bfld` and `rld` (the PSIs have no drift).
 Also `clip`, `text "line1" "line2" [--motion loop] [--on-black]`, `configure --brightness N`
@@ -302,7 +322,9 @@ Exit codes: 0 done (claim accepted, intent sent to a subscriber), 1 refused or n
 answering, 2 bad arguments. An intent is fire-and-forget: one an arbiter drops (a higher
 priority holds the channel) shows only as `dropped` in `express status`. `claim` and
 `release` call `/expression/claim/led` for `fld`, `tfld`, `bfld`, `rld` and `psi`, and
-`/expression/claim/magic` for `magic`; `--claim-service NAME` overrides the choice.
+`/expression/claim/magic` for `magic`; `--claim-service NAME` overrides the choice. A `release`
+by an owner that holds nothing on the channel exits 1 and prints the refusal with the status
+line, which shows the real holder. `sequence` defaults to `--repeat 1 --end blank`.
 
 **199 and `--override`.** Every intent goes out as `source: manual` at priority 199, which
 yields to a person at the dome (their hold on the device is 200 or the device's own).
@@ -311,7 +333,8 @@ send 199 and have no override. `--source idle|behavior` (10 / 100, or `--priorit
 testing the arbiter's ladder only.
 
 **The dome's own console is not routed.** `express dome` and the mock's console topic exist
-only in the sim; on the robot, a line typed at the dome's console (or the touchscreen, or
+only in the sim, where the mock is `/dome_mock` and `express dome` sends to it by default
+(`--device /r2_dome` for a mock running under the device's own name); on the robot, a line typed at the dome's console (or the touchscreen, or
 the panel's rotary switch) holds those lights directly, and the arbiters show the channel as
 `foreign` until it ends. The real device has no `mock/console` topic, so `express dome` there prints the "nobody subscribes" note and exits 1.
 

@@ -58,12 +58,9 @@ class Harness:
         _counter += 1
         tag = '%d_%d' % (os.getpid(), _counter)
         self.name = 'dome_mock_t%s' % tag
-        self.text_topics = ['/t%s/dome/text/line%d' % (tag, i) for i in (0, 1)]
-        self.level_topic = '/t%s/dome/audio/level' % tag
-        remaps = ['-r', '__node:=%s' % self.name,
-                  '-r', '/dome/text/line0:=%s' % self.text_topics[0],
-                  '-r', '/dome/text/line1:=%s' % self.text_topics[1],
-                  '-r', '/dome/audio/level:=%s' % self.level_topic]
+        self.text_topics = ['/%s/dome/text/line%d' % (self.name, i) for i in (0, 1)]
+        self.level_topic = '/%s/dome/audio/level' % self.name
+        remaps = ['-r', '__node:=%s' % self.name]
         self.proc = subprocess.Popen(
             ['ros2', 'run', 'r2_mocks', 'dome_mock', '--ros-args', '-p', 'state_hz:=10.0',
              *extra_args, *remaps],
@@ -268,8 +265,10 @@ def test_sticky_manual_and_strip_enable_reach_the_state_topics(mock):
     mock.wait_for('leds', lambda m: not m.manual)
     mock.say('leds enable off')
     mock.wait_for('leds', lambda m: not m.strip_enabled)
-    off = mock.call('leds/run', RunLedEffect.Request(surface='fld', effect='fire'))
-    assert (off.accepted, off.reason) == (False, 'not fitted')
+    dark = mock.call('leds/run', RunLedEffect.Request(surface='fld', effect='fire', priority=10))
+    assert (dark.accepted, dark.reason) == (True, '')
+    state = mock.wait_for('leds', lambda m: led(m, 'surfaces', 'fld').running)
+    assert state.strip_enabled is False
 
 
 def test_magic_console_and_rotary_attribution(mock):

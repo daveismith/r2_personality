@@ -21,10 +21,10 @@ The ``express`` operator tool: drive R2's lights by hand through the arbiters.
     express clip    <channel> <name> [...]
     express text    <channel> "line1" ["line2"] [--motion bounce] [--on-black] [...]
     express configure <channel> [--drift calm|lively] [--brightness N]   # drift: fld tfld bfld rld
-    express sequence magic <id|name> [--repeat 1] [--end leave|blank] [--duration 5]
+    express sequence magic <id|name> [--repeat 1] [--end blank|leave] [--duration 5]
     express stop    <channel> [--mode blank|freeze]
     express status  [--watch]
-    express dome    "<console line>"          # the sim mock's console only
+    express dome    "<console line>" [--device /dome_mock]   # the sim mock's console only
 
 claim/release call /expression/claim/led, or .../magic for magic (--claim-service overrides).
 Intents go out as ``source: manual`` at priority 199, which a person at the dome still
@@ -44,6 +44,7 @@ import uuid
 from r2_expression.config import (
     BRIGHTNESS_RANGE, CLIPLESS_CHANNELS, DRIFT_PRESETS, PICK_CHANNELS)
 from r2_expression.core import END_VALUES, LADDER, STATE_NAMES, STOP_MODES, TEXT_MOTIONS
+from r2_expression.render_common import MAX_LINE_BYTES, too_long
 
 CHANNELS = PICK_CHANNELS
 MOTIONS = TEXT_MOTIONS
@@ -63,7 +64,7 @@ STATUS_TOPIC = '/expression/status'
 CLAIM_SERVICE_LED = '/expression/claim/led'       # the LED arbiter's (fld tfld bfld rld psi)
 CLAIM_SERVICE_MAGIC = '/expression/claim/magic'
 DRIFT_CHANNELS = ('fld', 'tfld', 'bfld', 'rld')
-DEFAULT_DEVICE = '/r2_dome'
+DEFAULT_DEVICE = '/dome_mock'          # the sim's mock; never the real /r2_dome
 
 LISTENER_WAIT_S = 2.0
 FLUSH_S = 0.3
@@ -86,8 +87,8 @@ def _channel(value):
 
 
 def _name(value):
-    if not value or len(value) > MAX_NAME:
-        raise argparse.ArgumentTypeError('must be 1 to %d characters' % MAX_NAME)
+    if not value or too_long(value, MAX_NAME):
+        raise argparse.ArgumentTypeError('must be 1 to %d bytes in UTF-8' % MAX_NAME)
     return value
 
 
@@ -121,8 +122,8 @@ def _seconds(value):
 
 
 def _line(value):
-    if len(value) > MAX_NAME:
-        raise argparse.ArgumentTypeError('a text line must be under 64 characters')
+    if too_long(value, MAX_LINE_BYTES):                    # the device counts bytes
+        raise argparse.ArgumentTypeError('a text line must be under 64 bytes in UTF-8')
     return value
 
 
@@ -174,7 +175,8 @@ def build_parser():
     sender(p)
     p.add_argument('ref', metavar='id|name')
     p.add_argument('--repeat', type=_ranged_int(0, 255), default=1)
-    p.add_argument('--end', choices=ENDS)
+    p.add_argument('--end', choices=ENDS, default='blank',
+                   help='default blank: the panel is not left lit')
     p = sub.add_parser('stop', help='stop what a channel is running')
     sender(p)
     p.add_argument('--mode', choices=STOP_MODE_NAMES, help='magic only')
@@ -275,8 +277,7 @@ def build_intent(ns):
         else:
             params['name'] = ns.ref
         params['repeat'] = ns.repeat
-        if ns.end:
-            params['end'] = ns.end
+        params['end'] = ns.end
     elif action == 'stop' and ns.mode:
         params['mode'] = ns.mode
     if ns.source:

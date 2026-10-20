@@ -90,6 +90,6 @@ def test_state_and_sim_panels(layout):
                p['value'].endswith('.state') for p in st['paths'])
     assert len(st['paths']) == 6
     (raw,) = panels(layout, 'RawMessages').values()
-    assert raw['topicPath'] == '/r2_dome/mock/picture'
+    assert raw['topicPath'] == '/dome_mock/mock/picture'
     (img,) = panels(layout, 'Image').values()
-    assert img['cameraTopic'] == '/r2_dome/mock/image'
+    assert img['cameraTopic'] == '/dome_mock/mock/image'

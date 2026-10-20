@@ -42,6 +42,12 @@ from typing import Any, FrozenSet, Mapping, Optional
 from r2_expression.config import LED_PICK_CHANNELS, STYLE_CHANNELS
 
 
+# MagicPanelSequence.FLAG_LOOPS: runs until stopped. FLAG_RANDOM alone is not unbounded (Fade
+# out and Flicker carry it and end by their length), so only LOOPS counts; the random shows
+# have both.
+UNBOUNDED_FLAGS = 1
+
+
 @dataclass(frozen=True)
 class ResolvedStyle:
     """One channel's look for one label and strength."""
@@ -70,6 +76,7 @@ class MagicCatalogue:
     """What ``ListMagicPanel`` says the panel can play: id -> name (empty without names)."""
 
     sequences: Mapping[int, str]
+    unbounded: FrozenSet[int] = frozenset()   # ids flagged LOOPS: no end of their own
 
     def resolve(self, ref):
         """Return the id for an id or a name, or None when the panel has no such sequence."""
@@ -99,9 +106,13 @@ def led_catalogue(response):
 
 def magic_catalogue(response):
     """Build a :class:`MagicCatalogue` from a ``ListMagicPanel`` response."""
-    return MagicCatalogue(sequences=MappingProxyType({
-        int(field_of(s, 'id')): field_of(s, 'name', '') or ''
-        for s in field_of(response, 'sequences', ()) or ()}))
+    names, unbounded = {}, set()
+    for seq in field_of(response, 'sequences', ()) or ():
+        seq_id = int(field_of(seq, 'id'))
+        names[seq_id] = field_of(seq, 'name', '') or ''
+        if int(field_of(seq, 'flags', 0) or 0) & UNBOUNDED_FLAGS:
+            unbounded.add(seq_id)
+    return MagicCatalogue(sequences=MappingProxyType(names), unbounded=frozenset(unbounded))
 
 
 def scale_brightness(brightness, strength):

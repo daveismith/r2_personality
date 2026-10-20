@@ -174,12 +174,8 @@ class Stack:
     # --- processes ---------------------------------------------------------------------------
 
     def _mock_argv(self):
-        t = 't%s' % self.tag
         return ['ros2', 'run', 'r2_mocks', 'dome_mock', '--ros-args', '-p', 'state_hz:=10.0',
-                *self.mock_args, '-r', '__node:=%s' % self.mock_name,
-                '-r', '/dome/text/line0:=/%s/dome/text/line0' % t,
-                '-r', '/dome/text/line1:=/%s/dome/text/line1' % t,
-                '-r', '/dome/audio/level:=/%s/dome/audio/level' % t]
+                *self.mock_args, '-r', '__node:=%s' % self.mock_name]
 
     def start_mock(self):
         self.mock = Proc(self._mock_argv())
@@ -187,14 +183,17 @@ class Stack:
     def arbiter_name(self, kind):
         return '%s_arbiter_t%s' % (kind, self.tag)
 
-    def start_arbiter(self, kind, extra=()):
+    def arbiter_argv(self, kind, extra=()):
         remaps = []
         for name, target in self.topics.items():
             remaps += ['-r', '%s:=%s' % (name, target)]
-        self.arbiters[kind] = Proc([
+        return [
             'ros2', 'run', 'r2_expression', '%s_arbiter' % kind, '--ros-args',
             '-r', '__node:=%s' % self.arbiter_name(kind), '-p', 'device:=/%s' % self.mock_name,
-            *self.config_args, *self.arbiter_args, *extra, *remaps])
+            *self.config_args, *self.arbiter_args, *extra, *remaps]
+
+    def start_arbiter(self, kind, extra=()):
+        self.arbiters[kind] = Proc(self.arbiter_argv(kind, extra))
         return self.arbiters[kind]
 
     def close(self):
@@ -482,12 +481,15 @@ def test_a_new_mood_label_reconfigures_the_displays_once(stack):
     time.sleep(1.0)                                    # five more mood messages
     shown = ('tfld', 'bfld', 'rld', 'fpsi', 'rpsi')
     out = s.arbiters['led'].text
-    assert palette_calls(out()) == {display: 1 for display in shown}, out()
+    # Count from the first mood message on: on a slow graph the neutral palette may have been
+    # sent before it arrived, and that is not a repeat. The node logs the mood line first.
+    mark = out().index('mood: - -> calm')
+    assert palette_calls(out()[mark:]) == {display: 1 for display in shown}, out()
     s.start_mood('excited')
     s.wait_led(lambda m: s.display('tfld').brightness == 100)
     assert s.display('tfld').drift == 'lively' and s.display('rld').drift == 'lively'
     time.sleep(1.5)                                    # seven more mood messages
-    assert palette_calls(out()) == {display: 2 for display in shown}
+    assert palette_calls(out()[mark:]) == {display: 2 for display in shown}
 
 
 def test_a_silent_mood_makes_channels_stale_with_the_neutral_palette(stack):
@@ -542,13 +544,14 @@ def test_a_long_effect_name_is_refused_locally_and_never_sent(stack):
 def test_the_magic_node_starts_a_sequence_and_stops_it_at_its_duration(stack):
     s = stack(kinds=('magic',))
     s.start_mood('calm')
-    s.intent('magic', 'manual', 199, 'sequence', {'name': 'Smile', 'repeat': 0},
-             duration_ms=2000, intent_id='smile')
+    # 56 is a random show: it loops until stopped, so only the arbiter's stop ends it.
+    s.intent('magic', 'manual', 199, 'sequence', {'id': 56, 'repeat': 0},
+             duration_ms=2000, intent_id='show')
     status = s.wait_status('magic', lambda m: m.state == STATE_RUNNING, 6.0, 'running')
-    assert (status.active_action, status.active_intent_id) == ('sequence', 'smile')
+    assert (status.active_action, status.active_intent_id) == ('sequence', 'show')
     panel = wait_until(lambda: s.latest.get('magic') and s.latest['magic'].state == 1 and
                        s.latest['magic'], 6.0, 'panel running', s.output)
-    assert (panel.started_by, panel.owner, panel.sequence_id) == ('ros', 'r2_expression', 44)
+    assert (panel.started_by, panel.owner, panel.sequence_id) == ('ros', 'r2_expression', 56)
     stopped = wait_until(lambda: s.latest['magic'].state == 3, 10.0, 'panel stopped',
                          s.output)
     assert stopped
@@ -693,13 +696,13 @@ def test_a_stalled_device_queue_drops_stale_personality_actions_but_keeps_manual
     s.mock.send(signal.SIGSTOP)
     # The first call blocks the worker for its 5 s timeout; the rest queue up behind it.
     s.intent('fld', 'manual', 199, 'effect', {'name': 'fire'}, duration_ms=1000)
-    for name in ('fire', 'rainbow', 'roam'):
+    for name in ('fire', 'rainbow', 'roam'):          # one target: only the newest is queued
         s.intent('rld', 'idle', 10, 'effect', {'name': name}, duration_ms=20000)
     s.intent('psi', 'manual', 199, 'effect', {'name': 'rainbow'}, duration_ms=20000)
     wait_until(lambda: 'no answer in 5 s' in s.arbiters['led'].text(), 12.0, 'timeout logged',
                s.output)
     s.mock.send(signal.SIGCONT)
-    wait_until(lambda: 'dropped 3 stale device actions' in s.arbiters['led'].text(), 20.0,
+    wait_until(lambda: 'dropped 1 stale device actions' in s.arbiters['led'].text(), 20.0,
                'stale burst reported', s.output)
     text = s.arbiters['led'].text()
     assert text.count('dropping queued personality actions') == 1     # once per burst
@@ -707,6 +710,66 @@ def test_a_stalled_device_queue_drops_stale_personality_actions_but_keeps_manual
                'the manual psi run was kept')
     assert s.surface('fpsi').effect == 'rainbow'
     assert not s.surface('rld').running                # the stale idle runs never played
+
+
+def test_a_wedged_device_replays_at_most_one_run_per_target_when_it_recovers(stack):
+    s = stack(kinds=('led',), arbiter_args=('--log-level', 'debug'))
+    s.start_mood('calm')
+    s.wait_led(lambda m: all(s.display(n).brightness == 60 for n in ('tfld', 'rld', 'fpsi')),
+               10.0, 'the calm palette applied')
+    s.mock.send(signal.SIGSTOP)
+    s.intent('fld', 'manual', 199, 'effect', {'name': 'fire'}, duration_ms=1000)  # blocks 5 s
+    for name in ('fire', 'rainbow', 'roam', 'wipe'):          # four manual runs, one target
+        s.intent('rld', 'manual', 199, 'effect', {'name': name}, duration_ms=20000)
+    s.intent('rld', 'manual', 199, 'stop')                     # a stop is never replaced
+    s.intent('rld', 'manual', 199, 'effect', {'name': 'cycle'}, duration_ms=20000)
+    wait_until(lambda: 'no answer in 5 s' in s.arbiters['led'].text(), 12.0, 'timeout logged',
+               s.output)
+    s.mock.send(signal.SIGCONT)
+    s.wait_led(lambda m: s.surface('rld').effect.startswith('cycle'), 15.0, 'the newest played')
+    time.sleep(1.0)
+    text = s.arbiters['led'].text()
+    played = [ln for ln in text.splitlines() if 'run on rld (intent)' in ln]
+    assert len(played) == 1, text                              # one run, not five
+    assert text.count('rld: stop on rld') >= 1, text            # the stop was kept
+
+
+def test_a_second_arbiter_of_the_same_name_refuses_to_start(stack):
+    s = stack(kinds=('led',))
+    s.start_mood('calm')
+    second = Proc(s.arbiter_argv('led'))
+    try:
+        code = second.proc.wait(timeout=40)
+    except subprocess.TimeoutExpired:
+        second.close()
+        raise AssertionError('the duplicate did not exit\n' + second.text())
+    assert code == 1, second.text()
+    assert 'cannot start' in second.text() and '/' + s.arbiter_name('led') in second.text()
+    s.wait_status('fld', lambda m: m.state != STATE_OFFLINE, 5.0, 'the first one is fine')
+    allowed = Proc(s.arbiter_argv('led', ('-p', 'allow_duplicate:=true')))
+    try:
+        time.sleep(6.0)
+        assert allowed.proc.poll() is None, allowed.text()
+    finally:
+        allowed.close()
+
+
+def test_a_hostile_params_string_does_not_kill_the_node(stack):
+    s = stack(kinds=('led',))
+    s.start_mood('calm')
+    msg = ExpressionIntent()
+    msg.channel, msg.source, msg.priority, msg.action = 'rld', 'manual', 199, 'effect'
+    msg.params, msg.intent_id = '[' * 200000, 'deep'
+    s.intents.publish(msg)
+    with s.lock:
+        s.status.clear()
+    s.wait_status('rld', lambda m: m.dropped >= 1, 10.0, 'the bomb dropped and counted')
+    s.intent('rld', 'manual', 199, 'effect', {'name': 'fire'}, duration_ms=2000,
+             intent_id='after')
+    s.wait_status('rld', lambda m: m.state == STATE_RUNNING and
+                  m.active_intent_id == 'after', 8.0, 'a later intent still runs')
+    assert 'Traceback' not in s.arbiters['led'].text()
+    assert s.arbiters['led'].proc.poll() is None
 
 
 # --- palettes and flourishes (step 5) ---------------------------------------------------------

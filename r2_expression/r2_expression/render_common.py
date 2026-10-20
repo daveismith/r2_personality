@@ -26,7 +26,7 @@ request that has ``owner`` carries one.
 from r2_expression.core import MAX_OWNER_BYTES
 
 MAX_NAME_BYTES = 63          # the device never answers a name of 96 bytes or more (plan 2.1)
-MAX_LINE_CHARS = 63          # a text line of 64+ is `text too long`
+MAX_LINE_BYTES = 63          # bytes: the device's strlen counts 64+ as `text too long`
 
 REFUSE_OWNER = 'owner too long'
 REFUSE_NAME = 'name too long'
@@ -44,7 +44,7 @@ class RenderRefusal(Exception):
 
 def too_long(text, limit):
     """Return True when ``text`` is longer than ``limit`` bytes in UTF-8."""
-    return len(text.encode('utf-8')) > limit
+    return len(text.encode('utf-8', 'surrogatepass')) > limit
 
 
 def build(request_type, fields):

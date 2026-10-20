@@ -17,12 +17,13 @@
 import copy
 import dataclasses
 import os
+import re
 
 import pytest
 import yaml
 
 from fixtures import AFFECT_YAML, base_data, cfg, LEDS_LIST, SHIPPED  # noqa: I100
-from fixtures import capture_names
+from fixtures import capture_names, MAGIC_LIST
 from r2_expression.config import (ExpressionConfigError, load_config, load_config_string,
                                   missing_moods, parse_config)
 from r2_expression.palette import LedCatalogue, MagicCatalogue, validate_picks
@@ -92,6 +93,19 @@ def test_shipped_picks_all_exist_in_the_workbench_catalogue():
                                      magic=MagicCatalogue(sequences=sequences))
     assert warnings == []
     assert all(picks[name] for name in picks)
+
+
+def test_no_shipped_pick_names_a_looping_sequence_of_the_workbench_catalogue():
+    if not os.path.exists(MAGIC_LIST):
+        pytest.skip('docs/dome is not beside this package')
+    with open(MAGIC_LIST) as f:
+        looping = {int(i) for i, flags in re.findall(
+            r"MagicPanelSequence\(id=(\d+), name='[^']*', flags=(\d+)", f.read())
+            if int(flags) & 1}
+    assert {56, 57} <= looping
+    for mood in load_config(SHIPPED).moods.values():
+        for pick in mood.flourish.picks:
+            assert pick.channel != 'magic' or pick.name not in looping
 
 
 def test_shipped_flourishes_never_carry_duration_zero_and_lightsout_is_timed():
@@ -320,6 +334,7 @@ def test_rejects_pick_on_unknown_channel_or_without_one():
     ({'channel': 'fld', 'effect': 'fire', 'weight': 0}, 'picks[0].weight: must be > 0'),
     ({'channel': 'magic', 'sequence': 256}, 'picks[0].sequence'),
     ({'channel': 'magic', 'sequence': 3, 'end': 'freeze'}, 'picks[0].end'),
+    ({'channel': 'magic', 'sequence': 3, 'repeat': 0}, 'picks[0].repeat'),
     ({'channel': 'fld', 'effect': ''}, 'must be a non-empty name'),
     ({'channel': 'fld', 'effect': 'fire', 'colour': 1}, 'picks[0].colour: unknown key'),
 ])

@@ -66,6 +66,11 @@ def test_catalogues_build_from_list_responses():
     magic = magic_catalogue({'sequences': [{'id': 44, 'name': 'Smile'}, {'id': 3, 'name': ''}]})
     assert magic.resolve('Smile') == 44 and magic.resolve(3) == 3
     assert magic.resolve('') is None and magic.resolve(9) is None
+    assert magic.unbounded == frozenset()
+    flagged = magic_catalogue({'sequences': [
+        {'id': 56, 'name': 'Random show', 'flags': 3}, {'id': 25, 'name': 'Fade', 'flags': 2},
+        {'id': 7, 'name': 'Loop', 'flags': 1}, {'id': 44, 'name': 'Smile', 'flags': 0}]})
+    assert flagged.unbounded == frozenset({56, 7})    # RANDOM alone ends by its length
 
 
 def test_listleds_validation_drops_a_pick_the_device_lacks_with_one_warning():

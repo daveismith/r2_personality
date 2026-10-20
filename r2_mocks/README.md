@@ -27,9 +27,11 @@ ros2 launch r2_mocks dome_mock.launch.py use_sim_time:=true state_hz:=10
 ros2 run r2_mocks dome_mock --ros-args -r __node:=dome_mock -p state_hz:=5.0
 ```
 
-The device's absolute topics are kept (`/dome/text/line0`, `/dome/text/line1`,
-`/dome/audio/level`); remap them too if a real dome publishes or listens there
-(`-r /dome/text/line0:=/mock/text/line0`). Tests rename the node and remap all three.
+The device's absolute topics (`/dome/text/line0`, `/dome/text/line1`, `/dome/audio/level`)
+are used only by a mock named `r2_dome`. Under any other node name the mock listens on
+`/<node_name>/dome/text/line0` and so on (a mock named `dome_mock` on
+`/dome_mock/dome/text/line0`), so a real dome's topics are never touched. Tests run the node
+with a unique name.
 
 Manual check:
 
@@ -71,8 +73,10 @@ LEDs (`led_model.py`):
   `owner too long`, `not fitted` and `unknown surface` and before anything applies. Priority 0
   and 200+ are never refused; ROS writes never hold and never end a hold.
 - `leds owner manual` (hold everything, `HOLD_FOREVER`, `LedStateArray.manual`, the panel too)
-  until `leds owner auto`, which also drops timed holds. `leds enable off` makes every request
-  `not fitted` and `strip_enabled` false.
+  until `leds owner auto`, which also drops timed holds. `leds enable off` only darkens the
+  strip: `strip_enabled` goes false and requests are still accepted and tracked, as the firmware
+  does (it answers `not fitted` only when no strip is wired: the `fitted` parameter,
+  default true, `-p fitted:=false`, which also takes the panel away).
 - Text slots: a new message on `/dome/text/line0|1` starts `say fld` with both slots (bounce,
   linked, over the drift, no duration); both empty stops a `text` run on `fld`. Either is a
   `text_topic` write. `leds rostext off` makes the slots inert.
@@ -122,7 +126,7 @@ A ROS request is checked in this order, and the first failure is the reason (the
 order for the part the plan fixes; the first two are the mock's choice):
 
 1. `owner too long` (32 bytes or more)
-2. `not fitted` (LEDs: `leds enable off`; panel: link absent, with `firmware too old` ahead of
+2. `not fitted` (LEDs: no strip wired, `fitted` false; panel: link absent, with `firmware too old` ahead of
    it for an unsupported panel)
 3. `unknown surface` (configure: `unknown display`, the mock's wording, not captured from the
    device; run/say/stop say `unknown surface` as the device does)
@@ -142,7 +146,7 @@ The wait ends early on shutdown.
 ## Knobs
 
 Parameters, read at startup: `config` (catalogue YAML, default the installed one), `state_hz`
-(1, up to 10), `hold_ms` (5000), `fitted` (true: the Magic Panel link), `too_long_sleep_s`
+(1, up to 10), `hold_ms` (5000), `fitted` (true: a strip and a panel are fitted, one flag for both models), `too_long_sleep_s`
 (5.5), `use_sim_time`. A droid's own `ListLeds`/`ListMagicPanel` capture replaces the
 catalogue: `python3 tools/gen_dome_mock_yaml.py LEDS.txt MAGIC.txt > config/dome_mock.yaml`.
 To test a panel without `CAP_REPEAT`, copy the YAML, set `has_repeat: false` under
@@ -150,6 +154,9 @@ To test a panel without `CAP_REPEAT`, copy the YAML, set `has_repeat: false` und
 
 ## Known gaps
 
+- A request that touches several surfaces (`all`) is all-or-nothing on a hold; the firmware
+  goes surface by surface and joins the refusals as `<surface>: <reason>; `. Single-surface
+  requests, which is all the arbiters send, are identical.
 - No pixel-accurate effects: the image shows mode and effect colour only, no animation.
 - No clip pull (`leds pull`); the clips are the catalogue's, as captured.
 - No servos (phase 0's `servo_sim` covers the dome servos), no `/dome/joint_*`, `/dome/buttons/*`.

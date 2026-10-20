@@ -27,7 +27,9 @@ thread makes the device calls from a queue, in order, one request in flight at a
 clock (``use_sim_time`` aware); the tick timer runs on the steady clock.
 """
 
+from collections import deque
 from dataclasses import dataclass
+import functools
 import os
 import queue
 import sys
@@ -55,6 +57,7 @@ from r2_expression.core import held_by
 from r2_expression.core import LED_CHANNELS
 from r2_expression.core import MAGIC_CHANNELS
 from r2_expression.core import PRIORITY_BEHAVIOR
+from r2_expression.core import RUN_CALLS
 from r2_expression.core import STATE_FOREIGN
 from r2_expression.core import STATE_IDLE
 from r2_expression.core import STATE_NAMES
@@ -73,12 +76,14 @@ from rclpy.qos import QoSProfile
 from rclpy.qos import ReliabilityPolicy
 
 # Read once at startup; a later `ros2 param set` of any of these is refused.
-STARTUP_PARAMETERS = ('config', 'device', 'use_sim_time')
+STARTUP_PARAMETERS = ('config', 'device', 'use_sim_time', 'allow_duplicate')
 
 REQUEST_TIMEOUT_S = 5.0      # one device request, plan 2.1
 LIST_RETRY_S = 5.0           # between attempts at the device's `list`
 TICK_S = 0.1                 # the core's timers, 10 Hz
 POLL_S = 0.1                 # how often a waiting worker looks at the stop flag
+DUPLICATE_WAIT_S = 1.0       # discovery time before the graph is asked for a node of our name
+GUARD_LOG_S = 60.0           # a failing callback is logged at most this often
 # Where the nodes meet. Both offer a claim service; rmw_zenoh gives a request to either
 # server of a shared name, so each kind has its own (README, "The claim service").
 INTENT_TOPIC = '/expression/intent'
@@ -107,6 +112,68 @@ KINDS = {
     'magic': Kind(MAGIC_CHANNELS, magic_renderer, 'magic/states', MagicPanelState,
                   'magic_state', magic_catalogue),
 }
+
+
+class _ActionQueue:
+    """A FIFO of ``(time, Action | None)`` where a newer run replaces an older queued one."""
+
+    def __init__(self):
+        self._items = deque()
+        self._ready = threading.Condition()
+
+    def put_replacing(self, item):
+        """
+        Queue ``item``; return the queued actions it replaces.
+
+        A run, say or start for a (channel, target) makes any run still queued for the same
+        key pointless: the device would play both in a row. Stops and configures are kept.
+        """
+        key = self._run_key(item)
+        replaced = []
+        with self._ready:
+            if key is not None:
+                kept = deque()
+                for old in self._items:
+                    (replaced if self._run_key(old) == key else kept).append(old)
+                self._items = kept
+            self._items.append(item)
+            self._ready.notify()
+        return [old[1] for old in replaced]
+
+    def get(self, timeout):
+        """Return the oldest item; raise ``queue.Empty`` after ``timeout`` seconds."""
+        with self._ready:
+            if not self._items and not self._ready.wait_for(lambda: self._items, timeout):
+                raise queue.Empty
+            return self._items.popleft()
+
+    @staticmethod
+    def _run_key(item):
+        action = item[1]
+        if action is None or action.call not in RUN_CALLS:
+            return None
+        return action.channel, action.target
+
+
+def guarded(on_error=None):
+    """Log an exception from a node callback (once a minute per callback) and carry on."""
+    def decorate(method):
+        @functools.wraps(method)
+        def wrapper(self, *args):
+            try:
+                return method(self, *args)
+            except Exception as exc:
+                self._log_guarded(method.__name__, exc)
+                return on_error(*args) if on_error else None
+        return wrapper
+    return decorate
+
+
+def _internal_error(request, response):
+    response.accepted = False
+    response.reason = 'internal error'
+    response.status.channel = request.channel
+    return response
 
 
 def _reliable(depth):
@@ -154,16 +221,19 @@ class ArbiterNode(Node):
         super().__init__('%s_arbiter' % kind)
         self.declare_parameter('config', default_config_path())
         self.declare_parameter('device', '/r2_dome')
+        self.declare_parameter('allow_duplicate', False)
         device = str(self.get_parameter('device').value).rstrip('/')
         if not device.startswith('/') or len(device) < 2:
             raise ValueError('device must be an absolute node name like /r2_dome, got %r'
                              % device)
         self._device = device
+        self._refuse_a_duplicate()
         self._config_path = str(self.get_parameter('config').value)
         config = load_config(self._config_path)     # ExpressionConfigError: main() exits
         self._core = Arbiter(config, self._kind.channels)
         self._lock = threading.Lock()
-        self._queue = queue.Queue()        # (time.monotonic() when queued, Action | None)
+        self._queue = _ActionQueue()       # (time.monotonic() when queued, Action | None)
+        self._guard_logged = {}            # callback name -> time.monotonic() of its last log
         self._max_age_s = config.defaults.device_stale_s
         self._stale_burst = 0              # stale actions dropped since the queue last caught up
         self._stop = threading.Event()
@@ -205,6 +275,35 @@ class ArbiterNode(Node):
     def _now(self):
         return self.get_clock().now().nanoseconds * 1e-9
 
+    def _refuse_a_duplicate(self):
+        """
+        Raise ValueError when another node of this name is on the graph.
+
+        Two arbiter pairs would fight over one device with the same owner. ``allow_duplicate``
+        is for the test that wants two.
+        """
+        if self.get_parameter('allow_duplicate').value is True:
+            return
+        time.sleep(DUPLICATE_WAIT_S)      # let discovery of an older node catch up
+        name, namespace = self.get_name(), self.get_namespace()
+        found = [(n, ns) for n, ns in self.get_node_names_and_namespaces()
+                 if n == name and ns == namespace]
+        if len(found) > 1:                # one of them is this node
+            raise ValueError(
+                'another node named %s is already on the graph (a second %s_arbiter, perhaps '
+                'on another machine?); two would fight over %s. Stop it, or pass '
+                '-p allow_duplicate:=true' % (
+                    self.get_fully_qualified_name(), self._kind_name, self._device))
+
+    def _log_guarded(self, name, exc):
+        """Log a callback's exception, at most once per GUARD_LOG_S for each callback."""
+        now = time.monotonic()
+        last = self._guard_logged.get(name)
+        if last is None or now - last >= GUARD_LOG_S:
+            self._guard_logged[name] = now
+            self.get_logger().error('%s failed and was skipped: %s: %s' % (
+                name, type(exc).__name__, str(exc)[:200]))
+
     def _on_parameters(self, params):
         for param in params:
             if param.name in STARTUP_PARAMETERS:
@@ -215,7 +314,8 @@ class ArbiterNode(Node):
     def _settle(self, now, actions=(), force=False):
         """Queue ``actions``, log core warnings, publish status changes. Hold ``_lock``."""
         for action in actions:
-            self._queue.put((time.monotonic(), action))
+            for old in self._queue.put_replacing((time.monotonic(), action)):
+                self._core.device_reply(old, False, 'superseded', now)
         log = self.get_logger()
         for line in self._core.take_warnings():
             log.warning(line)
@@ -245,6 +345,7 @@ class ArbiterNode(Node):
 
     # --- subscriptions and the claim service (executor thread) -----------------------------
 
+    @guarded()
     def _on_intent(self, msg):
         if msg.channel not in self._core.channels:
             return
@@ -259,15 +360,18 @@ class ArbiterNode(Node):
         else:
             log.debug('intent %s dropped: %s' % (result.intent_id, result.reason))
 
+    @guarded()
     def _on_mood(self, msg):
         with self._lock:
+            if msg.mood and msg.mood != self._last_mood:
+                # logged under the lock, so before its palette calls can reach the worker
+                self.get_logger().info('mood: %s -> %s' % (self._last_mood or '-', msg.mood))
+                self._last_mood = msg.mood
             now = self._now()
             actions = self._core.mood(msg.mood, msg.mood_strength, now)
             self._settle(now, actions)
-        if msg.mood and msg.mood != self._last_mood:
-            self.get_logger().info('mood: %s -> %s' % (self._last_mood or '-', msg.mood))
-            self._last_mood = msg.mood
 
+    @guarded()
     def _on_state(self, msg):
         if not self._catalogue_ready:
             return                     # the catalogue first, then the first state (plan 5.3)
@@ -286,8 +390,9 @@ class ArbiterNode(Node):
                                      (seen[1] == 1 and previous[1] != 1)):
             self.get_logger().info('panel changed (interrogations %d, link %d): listing again'
                                    % seen)
-            self._queue.put((time.monotonic(), None))
+            self._queue.put_replacing((time.monotonic(), None))
 
+    @guarded(_internal_error)
     def _on_claim(self, request, response):
         with self._lock:
             now = self._now()
@@ -306,6 +411,7 @@ class ArbiterNode(Node):
                 'accepted' if result.accepted else 'refused, %s' % result.reason))
         return response
 
+    @guarded()
     def _on_tick(self):
         with self._lock:
             now = self._now()
@@ -325,8 +431,24 @@ class ArbiterNode(Node):
                 return None
         return future.result()
 
+    def _await_catalogue(self):
+        """Run :meth:`_first_catalogue`, again after a pause if it raises."""
+        while not self._stop.is_set():
+            try:
+                return self._first_catalogue()
+            except Exception as exc:     # the worker must outlive a bad first `list` too
+                self._log_guarded('device worker (first list)', exc)
+                self._stop.wait(LIST_RETRY_S)
+
+    def _safe_reply(self, action, exc):
+        """Tell the core a request failed inside the worker; never raise."""
+        try:
+            self._reply(action, False, 'internal: %s' % exc, quiet=True)
+        except Exception as again:
+            self._log_guarded('device worker (reply)', again)
+
     def _work(self):
-        self._first_catalogue()
+        self._await_catalogue()
         while not self._stop.is_set():
             try:
                 queued_at, item = self._queue.get(timeout=POLL_S)
@@ -343,9 +465,9 @@ class ArbiterNode(Node):
                     self._end_stale_burst()
                     self._send(item)
             except Exception as exc:     # the worker must outlive any one bad request
-                self.get_logger().error('device worker: %r' % (exc,))
+                self._log_guarded('device worker', exc)
                 if item is not None:
-                    self._reply(item, False, 'internal: %s' % exc, quiet=True)
+                    self._safe_reply(item, exc)
 
     def _is_stale(self, queued_at, action):
         """Return True for a start or palette call that waited over ``device_stale_s``."""

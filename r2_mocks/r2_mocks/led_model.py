@@ -36,7 +36,7 @@ from r2_mocks.holds import REFUSE_NOT_FITTED
 from r2_mocks.holds import REFUSE_OWNER_TOO_LONG
 import yaml
 
-TEXT_MAX_CHARS = 63
+TEXT_MAX_BYTES = 63         # the firmware counts bytes (strlen); 64 or more is too long
 CYCLE_PERIOD_S = 10.0
 CYCLE_CHILDREN = ('rainbow', 'roam', 'fire')
 DEFAULT_BRIGHTNESS = 40
@@ -143,11 +143,12 @@ class _Record:
 class LedModel:
     """The LED displays and surfaces of the dome device."""
 
-    def __init__(self, catalogue, hold_ms=5000, rostext=True, seed=1, manual=None):
+    def __init__(self, catalogue, hold_ms=5000, rostext=True, seed=1, manual=None, fitted=True):
         self.catalogue = catalogue
         self.hold_s = hold_ms / 1000.0
         self.rostext = rostext
-        self.strip_enabled = True
+        self.fitted = fitted            # a strip is wired; without one: `not fitted`
+        self.strip_enabled = True       # `leds enable`: dark, but writes are still accepted
         self.manual = manual or Manual()
         self.level = 0
         self.level_set = False
@@ -209,7 +210,7 @@ class LedModel:
         """Return the refusal that precedes everything else, or ''."""
         if owner_too_long(owner):
             return REFUSE_OWNER_TOO_LONG
-        if not self.strip_enabled:
+        if not self.fitted:
             return REFUSE_NOT_FITTED
         known = self.surfaces if what == 'surface' else self.displays
         if surface != ALL and surface not in known:
@@ -316,7 +317,7 @@ class LedModel:
             return REFUSE_NO_TEXT
         if len(lines) > len(spec['displays']):
             return REFUSE_LINES
-        if any(len(line) > TEXT_MAX_CHARS for line in lines):
+        if any(len(line.encode('utf-8')) > TEXT_MAX_BYTES for line in lines):
             return REFUSE_TEXT_LONG
         if not all(self.displays[n].spec['has_text'] for n in spec['displays']):
             return REFUSE_NO_TEXT_MODE
@@ -431,7 +432,7 @@ class LedModel:
     # --- the other writers --------------------------------------------------------------
 
     def set_enabled(self, enabled):
-        """Switch the strip on or off (``leds enable``); off refuses requests as not fitted."""
+        """Switch the strip on or off (``leds enable``): off is dark, writes are still tracked."""
         self.strip_enabled = bool(enabled)
 
     def set_level(self, value):

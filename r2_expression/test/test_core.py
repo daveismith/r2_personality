@@ -202,6 +202,19 @@ def test_claim_accepted_refused_renewed_released_expired():
     assert r.accepted and r.status.state == STATE_IDLE and r.status.owner == ''
 
 
+def test_release_by_an_owner_without_a_claim_is_refused_naming_the_channel():
+    a = led()
+    a.claim('rld', 'console', 200, 30.0, 1.0)
+    r = a.claim('rld', 'express', 199, 0.0, 2.0)
+    assert (r.accepted, r.reason) == (False, "no claim by 'express' on rld")
+    assert r.status.owner == 'console' and r.status.state == STATE_CLAIMED   # the real holder
+    r = a.claim('psi', 'express', 199, 0.0, 2.0)
+    assert (r.accepted, r.reason) == (False, "no claim by 'express' on psi")
+    assert a.claim('rld', 'console', 200, 0.0, 3.0).accepted
+    r = a.claim('rld', 'console', 200, 0.0, 4.0)                  # twice: nothing left to release
+    assert not r.accepted and 'no claim' in r.reason
+
+
 def test_release_needs_no_priority():
     a = led()
     a.claim('fld', 'console', 200, 30.0, 1.0)
@@ -436,7 +449,7 @@ def test_rule3_magic_sequence_is_stopped_by_the_arbiter_at_its_duration():
     r = intent(a, 1.0, channel='magic', action='sequence', params={'id': 44},
                duration_ms=3000)
     assert calls(r.actions) == [(CALL_START, 'magic')]
-    assert r.actions[0].request == {'sequence_id': 44, 'repeat': 1, 'end': 0,
+    assert r.actions[0].request == {'sequence_id': 44, 'repeat': 1, 'end': 1,
                                     'owner': OWNER, 'priority': 10}
     accept_all(a, r.actions, 1.0)
     run = magic_snap(state=1, started_by='ros', owner=OWNER, sequence_id=44)
@@ -451,7 +464,7 @@ def test_rule3_magic_sequence_is_stopped_by_the_arbiter_at_its_duration():
 
 def test_rule3_a_refused_duration_stop_is_retried_after_the_hold():
     a = magic()
-    r = intent(a, 1.0, channel='magic', action='sequence', params={'id': 27, 'repeat': 0},
+    r = intent(a, 1.0, channel='magic', action='sequence', params={'id': 27, 'repeat': 2},
                duration_ms=3000)
     accept_all(a, r.actions, 1.0)
     run = magic_snap(state=1, started_by='ros', owner=OWNER, sequence_id=27)
@@ -463,8 +476,32 @@ def test_rule3_a_refused_duration_stop_is_retried_after_the_hold():
 
 def test_rule3_idle_magic_sequence_without_duration_gets_the_cap():
     a = magic()
-    intent(a, 1.0, channel='magic', action='sequence', params={'name': 'Random show'})
+    intent(a, 1.0, channel='magic', action='sequence', params={'name': 'Smile'})
     assert a.status('magic', 1.0).active_remaining_ms == 30000
+
+
+def test_a_sequence_the_arbiter_starts_ends_blank_unless_the_intent_says_leave():
+    a = magic()
+    for source, priority in (('idle', 10), ('behavior', 100), ('manual', 199)):
+        r = intent(a, 1.0, channel='magic', source=source, priority=priority,
+                   action='sequence', params={'id': 44}, duration_ms=3000)
+        assert r.actions[0].request['end'] == 1
+    r = intent(a, 2.0, channel='magic', source='manual', priority=199, action='sequence',
+               params={'id': 44, 'end': 'leave'}, duration_ms=3000)
+    assert r.actions[0].request['end'] == 0
+
+
+def test_an_unbounded_sequence_is_refused_for_idle_and_behaviour_but_not_manual():
+    a = magic()
+    for source, priority in (('idle', 10), ('behavior', 100)):
+        for params in ({'id': 44, 'repeat': 0}, {'id': 56}, {'name': 'Random show'}):
+            r = intent(a, 1.0, channel='magic', source=source, priority=priority,
+                       action='sequence', params=params, duration_ms=3000)
+            assert (r.accepted, r.reason) == (False, 'unbounded sequence')
+    assert a.status('magic', 1.0).dropped == 6
+    r = intent(a, 2.0, channel='magic', source='manual', priority=199, action='sequence',
+               params={'id': 56, 'repeat': 0}, duration_ms=3000)
+    assert r.accepted and r.actions[0].request['repeat'] == 0
 
 
 # --- psi fan-out ---------------------------------------------------------------------------
@@ -1020,7 +1057,7 @@ def test_text_with_more_lines_than_displays_is_refused_with_the_devices_string()
 def test_a_refused_replacement_keeps_tracking_the_run_it_would_have_replaced():
     a = magic()
     first = intent(a, 1.0, channel='magic', source='behavior', priority=100,
-                   action='sequence', params={'id': 23, 'repeat': 0}, duration_ms=10000)
+                   action='sequence', params={'id': 23, 'repeat': 2}, duration_ms=10000)
     accept_all(a, first.actions, 1.0)
     second = intent(a, 2.0, channel='magic', source='behavior', priority=100,
                     action='sequence', params={'id': 44})
@@ -1042,7 +1079,7 @@ def test_behaviour_intent_never_replaces_a_persons_run_after_the_hold():
 def test_rule7_no_duration_stop_is_sent_into_a_hold():
     a = magic()
     r = intent(a, 1.0, channel='magic', source='behavior', priority=100, action='sequence',
-               params={'id': 27, 'repeat': 0}, duration_ms=3000)
+               params={'id': 27, 'repeat': 2}, duration_ms=3000)
     accept_all(a, r.actions, 1.0)
     ours_held = magic_snap(state=1, started_by='ros', owner=OWNER, sequence_id=27,
                            held_by='console', hold_remaining_ms=60000)

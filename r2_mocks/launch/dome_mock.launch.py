@@ -25,7 +25,8 @@ from launch_ros.parameter_descriptions import ParameterValue
 
 
 # With a real dome on the graph, give the mock another node_name (it moves every service and
-# state topic with it); with the sim, use_sim_time must be true.
+# state topic with it, and, unless it is r2_dome, the text and level topics too: the node puts
+# them under /<node_name>/dome/...); with the sim, use_sim_time must be true.
 def generate_launch_description():
     node = Node(
         package='r2_mocks',

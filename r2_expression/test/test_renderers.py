@@ -121,6 +121,13 @@ def test_a_line_of_64_characters_is_text_too_long_and_63_is_fine():
                        action(core.CALL_SAY, say_request(lines=lines))) == 'text too long'
 
 
+def test_text_length_is_counted_in_utf_8_bytes_like_the_devices_strlen():
+    led_renderer.render(action(core.CALL_SAY, say_request(lines=['\u00e9' * 31 + 'x'])))
+    for lines in (['\u00e9' * 40], ['ok', '\u00e9' * 32]):       # 80 and 64 bytes, 40/32 chars
+        assert refusal(led_renderer.render,
+                       action(core.CALL_SAY, say_request(lines=lines))) == 'text too long'
+
+
 def test_no_text_is_refused():
     assert refusal(led_renderer.render,
                    action(core.CALL_SAY, say_request(lines=[]))) == 'no text'

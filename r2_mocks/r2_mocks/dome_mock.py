@@ -17,7 +17,9 @@
 
 The node is named ``r2_dome`` by default and every service and state topic hangs off the node
 name (``~/leds/run``), so ``-r __node:=other`` moves them clear of a real dome on the graph.
-The device's absolute topics (``/dome/text/line0|1``, ``/dome/audio/level``) are kept, and the
+The device's absolute topics (``/dome/text/line0|1``, ``/dome/audio/level``) are the default;
+a mock under another node name (``-r __node:=other``) moves them to ``/other/dome/...`` so
+they too clear a real dome. The
 mock adds ``~/mock/console``, ``~/mock/picture`` and ``~/mock/image``. Behaviour lives in
 :mod:`r2_mocks.led_model` and :mod:`r2_mocks.magic_model`; this file maps them to ROS.
 """
@@ -126,13 +128,14 @@ class DomeMock(Node):
                 MAX_STATE_HZ, values['state_hz']))
         if values['hold_ms'] < 0.0 or values['too_long_sleep_s'] < 0.0:
             raise ValueError('hold_ms and too_long_sleep_s must be >= 0')
-        fitted = self.get_parameter('fitted').value
-        if not isinstance(fitted, bool):
-            raise ValueError('fitted must be a bool, got %r' % (fitted,))
+        fitted = self._bool_param('fitted')      # a strip / a panel is fitted, for both models
+        name = self.get_name()
+        prefix = '' if name == 'r2_dome' else '/' + name       # the device's /dome/... topics
         self.no_reply_s = values['too_long_sleep_s']
         self.catalogue = load_catalogue(self.get_parameter('config').value)
         manual = Manual()           # the sticky setting, one flag for both models
-        self.leds = LedModel(self.catalogue, hold_ms=values['hold_ms'], manual=manual)
+        self.leds = LedModel(
+            self.catalogue, hold_ms=values['hold_ms'], manual=manual, fitted=fitted)
         self.panel = MagicModel(
             self.catalogue, hold_ms=values['hold_ms'], fitted=fitted, manual=manual)
         self.console = Console(self.leds, self.panel)
@@ -159,10 +162,10 @@ class DomeMock(Node):
         self.create_subscription(String, '~/mock/console', self._on_console, reliable)
         for index in (0, 1):
             self.create_subscription(
-                String, '/dome/text/line%d' % index,
+                String, '%s/dome/text/line%d' % (prefix, index),
                 lambda msg, index=index: self._on_text(index, msg), reliable)
         self.create_subscription(
-            UInt8, '/dome/audio/level', self._on_level,
+            UInt8, prefix + '/dome/audio/level', self._on_level,
             QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT))
         self.create_timer(1.0 / values['state_hz'], self._tick)
         self.create_timer(self.panel.panel['poll_period_ms'] / 1000.0, self._poll)
@@ -170,6 +173,12 @@ class DomeMock(Node):
             'dome mock up as %s (config %s, state_hz %g, hold_ms %g, magic panel %s)' % (
                 self.get_fully_qualified_name(), self.get_parameter('config').value,
                 values['state_hz'], values['hold_ms'], 'fitted' if fitted else 'not fitted'))
+
+    def _bool_param(self, name):
+        value = self.get_parameter(name).value
+        if not isinstance(value, bool):
+            raise ValueError('%s must be a bool, got %r' % (name, value))
+        return value
 
     def now(self):
         """Return the node clock in seconds."""

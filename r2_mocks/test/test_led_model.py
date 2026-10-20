@@ -222,6 +222,11 @@ def test_say_refusal_strings(m, surface_name, lines, kwargs, reason):
     assert m.say(0, surface_name, lines, **kwargs) == (False, reason)
 
 
+def test_text_length_is_counted_in_utf_8_bytes(m):
+    assert m.say(0, 'fld', ['\u00e9' * 40]) == (False, 'text too long')    # 40 chars, 80 bytes
+    assert m.say(0, 'fld', ['\u00e9' * 31 + 'x']) == (True, '')            # 63 bytes
+
+
 def test_text_of_63_characters_is_accepted(m):
     assert m.say(0, 'fld', ['x' * 63]) == (True, '')
 
@@ -415,7 +420,7 @@ def test_unknown_surface_comes_before_the_hold(m):
 
 def test_not_fitted_comes_before_the_hold(m):
     m.manual.set_on(True)
-    m.set_enabled(False)
+    m.fitted = False
     assert m.run(0, 'fld', 'fire', priority=10) == (False, 'not fitted')
 
 
@@ -440,13 +445,24 @@ def test_owner_auto_drops_manual_and_every_timed_hold(m):
     assert m.run(1, 'fld', 'fire', priority=10) == (True, '')
 
 
-def test_enable_off_reports_strip_enabled_false_and_refuses_not_fitted(m):
-    m.set_enabled(False)
-    assert m.state(0)['strip_enabled'] is False
+def test_a_strip_that_is_not_wired_refuses_everything_as_not_fitted(m):
+    m.fitted = False
     for result in (m.run(0, 'fld', 'fire'), m.say(0, 'fld', ['x'])):
         assert result == (False, 'not fitted')
     assert m.configure(0, 'tfld', led.APPLY_MODE, mode=0)[:2] == (False, 'not fitted')
     assert m.stop(0, 'fld')[:2] == (False, 'not fitted')
+
+
+def test_enable_off_darkens_the_strip_but_accepts_and_tracks_writes(m):
+    m.set_enabled(False)
+    assert m.state(0)['strip_enabled'] is False
+    assert m.run(0, 'fld', 'fire') == (True, '')
+    assert next(s for s in m.surface_states(0) if s['name'] == 'fld')['running']
+    assert m.configure(0, 'tfld', led.APPLY_BRIGHTNESS, brightness=33)[:2] == (True, '')
+    assert m.stop(0, 'fld')[:2] == (True, '')
+    assert m.state(0)['strip_enabled'] is False
+    m.set_enabled(True)
+    assert m.state(0)['strip_enabled'] is True
 
 
 def test_owner_of_32_bytes_is_too_long_31_is_fine(m):

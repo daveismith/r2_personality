@@ -121,7 +121,7 @@
       "foxglovePanelTitle": "Channel state (0 idle, 1 running, 2 claimed, 3 foreign, 4 stale, 5 offline, 6 dark)"
     },
     "RawMessages!picture": {
-      "topicPath": "/r2_dome/mock/picture",
+      "topicPath": "/dome_mock/mock/picture",
       "diffTopicPath": "",
       "diffMethod": "custom",
       "diffEnabled": false,
@@ -130,7 +130,7 @@
       "foxglovePanelTitle": "Dome picture (sim)"
     },
     "Image!picture": {
-      "cameraTopic": "/r2_dome/mock/image",
+      "cameraTopic": "/dome_mock/mock/image",
       "enabledMarkerTopics": [],
       "synchronize": false,
       "mode": "fit",
