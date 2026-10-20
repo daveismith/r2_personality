@@ -88,7 +88,10 @@ Rules (plan 4.2), each named by a test:
    a release, the end of a hold (once the person's run has ended), and the
    device coming back all re-apply it. A display left in a mode other than
    random or effect is put back to random with the drift. The Magic Panel
-   brightness is only sent while the panel's ``held_by`` is empty.
+   brightness is only sent while the panel's ``held_by`` is empty. A palette
+   request the device fails for any other reason (a timeout, a refusal that
+   is not a hold) is sent again after ``device_stale_s``; a new label sends
+   at once.
 9. **Watchdog.** ``/mood/state`` older than ``mood_stale_s`` (or never seen
    ``mood_stale_s`` after the first call): neutral palette, no flourishes,
    status STALE when nothing else applies. No snapshot for
@@ -204,6 +207,9 @@ class Channel:
         """Return True when the two share a display."""
         return bool(set(self.displays) & set(other.displays))
 
+
+# Why a device call failed without the device refusing it: worth sending the palette again.
+RETRYABLE_REASONS = ('timeout', 'device offline', 'stale')
 
 CHANNELS = MappingProxyType({
     'fld': Channel('fld', 'led', ('fld',), ('tfld', 'bfld')),
@@ -473,6 +479,7 @@ class Arbiter:
         self._last_now = 0.0
         self._was_stale = False
         self._needs_palette = set()
+        self._palette_retry_at = {}      # channel -> earliest re-send of a failed palette
         self._eligible = {}
         self._flourish = FlourishScheduler(self._rng)
         self._serial = 0
@@ -550,7 +557,7 @@ class Arbiter:
         now = self._clock(self._last_now if now is None else now)
         self._config = config
         self._validate_picks()
-        self._needs_palette.update(self._palette_channels)
+        self._want_palette()
         if self._label and not self._was_stale:
             self._restart_flourish(now)
         return self._settle(now)
@@ -567,7 +574,7 @@ class Arbiter:
             if label not in self._config.moods:
                 self._warn(('label', label), 'mood %r has no palette in expression.yaml; '
                                              'using neutral' % label)
-            self._needs_palette.update(self._palette_channels)
+            self._want_palette()
             if not self._was_stale:
                 self._restart_flourish(now)
         return self._settle(now)
@@ -735,6 +742,11 @@ class Arbiter:
             line = '%s refused %r: channel foreign (%s)' % (what, reason, holder)
         else:
             line = '%s failed: %s' % (what, reason or 'no reason given')
+            if action.why == 'palette' and reason in RETRYABLE_REASONS:
+                # Not a hold (that re-applies when it ends): try again after a backoff.
+                self._needs_palette.add(cs.spec.palette_channel)
+                self._palette_retry_at[cs.spec.palette_channel] = (
+                    now + self._config.defaults.device_stale_s)
         if cs.run is run and run is not None and run.surfaces:
             line += '; %s keeps its run' % ', '.join(sorted(run.surfaces))
         return line
@@ -1184,7 +1196,7 @@ class Arbiter:
         stale = self._stale(now)
         if stale != self._was_stale:
             self._was_stale = stale
-            self._needs_palette.update(self._palette_channels)
+            self._want_palette()
             if stale:
                 self._flourish.stop()
             else:
@@ -1194,12 +1206,20 @@ class Arbiter:
             cs = self._ch[name]
             eligible = self._palette_eligible(cs, now)
             if eligible and not self._eligible.get(name, False):
-                self._needs_palette.add(name)
+                self._want_palette((name,))
             self._eligible[name] = eligible
-            if eligible and name in self._needs_palette and (stale or self._label):
+            if (eligible and name in self._needs_palette and (stale or self._label) and
+                    now >= self._palette_retry_at.get(name, 0.0)):
                 actions += self._palette_actions(cs, stale)
                 self._needs_palette.discard(name)
+                self._palette_retry_at.pop(name, None)
         return actions
+
+    def _want_palette(self, names=None):
+        """Mark channels as needing their palette now (a new look or a return is not a retry)."""
+        for name in self._palette_channels if names is None else names:
+            self._needs_palette.add(name)
+            self._palette_retry_at.pop(name, None)
 
     def _palette_actions(self, cs, stale):
         style = resolve_styles(self._config, self._label, self._strength,

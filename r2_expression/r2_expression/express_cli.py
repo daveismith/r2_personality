@@ -20,12 +20,13 @@ The ``express`` operator tool: drive R2's lights by hand through the arbiters.
     express effect  <channel> <name> [--rgb ff2200] [--speed 5] [--duration 5]
     express clip    <channel> <name> [...]
     express text    <channel> "line1" ["line2"] [--motion bounce] [--on-black] [...]
-    express configure <channel> [--drift calm|lively] [--brightness N]
+    express configure <channel> [--drift calm|lively] [--brightness N]   # drift: fld tfld bfld rld
     express sequence magic <id|name> [--repeat 1] [--end leave|blank] [--duration 5]
     express stop    <channel> [--mode blank|freeze]
     express status  [--watch]
     express dome    "<console line>"          # the sim mock's console only
 
+claim/release call /expression/claim/led, or .../magic for magic (--claim-service overrides).
 Intents go out as ``source: manual`` at priority 199, which a person at the dome still
 beats; ``--override`` sends 200.  Exit codes: 0 done (claim accepted), 1 refused or
 unavailable, 2 bad arguments.  The argument handling (:func:`parse_args`,
@@ -59,7 +60,9 @@ MAGIC_BRIGHTNESS = BRIGHTNESS_RANGE['magic'][1]
 
 INTENT_TOPIC = '/expression/intent'
 STATUS_TOPIC = '/expression/status'
-CLAIM_SERVICE = '/expression/claim'
+CLAIM_SERVICE_LED = '/expression/claim/led'       # the LED arbiter's (fld tfld bfld rld psi)
+CLAIM_SERVICE_MAGIC = '/expression/claim/magic'
+DRIFT_CHANNELS = ('fld', 'tfld', 'bfld', 'rld')
 DEFAULT_DEVICE = '/r2_dome'
 
 LISTENER_WAIT_S = 2.0
@@ -180,7 +183,8 @@ def build_parser():
         p = sub.add_parser(verb, help=text)
         p.add_argument('channel', type=_channel)
         p.add_argument('--owner', default='express', type=_name)
-        p.add_argument('--claim-service', default=CLAIM_SERVICE, metavar='NAME')
+        p.add_argument('--claim-service', metavar='NAME',
+                       help='override: /expression/claim/led, or .../magic for magic')
         if verb == 'claim':
             p.add_argument('--priority', type=_ranged_int(0, 255), default=DEFAULT_PRIORITY)
             p.add_argument('--override', action='store_true', help='claim at 200')
@@ -199,6 +203,8 @@ def parse_args(argv):
     parser = build_parser()
     ns = parser.parse_args(argv)
     cmd = ns.command
+    if cmd in ('claim', 'release') and ns.claim_service is None:
+        ns.claim_service = CLAIM_SERVICE_MAGIC if ns.channel == 'magic' else CLAIM_SERVICE_LED
     if cmd == 'claim' and ns.override:
         ns.priority = OVERRIDE_PRIORITY
     if cmd not in ('effect', 'clip', 'text', 'configure', 'sequence', 'stop'):
@@ -222,8 +228,8 @@ def parse_args(argv):
     if cmd == 'configure':
         if ns.drift is None and ns.brightness is None:
             parser.error('configure needs --drift and/or --brightness')
-        if ns.drift and ns.channel not in ('fld', 'rld'):
-            parser.error('--drift is for fld and rld')
+        if ns.drift and ns.channel not in DRIFT_CHANNELS:
+            parser.error('--drift is for fld, tfld, bfld and rld')
         if ns.brightness is not None and magic and ns.brightness > MAGIC_BRIGHTNESS:
             parser.error('magic brightness is 0 to 15')
     if cmd == 'stop' and ns.mode and not magic:
@@ -429,7 +435,7 @@ def _try_shutdown():
     from rclpy._rclpy_pybind11 import RCLError
     try:
         rclpy.try_shutdown()
-    except RCLError:
+    except (RCLError, RuntimeError):     # a session that is slow to close is not a failure
         pass
 
 

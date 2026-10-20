@@ -37,7 +37,7 @@ from astromech_msgs.msg import LedStateArray
 from astromech_msgs.msg import MagicPanelState
 from astromech_msgs.msg import MoodState
 from astromech_msgs.srv import ClaimChannel
-from fixtures import BASE
+from fixtures import BASE, shutdown_rclpy
 import pytest
 import rclpy
 from rclpy.executors import SingleThreadedExecutor
@@ -296,7 +296,7 @@ class Stack:
 def ros_context():
     rclpy.init()
     yield
-    rclpy.shutdown()
+    shutdown_rclpy()
 
 
 @pytest.fixture
@@ -677,3 +677,27 @@ def test_a_restarted_arbiter_adopts_its_own_leftover_run(stack):
     assert 0 < status.active_remaining_ms <= 30000       # max_duration_ms from the restart
     assert s.surface('rld').running                       # not stopped on adoption
     assert s.get_status('fld').state != STATE_RUNNING
+
+
+def test_a_stalled_device_queue_drops_stale_personality_actions_but_keeps_manual(stack):
+    s = stack(kinds=('led',))
+    s.start_mood('calm')
+    s.wait_led(lambda m: all(s.display(n).brightness == 60 for n in ('tfld', 'rld', 'fpsi')),
+               10.0, 'the calm palette applied')
+    s.mock.send(signal.SIGSTOP)
+    # The first call blocks the worker for its 5 s timeout; the rest queue up behind it.
+    s.intent('fld', 'manual', 199, 'effect', {'name': 'fire'}, duration_ms=1000)
+    for name in ('fire', 'rainbow', 'roam'):
+        s.intent('rld', 'idle', 10, 'effect', {'name': name}, duration_ms=20000)
+    s.intent('psi', 'manual', 199, 'effect', {'name': 'rainbow'}, duration_ms=20000)
+    wait_until(lambda: 'no answer in 5 s' in s.arbiters['led'].text(), 12.0, 'timeout logged',
+               s.output)
+    s.mock.send(signal.SIGCONT)
+    wait_until(lambda: 'dropped 3 stale device actions' in s.arbiters['led'].text(), 20.0,
+               'stale burst reported', s.output)
+    text = s.arbiters['led'].text()
+    assert text.count('dropping queued personality actions') == 1     # once per burst
+    s.wait_led(lambda m: next(x for x in m.surfaces if x.name == 'fpsi').running, 15.0,
+               'the manual psi run was kept')
+    assert s.surface('fpsi').effect == 'rainbow'
+    assert not s.surface('rld').running                # the stale idle runs never played

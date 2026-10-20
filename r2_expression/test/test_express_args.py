@@ -90,9 +90,23 @@ def test_magic_configure_is_the_brightness_action():
 def test_claim_defaults_and_override():
     ns = parse_args(['claim', 'fld'])
     assert (ns.priority, ns.lease, ns.owner, ns.claim_service) == \
-        (199, 30.0, 'express', '/expression/claim')
+        (199, 30.0, 'express', '/expression/claim/led')
     assert parse_args(['claim', 'fld', '--override']).priority == 200
     assert parse_args(['release', 'fld', '--owner', 'me']).owner == 'me'
+
+
+def test_claim_service_follows_the_channel():
+    for channel in ('fld', 'tfld', 'bfld', 'rld', 'psi'):
+        for verb in ('claim', 'release'):
+            assert parse_args([verb, channel]).claim_service == '/expression/claim/led'
+    for verb in ('claim', 'release'):
+        assert parse_args([verb, 'magic']).claim_service == '/expression/claim/magic'
+    assert parse_args(['claim', 'magic', '--claim-service', '/x']).claim_service == '/x'
+
+
+def test_drift_is_accepted_on_the_logic_displays():
+    for channel in ('fld', 'tfld', 'bfld', 'rld'):
+        assert params('configure', channel, '--drift', 'calm') == {'drift': 'calm'}
 
 
 @pytest.mark.parametrize('argv', [

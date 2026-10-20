@@ -41,22 +41,40 @@
       "foxglovePanelTitle": "Intent: stop fld"
     },
     "CallService!claim": {
-      "serviceName": "/expression/claim",
+      "serviceName": "/expression/claim/led",
       "requestPayload": "{\n  \"channel\": \"fld\",\n  \"owner\": \"foxglove\",\n  \"priority\": 199,\n  \"lease_s\": 30\n}",
       "layout": "vertical",
       "buttonText": "Claim fld for 30 s",
-      "buttonTooltip": "astromech_msgs/srv/ClaimChannel: hold a channel at 199",
+      "buttonTooltip": "astromech_msgs/srv/ClaimChannel on the LED arbiter: hold a channel at 199",
       "buttonColor": "#986ee2",
-      "foxglovePanelTitle": "Claim (/expression/claim)"
+      "foxglovePanelTitle": "Claim fld (led)"
     },
     "CallService!release": {
-      "serviceName": "/expression/claim",
+      "serviceName": "/expression/claim/led",
       "requestPayload": "{\n  \"channel\": \"fld\",\n  \"owner\": \"foxglove\",\n  \"priority\": 199,\n  \"lease_s\": 0\n}",
       "layout": "vertical",
       "buttonText": "Release fld",
       "buttonTooltip": "ClaimChannel with lease_s 0 releases",
       "buttonColor": "#986ee2",
-      "foxglovePanelTitle": "Release (/expression/claim)"
+      "foxglovePanelTitle": "Release fld (led)"
+    },
+    "CallService!claimmagic": {
+      "serviceName": "/expression/claim/magic",
+      "requestPayload": "{\n  \"channel\": \"magic\",\n  \"owner\": \"foxglove\",\n  \"priority\": 199,\n  \"lease_s\": 30\n}",
+      "layout": "vertical",
+      "buttonText": "Claim magic for 30 s",
+      "buttonTooltip": "ClaimChannel on the Magic Panel arbiter: hold the panel at 199",
+      "buttonColor": "#986ee2",
+      "foxglovePanelTitle": "Claim magic (magic)"
+    },
+    "CallService!releasemagic": {
+      "serviceName": "/expression/claim/magic",
+      "requestPayload": "{\n  \"channel\": \"magic\",\n  \"owner\": \"foxglove\",\n  \"priority\": 199,\n  \"lease_s\": 0\n}",
+      "layout": "vertical",
+      "buttonText": "Release magic",
+      "buttonTooltip": "ClaimChannel with lease_s 0 releases",
+      "buttonColor": "#986ee2",
+      "foxglovePanelTitle": "Release magic (magic)"
     },
     "StateTransitions!state": {
       "paths": [
@@ -157,8 +175,18 @@
       },
       "second": {
         "direction": "column",
-        "first": "CallService!claim",
-        "second": "CallService!release",
+        "first": {
+          "direction": "column",
+          "first": "CallService!claim",
+          "second": "CallService!release",
+          "splitPercentage": 50.0
+        },
+        "second": {
+          "direction": "column",
+          "first": "CallService!claimmagic",
+          "second": "CallService!releasemagic",
+          "splitPercentage": 50.0
+        },
         "splitPercentage": 50.0
       },
       "splitPercentage": 50

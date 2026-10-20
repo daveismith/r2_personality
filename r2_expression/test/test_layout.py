@@ -73,12 +73,15 @@ def test_publish_panels_send_complete_manual_intents(layout):
 
 
 def test_claim_and_release_panels(layout):
-    bodies = [strict_json(c['requestPayload']) for c in panels(layout, 'CallService').values()]
+    calls = panels(layout, 'CallService').values()
+    seen = {(c['serviceName'], strict_json(c['requestPayload'])['channel'],
+             strict_json(c['requestPayload'])['lease_s']) for c in calls}
+    assert seen == {('/expression/claim/led', 'fld', 30), ('/expression/claim/led', 'fld', 0),
+                    ('/expression/claim/magic', 'magic', 30),
+                    ('/expression/claim/magic', 'magic', 0)}
+    bodies = [strict_json(c['requestPayload']) for c in calls]
     assert all(set(b) == CLAIM_FIELDS for b in bodies)
-    assert sorted(b['lease_s'] for b in bodies) == [0, 30]
     assert all(b['owner'] == 'foxglove' and b['priority'] == 199 for b in bodies)
-    assert {c['serviceName'] for c in panels(layout, 'CallService').values()} == \
-        {'/expression/claim'}
 
 
 def test_state_and_sim_panels(layout):

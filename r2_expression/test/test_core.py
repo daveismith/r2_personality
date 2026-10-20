@@ -585,6 +585,71 @@ def test_hold_expiry_reapplies_the_palette():
     assert step(a, 4.0) == []                        # once, not every tick
 
 
+def _styled(out, channel):
+    return [x for x in out if x.channel == channel and x.call == CALL_CONFIGURE]
+
+
+def _fresh_palette():
+    a = Arbiter(cfg(), LED_CHANNELS, rng=FixedRng(0.0))
+    collect(a.set_catalogue(LED_CAT, 0.0))
+    collect(a.led_state(led_snap(), 0.0))
+    return a, collect(a.mood('calm', 1.0, 0.0))
+
+
+def test_a_failed_palette_configure_is_retried_after_the_backoff():
+    a, out = _fresh_palette()
+    (first,) = _styled(out, 'rld')
+    assert a.device_reply(first, False, 'timeout', 0.1).startswith('rld: configure')
+    assert _styled(step(a, 4.9), 'rld') == []            # device_stale_s (5 s) not over
+    again = _styled(step(a, 5.2), 'rld')
+    assert len(again) == 1 and again[0].why == 'palette'
+    assert a.device_reply(again[0], True, '', 5.3) == ''
+    assert _styled(step(a, 20.0), 'rld') == []           # accepted: not again
+
+
+def test_a_palette_the_device_refuses_outright_is_not_retried():
+    a, out = _fresh_palette()
+    a.device_reply(_styled(out, 'rld')[0], False, 'out of range', 0.1)
+    assert _styled(step(a, 30.0), 'rld') == []
+
+
+def test_a_failed_palette_retry_backs_off_again():
+    a, out = _fresh_palette()
+    a.device_reply(_styled(out, 'rld')[0], False, 'timeout', 0.1)
+    (again,) = _styled(step(a, 5.2), 'rld')
+    a.device_reply(again, False, 'timeout', 5.3)
+    assert _styled(step(a, 10.0), 'rld') == []
+    assert len(_styled(step(a, 10.5), 'rld')) == 1
+
+
+def test_a_new_label_after_a_failed_palette_does_not_wait_for_the_backoff():
+    a, out = _fresh_palette()
+    a.device_reply(_styled(out, 'rld')[0], False, 'timeout', 0.1)
+    assert len(_styled(a.mood('excited', 1.0, 1.0), 'rld')) == 1
+
+
+def test_a_palette_refused_as_held_is_not_resent_until_the_hold_ends():
+    a, out = _fresh_palette()
+    line = a.device_reply(_styled(out, 'rld')[0], False, 'held by console', 0.1)
+    assert 'channel foreign' in line and a.status('rld', 0.1).state == STATE_FOREIGN
+    person = led_snap(displays={'rld': held('console', 5000)})
+    assert _styled(step(a, 9.0, snap=person), 'rld') == []   # past the backoff, still held
+    assert a.status('rld', 9.0).state == STATE_FOREIGN
+    assert len(_styled(step(a, 10.0), 'rld')) == 1           # the hold ended
+
+
+def test_configure_drift_is_accepted_on_every_logic_display_but_not_the_psis():
+    a = led()
+    for channel in ('fld', 'tfld', 'bfld', 'rld'):
+        r = intent(a, 1.0, channel=channel, source='manual', priority=199, action='configure',
+                   params={'drift': 'lively'})
+        assert r.accepted and r.actions[-1].request['apply'] & APPLY_DRIFT
+        assert r.actions[-1].request['drift'] == 'lively'
+    r = intent(a, 2.0, channel='psi', source='manual', priority=199, action='configure',
+               params={'drift': 'lively'})
+    assert not r.accepted and 'display has no drift' in r.reason
+
+
 def test_after_the_hold_the_palette_waits_for_the_persons_run_to_end():
     a = led()
     run = {'rld': running('rainbow', source='console', owner='')}

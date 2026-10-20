@@ -49,9 +49,12 @@ from r2_expression import magic_renderer
 from r2_expression.config import ExpressionConfigError
 from r2_expression.config import load_config
 from r2_expression.core import Arbiter
+from r2_expression.core import CALL_MAGIC_STOP
+from r2_expression.core import CALL_STOP
 from r2_expression.core import held_by
 from r2_expression.core import LED_CHANNELS
 from r2_expression.core import MAGIC_CHANNELS
+from r2_expression.core import PRIORITY_BEHAVIOR
 from r2_expression.core import STATE_FOREIGN
 from r2_expression.core import STATE_IDLE
 from r2_expression.core import STATE_NAMES
@@ -160,7 +163,9 @@ class ArbiterNode(Node):
         config = load_config(self._config_path)     # ExpressionConfigError: main() exits
         self._core = Arbiter(config, self._kind.channels)
         self._lock = threading.Lock()
-        self._queue = queue.Queue()
+        self._queue = queue.Queue()        # (time.monotonic() when queued, Action | None)
+        self._max_age_s = config.defaults.device_stale_s
+        self._stale_burst = 0              # stale actions dropped since the queue last caught up
         self._stop = threading.Event()
         self._catalogue_ready = False
         self._panel = None                 # magic: (interrogations, link) of the last state
@@ -210,7 +215,7 @@ class ArbiterNode(Node):
     def _settle(self, now, actions=(), force=False):
         """Queue ``actions``, log core warnings, publish status changes. Hold ``_lock``."""
         for action in actions:
-            self._queue.put(action)
+            self._queue.put((time.monotonic(), action))
         log = self.get_logger()
         for line in self._core.take_warnings():
             log.warning(line)
@@ -281,7 +286,7 @@ class ArbiterNode(Node):
                                      (seen[1] == 1 and previous[1] != 1)):
             self.get_logger().info('panel changed (interrogations %d, link %d): listing again'
                                    % seen)
-            self._queue.put(None)
+            self._queue.put((time.monotonic(), None))
 
     def _on_claim(self, request, response):
         with self._lock:
@@ -324,18 +329,43 @@ class ArbiterNode(Node):
         self._first_catalogue()
         while not self._stop.is_set():
             try:
-                item = self._queue.get(timeout=POLL_S)
+                queued_at, item = self._queue.get(timeout=POLL_S)
             except queue.Empty:
+                self._end_stale_burst()
                 continue
             try:
                 if item is None:
+                    self._end_stale_burst()
                     self._load_catalogue()
+                elif self._is_stale(queued_at, item):
+                    self._drop_stale(item)
                 else:
+                    self._end_stale_burst()
                     self._send(item)
             except Exception as exc:     # the worker must outlive any one bad request
                 self.get_logger().error('device worker: %r' % (exc,))
                 if item is not None:
                     self._reply(item, False, 'internal: %s' % exc, quiet=True)
+
+    def _is_stale(self, queued_at, action):
+        """Return True for a start or palette call that waited over ``device_stale_s``."""
+        return (action.priority <= PRIORITY_BEHAVIOR and
+                action.call not in (CALL_STOP, CALL_MAGIC_STOP) and
+                time.monotonic() - queued_at > self._max_age_s)
+
+    def _drop_stale(self, action):
+        """Not played into a recovered device: tell the core it failed, count it, log the burst."""
+        if self._stale_burst == 0:
+            self.get_logger().warning(
+                'device worker is behind: dropping queued personality actions older than '
+                '%.0f s (manual, safety and stops are kept)' % self._max_age_s)
+        self._stale_burst += 1
+        self._reply(action, False, 'stale', quiet=True)
+
+    def _end_stale_burst(self):
+        if self._stale_burst:
+            self.get_logger().info('dropped %d stale device actions' % self._stale_burst)
+            self._stale_burst = 0
 
     def _load_catalogue(self):
         """Call `list` once and give the core the catalogue; return True on success."""
@@ -381,7 +411,7 @@ class ArbiterNode(Node):
         deadline = time.monotonic() + seconds
         while not self._stop.is_set() and time.monotonic() < deadline:
             try:
-                action = self._queue.get(timeout=POLL_S)
+                _, action = self._queue.get(timeout=POLL_S)
             except queue.Empty:
                 continue
             if action is not None:
@@ -451,7 +481,7 @@ def _try_shutdown():
     """Shut rclpy down unless a signal handler already did."""
     try:
         rclpy.try_shutdown()
-    except RCLError:
+    except (RCLError, RuntimeError):     # a session that is slow to close is not a failure
         pass
 
 

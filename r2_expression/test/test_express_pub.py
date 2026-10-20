@@ -21,48 +21,58 @@ import uuid
 
 from astromech_msgs.msg import ChannelStatus, ExpressionIntent
 from astromech_msgs.srv import ClaimChannel
+from fixtures import shutdown_rclpy
 import pytest
 import rclpy
 from rclpy.qos import QoSProfile, ReliabilityPolicy
 from std_msgs.msg import String
 
 
+@pytest.fixture(scope='module', autouse=True)
+def ros_context():
+    rclpy.init()
+    yield
+    shutdown_rclpy()
+
+
 @pytest.fixture
 def harness():
-    rclpy.init()
     node = rclpy.create_node('test_express_pub_%s' % uuid.uuid4().hex[:6])
     tag = uuid.uuid4().hex[:8]
     h = type('H', (), {})()
     h.node, h.tag = node, tag
     h.intent_topic = '/test_express_%s/intent' % tag
     h.status_topic = '/test_express_%s/status' % tag
-    h.claim_service = '/test_express_%s/claim' % tag
+    h.claim_service = '/test_express_%s/claim_led' % tag
+    h.claim_service_magic = '/test_express_%s/claim_magic' % tag
     h.console_topic = '/test_express_%s/mock/console' % tag
-    h.calls, h.intents, h.consoles = [], [], []
+    h.calls, h.magic_calls, h.intents, h.consoles = [], [], [], []
     h.accept = True
     qos = QoSProfile(depth=10, reliability=ReliabilityPolicy.RELIABLE)
     node.create_subscription(ExpressionIntent, h.intent_topic, h.intents.append, qos)
     node.create_subscription(String, h.console_topic, h.consoles.append, qos)
     h.status_pub = node.create_publisher(ChannelStatus, h.status_topic, qos)
 
-    def claim(request, response):
-        h.calls.append(request)
+    def claim(request, response, calls=h.calls):
+        calls.append(request)
         response.accepted = h.accept
         response.reason = '' if h.accept else 'held by someone'
         response.status.channel = request.channel
         response.status.state = ChannelStatus.STATE_CLAIMED
         return response
     node.create_service(ClaimChannel, h.claim_service, claim)
+    node.create_service(ClaimChannel, h.claim_service_magic,
+                        lambda q, r: claim(q, r, h.magic_calls))
     yield h
     node.destroy_node()
-    rclpy.shutdown()
 
 
 def run(h, *argv, until=lambda: False, timeout=20.0):
     cmd = ['ros2', 'run', 'r2_expression', 'express', *argv, '--ros-args',
            '-r', '/expression/intent:=' + h.intent_topic,
            '-r', '/expression/status:=' + h.status_topic,
-           '-r', '/expression/claim:=' + h.claim_service]
+           '-r', '/expression/claim/led:=' + h.claim_service,
+           '-r', '/expression/claim/magic:=' + h.claim_service_magic]
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     end = time.monotonic() + timeout
     try:
@@ -75,6 +85,11 @@ def run(h, *argv, until=lambda: False, timeout=20.0):
     finally:
         if proc.poll() is None:
             proc.kill()
+
+
+def accepted(out):
+    # the zenoh scouting warnings share stdout, so look for the line
+    return any(ln.startswith('accepted') for ln in out.splitlines())
 
 
 def test_effect_publishes_a_manual_199_intent(harness):
@@ -97,13 +112,23 @@ def test_override_and_hold(harness):
 
 def test_claim_accepted_and_refused_exit_codes(harness):
     code, out, _ = run(harness, 'claim', 'fld', '--owner', 'me', '--lease', '12')
-    assert code == 0 and out.startswith('accepted')
+    assert code == 0 and accepted(out)
     (r,) = harness.calls
     assert (r.channel, r.owner, r.priority, r.lease_s) == ('fld', 'me', 199, 12.0)
     harness.accept = False
     code, out, _ = run(harness, 'release', 'fld', '--owner', 'me')
     assert code == 1 and 'held by someone' in out
     assert harness.calls[-1].lease_s == 0.0
+
+
+def test_magic_claim_and_release_use_the_magic_service(harness):
+    code, out, _ = run(harness, 'claim', 'magic', '--owner', 'me')
+    assert code == 0 and accepted(out)
+    code, _, _ = run(harness, 'release', 'magic', '--owner', 'me')
+    assert code == 0
+    assert [(r.channel, r.lease_s) for r in harness.magic_calls] == [
+        ('magic', 30.0), ('magic', 0.0)]
+    assert harness.calls == []
 
 
 def test_bad_arguments_exit_2_and_publish_nothing(harness):

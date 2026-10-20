@@ -34,7 +34,7 @@ overlapping channels, because the device replaces any run sharing a display.
    colour scheme, not a mood knob.
 2. **Ladder.** `safety` <= 255, `manual` <= 200, `behavior` <= 100, `idle` <= 10. A source
    above its slot, priority 0, an unknown source or action: dropped and counted.
-3. **Claims** (`/expression/claim`): accepted unless another owner holds the channel, or
+3. **Claims** (`/expression/claim/led`, `/expression/claim/magic`): accepted unless another owner holds the channel, or
    an overlapping one, at an equal or higher priority (the refusal names the holder). The
    same owner renews; `lease_s` 0 releases (on the channel the claim is on; any priority);
    leases are capped at `max_lease_s`. Claims
@@ -159,7 +159,7 @@ on rmw_zenoh**: with two servers on one name a request goes to either of them (m
 half the requests for `magic` reached the LED node, which answered `not my channel`). So each
 node offers its own: **`/expression/claim/led`** and **`/expression/claim/magic`**. A node still
 refuses the other's channels with `not my channel` and `accepted false`, so a client that tries
-both is correct. The later `express` CLI and Foxglove panels pick the service by channel.
+both is correct. The `express` CLI and the Foxglove panels pick the service by channel.
 
 ### Status semantics
 
@@ -183,7 +183,12 @@ message arrives for `device_stale_s`.
 
 All device calls are made by **one worker thread**, from a queue, in the order the core produced
 them: one request in flight per device, a 5 s timeout, and a timed-out call is reported to the
-core as refused with reason `timeout`. The executor thread (subscriptions, the claim service,
+core as refused with reason `timeout`. A palette request that fails like this (a timeout, the device offline, a stale drop; not a
+hold, not a refusal) is sent again after `device_stale_s`. The device queue is bounded by age: an `idle` or `behavior`
+action that waited longer than `device_stale_s` when the worker reaches it (the device was
+stalled or slow) is dropped, reported to the core as refused `stale` and logged as
+one WARN per burst plus one INFO with the count; `manual` and `safety` actions (priority above
+100) and stops are always sent. The executor thread (subscriptions, the claim service,
 the tick) never waits on the device; the core is guarded by one lock. Before a request is sent
 the renderer checks what it can: text on a PSI, more than two lines, a line of 64 characters
 or more, a name over 63 bytes (`name too long`: the device never answers it), an owner over 31
@@ -237,17 +242,18 @@ Two ways, same messages: the `express` CLI and the Foxglove tab
 | Magic Panel sequence | `express sequence magic 44 --duration 3` | Publish "magic sequence 44" |
 | drift | `express configure rld --drift lively` | Publish "rld drift lively" |
 | stop | `express stop fld` | Publish "stop fld" |
-| hold a channel | `express claim fld --owner me --lease 30` / `express release fld` | Call Service `/expression/claim` (claim, release) |
+| hold a channel | `express claim fld --owner me --lease 30` / `express release fld` (`magic` for the panel) | Call Service `/expression/claim/led` and `/expression/claim/magic` (a claim and a release panel each) |
 | why is it quiet | `express status [--watch]` | State Transitions on `/expression/status{channel=="fld"}.state` |
 | see the lights (sim) | `express dome "leds run fld fire"` | Raw Messages `/r2_dome/mock/picture`, Image `/r2_dome/mock/image` |
 
+`configure --drift` works on `fld`, `tfld`, `bfld` and `rld` (the PSIs have no drift).
 Also `clip`, `text "line1" "line2" [--motion loop] [--on-black]`, `configure --brightness N`
 (0-100; magic 0-15), `--rgb rrggbb`, `--speed 1-9`, `--hold` (not interruptible), `--id`.
 Exit codes: 0 done (claim accepted, intent sent to a subscriber), 1 refused or nothing
 answering, 2 bad arguments. An intent is fire-and-forget: one an arbiter drops (a higher
-priority holds the channel) shows only as `dropped` in `express status`. If each arbiter
-offers its own claim service, `--claim-service NAME` points claim and release at the right one
-(the shared `/expression/claim` name answers "not my channel" for the other kind).
+priority holds the channel) shows only as `dropped` in `express status`. `claim` and
+`release` call `/expression/claim/led` for `fld`, `tfld`, `bfld`, `rld` and `psi`, and
+`/expression/claim/magic` for `magic`; `--claim-service NAME` overrides the choice.
 
 **199 and `--override`.** Every intent goes out as `source: manual` at priority 199, which
 yields to a person at the dome (their hold on the device is 200 or the device's own).

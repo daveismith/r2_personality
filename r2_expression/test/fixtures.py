@@ -138,3 +138,12 @@ def capture_names():
     sequences = {int(i): n for i, n in
                  re.findall(r"MagicPanelSequence\(id=(\d+), name='([^']*)'", magic)}
     return effects, clips, sequences
+
+
+def shutdown_rclpy():
+    """Shut rclpy down; a zenoh session that is slow to close (RuntimeError) is not a failure."""
+    import rclpy
+    try:
+        rclpy.try_shutdown()
+    except RuntimeError:
+        pass
