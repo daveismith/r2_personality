@@ -317,6 +317,19 @@ def test_manual_intent_auto_claims_until_hold_after_its_run_ends():
     assert a.status('fld', 11.0).dropped == 2       # and the flourish due at 10
 
 
+def test_manual_run_without_duration_holds_its_claim_until_it_ends_then_hold():
+    a = led()
+    intent(a, 1.0, channel='rld', source='manual', priority=199)      # duration 0
+    step(a, 60.0)
+    st = a.status('rld', 60.0)
+    assert (st.state, st.owner, st.lease_remaining_s) == (STATE_RUNNING, 'manual', -1.0)
+    intent(a, 60.0, channel='rld', source='manual', priority=199, action='stop')
+    st = a.status('rld', 60.0)
+    assert (st.state, st.lease_remaining_s) == (STATE_CLAIMED, 5.0)
+    step(a, 65.0)
+    assert a.status('rld', 65.0).state == STATE_IDLE
+
+
 def test_manual_auto_claim_is_renewed_by_each_manual_intent():
     a = led()
     intent(a, 1.0, channel='rld', source='manual', priority=199, action='configure',
@@ -959,6 +972,58 @@ def test_behaviour_intent_never_replaces_a_persons_run_after_the_hold():
     r = intent(a, 1.5, source='behavior', priority=50, params={'name': 'rainbow'})
     assert (r.accepted, r.reason, r.actions) == (False, 'channel is foreign', ())
     assert intent(a, 1.5, source='manual', priority=199).accepted   # an operator may
+
+
+def test_rule7_no_duration_stop_is_sent_into_a_hold():
+    a = magic()
+    r = intent(a, 1.0, channel='magic', source='behavior', priority=100, action='sequence',
+               params={'id': 27, 'repeat': 0}, duration_ms=3000)
+    accept_all(a, r.actions, 1.0)
+    ours_held = magic_snap(state=1, started_by='ros', owner=OWNER, sequence_id=27,
+                           held_by='console', hold_remaining_ms=60000)
+    assert step(a, 40.0, snap=ours_held) == []
+    assert a.status('magic', 40.0).refused == 0
+    ours = magic_snap(state=1, started_by='ros', owner=OWNER, sequence_id=27)
+    assert calls(step(a, 61.5, snap=ours))[-1:] == [(CALL_MAGIC_STOP, 'magic')]
+
+
+def test_a_stop_retry_keeps_the_manual_claim():
+    a = magic()
+    r = intent(a, 1.0, channel='magic', source='manual', priority=150, action='sequence',
+               params={'id': 27, 'repeat': 0}, duration_ms=3000)
+    accept_all(a, r.actions, 1.0)
+    ours = magic_snap(state=1, started_by='ros', owner=OWNER, sequence_id=27)
+    stop = step(a, 4.0, snap=ours)[0]
+    a.device_reply(stop, False, 'busy', 4.0)
+    step(a, 8.5, snap=ours)
+    assert not a.claim('magic', 'op', 100, 30.0, 8.5).accepted
+
+
+def test_a_stopping_run_ends_only_when_every_surface_took_its_stop():
+    both = led_snap(surfaces={'fpsi': running('pulse'), 'rpsi': running('pulse')})
+    a = led(config=quiet(), snap=both)
+    stops = [x for x in step(a, 30.0, snap=both) if x.call == CALL_STOP]
+    assert sorted(x.target for x in stops) == ['fpsi', 'rpsi']
+    by = {x.target: x for x in stops}
+    a.device_reply(by['fpsi'], True, '', 30.0)
+    a.device_reply(by['rpsi'], False, 'busy', 30.0)
+    assert a.status('psi', 30.0).state == STATE_RUNNING
+
+
+@pytest.mark.parametrize('priority', [True, 5.5])
+def test_a_priority_that_is_not_an_integer_is_a_counted_drop(priority):
+    a = led()
+    r = a.intent(Intent('rld', 'idle', priority, 'effect', {'name': 'fire'}), 1.0)
+    assert not r.accepted and 'integer 1-255' in r.reason
+    assert a.status('rld', 1.0).dropped == 1
+
+
+def test_release_names_the_channel_the_claim_is_on():
+    a = led()
+    a.claim('fld', 'op', 100, 30.0, 1.0)
+    r = a.claim('tfld', 'op', 0, 0.0, 2.0)
+    assert not r.accepted and "'op' holds fld" in r.reason
+    assert a.claim('fld', 'op', 0, 0.0, 2.0).accepted
 
 
 def test_an_unconfirmed_displaced_run_is_not_restored():

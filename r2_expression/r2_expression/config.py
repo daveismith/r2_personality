@@ -58,7 +58,7 @@ Every rejection raises :class:`ExpressionConfigError` whose message starts
 with the dotted path of the offending key.
 """
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, fields
 import math
 from types import MappingProxyType
 from typing import Hashable, Mapping, Optional, Tuple, Union
@@ -103,8 +103,7 @@ class Defaults:
     device_stale_s: float = 5.0
 
 
-_DEFAULT_FIELDS = ('manual_hold_s', 'mood_stale_s', 'max_duration_ms', 'status_hz',
-                   'max_lease_s', 'device_stale_s')
+_DEFAULT_FIELDS = tuple(f.name for f in fields(Defaults))
 
 
 @dataclass(frozen=True)
@@ -161,7 +160,6 @@ class Flourish:
 class Mood:
     """A palette: a style per channel (only those given) and an optional flourish."""
 
-    name: str
     styles: Mapping[str, Style]
     flourish: Optional[Flourish] = None
 
@@ -185,7 +183,7 @@ class ExpressionConfig:
     def to_dict(self):
         """Return the plain-data form, which :func:`parse_config` accepts back."""
         return {
-            'defaults': {name: getattr(self.defaults, name) for name in _DEFAULT_FIELDS},
+            'defaults': asdict(self.defaults),
             'neutral': self.neutral.to_dict(),
             'moods': {name: mood.to_dict() for name, mood in self.moods.items()},
         }
@@ -248,7 +246,7 @@ def parse_config(data):
         if key not in data:
             raise ExpressionConfigError('%s: required key missing' % key)
     defaults = _defaults(data.get('defaults', {}))
-    neutral = _mood('neutral', data['neutral'], 'neutral', defaults, neutral=True)
+    neutral = _mood(data['neutral'], 'neutral', defaults, neutral=True)
     table = _mapping(data['moods'], 'moods')
     if not table:
         raise ExpressionConfigError('moods: must name at least one mood')
@@ -256,7 +254,7 @@ def parse_config(data):
     for name, entry in table.items():
         if not isinstance(name, str) or not name:
             raise ExpressionConfigError('moods.%r: names must be non-empty strings' % (name,))
-        moods[name] = _mood(name, entry, 'moods.%s' % name, defaults, neutral=False)
+        moods[name] = _mood(entry, 'moods.%s' % name, defaults, neutral=False)
     return ExpressionConfig(defaults=defaults, neutral=neutral,
                             moods=MappingProxyType(moods))
 
@@ -389,7 +387,7 @@ def _style(channel, value, path, neutral):
     return Style(drift=drift, brightness=brightness)
 
 
-def _mood(name, value, path, defaults, neutral):
+def _mood(value, path, defaults, neutral):
     mapping = _mapping(value, path)
     allowed = STYLE_CHANNELS if neutral else STYLE_CHANNELS + ('flourish',)
     for key in mapping:
@@ -406,7 +404,7 @@ def _mood(name, value, path, defaults, neutral):
     flourish = None
     if 'flourish' in mapping:
         flourish = _flourish(mapping['flourish'], '%s.flourish' % path, defaults)
-    return Mood(name=name, styles=MappingProxyType(styles), flourish=flourish)
+    return Mood(styles=MappingProxyType(styles), flourish=flourish)
 
 
 def _flourish(value, path, defaults):

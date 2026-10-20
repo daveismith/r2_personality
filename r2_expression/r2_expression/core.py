@@ -62,10 +62,11 @@ Rules (plan 4.2), each named by a test:
    end on the device by their duration; a Magic Panel run is stopped by the
    arbiter at its duration (the panel has none).
 6. **Manual auto-claim.** A ``manual`` intent claims its channel as owner
-   ``manual`` at its own priority for ``manual_hold_s`` from the intent;
-   while a manual run is still running on the channel the claim is kept, so
-   it ends ``manual_hold_s`` after the later of the last intent and the end
-   of the run. A manual configure, stop or brightness pre-empts lower runs.
+   ``manual`` at its own priority (never lowered by a renewal), ending
+   ``manual_hold_s`` after the later of the last intent and the end of its
+   run: sized from the run's duration when it starts (forever, -1, for a run
+   with none) and re-sized when the run ends. A manual configure, stop or
+   brightness pre-empts lower runs.
 7. **A person at the dome is the device's hold.** A ``held by console|ui|
    text topic`` or ``held: manual`` refusal (:meth:`Arbiter.device_reply`)
    or ``held_by`` on the state topic makes the channel FOREIGN with the
@@ -221,6 +222,22 @@ SURFACE_DISPLAYS = MappingProxyType({
     'fpsi': ('fpsi',), 'rpsi': ('rpsi',)})
 
 
+# The device surfaces whose runs touch each channel's displays.
+_TOUCHING = MappingProxyType({
+    name: frozenset(s for s, displays in SURFACE_DISPLAYS.items()
+                    if set(displays) & set(spec.displays))
+    for name, spec in CHANNELS.items()})
+
+
+def _valid_owner(owner):
+    return bool(owner) and len(owner.encode('utf-8')) <= MAX_OWNER_BYTES
+
+
+def _valid_priority(priority):
+    return not isinstance(priority, bool) and isinstance(priority, int) and \
+        1 <= priority <= 255
+
+
 def channel_of(name):
     """Return the :class:`Channel` named, or holding surface ``fpsi``/``rpsi``; else None."""
     return CHANNELS.get(_SURFACE_CHANNEL.get(name, name))
@@ -256,14 +273,13 @@ class Action:
     def __post_init__(self):
         if self.call not in CALLS:
             raise ValueError('unknown call %r' % self.call)
-        if isinstance(self.priority, bool) or not isinstance(self.priority, int) \
-                or not 1 <= self.priority <= 255:
+        if not _valid_priority(self.priority):
             raise ValueError('a device request needs priority 1-255, never 0 (rule 6): '
                              'got %r' % (self.priority,))
         if 'priority' in self.request and self.request['priority'] != self.priority:
             raise ValueError('request priority %r differs from %r'
                              % (self.request['priority'], self.priority))
-        if not self.owner or len(self.owner.encode('utf-8')) > MAX_OWNER_BYTES:
+        if not _valid_owner(self.owner):
             raise ValueError('owner must be 1-%d bytes' % MAX_OWNER_BYTES)
         if HUE_KEY in self.request or (self.call == CALL_CONFIGURE and
                                        self.request.get('apply', 0) & APPLY_HUE):
@@ -313,9 +329,9 @@ class IntentResult:
 class _Claim:
     owner: str
     priority: int
-    until: float
-    channel: str
+    until: float                  # inf while a manual run of unknown length runs
     auto: bool = False            # a manual intent's auto-claim
+    floor: float = 0.0            # auto: its last intent plus manual_hold_s
 
 
 @dataclass
@@ -335,7 +351,7 @@ class _Run:
     effect: str                   # what the state topic will show: name, 'text', sequence id
     surfaces: set
     until: Optional[float]        # None: unbounded (manual 0)
-    adopted: bool = False
+    device_ends: bool = True      # the device ends it at its duration; else the arbiter stops it
     confirmed_at: Optional[float] = None
     displaced: list = field(default_factory=list)   # (channel state, run) it replaced
     stopping: bool = False        # its duration stop is sent; cleared once accepted
@@ -425,13 +441,15 @@ class Arbiter:
         kinds = {spec.kind for spec in specs}
         if len(kinds) != 1:
             raise ValueError('an arbiter serves one channel group (LEDs or the Magic Panel)')
-        if not owner or len(owner.encode('utf-8')) > MAX_OWNER_BYTES:
+        if not _valid_owner(owner):
             raise ValueError('owner must be 1-%d bytes' % MAX_OWNER_BYTES)
         self.kind = kinds.pop()
         self.owner = owner
         self._config = config
         self._rng = rng if rng is not None else random.Random()
         self._ch = {spec.name: _ChannelState(spec) for spec in specs}
+        self._overlap = {name: tuple(o for o in self._ch.values() if o.spec.overlaps(cs.spec))
+                         for name, cs in self._ch.items()}
         styled = LED_STYLE_CHANNELS if self.kind == 'led' else MAGIC_CHANNELS
         self._palette_channels = tuple(ch for ch in styled if ch in self._ch)
         self._catalogue = None
@@ -486,7 +504,8 @@ class Arbiter:
         else:
             holder = self._holder(cs, now)
             if holder is not None:
-                owner, priority, lease = holder.owner, holder.priority, holder.until - now
+                owner, priority = holder.owner, holder.priority
+                lease = -1.0 if holder.until == math.inf else holder.until - now
         run = cs.run
         remaining = 0
         if run is not None and run.until is not None:
@@ -574,11 +593,15 @@ class Arbiter:
         if not (math.isfinite(lease_s) and lease_s >= 0.0):
             return refuse('lease_s must be a finite number >= 0')
         if lease_s == 0.0:                    # a release, whatever priority it names
+            if owner not in cs.claims:
+                elsewhere = [o.spec.name for o in self._overlapping(cs) if owner in o.claims]
+                if elsewhere:
+                    return refuse('%r holds %s, not %s: release that channel'
+                                  % (owner, elsewhere[0], channel))
             cs.claims.pop(owner, None)
             actions = self._settle(now)
             return ClaimResult(True, '', self.status(channel, now), tuple(actions))
-        if isinstance(priority, bool) or not isinstance(priority, int) \
-                or not 1 <= priority <= 255:
+        if not _valid_priority(priority):
             return refuse('priority must be 1-255')
         for other in self._overlapping(cs):
             for held in other.claims.values():
@@ -587,9 +610,8 @@ class Arbiter:
                     return refuse('claimed by %r at priority %d%s'
                                   % (held.owner, held.priority, where))
         cs.claims[owner] = _Claim(owner, priority,
-                                  now + min(lease_s, self._config.defaults.max_lease_s),
-                                  channel)
-        actions = self._preempt(cs, priority)
+                                  now + min(lease_s, self._config.defaults.max_lease_s))
+        actions = self._preempt(cs, priority, now)
         actions += self._settle(now)
         return ClaimResult(True, '', self.status(channel, now), tuple(actions))
 
@@ -611,7 +633,9 @@ class Arbiter:
             return drop('unknown source %r' % f.source)
         if f.priority == 0:
             return drop('priority 0 is never sent: the device would let it override a person')
-        if not 1 <= f.priority <= slot:
+        if not _valid_priority(f.priority):
+            return drop('priority must be an integer 1-255, got %r' % (f.priority,))
+        if f.priority > slot:
             return drop('priority %d is above the %s slot (%d)' % (f.priority, f.source, slot))
         if f.action not in (LED_ACTIONS if self.kind == 'led' else MAGIC_ACTIONS):
             return drop('unknown action %r' % f.action)
@@ -647,23 +671,24 @@ class Arbiter:
         except _Refuse as exc:
             return drop(str(exc))
 
-        pre = []
-        if f.source == 'manual':
-            auto = cs.claims.get(MANUAL_OWNER)
-            priority = f.priority
-            if auto is not None and auto.until > now:
-                priority = max(priority, auto.priority)     # renewal never lowers it
-            cs.claims[MANUAL_OWNER] = _Claim(
-                MANUAL_OWNER, priority, now + self._config.defaults.manual_hold_s,
-                cs.spec.name, auto=True)
-            if not replaces:
-                pre = self._preempt(cs, f.priority)
         if run is not None:
             for other in self._overlapping(cs):
                 if other.run is not None:     # the device replaces them, once it accepts
                     run.displaced.append((other, other.run))
-                    other.run = None
+                    self._end_run(other, now)
             cs.run = run
+        pre = []
+        if f.source == 'manual':
+            hold_s = self._config.defaults.manual_hold_s
+            auto = cs.claims.get(MANUAL_OWNER)
+            live = auto is not None and auto.until > now
+            cs.claims[MANUAL_OWNER] = _Claim(
+                MANUAL_OWNER, max(f.priority, auto.priority) if live else f.priority,
+                max(auto.until, now + hold_s) if live else now + hold_s,
+                auto=True, floor=now + hold_s)          # renewal never lowers either
+            self._size_auto_claim(cs)
+            if not replaces:
+                pre = self._preempt(cs, f.priority, now)
         note = '' if actions else 'nothing running'
         return IntentResult(True, note, tuple(pre + actions), intent_id)
 
@@ -688,16 +713,19 @@ class Arbiter:
                 run.displaced = []
             elif run is not None and run.stopping and action.call in (CALL_STOP,
                                                                       CALL_MAGIC_STOP):
-                cs.run = None
+                run.surfaces.discard(action.target)
+                if not run.surfaces:
+                    self._end_run(cs, now)
             return '%s: %s' % (what, reason) if reason else ''
         if run is not None and action.call in _RUN_CALLS:
             run.surfaces.discard(action.target)
             if not run.surfaces:
-                cs.run = None
+                self._end_run(cs, now)
                 # Refused outright: what it would have replaced is still running.
                 for other, old in run.displaced:
                     if other.run is None and old.confirmed_at is not None:
                         other.run = old
+                        self._size_auto_claim(other)
         holder = held_by(reason)
         if holder:
             cs.refused += 1
@@ -742,7 +770,7 @@ class Arbiter:
                         _effect_base(snap['effect']) == _effect_base(run.effect)):
                     run.surfaces.discard(name)
             if not run.surfaces:
-                cs.run = None
+                self._end_run(cs, now)
         return self._settle(now)
 
     def magic_state(self, snapshot, now):
@@ -764,35 +792,31 @@ class Arbiter:
         run, m = cs.run, self._magic
         if run is not None and self._evidence(run, now) and not (
                 m['running'] and self._ours(m) and m['effect'] == run.effect):
-            cs.run = None
+            self._end_run(cs, now)
         return self._settle(now)
 
     def tick(self, now):
         """Advance timers to ``now``: leases, holds, durations, staleness, flourishes."""
         now = self._clock(now)
         actions = []
-        hold_s = self._config.defaults.manual_hold_s
-        for cs in self._ch.values():
-            auto = cs.claims.get(MANUAL_OWNER)
-            if auto is not None and auto.auto and any(
-                    o.run is not None and o.run.source == 'manual'
-                    for o in self._overlapping(cs)):
-                auto.until = max(auto.until, now + hold_s)
         for cs in self._ch.values():
             for owner in [o for o, c in cs.claims.items() if c.until <= now]:
                 del cs.claims[owner]
             run = cs.run
             if run is not None and run.until is not None and now >= run.until:
-                if self.kind == 'magic' or run.adopted:
+                if not run.device_ends:
+                    if self._hold(cs, now) is not None:
+                        continue              # a person holds it: stop once they let go
                     stops = self._stops(cs, run.surfaces, run.priority, run.intent_id,
                                         'duration')
                     if stops:
-                        # Kept until the device takes the stop; retried after a hold.
+                        # Kept until the device takes every stop; retried after a hold.
                         actions += stops
                         run.stopping = True
                         run.until = now + DEVICE_HOLD_S
+                        self._size_auto_claim(cs)
                         continue
-                cs.run = None
+                self._end_run(cs, now)
         actions += self._settle(now)
         if not self._was_stale and self._label in self._config.moods:
             pick = self._flourish.poll(self._picks.get(self._label, ()), now)
@@ -837,7 +861,7 @@ class Arbiter:
         self._flourish.restart(mood.flourish if mood is not None else None, now)
 
     def _overlapping(self, cs):
-        return [o for o in self._ch.values() if o.spec.overlaps(cs.spec)]
+        return self._overlap[cs.spec.name]
 
     def _ours(self, snap):
         return snap['source'] == 'ros' and snap['owner'] == self.owner
@@ -879,7 +903,7 @@ class Arbiter:
             action = ('sequence' if self.kind == 'magic'
                       else 'text' if effect == 'text' else 'effect')
             cs.run = _Run(ADOPTED, ADOPTED, action, PRIORITY_IDLE, True, effect, set(ours),
-                          until, adopted=True, confirmed_at=now - SNAPSHOT_GRACE_S)
+                          until, device_ends=False, confirmed_at=now - SNAPSHOT_GRACE_S)
 
     def _offline(self, now):
         if self._catalogue is None or self._snapshot_at is None:
@@ -922,9 +946,8 @@ class Arbiter:
         if self.kind == 'magic':
             snaps = [self._magic] if self._magic else []
         else:
-            mine = set(cs.spec.displays)
-            snaps = [s for name, s in self._surfaces.items()
-                     if mine & set(SURFACE_DISPLAYS.get(name, ()))]
+            touching = _TOUCHING[cs.spec.name]
+            snaps = [s for name, s in self._surfaces.items() if name in touching]
         for snap in snaps:
             if snap['running'] and not self._ours(snap):
                 if snap['source'] == 'ros':
@@ -950,13 +973,20 @@ class Arbiter:
                     best = held
         return best
 
-    def _state(self, cs, now):
+    def _blocked(self, cs, now):
+        """Return OFFLINE, DARK or FOREIGN when one holds the channel off, else None."""
         if self._offline(now):
             return STATE_OFFLINE
         if self.kind == 'led' and not self._strip_enabled:
             return STATE_DARK
         if self._foreign(cs, now) is not None:
             return STATE_FOREIGN
+        return None
+
+    def _state(self, cs, now):
+        blocked = self._blocked(cs, now)
+        if blocked is not None:
+            return blocked
         if cs.run is not None:
             return STATE_RUNNING
         if self._holder(cs, now) is not None:
@@ -965,14 +995,33 @@ class Arbiter:
             return STATE_STALE
         return STATE_IDLE
 
-    def _preempt(self, cs, priority):
+    def _end_run(self, cs, now):
+        """
+        Forget ``cs``'s run: every run ends here.
+
+        Rule 6: a manual run's auto-claim then ends ``manual_hold_s`` after the
+        later of now and the last manual intent.
+        """
+        run, cs.run = cs.run, None
+        auto = cs.claims.get(MANUAL_OWNER)
+        if run is not None and run.source == 'manual' and auto is not None and auto.auto:
+            auto.until = max(auto.floor, now + self._config.defaults.manual_hold_s)
+
+    def _size_auto_claim(self, cs):
+        """Rule 6: a manual run keeps its auto-claim until manual_hold_s after its end."""
+        auto, run = cs.claims.get(MANUAL_OWNER), cs.run
+        if auto is not None and auto.auto and run is not None and run.source == 'manual':
+            end = math.inf if run.until is None else run.until
+            auto.until = max(auto.until, end + self._config.defaults.manual_hold_s)
+
+    def _preempt(self, cs, priority, now):
         actions = []
         for other in self._overlapping(cs):
             run = other.run
             if run is not None and run.priority < priority:
                 actions += self._stops(other, run.surfaces, run.priority, run.intent_id,
                                        'preempt')
-                other.run = None
+                self._end_run(other, now)
         return actions
 
     def _stops(self, cs, surfaces, priority, intent_id, why, mode='blank'):
@@ -1032,7 +1081,8 @@ class Arbiter:
 
         def new_run(effect, surfaces, duration):
             return _Run(intent_id, f.source, f.action, pr, f.interruptible, effect,
-                        set(surfaces), None if not duration else now + duration / 1000.0)
+                        set(surfaces), None if not duration else now + duration / 1000.0,
+                        device_ends=spec.kind == 'led')
 
         if f.action in ('effect', 'clip'):
             name = params.get('name')
@@ -1119,11 +1169,12 @@ class Arbiter:
         actions = []
         for other in ours:
             actions += self._stops(other, other.run.surfaces, pr, intent_id, 'intent', mode)
-            other.run = None
+            self._end_run(other, now)
         return actions, None
 
     def _palette_eligible(self, cs, now):
-        return (self._state(cs, now) not in (STATE_OFFLINE, STATE_DARK, STATE_FOREIGN) and
+        """Return True when nothing keeps the palette off: a blocking state, a claim, a run."""
+        return (self._blocked(cs, now) is None and
                 self._holder(cs, now) is None and
                 not any(o.run is not None and o.run.priority > PRIORITY_IDLE
                         for o in self._overlapping(cs)))

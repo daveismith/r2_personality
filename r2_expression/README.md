@@ -32,7 +32,8 @@ overlapping channels, because the device replaces any run sharing a display.
    above its slot, priority 0, an unknown source or action: dropped and counted.
 3. **Claims** (`/expression/claim`): accepted unless another owner holds the channel, or
    an overlapping one, at an equal or higher priority (the refusal names the holder). The
-   same owner renews; `lease_s` 0 releases; leases are capped at `max_lease_s`. Claims
+   same owner renews; `lease_s` 0 releases (on the channel the claim is on; any priority);
+   leases are capped at `max_lease_s`. Claims
    layer: a lower claim holds again when a higher one goes. Owner `manual` is reserved for
    the auto-claim of rule 4. An accepted claim stops our
    lower runs on the channel at once; lower intents are dropped (and counted) until release.
@@ -46,8 +47,8 @@ overlapping channels, because the device replaces any run sharing a display.
 6. **Duration cap.** `idle` and `behavior` runs are sent with `min(duration,
    max_duration_ms)`, and `max_duration_ms` instead of 0: a dead arbiter or personality
    leaves nothing running for more than 30 s. `manual` and `safety` are exempt. LED runs end
-   on the device; a Magic Panel run is stopped by the arbiter at its duration (a refused
-   stop is retried after the device's 5 s hold).
+   on the device; a Magic Panel run is stopped by the arbiter at its duration, once no
+   person holds the panel (a refused stop is retried after the device's 5 s hold).
 7. **A person at the dome is the device's hold.** A `held by console|ui|text topic` or
    `held: manual` refusal, or `held_by` on the state topic, makes the channel `FOREIGN`
    with the holder as owner and its remaining time as lease (`manual`: forever, -1). A run

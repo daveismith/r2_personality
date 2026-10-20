@@ -39,11 +39,7 @@ import json
 from types import MappingProxyType
 from typing import Any, FrozenSet, Mapping, Optional
 
-from r2_expression.config import LED_PICK_CHANNELS, LED_STYLE_CHANNELS, STYLE_CHANNELS
-
-# The ListLeds clip target each LED channel's clips are played from (2.2).
-CLIP_TARGET = MappingProxyType({'fld': 'fld', 'rld': 'rld', 'psi': 'psi'})
-NEUTRAL = 'neutral'
+from r2_expression.config import LED_PICK_CHANNELS, STYLE_CHANNELS
 
 
 @dataclass(frozen=True)
@@ -65,8 +61,8 @@ class LedCatalogue:
         """Return True when ``kind`` ``name`` plays on LED ``channel``."""
         if kind == 'effect':
             return name in self.effects
-        target = CLIP_TARGET.get(channel)
-        return target is not None and target in self.clips.get(name, ())
+        # A clip target is named as its channel (2.2): fld, rld, psi; tfld/bfld have none.
+        return channel in self.clips.get(name, ())
 
 
 @dataclass(frozen=True)
@@ -123,14 +119,6 @@ def scale_brightness(brightness, strength):
     return int(round(lo + (hi - lo) * strength))
 
 
-def palette_for(config, label):
-    """Return ``(mood, known)``: the label's :class:`~r2_expression.config.Mood`, or neutral."""
-    mood = config.moods.get(label)
-    if mood is None:
-        return config.neutral, False
-    return mood, True
-
-
 def resolve_styles(config, label, strength, stale=False):
     """
     Return ``{channel: ResolvedStyle}`` for every style channel that has a style.
@@ -139,7 +127,7 @@ def resolve_styles(config, label, strength, stale=False):
     mood leaves out takes neutral's; a channel neither names is absent (it is
     not touched).
     """
-    mood = config.neutral if stale else palette_for(config, label)[0]
+    mood = config.neutral if stale else config.moods.get(label, config.neutral)
     out = {}
     for channel in STYLE_CHANNELS:
         style = mood.styles.get(channel) or config.neutral.styles.get(channel)
@@ -250,7 +238,6 @@ def choose(picks, rng) -> Any:
     return picks[-1]
 
 
-__all__ = ['CLIP_TARGET', 'LED_STYLE_CHANNELS', 'NEUTRAL', 'FlourishScheduler',
-           'LedCatalogue', 'MagicCatalogue', 'ResolvedStyle', 'choose', 'is_led_pick',
-           'led_catalogue', 'magic_catalogue', 'palette_for', 'pick_intent_fields',
-           'resolve_styles', 'scale_brightness', 'validate_picks']
+__all__ = ['FlourishScheduler', 'LedCatalogue', 'MagicCatalogue', 'ResolvedStyle', 'choose',
+           'field_of', 'is_led_pick', 'led_catalogue', 'magic_catalogue',
+           'pick_intent_fields', 'resolve_styles', 'scale_brightness', 'validate_picks']
