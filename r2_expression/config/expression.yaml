@@ -1,0 +1,126 @@
+# expression.yaml: the arbiters' settings and R2's mood palettes (r2_expression).
+# Schema: r2_expression/README.md. One entry per mood of r2_affect's affect.yaml.
+# Ambient knobs are the drift preset (calm | lively) and brightness, per palette channel:
+#   fld, rld: drift and brightness (percent; [min, max] is scaled by mood_strength)
+#   psi:      brightness only (the PSIs have no drift)
+#   magic:    brightness 0-15
+# Never hue: it is the droid's colour scheme, not a mood knob (plan rule 9).
+# Floors (plan 2.6): logics are invisible below ~25 %, the PSIs stay visible down to ~20.
+# Flourishes: every_s [min, max] seconds apart, one weighted pick at a time, sent at idle
+# priority with a duration (never 0; capped at max_duration_ms). Clip and effect names are
+# checked against ListLeds at startup, sequences against ListMagicPanel; a pick the device
+# lacks is dropped with one WARN.
+
+defaults:
+  manual_hold_s: 5.0       # a manual intent holds its channel this long after it
+  mood_stale_s: 3.0        # /mood/state older than this: neutral palette, no flourishes
+  max_duration_ms: 30000   # cap on every personality-sent run and sequence
+  status_hz: 2.0
+  max_lease_s: 60.0        # cap on a ClaimChannel lease
+  device_stale_s: 5.0      # no state message for this long: OFFLINE
+
+# While the mood is stale, and for any mood without an entry: the device's own default
+# look. The Magic Panel is left untouched.
+neutral:
+  fld: {drift: calm, brightness: 40}
+  rld: {drift: calm, brightness: 40}
+  psi: {brightness: 40}
+
+moods:
+  calm:
+    fld:   {drift: calm, brightness: [50, 65]}
+    rld:   {drift: calm, brightness: [50, 65]}
+    psi:   {brightness: [50, 65]}
+    magic: {brightness: 5}
+    flourish:
+      every_s: [40, 90]
+      picks:
+        - {channel: fld, clip: pulse, rgb: 0x2060ff, weight: 2, duration_ms: 2560}
+        - {channel: psi, clip: pulse, rgb: 0x2060ff, weight: 1, duration_ms: 2560}
+
+  curious:
+    fld:   {drift: lively, brightness: [55, 75]}
+    rld:   {drift: calm, brightness: [55, 70]}
+    psi:   {brightness: [55, 75]}
+    magic: {brightness: 7}
+    flourish:
+      every_s: [20, 45]
+      picks:
+        - {channel: fld, clip: hscan, rgb: 0x20c0ff, weight: 2, duration_ms: 2100}
+        - {channel: rld, clip: vscan, rgb: 0x20c0ff, weight: 1, duration_ms: 1800}
+        - {channel: psi, clip: pulse, rgb: 0x20c0ff, weight: 1, duration_ms: 2560}
+        - {channel: magic, sequence: 23, weight: 1, duration_ms: 4000}       # Eye scan
+
+  excited:
+    fld:   {drift: lively, brightness: [80, 100]}
+    rld:   {drift: lively, brightness: [80, 100]}
+    psi:   {brightness: [80, 100]}
+    magic: {brightness: 12}
+    flourish:
+      every_s: [6, 15]
+      picks:
+        - {channel: fld, effect: rainbow, weight: 3, duration_ms: 4000}
+        - {channel: psi, clip: flash, rgb: 0xff2200, weight: 2, duration_ms: 1200}
+        - {channel: magic, sequence: 27, weight: 2, duration_ms: 3000}       # Flash halves
+
+  playful:
+    fld:   {drift: lively, brightness: [65, 85]}
+    rld:   {drift: lively, brightness: [60, 80]}
+    psi:   {brightness: [65, 85]}
+    magic: {brightness: 9}
+    flourish:
+      every_s: [10, 25]
+      picks:
+        - {channel: fld, clip: colourswap, weight: 2, duration_ms: 2100}
+        - {channel: rld, clip: flipflop, weight: 1, duration_ms: 1600}
+        - {channel: psi, clip: flipflop-alt, weight: 1, duration_ms: 1600}
+        - {channel: magic, sequence: 46, weight: 1, duration_ms: 2000}       # Heart
+
+  annoyed:
+    fld:   {drift: lively, brightness: [60, 80]}
+    rld:   {drift: lively, brightness: [55, 75]}
+    psi:   {brightness: [60, 80]}
+    magic: {brightness: 8}
+    flourish:
+      every_s: [15, 35]
+      picks:
+        - {channel: fld, clip: alarm, rgb: 0xff3000, weight: 2, duration_ms: 1500}
+        - {channel: rld, clip: hscan, rgb: 0xff4000, weight: 1, duration_ms: 2300}
+        - {channel: psi, clip: flash, rgb: 0xff0000, weight: 1, duration_ms: 1000}
+        - {channel: magic, sequence: 26, weight: 1, duration_ms: 3000}       # Flash all
+
+  scared:
+    fld:   {drift: lively, brightness: [70, 90]}
+    rld:   {drift: lively, brightness: [65, 85]}
+    psi:   {brightness: [70, 90]}
+    magic: {brightness: 10}
+    flourish:
+      every_s: [8, 20]
+      picks:
+        - {channel: fld, clip: alarm-twinkle, rgb: 0xffffff, weight: 2, duration_ms: 3000}
+        - {channel: psi, clip: flash, rgb: 0xffffff, weight: 2, duration_ms: 800}
+        - {channel: magic, sequence: 42, weight: 1, duration_ms: 2100}       # Flicker
+
+  sleepy:
+    fld:   {drift: calm, brightness: [25, 35]}    # below ~25 the logics are black (2.6)
+    rld:   {drift: calm, brightness: [25, 35]}
+    psi:   {brightness: [20, 30]}                 # the PSIs floor at ~18/255 and stay visible
+    magic: {brightness: 1}
+    flourish:
+      every_s: [120, 300]
+      picks:
+        - {channel: fld, effect: lightsout, weight: 1, duration_ms: 6000}  # holds forever: always timed
+        - {channel: psi, clip: pulse, rgb: 0x4040ff, weight: 2, duration_ms: 5120}
+        - {channel: magic, sequence: 25, weight: 1, duration_ms: 2300}       # Fade out
+
+  sulking:
+    fld:   {drift: calm, brightness: [30, 45]}
+    rld:   {drift: calm, brightness: [30, 45]}
+    psi:   {brightness: [25, 40]}
+    magic: {brightness: 2}
+    flourish:
+      every_s: [60, 150]
+      picks:
+        - {channel: psi, clip: pulse, rgb: 0x6020a0, weight: 2, duration_ms: 2560}
+        - {channel: fld, clip: fadescroll, rgb: 0x4020a0, weight: 1, duration_ms: 6000}
+        - {channel: magic, sequence: 45, weight: 1, duration_ms: 1500}       # Sad face
