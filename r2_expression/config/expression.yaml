@@ -6,6 +6,7 @@
 #   magic:    brightness 0-15
 # Never hue: it is the droid's colour scheme, not a mood knob (plan rule 9).
 # Floors (plan 2.6): logics are invisible below ~25 %, the PSIs stay visible down to ~20.
+# Reds: annoyed and scared use alarm / flash / redalert and Magic Panel Alert (6) and Alert long (7).
 # Flourishes: every_s [min, max] seconds apart, one weighted pick at a time, sent at idle
 # priority with a duration (never 0; capped at max_duration_ms). Clip and effect names are
 # checked against ListLeds at startup, sequences against ListMagicPanel; a pick the device
@@ -47,6 +48,8 @@ moods:
       every_s: [20, 45]
       picks:
         - {channel: fld, clip: hscan, rgb: 0x20c0ff, weight: 2, duration_ms: 2100}
+        - {channel: fld, effect: roam, weight: 2, duration_ms: 6000}
+        - {channel: rld, effect: cycle, weight: 1, duration_ms: 10000}        # one child
         - {channel: rld, clip: vscan, rgb: 0x20c0ff, weight: 1, duration_ms: 1800}
         - {channel: psi, clip: pulse, rgb: 0x20c0ff, weight: 1, duration_ms: 2560}
         - {channel: magic, sequence: 23, weight: 1, duration_ms: 4000}       # Eye scan
@@ -61,7 +64,7 @@ moods:
       picks:
         - {channel: fld, effect: rainbow, weight: 3, duration_ms: 4000}
         - {channel: psi, clip: flash, rgb: 0xff2200, weight: 2, duration_ms: 1200}
-        - {channel: magic, sequence: 27, weight: 2, duration_ms: 3000}       # Flash halves
+        - {channel: magic, sequence: 27, weight: 2, duration_ms: 3500}       # Flash halves (3.3 s)
 
   playful:
     fld:   {drift: lively, brightness: [65, 85]}
@@ -85,9 +88,10 @@ moods:
       every_s: [15, 35]
       picks:
         - {channel: fld, clip: alarm, rgb: 0xff3000, weight: 2, duration_ms: 1500}
+        - {channel: fld, effect: redalert, weight: 1, duration_ms: 2500}
         - {channel: rld, clip: hscan, rgb: 0xff4000, weight: 1, duration_ms: 2300}
         - {channel: psi, clip: flash, rgb: 0xff0000, weight: 1, duration_ms: 1000}
-        - {channel: magic, sequence: 26, weight: 1, duration_ms: 3000}       # Flash all
+        - {channel: magic, sequence: 6, weight: 1, duration_ms: 4700}        # Alert (4.6 s)
 
   scared:
     fld:   {drift: lively, brightness: [70, 90]}
@@ -98,7 +102,9 @@ moods:
       every_s: [8, 20]
       picks:
         - {channel: fld, clip: alarm-twinkle, rgb: 0xffffff, weight: 2, duration_ms: 3000}
+        - {channel: rld, effect: redalert, weight: 1, duration_ms: 2500}
         - {channel: psi, clip: flash, rgb: 0xffffff, weight: 2, duration_ms: 800}
+        - {channel: magic, sequence: 7, weight: 2, duration_ms: 11500}       # Alert long (11.4 s)
         - {channel: magic, sequence: 42, weight: 1, duration_ms: 2100}       # Flicker
 
   sleepy:

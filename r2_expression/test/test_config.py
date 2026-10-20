@@ -102,6 +102,33 @@ def test_shipped_flourishes_never_carry_duration_zero_and_lightsout_is_timed():
                 assert pick.duration_ms
 
 
+def _picked(mood):
+    return {(p.channel, p.name) for p in mood.flourish.picks}
+
+
+def test_shipped_moods_have_the_character_of_plan_4_3():
+    moods = load_config(SHIPPED).moods
+    for name, mood in moods.items():
+        assert mood.styles['magic'].brightness is not None, name
+        assert mood.flourish is not None and mood.flourish.picks, name
+    for name in ('excited', 'playful'):
+        assert moods[name].styles['fld'].drift == moods[name].styles['rld'].drift == 'lively'
+    for name in ('sleepy', 'sulking', 'calm'):
+        assert moods[name].styles['fld'].drift == moods[name].styles['rld'].drift == 'calm'
+    assert moods['excited'].flourish.every_s == (6, 15)
+    assert moods['calm'].flourish.every_s == (40, 90)
+    assert moods['sleepy'].flourish.every_s == (120, 300)
+    assert ('fld', 'pulse') in _picked(moods['calm'])
+    assert {('fld', 'roam'), ('rld', 'cycle')} <= _picked(moods['curious'])
+    for name, reds in (('annoyed', {'alarm', 'flash', 'redalert'}),
+                       ('scared', {'alarm-twinkle', 'flash', 'redalert'})):
+        assert reds <= {n for _, n in _picked(moods[name])}, name
+    assert ('magic', 6) in _picked(moods['annoyed'])
+    assert ('magic', 7) in _picked(moods['scared'])
+    assert max(s.brightness[1] for s in moods['sleepy'].styles.values()) <= 35
+    assert min(moods['excited'].styles['fld'].brightness) >= 80
+
+
 # --- shape ---------------------------------------------------------------------------------
 
 def test_defaults_take_the_plan_values_when_absent():

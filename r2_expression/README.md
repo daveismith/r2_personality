@@ -120,6 +120,55 @@ on the PSIs or the panel, a pick with no kind or two, `every_s` min above max, a
 `ListLeds`/`ListMagicPanel` at startup: a pick the device lacks is dropped with one WARN,
 so a palette can name clips only some droids carry.
 
+## Palettes and flourishes
+
+`expression.yaml` gives every mood of `affect.yaml` a palette (`moods.<label>`); `neutral`
+is used while `/mood/state` is stale and for a label with no entry.
+
+| key | what it does |
+|---|---|
+| `fld`, `rld`: `drift` | `calm` or `lively` (the device's two presets; about 5 times the activity). No hue: that is the droid's colour scheme. |
+| `fld`, `rld`, `psi`: `brightness` | percent; `[min, max]` is placed by `mood_strength` (0 gives min, 1 gives max); a number is fixed. The PSIs have no drift. |
+| `magic`: `brightness` | 0-15, sent with `ConfigureMagicPanel` only while the panel is not held by a person. Left out: the panel is untouched. |
+| `flourish.every_s` | `[min, max]` seconds from one flourish to the next, drawn at random. |
+| `flourish.picks` | weighted; each is a run on one channel: `effect`, `clip` or `sequence`, optional `rgb`, `speed`, `repeat`, `end`, and `duration_ms` (capped at `max_duration_ms`, never 0). |
+
+The palette is applied at priority 10 when the label changes (not when only the strength
+moves), when the mood goes stale or returns, and when a channel becomes free again; it is
+sent once per change, not every tick. A flourish is an idle intent, so a claim at any
+priority, a person's hold, a dark strip, an offline device or a stale mood drops it.
+
+**Floors** (plan 2.6, measured on the strip): the logics are invisible below about 25 %, so
+`fld` and `rld` never go under 25 in a mood (neutral is 40); the PSIs stay visible and floor
+at 20. Sleepy sits at the floors and sulking just above them, both calm; excited and playful are lively and
+bright; annoyed and scared use `alarm`, `flash`, `redalert` and Magic Panel Alert (6) and
+Alert long (7); curious uses `roam`, `cycle` and the scans; calm has an occasional `pulse`.
+Flourish rates run from every 6-15 s (excited) to every 120-300 s (sleepy).
+
+**Validation.** At startup each arbiter calls `list` on the device and checks every pick
+against it: an effect or clip name the device lacks (clips are per target: `fld`, `psi`,
+`rld`), or a Magic Panel sequence missing from its catalogue, is dropped with one WARN, and
+the other picks keep their weights. A palette can therefore name clips only some droids
+carry. The shipped file is checked against the workbench captures in `docs/dome/` by a test.
+A palette configure the device does not answer is sent again after `device_stale_s`.
+
+**Previewing with the mock** (the real `/r2_dome` may be on the graph: use private names):
+
+```bash
+ros2 run r2_mocks dome_mock --ros-args -r __node:=dome_mock_manual -p state_hz:=10.0
+ros2 launch r2_expression expression.launch.py device:=/dome_mock_manual
+ros2 topic pub -r 5 /mood/state astromech_msgs/msg/MoodState "{mood: excited, mood_strength: 1.0}"
+ros2 topic echo /dome_mock_manual/mock/picture     # drift and brightness per display
+ros2 topic echo /expression/status                 # the running flourish, per channel
+```
+
+A stale mood returns fld, rld and psi to neutral; the Magic Panel (no `magic` in neutral) keeps
+the last mood's brightness. `redalert` follows the audio level, so check it on the lights. Sequence
+durations are the catalogue's lengths (a panel run is blanked at `duration_ms`).
+
+Without `r2_affect` running you are the only `/mood/state` publisher; with it running, remap
+the arbiters and your publisher to private names as the tests do.
+
 ## Running the nodes
 
 ```bash

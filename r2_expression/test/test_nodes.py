@@ -54,13 +54,19 @@ STATE_IDLE, STATE_RUNNING, STATE_CLAIMED, STATE_FOREIGN, STATE_STALE, STATE_OFFL
 _counter = 0
 
 
-def config_text(**defaults):
-    """Return the YAML text of a config with no flourishes and short staleness windows."""
+def config_text(flourish=None, **defaults):
+    """
+    Return the YAML text of a config with short staleness windows and no flourishes.
+
+    ``flourish`` (a dict) is put on the ``calm`` mood.
+    """
     data = copy.deepcopy(BASE)
     data['defaults'].update(mood_stale_s=1.0, device_stale_s=2.0, status_hz=5.0)
     data['defaults'].update(defaults)
     for mood in data['moods'].values():
         mood.pop('flourish', None)
+    if flourish:
+        data['moods']['calm']['flourish'] = flourish
     return yaml.safe_dump(data)
 
 
@@ -476,7 +482,7 @@ def test_a_new_mood_label_reconfigures_the_displays_once(stack):
     time.sleep(1.0)                                    # five more mood messages
     shown = ('tfld', 'bfld', 'rld', 'fpsi', 'rpsi')
     out = s.arbiters['led'].text
-    assert palette_calls(out()) == {display: 1 for display in shown}
+    assert palette_calls(out()) == {display: 1 for display in shown}, out()
     s.start_mood('excited')
     s.wait_led(lambda m: s.display('tfld').brightness == 100)
     assert s.display('tfld').drift == 'lively' and s.display('rld').drift == 'lively'
@@ -701,3 +707,111 @@ def test_a_stalled_device_queue_drops_stale_personality_actions_but_keeps_manual
                'the manual psi run was kept')
     assert s.surface('fpsi').effect == 'rainbow'
     assert not s.surface('rld').running                # the stale idle runs never played
+
+
+# --- palettes and flourishes (step 5) ---------------------------------------------------------
+
+def flourish_config(tmp_path, picks, every_s=(0.5, 1.0)):
+    path = tmp_path / 'flourish.yaml'
+    path.write_text(config_text(flourish={'every_s': list(every_s), 'picks': picks}))
+    return str(path)
+
+
+def test_mood_strength_scales_the_brightness_between_min_and_max(stack):
+    s = stack(kinds=('led',))
+    s.start_mood('calm', 0.0)                                  # calm is [50, 60]
+    s.wait_led(lambda m: s.display('tfld').brightness == 50, 10.0, 'strength 0')
+    s.start_mood('excited', 0.5)                               # excited is [80, 100]
+    s.wait_led(lambda m: s.display('tfld').brightness == 90, 10.0, 'strength 0.5')
+    assert s.display('rld').brightness == 90 and s.display('fpsi').brightness == 90
+
+
+def test_flourishes_fire_within_every_s_on_an_idle_channel_and_never_under_a_claim(
+        stack, tmp_path):
+    picks = [{'channel': 'fld', 'effect': 'rainbow', 'weight': 1, 'duration_ms': 300}]
+    s = stack(kinds=('led',), config=flourish_config(tmp_path, picks))
+    s.start_mood('calm')
+    started = {}
+
+    def fired():
+        with s.lock:
+            for t, m in s.history:
+                if (m.channel == 'fld' and m.state == STATE_RUNNING and
+                        m.active_source == 'idle'):
+                    started.setdefault(m.active_intent_id, t)
+        return len(started) >= 4
+    wait_until(fired, 20.0, 'four flourishes', s.output)
+    times = sorted(started.values())
+    gaps = [b - a for a, b in zip(times, times[1:])]
+    # every_s is 0.5-1.0 s from one flourish to the next; the status stream is 5 Hz
+    assert all(0.3 <= g <= 1.0 + 0.5 for g in gaps), gaps
+    claim = s.claim('led', 'fld', 'op', 150, 30.0)
+    assert claim.accepted
+    status = s.wait_status('fld', lambda m: m.state == STATE_CLAIMED)
+    dropped, mark = status.dropped, time.monotonic()
+    wait_until(lambda: s.get_status('fld').dropped >= dropped + 2, 8.0, 'flourishes dropped',
+               s.output)
+    with s.lock:
+        under_claim = [m for t, m in s.history if t > mark and m.channel == 'fld']
+    assert all(m.state == STATE_CLAIMED for m in under_claim)
+    assert not s.surface('fld').running
+    # the claim does not stop the other channels' styling: rld stays idle and styled
+    assert s.get_status('rld').state == STATE_IDLE
+
+
+def test_a_pick_naming_an_absent_clip_is_dropped_with_one_warn(stack, tmp_path):
+    picks = [{'channel': 'fld', 'clip': 'nosuchclip', 'weight': 5, 'duration_ms': 300},
+             {'channel': 'fld', 'effect': 'rainbow', 'weight': 1, 'duration_ms': 300}]
+    s = stack(kinds=('led',), config=flourish_config(tmp_path, picks))
+    s.start_mood('calm')
+    wait_until(lambda: 'nosuchclip' in s.arbiters['led'].text(), 10.0, 'warned', s.output)
+    s.wait_status('fld', lambda m: m.state == STATE_RUNNING and m.active_source == 'idle',
+                  10.0, 'the surviving pick runs')
+    s.start_mood('excited')
+    s.start_mood('calm')                                       # the pick is validated again
+    time.sleep(2.0)
+    warns = [ln for ln in s.arbiters['led'].text().splitlines() if 'nosuchclip' in ln]
+    assert len(warns) == 1 and 'WARN' in warns[0], warns
+    assert not any(x.effect == 'nosuchclip' for x in s.latest['leds'].surfaces)
+
+
+def test_the_magic_panel_brightness_follows_the_mood_but_not_while_the_panel_is_held(stack):
+    s = stack(kinds=('magic',), mock_args=('-p', 'hold_ms:=2500.0'))
+
+    def brightness():
+        magic = s.latest.get('magic')
+        return magic.live.brightness if magic else None
+    s.start_mood('calm')
+    wait_until(lambda: brightness() == 5, 8.0, 'calm brightness', s.output)
+    s.say('magic_panel start 44')                              # a person at the dome
+    s.wait_status('magic', lambda m: m.state == STATE_FOREIGN, 5.0, 'foreign')
+    s.start_mood('excited')
+    time.sleep(1.0)
+    assert brightness() == 5                                   # not sent while held
+    wait_until(lambda: brightness() == 12, 20.0, 'excited brightness after the hold',
+               s.output)
+
+
+def test_the_palette_arrives_after_the_device_stalls_through_the_change(stack):
+    s = stack(kinds=('led',))
+    s.start_mood('calm')
+    s.wait_led(lambda m: s.display('tfld').brightness == 60)
+    s.mock.send(signal.SIGSTOP)
+    s.start_mood('excited')
+    wait_until(lambda: 'no answer in 5 s' in s.arbiters['led'].text(), 12.0, 'timeout logged',
+               s.output)
+    s.mock.send(signal.SIGCONT)
+    s.wait_led(lambda m: all(s.display(n).brightness == 100 for n in ('tfld', 'bfld', 'rld')) and
+               all(s.display(n).drift == 'lively' for n in ('tfld', 'bfld', 'rld')), 25.0,
+               'the excited palette arrived')
+    assert s.display('fpsi').brightness == 100 and s.display('rpsi').brightness == 100
+
+
+def test_a_psi_flourish_runs_on_both_psis(stack, tmp_path):
+    picks = [{'channel': 'psi', 'clip': 'flash', 'rgb': 0xff2200, 'duration_ms': 800}]
+    s = stack(kinds=('led',), config=flourish_config(tmp_path, picks))
+    s.start_mood('calm')
+    s.wait_led(lambda m: all(next(x for x in m.surfaces if x.name == n).running
+                             for n in ('fpsi', 'rpsi')), 15.0, 'both PSIs flash')
+    assert s.surface('fpsi').effect == s.surface('rpsi').effect == 'flash'
+    assert s.surface('fpsi').owner == 'r2_expression'
