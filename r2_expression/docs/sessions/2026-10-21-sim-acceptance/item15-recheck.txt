@@ -1,0 +1,43 @@
+# Item 15 recheck, 2026-10-20 23:13 UTC: sim_foxglove.launch.py with the service allow-list
+# (r2_bringup 375e566, r2_sim eb1a337), live /r2_dome and /foxglove_bridge on the graph.
+
+$ ros2 param get /foxglove_bridge_sim service_whitelist
+String values are: ['^(?!/r2_dome/).*']
+
+# rclpy get_client_names_and_types_by_node, every node, clients of /(r2_dome|dome_mock)/(leds|magic)/*
+/foxglove_bridge: dome_mock, r2_dome (18)
+/foxglove_bridge_sim: dome_mock (9)
+/led_arbiter: dome_mock (5)
+/magic_arbiter: dome_mock (4)
+nodes: 32
+
+$ ros2 node info /foxglove_bridge_sim   # Service Clients on the dome services only
+    /dome_mock/leds/configure: astromech_msgs/srv/ConfigureLedDisplay
+    /dome_mock/leds/list: astromech_msgs/srv/ListLeds
+    /dome_mock/leds/run: astromech_msgs/srv/RunLedEffect
+    /dome_mock/leds/say: astromech_msgs/srv/SayLedText
+    /dome_mock/leds/stop: astromech_msgs/srv/StopLedEffect
+    /dome_mock/magic/configure: astromech_msgs/srv/ConfigureMagicPanel
+    /dome_mock/magic/list: astromech_msgs/srv/ListMagicPanel
+    /dome_mock/magic/start: astromech_msgs/srv/StartMagicSequence
+    /dome_mock/magic/stop: astromech_msgs/srv/StopMagicSequence
+
+$ ros2 node info /foxglove_bridge   # Service Clients on the dome services only
+    /dome_mock/leds/configure: astromech_msgs/srv/ConfigureLedDisplay
+    /dome_mock/leds/list: astromech_msgs/srv/ListLeds
+    /dome_mock/leds/run: astromech_msgs/srv/RunLedEffect
+    /dome_mock/leds/say: astromech_msgs/srv/SayLedText
+    /dome_mock/leds/stop: astromech_msgs/srv/StopLedEffect
+    /dome_mock/magic/configure: astromech_msgs/srv/ConfigureMagicPanel
+    /dome_mock/magic/list: astromech_msgs/srv/ListMagicPanel
+    /dome_mock/magic/start: astromech_msgs/srv/StartMagicSequence
+    /dome_mock/magic/stop: astromech_msgs/srv/StopMagicSequence
+    /r2_dome/leds/configure: astromech_msgs/srv/ConfigureLedDisplay
+    /r2_dome/leds/list: astromech_msgs/srv/ListLeds
+    /r2_dome/leds/run: astromech_msgs/srv/RunLedEffect
+    /r2_dome/leds/say: astromech_msgs/srv/SayLedText
+    /r2_dome/leds/stop: astromech_msgs/srv/StopLedEffect
+    /r2_dome/magic/configure: astromech_msgs/srv/ConfigureMagicPanel
+    /r2_dome/magic/list: astromech_msgs/srv/ListMagicPanel
+    /r2_dome/magic/start: astromech_msgs/srv/StartMagicSequence
+    /r2_dome/magic/stop: astromech_msgs/srv/StopMagicSequence

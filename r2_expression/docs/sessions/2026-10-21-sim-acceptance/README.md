@@ -30,7 +30,7 @@ command output and the `/expression/status` change logs (sim stamps) the table c
 | 12 kill `r2_affect` | PASS (at the limit) | SIGKILL: last `/mood/state` at 1633.641, every channel `stale mood=neutral` at 1636.645 (3.004 s, the `mood_stale_s` of 3.0 plus a status tick); picture brightness 40 calm; restart: `calm` palette (65) back, status `idle` at 1661.5 |
 | 13 kill `led_arbiter` | PASS | SIGKILL while a manual `rld cycle` of 14 s ran: the mock showed `rld running effect=cycle:rainbow` at 0.7, 1.7, 2.7, 3.7 s elapsed, then `idle last_end=duration` by the end; `/expression/status` for the LED channels stopped (6 s: `{'magic': 11}`, 4 s: `{'magic': 7}`), `magic_arbiter` kept publishing; restart: `answered list; catalogue loaded`, all channels `idle`, palette reapplied (first run: excited 100 to sleepy 35 set while it was down, 35 on the picture after the restart) |
 | 14 kill the mock | PASS | SIGKILL: last mock state 1923.0, every channel `offline` at 1928.0 (`device_stale_s` 5 s); 0 `list` log lines in 22 s (the arbiters do not re-list), no errors; restart: the first state message (1968.107) and every channel `idle` in the same status tick, palette in place |
-| 15 graph check | FAIL | the clients of `/dome_mock/leds/*`, `/dome_mock/magic/*` are the two arbiters as expected, but `/foxglove_bridge_sim` (and `/foxglove_bridge` by `ros2 node info`) also lists a client on every one of them and on all 9 `/r2_dome/leds|magic/*` services: see Findings 1. No client other than the bridges |
+| 15 graph check | FAIL as written; PASS reworded, on recheck | the clients of `/dome_mock/leds/*`, `/dome_mock/magic/*` are the two arbiters as expected, but `/foxglove_bridge_sim` (and `/foxglove_bridge` by `ros2 node info`) also lists a client on every one of them and on all 9 `/r2_dome/leds|magic/*` services: see Findings 1. No client other than the bridges. Recheck with the reworded item and the allow-list (`item15-recheck.txt`): `/foxglove_bridge_sim` holds the 9 `/dome_mock` clients and none on `/r2_dome`; only the arbiters and the two bridges are clients |
 
 Bag: 1997 s of sim time (54.5 to 2051.6), 50 579 messages, 8.7 MiB mcap (under 20 MB,
 committed): `/mood/state` 24 220, `/expression/status` 19 771, `/dome_mock/leds/states` 1 953,
@@ -52,6 +52,13 @@ flourishes are the arbiters' own and not published).
    "other than the Foxglove bridges", or the bridge needs a service allow-list
    (`service_whitelist`) that leaves the dome out. A Service Call panel pointed at
    `/r2_dome/leds/run` would be a way for the sim's bridge to reach the real dome.
+   **Resolved, rechecked 2026-10-20 23:13 UTC** (`item15-recheck.txt`): item 15 reworded to
+   allow the bridges, and `sim_foxglove.launch.py` gives its bridge
+   `service_whitelist: ['^(?!/r2_dome/).*']` (r2_sim d1ac845; r2_bringup 375e566 fixed the
+   launch file's `value_type`, which until then stopped every bridge launched with it). With
+   the live `/r2_dome` and `/foxglove_bridge` on the graph, `/foxglove_bridge_sim` lists
+   clients on the 9 `/dome_mock/leds|magic/*` services and none on `/r2_dome/*`; the live
+   bridge still holds all 18, as the item allows.
 2. **Every CLI call takes 10-14 s.** After doing its job `express` and `mood` wait for the
    rmw_zenoh session to close: `Error closing session: close operation timed out ...
    Failed to close the session (Error code: -128)`. Consequences: the 5 s device hold lapses
