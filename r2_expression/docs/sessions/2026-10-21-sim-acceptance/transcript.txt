@@ -1,0 +1,680 @@
+===== i02
+$ mood set excited
+accepted: mood excited (1.00), unlocked
+--- status
+fld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+magic idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+psi   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+rld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+--- picture
+surface rpsi: idle effect=- elapsed=0ms duration=0ms source=- owner=- last_end=duration last_effect=pulse last_source=ros
+surface fpsi: idle effect=- elapsed=0ms duration=0ms source=- owner=- last_end=duration last_effect=pulse last_source=ros
+display rpsi: mode=random brightness=100 drift=- changed_by=ros held_by=- hold=0ms
+display rld: mode=random brightness=100 drift=lively changed_by=ros held_by=- hold=0ms
+display bfld: mode=random brightness=100 drift=lively changed_by=ros held_by=- hold=0ms
+display tfld: mode=random brightness=100 drift=lively changed_by=ros held_by=- hold=0ms
+display fpsi: mode=random brightness=100 drift=- changed_by=ros held_by=- hold=0ms
+strip_enabled=True manual=False level=0 (default)
+magic: link=1 state=0 sequence=255 started_by=- owner=- held_by=-
+----- i02w
+   167.1 magic idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=0 refused=0
+   167.2 fld   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=0 refused=0
+   167.2 rld   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=0 refused=0
+   167.2 psi   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=0 refused=0
+   169.1 fld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+   169.1 magic idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+   169.1 tfld  idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+   169.1 bfld  idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+   169.1 rld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+   169.1 psi   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+   179.0 magic running  owner=- prio=0 lease=0.0s active=idle/sequence 3500ms mood=excited dropped=0 refused=0
+   182.6 magic idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+----- i03w
+   218.0 magic idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+   218.0 fld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+   218.0 rld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+   218.0 psi   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+   219.4 psi   running  owner=- prio=0 lease=0.0s active=idle/clip 1200ms mood=excited dropped=0 refused=0
+   219.8 fld   idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+   219.8 tfld  idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+   219.8 bfld  idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+   219.8 rld   idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+   219.8 psi   running  owner=- prio=0 lease=0.0s active=idle/clip 778ms mood=sleepy dropped=0 refused=0
+   219.8 magic idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+   220.7 psi   idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+----- i04w
+   269.9 fld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+   269.9 rld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+   269.9 psi   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+   270.1 magic idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+   271.8 fld   running  owner=manual prio=199 lease=10.0s active=manual/effect 5000ms mood=excited dropped=0 refused=0
+   271.8 tfld  claimed  owner=manual prio=199 lease=10.0s active=- mood=excited dropped=0 refused=0
+   271.8 bfld  claimed  owner=manual prio=199 lease=10.0s active=- mood=excited dropped=0 refused=0
+   276.7 psi   running  owner=- prio=0 lease=0.0s active=idle/clip 1200ms mood=excited dropped=0 refused=0
+   276.9 fld   claimed  owner=manual prio=199 lease=5.0s active=- mood=excited dropped=0 refused=0
+   278.0 psi   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+   281.9 fld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+   281.9 tfld  idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+   281.9 bfld  idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+===== i04b
+===== i05
+$ mood clear
+accepted: mood sleepy (0.02), unlocked
+sequence_id: 27 source: 1 state: 2 ours: true run_counter: 7   brightness: 1   brightness: 8 started_by: ros held_by: '' 
+$ express claim magic --owner console --lease 60
+accepted: magic claimed  owner=console prio=199 lease=60.0s active=- mood=sleepy dropped=0 refused=0
+12:55:24
+$ mood set excited --lock
+accepted: mood excited (1.00), locked by mood_cli
+magic claimed  owner=console prio=199 lease=36.0s active=- mood=excited dropped=0 refused=0
+sequence_id: 27 source: 1 state: 2 ours: true run_counter: 7   brightness: 1   brightness: 8 started_by: ros held_by: '' 
+$ express release magic
+refused: no claim by 'express' on magic: magic claimed  owner=console prio=199 lease=23.0s active=- mood=excited dropped=0 refused=0
+$ express release magic --owner console
+accepted: magic idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+12:56:23
+magic idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+sequence_id: 27 source: 1 state: 2 ours: true run_counter: 7   brightness: 12   brightness: 8 started_by: ros held_by: '' 
+$ mood clear
+accepted: mood excited (1.00), unlocked
+----- i05w
+   558.0 magic idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+   569.8 magic claimed  owner=console prio=199 lease=60.0s active=- mood=sleepy dropped=0 refused=0
+   580.0 magic claimed  owner=console prio=199 lease=49.8s active=- mood=excited dropped=0 refused=0
+   617.0 magic idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+----- i06w
+   661.0 seq=27 state=2 run_counter=7 started_by=ros owner=r2_expression held_by='' bright=12 pause=False end=1
+   664.0 seq=44 state=1 run_counter=8 started_by=ros owner=r2_expression held_by='' bright=12 pause=False end=1
+   665.0 seq=44 state=2 run_counter=8 started_by=ros owner=r2_expression held_by='' bright=12 pause=False end=1
+   675.0 seq=44 state=2 run_counter=8 started_by=ros owner=r2_expression held_by='' bright=5 pause=False end=1
+   682.0 seq=56 state=1 run_counter=9 started_by=ros owner=r2_expression held_by='' bright=5 pause=False end=1
+   685.0 seq=56 state=3 run_counter=9 started_by=ros owner=r2_expression held_by='' bright=5 pause=False end=1
+----- i06s
+   660.7 magic idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+   662.5 magic running  owner=manual prio=199 lease=8.0s active=manual/sequence 3000ms mood=excited dropped=0 refused=0
+   662.9 magic running  owner=manual prio=199 lease=7.5s active=manual/sequence 2526ms mood=excited dropped=1 refused=0
+   665.0 magic claimed  owner=manual prio=199 lease=5.0s active=- mood=excited dropped=1 refused=0
+   670.0 magic idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=1 refused=0
+   674.4 magic idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=1 refused=0
+   680.1 magic running  owner=manual prio=199 lease=8.0s active=manual/sequence 3000ms mood=calm dropped=1 refused=0
+   683.2 magic claimed  owner=manual prio=199 lease=5.0s active=- mood=calm dropped=1 refused=0
+   688.2 magic idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=1 refused=0
+===== i07
+$ mood set excited --lock
+accepted: mood excited (1.00), locked by mood_cli
+13:01:06
+13:01:20
+rld   foreign  owner=console prio=0 lease=0.0s active=- mood=excited dropped=0 refused=1
+surface rld: running effect=rainbow elapsed=23126ms duration=0ms source=console owner=- last_end=stopped last_effect=fire last_source=ros
+display rld: mode=effect brightness=100 drift=lively changed_by=ros held_by=- hold=0ms
+rld   foreign  owner=console prio=0 lease=0.0s active=- mood=excited dropped=0 refused=1
+$ express dome leds stop rld
+sent 'leds stop rld' to /dome_mock/mock/console
+13:02:09
+rld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=1
+surface rld: idle effect=- elapsed=0ms duration=0ms source=- owner=- last_end=stopped last_effect=rainbow last_source=console
+display rld: mode=random brightness=100 drift=lively changed_by=ros held_by=- hold=0ms
+----- i07w
+   853.3 fld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=1 refused=0
+   853.3 rld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+   853.3 psi   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+   854.0 rld   foreign  owner=console prio=0 lease=4.9s active=- mood=excited dropped=0 refused=0
+   855.1 rld   foreign  owner=console prio=0 lease=3.8s active=manual/effect 0ms mood=excited dropped=0 refused=0
+   855.1 rld   foreign  owner=console prio=0 lease=3.8s active=- mood=excited dropped=0 refused=1
+   875.9 fld   running  owner=- prio=0 lease=0.0s active=idle/effect 4000ms mood=excited dropped=1 refused=0
+   879.9 fld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=1 refused=0
+   882.9 fld   running  owner=- prio=0 lease=0.0s active=idle/effect 4000ms mood=excited dropped=1 refused=0
+   887.0 fld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=1 refused=0
+   889.7 fld   running  owner=- prio=0 lease=0.0s active=idle/effect 4000ms mood=excited dropped=1 refused=0
+   893.7 fld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=1 refused=0
+   903.2 fld   running  owner=- prio=0 lease=0.0s active=idle/effect 4000ms mood=excited dropped=1 refused=0
+   907.3 fld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=1 refused=0
+   910.9 psi   running  owner=- prio=0 lease=0.0s active=idle/clip 1200ms mood=excited dropped=0 refused=0
+   911.6 rld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=1
+   912.1 psi   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+   920.9 psi   running  owner=- prio=0 lease=0.0s active=idle/clip 1200ms mood=excited dropped=0 refused=0
+   922.1 psi   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+===== i07c
+$ mood set scared --lock
+accepted: mood scared (1.00), locked by mood_cli
+$ express dome leds run rld rainbow
+sent 'leds run rld rainbow' to /dome_mock/mock/console
+13:03:06
+rld   foreign  owner=console prio=0 lease=0.0s active=- mood=scared dropped=0 refused=1
+rld   foreign  owner=console prio=0 lease=0.0s active=- mood=scared dropped=0 refused=1
+rld   foreign  owner=console prio=0 lease=0.0s active=- mood=scared dropped=0 refused=1
+rld   foreign  owner=console prio=0 lease=0.0s active=- mood=scared dropped=0 refused=1
+$ express dome leds stop rld
+sent 'leds stop rld' to /dome_mock/mock/console
+13:04:23
+rld   idle     owner=- prio=0 lease=0.0s active=- mood=scared dropped=0 refused=1
+===== i08
+$ mood set calm --lock
+accepted: mood calm (1.00), locked by mood_cli
+$ express dome leds mode tfld off
+sent 'leds mode tfld off' to /dome_mock/mock/console
+13:05:44
+fld   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=1 refused=0
+display bfld: mode=random brightness=65 drift=calm changed_by=ros held_by=- hold=0ms
+display tfld: mode=random brightness=65 drift=calm changed_by=ros held_by=- hold=0ms
+fld   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=1 refused=0
+display bfld: mode=random brightness=65 drift=calm changed_by=ros held_by=- hold=0ms
+display tfld: mode=random brightness=65 drift=calm changed_by=ros held_by=- hold=0ms
+fld   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=1 refused=0
+display bfld: mode=random brightness=65 drift=calm changed_by=ros held_by=- hold=0ms
+display tfld: mode=random brightness=65 drift=calm changed_by=ros held_by=- hold=0ms
+----- i08w
+  1073.3 fld   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=1 refused=0
+  1075.0 fld   foreign  owner=console prio=0 lease=4.1s active=- mood=calm dropped=1 refused=0
+  1075.0 tfld  foreign  owner=console prio=0 lease=4.1s active=- mood=calm dropped=0 refused=0
+  1079.1 fld   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=1 refused=0
+  1079.1 tfld  idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=0 refused=0
+===== i09
+$ express dome magic_panel start 44
+sent 'magic_panel start 44' to /dome_mock/mock/console
+13:07:19
+----- i09w
+  1153.7 magic idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=1 refused=0
+  1155.0 magic foreign  owner=console prio=0 lease=4.5s active=- mood=calm dropped=1 refused=0
+  1159.5 magic idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=1 refused=0
+----- i09m
+  1154.0 seq=7 state=2 run_counter=14 started_by=ros owner=r2_expression held_by='' bright=5 pause=False end=1
+  1155.0 seq=7 state=2 run_counter=14 started_by=ros owner=r2_expression held_by='console' bright=5 pause=False end=1
+  1156.0 seq=44 state=1 run_counter=15 started_by=console owner= held_by='console' bright=5 pause=False end=0
+  1157.0 seq=44 state=2 run_counter=15 started_by=console owner= held_by='console' bright=5 pause=False end=0
+  1160.0 seq=44 state=2 run_counter=15 started_by=console owner= held_by='' bright=5 pause=False end=0
+===== i10
+$ ros2 topic pub --once /dome_mock/dome/text/line0 std_msgs/msg/String "{data: 'hello'}"
+publishing #1: std_msgs.msg.String(data='hello')
+13:08:25
+fld   foreign  owner=text_topic prio=0 lease=0.0s active=- mood=calm dropped=1 refused=0
+surface fld: running effect=text elapsed=19923ms duration=0ms source=text_topic owner=- last_end=duration last_effect=pulse last_source=ros
+surface bfld: idle effect=- elapsed=0ms duration=0ms source=- owner=- last_end=none last_effect=- last_source=-
+surface tfld: idle effect=- elapsed=0ms duration=0ms source=- owner=- last_end=none last_effect=- last_source=-
+$ ros2 topic pub --once /dome_mock/dome/text/line0 std_msgs/msg/String "{data: ''}"
+publishing #1: std_msgs.msg.String(data='')
+13:08:53
+fld   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=1 refused=0
+surface fld: idle effect=- elapsed=0ms duration=0ms source=- owner=- last_end=duration last_effect=pulse last_source=ros
+$ express dome leds rostext off
+sent 'leds rostext off' to /dome_mock/mock/console
+$ ros2 topic pub --once /dome_mock/dome/text/line0 std_msgs/msg/String "{data: 'hello'}"
+publishing #1: std_msgs.msg.String(data='hello')
+13:09:40
+fld   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=1 refused=0
+surface fld: idle effect=- elapsed=0ms duration=0ms source=- owner=- last_end=duration last_effect=pulse last_source=ros
+$ express dome leds rostext on
+sent 'leds rostext on' to /dome_mock/mock/console
+----- i10w
+  1211.3 fld   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=1 refused=0
+  1213.0 fld   foreign  owner=text_topic prio=0 lease=4.1s active=- mood=calm dropped=1 refused=0
+  1213.0 tfld  foreign  owner=text_topic prio=0 lease=4.1s active=- mood=calm dropped=0 refused=0
+  1213.0 bfld  foreign  owner=text_topic prio=0 lease=4.1s active=- mood=calm dropped=0 refused=0
+  1238.5 fld   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=1 refused=0
+  1238.5 tfld  idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=0 refused=0
+  1238.5 bfld  idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=0 refused=0
+  1249.8 fld   running  owner=- prio=0 lease=0.0s active=idle/clip 2560ms mood=calm dropped=1 refused=0
+  1252.4 fld   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=1 refused=0
+===== i10a
+$ express dome leds owner manual
+sent 'leds owner manual' to /dome_mock/mock/console
+13:10:23
+A
+bfld  foreign  owner=manual prio=0 lease=forever active=- mood=calm dropped=0 refused=0
+fld   foreign  owner=manual prio=0 lease=forever active=- mood=calm dropped=1 refused=0
+magic foreign  owner=manual prio=0 lease=forever active=- mood=calm dropped=1 refused=0
+psi   foreign  owner=manual prio=0 lease=forever active=- mood=calm dropped=0 refused=0
+rld   foreign  owner=manual prio=0 lease=forever active=- mood=calm dropped=0 refused=1
+tfld  foreign  owner=manual prio=0 lease=forever active=- mood=calm dropped=0 refused=0
+display rld: mode=random brightness=65 drift=calm changed_by=ros held_by=manual hold=forever
+strip_enabled=True manual=True level=0 (default)
+$ mood set excited --lock
+accepted: mood excited (1.00), locked by mood_cli
+B
+bfld  foreign  owner=manual prio=0 lease=forever active=- mood=excited dropped=0 refused=0
+fld   foreign  owner=manual prio=0 lease=forever active=- mood=excited dropped=1 refused=0
+psi   foreign  owner=manual prio=0 lease=forever active=- mood=excited dropped=0 refused=0
+rld   foreign  owner=manual prio=0 lease=forever active=- mood=excited dropped=0 refused=1
+tfld  foreign  owner=manual prio=0 lease=forever active=- mood=excited dropped=0 refused=0
+display rld: mode=random brightness=65 drift=calm changed_by=ros held_by=manual hold=forever
+display tfld: mode=random brightness=65 drift=calm changed_by=ros held_by=manual hold=forever
+$ express effect fld fire --duration 4
+sent manual fld effect at 199 ({"name": "fire"}) id=express-2aa5b549
+C
+fld   foreign  owner=manual prio=0 lease=forever active=- mood=excited dropped=1 refused=1
+$ express effect fld fire --duration 4 --override
+sent manual fld effect at 200 ({"name": "fire"}) id=express-1126aab8
+D
+fld   foreign  owner=manual prio=0 lease=forever active=- mood=excited dropped=1 refused=1
+surface fld: idle effect=- elapsed=0ms duration=0ms source=- owner=- last_end=duration last_effect=fire last_source=ros
+$ express dome leds owner auto
+sent 'leds owner auto' to /dome_mock/mock/console
+E
+fld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=1 refused=1
+magic idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=5 refused=0
+psi   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=3 refused=0
+rld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=1
+display rld: mode=random brightness=100 drift=lively changed_by=ros held_by=- hold=0ms
+strip_enabled=True manual=False level=0 (default)
+----- i10aw
+  1307.1 fld   running  owner=- prio=0 lease=0.0s active=idle/clip 2030ms mood=calm dropped=1 refused=0
+  1307.1 rld   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=0 refused=1
+  1307.1 psi   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=0 refused=0
+  1307.1 magic idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=1 refused=0
+  1309.0 fld   foreign  owner=manual prio=0 lease=forever active=idle/clip 125ms mood=calm dropped=1 refused=0
+  1309.0 magic foreign  owner=manual prio=0 lease=forever active=- mood=calm dropped=1 refused=0
+  1309.0 tfld  foreign  owner=manual prio=0 lease=forever active=- mood=calm dropped=0 refused=0
+  1309.0 bfld  foreign  owner=manual prio=0 lease=forever active=- mood=calm dropped=0 refused=0
+  1309.0 rld   foreign  owner=manual prio=0 lease=forever active=- mood=calm dropped=0 refused=1
+  1309.0 psi   foreign  owner=manual prio=0 lease=forever active=- mood=calm dropped=0 refused=0
+  1309.2 fld   foreign  owner=manual prio=0 lease=forever active=- mood=calm dropped=1 refused=0
+  1337.2 fld   foreign  owner=manual prio=0 lease=forever active=- mood=excited dropped=1 refused=0
+  1337.2 tfld  foreign  owner=manual prio=0 lease=forever active=- mood=excited dropped=0 refused=0
+  1337.2 bfld  foreign  owner=manual prio=0 lease=forever active=- mood=excited dropped=0 refused=0
+  1337.2 rld   foreign  owner=manual prio=0 lease=forever active=- mood=excited dropped=0 refused=1
+  1337.2 psi   foreign  owner=manual prio=0 lease=forever active=- mood=excited dropped=0 refused=0
+  1337.2 magic foreign  owner=manual prio=0 lease=forever active=- mood=excited dropped=1 refused=0
+  1347.0 psi   foreign  owner=manual prio=0 lease=forever active=- mood=excited dropped=1 refused=0
+  1347.1 magic foreign  owner=manual prio=0 lease=forever active=- mood=excited dropped=2 refused=0
+  1352.1 fld   foreign  owner=manual prio=0 lease=forever active=manual/effect 4000ms mood=excited dropped=1 refused=0
+  1352.1 fld   foreign  owner=manual prio=0 lease=forever active=- mood=excited dropped=1 refused=1
+  1357.6 psi   foreign  owner=manual prio=0 lease=forever active=- mood=excited dropped=2 refused=0
+  1358.4 magic foreign  owner=manual prio=0 lease=forever active=- mood=excited dropped=3 refused=0
+  1364.4 psi   foreign  owner=manual prio=0 lease=forever active=- mood=excited dropped=3 refused=0
+  1371.7 magic foreign  owner=manual prio=0 lease=forever active=- mood=excited dropped=4 refused=0
+  1373.9 fld   foreign  owner=manual prio=0 lease=forever active=manual/effect 4000ms mood=excited dropped=1 refused=1
+  1377.9 fld   foreign  owner=manual prio=0 lease=forever active=- mood=excited dropped=1 refused=1
+  1383.9 magic foreign  owner=manual prio=0 lease=forever active=- mood=excited dropped=5 refused=0
+  1392.0 fld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=1 refused=1
+  1392.0 tfld  idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+  1392.0 bfld  idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+  1392.0 magic idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=5 refused=0
+  1392.0 rld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=1
+  1392.0 psi   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=3 refused=0
+  1395.7 psi   running  owner=- prio=0 lease=0.0s active=idle/clip 1200ms mood=excited dropped=3 refused=0
+  1397.0 psi   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=3 refused=0
+  1412.4 magic running  owner=- prio=0 lease=0.0s active=idle/sequence 3500ms mood=excited dropped=5 refused=0
+  1415.9 magic idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=5 refused=0
+  1419.3 magic running  owner=- prio=0 lease=0.0s active=idle/sequence 3500ms mood=excited dropped=5 refused=0
+  1422.6 fld   running  owner=- prio=0 lease=0.0s active=idle/effect 4000ms mood=excited dropped=1 refused=1
+  1422.9 magic idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=5 refused=0
+  1426.6 fld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=1 refused=1
+  1429.5 fld   running  owner=- prio=0 lease=0.0s active=idle/effect 4000ms mood=excited dropped=1 refused=1
+===== i10b
+$ express dome leds enable off
+sent 'leds enable off' to /dome_mock/mock/console
+13:13:02
+A
+bfld  dark     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+fld   dark     owner=- prio=0 lease=0.0s active=- mood=excited dropped=2 refused=1
+magic idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=5 refused=0
+psi   dark     owner=- prio=0 lease=0.0s active=- mood=excited dropped=4 refused=0
+rld   dark     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=1
+tfld  dark     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+strip_enabled=False manual=False level=0 (default)
+B
+bfld  dark     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+fld   dark     owner=- prio=0 lease=0.0s active=- mood=excited dropped=2 refused=1
+psi   dark     owner=- prio=0 lease=0.0s active=- mood=excited dropped=7 refused=0
+rld   dark     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=1
+tfld  dark     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+strip_enabled=False manual=False level=0 (default)
+$ express dome leds enable on
+sent 'leds enable on' to /dome_mock/mock/console
+C
+fld   running  owner=- prio=0 lease=0.0s active=idle/effect 3251ms mood=excited dropped=2 refused=1
+magic idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=5 refused=0
+psi   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=8 refused=0
+rld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=1
+display rld: mode=random brightness=100 drift=lively changed_by=ros held_by=- hold=0ms
+strip_enabled=True manual=False level=0 (default)
+----- i10bw
+  1436.7 fld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=1 refused=1
+  1436.7 rld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=1
+  1436.7 psi   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=3 refused=0
+  1436.7 magic idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=5 refused=0
+  1438.0 fld   dark     owner=- prio=0 lease=0.0s active=- mood=excited dropped=1 refused=1
+  1438.0 tfld  dark     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+  1438.0 bfld  dark     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+  1438.0 rld   dark     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=1
+  1438.0 psi   dark     owner=- prio=0 lease=0.0s active=- mood=excited dropped=3 refused=0
+  1439.7 fld   dark     owner=- prio=0 lease=0.0s active=- mood=excited dropped=2 refused=1
+  1451.3 psi   dark     owner=- prio=0 lease=0.0s active=- mood=excited dropped=4 refused=0
+  1459.2 psi   dark     owner=- prio=0 lease=0.0s active=- mood=excited dropped=5 refused=0
+  1466.4 magic running  owner=- prio=0 lease=0.0s active=idle/sequence 3500ms mood=excited dropped=5 refused=0
+  1470.0 magic idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=5 refused=0
+  1470.4 psi   dark     owner=- prio=0 lease=0.0s active=- mood=excited dropped=6 refused=0
+  1477.6 psi   dark     owner=- prio=0 lease=0.0s active=- mood=excited dropped=7 refused=0
+  1492.1 psi   dark     owner=- prio=0 lease=0.0s active=- mood=excited dropped=8 refused=0
+  1492.3 magic running  owner=- prio=0 lease=0.0s active=idle/sequence 3500ms mood=excited dropped=5 refused=0
+  1494.0 fld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=2 refused=1
+  1494.0 tfld  idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+  1494.0 bfld  idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=0
+  1494.0 rld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=1
+  1494.0 psi   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=8 refused=0
+  1495.9 magic idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=5 refused=0
+===== i11
+$ mood set calm --lock
+accepted: mood calm (1.00), locked by mood_cli
+$ ros2 topic pub --once /stimuli astromech_msgs/msg/Stimulus {kind: bump, source: accept, intensity: 1.0, confidence: 1.0}
+publishing #1: astromech_msgs.msg.Stimulus(header=std_msgs.msg.Header(stamp=builtin_interfaces.msg.Time(sec=0, nanosec=0), frame_id=''), kind='bump', source='accept', intensity=1.0, confidence=1.0, subject='', bearing_rad=nan, ttl_s=0.0, extra='')
+$ ros2 topic pub --once /stimuli astromech_msgs/msg/Stimulus {kind: bump, source: accept, intensity: 1.0, confidence: 1.0}
+publishing #1: astromech_msgs.msg.Stimulus(header=std_msgs.msg.Header(stamp=builtin_interfaces.msg.Time(sec=0, nanosec=0), frame_id=''), kind='bump', source='accept', intensity=1.0, confidence=1.0, subject='', bearing_rad=nan, ttl_s=0.0, extra='')
+fld   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=2 refused=1
+psi   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=8 refused=0
+rld   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=0 refused=1
+display rld: mode=random brightness=65 drift=calm changed_by=ros held_by=- hold=0ms
+$ express effect fld fire --duration 4
+sent manual fld effect at 199 ({"name": "fire"}) id=express-ce4538cf
+$ express effect psi flash --duration 2
+sent manual psi effect at 199 ({"name": "flash"}) id=express-4cd6ff4a
+M
+fld   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=2 refused=1
+psi   running  owner=- prio=0 lease=0.0s active=idle/clip 2210ms mood=calm dropped=8 refused=0
+rld   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=0 refused=1
+$ express sequence magic 44 --duration 3
+sent manual magic sequence at 199 ({"id": 44, "repeat": 1, "end": "blank"}) id=express-a5199c8c
+sequence_id: 44 source: 1 state: 2 ours: true run_counter: 21   brightness: 5   brightness: 8 started_by: ros held_by: '' 
+arousal: 0.0
+valence: 0.20000000298023224
+mood: calm
+mood_strength: 1.0
+locked: true
+lock_source: mood_cli
+lock_until:
+----- i11w
+  1534.9 fld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=2 refused=1
+  1534.9 rld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=1
+  1534.9 psi   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=8 refused=0
+  1535.0 magic idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=5 refused=0
+  1535.4 fld   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=2 refused=1
+  1535.4 tfld  idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=0 refused=0
+  1535.4 bfld  idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=0 refused=0
+  1535.4 rld   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=0 refused=1
+  1535.4 psi   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=8 refused=0
+  1535.4 magic idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=5 refused=0
+  1577.1 fld   running  owner=manual prio=199 lease=9.0s active=manual/effect 4000ms mood=calm dropped=2 refused=1
+  1577.1 tfld  claimed  owner=manual prio=199 lease=9.0s active=- mood=calm dropped=0 refused=0
+  1577.1 bfld  claimed  owner=manual prio=199 lease=9.0s active=- mood=calm dropped=0 refused=0
+  1581.2 fld   claimed  owner=manual prio=199 lease=5.0s active=- mood=calm dropped=2 refused=1
+  1586.2 fld   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=2 refused=1
+  1586.2 tfld  idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=0 refused=0
+  1586.2 bfld  idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=0 refused=0
+  1586.7 psi   running  owner=manual prio=199 lease=7.0s active=manual/effect 2000ms mood=calm dropped=8 refused=0
+  1588.7 psi   claimed  owner=manual prio=199 lease=5.0s active=- mood=calm dropped=8 refused=0
+  1593.7 psi   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=8 refused=0
+  1595.2 psi   running  owner=- prio=0 lease=0.0s active=idle/clip 2560ms mood=calm dropped=8 refused=0
+  1597.4 magic running  owner=manual prio=199 lease=8.0s active=manual/sequence 3000ms mood=calm dropped=5 refused=0
+  1597.8 psi   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=8 refused=0
+  1600.0 magic claimed  owner=manual prio=199 lease=5.0s active=- mood=calm dropped=5 refused=0
+===== i12
+$ mood set excited --lock
+79062 /usr/bin/python3 /ws/install/r2_affect/lib/r2_affect/r2_affect --ros-args -r __node:=r2_affect --params-file /tmp/
+mood/state: ok
+13:17:06.399446263
+13:17:06.402295346
+A
+bfld  stale    owner=- prio=0 lease=0.0s active=- mood=neutral dropped=0 refused=0
+fld   stale    owner=- prio=0 lease=0.0s active=- mood=neutral dropped=2 refused=1
+magic stale    owner=- prio=0 lease=0.0s active=- mood=neutral dropped=5 refused=0
+psi   stale    owner=- prio=0 lease=0.0s active=- mood=neutral dropped=8 refused=0
+rld   stale    owner=- prio=0 lease=0.0s active=- mood=neutral dropped=0 refused=1
+tfld  stale    owner=- prio=0 lease=0.0s active=- mood=neutral dropped=0 refused=0
+display rpsi: mode=random brightness=40 drift=- changed_by=ros held_by=- hold=0ms
+display rld: mode=random brightness=40 drift=calm changed_by=ros held_by=- hold=0ms
+display bfld: mode=random brightness=40 drift=calm changed_by=ros held_by=- hold=0ms
+display tfld: mode=random brightness=40 drift=calm changed_by=ros held_by=- hold=0ms
+display fpsi: mode=random brightness=40 drift=- changed_by=ros held_by=- hold=0ms
+13:17:37
+B
+fld   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=2 refused=1
+magic idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=5 refused=0
+psi   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=8 refused=0
+rld   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=0 refused=1
+display rpsi: mode=random brightness=65 drift=- changed_by=ros held_by=- hold=0ms
+display rld: mode=random brightness=65 drift=calm changed_by=ros held_by=- hold=0ms
+display bfld: mode=random brightness=65 drift=calm changed_by=ros held_by=- hold=0ms
+display tfld: mode=random brightness=65 drift=calm changed_by=ros held_by=- hold=0ms
+display fpsi: mode=random brightness=65 drift=- changed_by=ros held_by=- hold=0ms
+/r2_affect
+----- i12w
+  1635.0 fld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=2 refused=1
+  1635.0 rld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=1
+  1635.0 psi   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=8 refused=0
+  1635.0 magic idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=5 refused=0
+  1636.6 fld   stale    owner=- prio=0 lease=0.0s active=- mood=neutral dropped=2 refused=1
+  1636.6 tfld  stale    owner=- prio=0 lease=0.0s active=- mood=neutral dropped=0 refused=0
+  1636.6 bfld  stale    owner=- prio=0 lease=0.0s active=- mood=neutral dropped=0 refused=0
+  1636.6 rld   stale    owner=- prio=0 lease=0.0s active=- mood=neutral dropped=0 refused=1
+  1636.6 psi   stale    owner=- prio=0 lease=0.0s active=- mood=neutral dropped=8 refused=0
+  1636.6 magic stale    owner=- prio=0 lease=0.0s active=- mood=neutral dropped=5 refused=0
+  1661.5 magic idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=5 refused=0
+  1661.5 fld   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=2 refused=1
+  1661.5 tfld  idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=0 refused=0
+  1661.5 bfld  idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=0 refused=0
+  1661.5 rld   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=0 refused=1
+  1661.5 psi   idle     owner=- prio=0 lease=0.0s active=- mood=calm dropped=8 refused=0
+===== i13
+$ mood set excited --lock
+led_arbiter pid 79064
+79064 /usr/bin/python3 /ws/install/r2_expression/lib/r2_expression/led_arbiter --ros-args -r __node:=led_arbit
+79065 /usr/bin/python3 /ws/install/r2_expression/lib/r2_expression/magic_arbiter --ros-args -r __node:=magic_a
+KILLED pid 79064 when fld running idle effect remaining 382 ms at sim 1742.4
+13:19:18
+display rpsi: mode=random brightness=100 drift=- changed_by=ros held_by=- hold=0ms
+display rld: mode=random brightness=100 drift=lively changed_by=ros held_by=- hold=0ms
+display bfld: mode=random brightness=100 drift=lively changed_by=ros held_by=- hold=0ms
+display tfld: mode=random brightness=100 drift=lively changed_by=ros held_by=- hold=0ms
+display fpsi: mode=random brightness=100 drift=- changed_by=ros held_by=- hold=0ms
+status msgs in 6s: {'magic': 11}
+/magic_arbiter
+-- at ~+8 s
+surface fld: idle effect=- elapsed=0ms duration=0ms source=- owner=- last_end=duration last_effect=rainbow last_source=ros
+$ mood set sleepy --lock
+status msgs in 4s: {'magic': 7}
+13:19:58
+restart
+fld   idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+magic idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=5 refused=0
+psi   idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+rld   idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+display rpsi: mode=random brightness=30 drift=- changed_by=ros held_by=- hold=0ms
+display rld: mode=random brightness=35 drift=calm changed_by=ros held_by=- hold=0ms
+display bfld: mode=random brightness=35 drift=calm changed_by=ros held_by=- hold=0ms
+display tfld: mode=random brightness=35 drift=calm changed_by=ros held_by=- hold=0ms
+display fpsi: mode=random brightness=30 drift=- changed_by=ros held_by=- hold=0ms
+----- i13w
+  1740.3 magic idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=5 refused=0
+  1740.5 fld   running  owner=- prio=0 lease=0.0s active=idle/effect 2375ms mood=excited dropped=2 refused=1
+  1740.5 rld   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=0 refused=1
+  1740.5 psi   idle     owner=- prio=0 lease=0.0s active=- mood=excited dropped=8 refused=0
+  1761.0 magic idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=5 refused=0
+  1776.3 fld   offline  owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1776.3 tfld  offline  owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1776.3 bfld  offline  owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1776.3 rld   offline  owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1776.3 psi   offline  owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1777.0 fld   idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1777.0 tfld  idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1777.0 bfld  idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1777.0 rld   idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1777.0 psi   idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+----- i13m
+  1741.0 seq=44 state=2 run_counter=21 started_by=ros owner=r2_expression held_by='' bright=12 pause=False end=1
+  1762.0 seq=44 state=2 run_counter=21 started_by=ros owner=r2_expression held_by='' bright=1 pause=False end=1
+===== i13b
+led_arbiter pid 96843
+KILLED pid 96843 when rld running manual effect remaining 14000 ms at sim 1833.3
+13:21:11
+surface rld: running effect=cycle:rainbow elapsed=710ms duration=14000ms source=ros owner=r2_expression last_end=stopped last_effect=rainbow last_source=console
+surface rld: running effect=cycle:rainbow elapsed=1711ms duration=14000ms source=ros owner=r2_expression last_end=stopped last_effect=rainbow last_source=console
+surface rld: running effect=cycle:rainbow elapsed=2710ms duration=14000ms source=ros owner=r2_expression last_end=stopped last_effect=rainbow last_source=console
+surface rld: running effect=cycle:rainbow elapsed=3710ms duration=14000ms source=ros owner=r2_expression last_end=stopped last_effect=rainbow last_source=console
+status msgs in 4s: {'magic': 7}
+/magic_arbiter
+surface rld: idle effect=- elapsed=0ms duration=0ms source=- owner=- last_end=duration last_effect=cycle last_source=ros
+13:21:34
+restart
+fld   idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+magic idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=5 refused=0
+psi   idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+rld   idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+surface rld: idle effect=- elapsed=0ms duration=0ms source=- owner=- last_end=duration last_effect=cycle last_source=ros
+display rld: mode=random brightness=35 drift=calm changed_by=ros held_by=- hold=0ms
+----- i13bw
+  1831.2 magic idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=5 refused=0
+  1831.3 fld   idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1831.3 rld   idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1831.3 psi   idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1833.3 rld   running  owner=manual prio=199 lease=19.0s active=manual/effect 14000ms mood=sleepy dropped=0 refused=0
+  1854.2 fld   offline  owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1854.2 tfld  offline  owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1854.2 bfld  offline  owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1854.2 rld   offline  owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1854.2 psi   offline  owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1855.0 fld   idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1855.0 tfld  idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1855.0 bfld  idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1855.0 rld   idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1855.0 psi   idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+----- i13b_ex
+$ express effect rld cycle --duration 14
+sent manual rld effect at 199 ({"name": "cycle"}) id=express-987c674c
+===== i14
+dome_mock pid 79066
+13:22:59
+killed 13:22:59.209444843
+A
+bfld  offline  owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+fld   offline  owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+magic offline  owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=5 refused=0
+psi   offline  owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+rld   offline  owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+tfld  offline  owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+0
+13:23:35
+B
+--- led_arbiter log since kill
+[INFO] [1792502584.686382262] [led_arbiter]: fld: offline
+[INFO] [1792502584.689796054] [led_arbiter]: tfld: offline
+[INFO] [1792502584.692962637] [led_arbiter]: bfld: offline
+[INFO] [1792502584.695866137] [led_arbiter]: rld: offline
+[INFO] [1792502584.698800220] [led_arbiter]: psi: offline
+--- rosout since kill
+Removing channel 46 for topic "/dome_mock/mock/console" (std_msgs/msg/String)
+---
+Removing channel 48 for topic "/dome_mock/mock/image" (sensor_msgs/msg/Image)
+---
+Removing channel 50 for topic "/dome_mock/dome/text/line1" (std_msgs/msg/String)
+---
+Removing channel 51 for topic "/dome_mock/dome/text/line0" (std_msgs/msg/String)
+---
+Removing channel 54 for topic "/dome_mock/dome/audio/level" (std_msgs/msg/UInt8)
+---
+Velocity command timed out. Braking.
+---
+Velocity command timed out. Braking.
+---
+Velocity command timed out. Braking.
+---
+Velocity command timed out. Braking.
+---
+Velocity command timed out. Braking.
+---
+fld: offline
+---
+magic: offline
+---
+tfld: offline
+---
+bfld: offline
+---
+rld: offline
+---
+psi: offline
+---
+Velocity command timed out. Braking.
+---
+Velocity command timed out. Braking.
+---
+Velocity command timed out. Braking.
+---
+Velocity command timed out. Braking.
+---
+Velocity command timed out. Braking.
+---
+Velocity command timed out. Braking.
+---
+Velocity command timed out. Braking.
+---
+Velocity command timed out. Braking.
+---
+Velocity command timed out. Braking.
+---
+Velocity command timed out. Braking.
+---
+Velocity command timed out. Braking.
+---
+Velocity command timed out. Braking.
+---
+Velocity command timed out. Braking.
+---
+Velocity command timed out. Braking.
+---
+Velocity command timed out. Braking.
+---
+Velocity command timed out. Braking.
+---
+Velocity command timed out. Braking.
+---
+Velocity command timed out. Braking.
+---
+Velocity command timed out. Braking.
+---
+Velocity command timed out. Braking.
+---
+Velocity command timed out. Braking.
+---
+Velocity command timed out. Braking.
+---
+Velocity command timed out. Braking.
+---
+Velocity command timed out. Braking.
+---
+Velocity command timed out. Braking.
+---
+Velocity command timed out. Braking.
+---
+bfld  offline  owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+fld   offline  owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+magic offline  owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=5 refused=0
+psi   offline  owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+rld   offline  owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+tfld  offline  owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+list-attempt log lines in 22 s: led=0 rosout(both arbiters)=0
+restart 13:23:48.808785838
+13:24:10
+C
+fld   idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+magic idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=5 refused=0
+psi   idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+rld   idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+display rld: mode=random brightness=35 drift=calm changed_by=ros held_by=- hold=0ms
+strip_enabled=True manual=False level=0 (default)
+----- i14w
+  1921.7 magic idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=5 refused=0
+  1921.8 fld   idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1921.8 rld   idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1921.8 psi   idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1928.0 magic offline  owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=5 refused=0
+  1928.0 fld   offline  owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1928.0 tfld  offline  owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1928.0 bfld  offline  owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1928.0 rld   offline  owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1928.0 psi   offline  owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1968.1 magic idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=5 refused=0
+  1968.1 fld   idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1968.1 tfld  idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1968.1 bfld  idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1968.1 rld   idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0
+  1968.1 psi   idle     owner=- prio=0 lease=0.0s active=- mood=sleepy dropped=0 refused=0

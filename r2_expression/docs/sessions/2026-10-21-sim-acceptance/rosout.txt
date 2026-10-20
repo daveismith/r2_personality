@@ -1,0 +1,382 @@
+Creating ROS->GZ Bridge: [/servo/p7_joint/cmd_pos (std_msgs/msg/Float64) -> /servo/p7_joint/cmd_pos (gz.msgs.Double)] (Lazy 0)
+bfld: idle
+rld: idle
+psi: idle
+psi: running
+psi: idle
+another publisher is reporting p7_joint, pp2_joint, pp5_joint: muting emulation for them
+Publishing state interfaces defined in 'joints' and 'interfaces' parameters.
+Waiting for robot_description to be published on the robot_description topic...
+Got description, configuring robot
+Robot initialized
+Press SPACE for pausing/resuming
+Event publisher thread: Started
+Starting recording to '/ws/src/r2_personality/r2_expression/docs/sessions/2026-10-21-sim-acceptance'
+Listening for topics...
+Recording...
+Topics discovery started.
+use_sim_time set, waiting for /clock before starting recording...
+Sim time /clock found, starting recording.
+Subscribed to topic '/dome_mock/leds/states'
+Subscribed to topic '/dome_mock/magic/states'
+Subscribed to topic '/expression/intent'
+Subscribed to topic '/expression/status'
+Subscribed to topic '/mood/state'
+Subscribed to topic '/rosout'
+All requested topics are subscribed. Stopping discovery...
+Topics discovery stopped.
+Advertising new channel 80 for topic "/events/write_split"
+mood forced excited by mood_cli
+mood: calm -> excited
+mood: calm -> excited
+fld: running
+fld: idle
+magic: running
+magic: idle
+magic: running
+psi: running
+psi: idle
+mood: excited -> calm (d=0.44)
+mood: excited -> calm
+mood: excited -> calm
+magic: idle
+mood forced excited by mood_cli
+mood: calm -> excited
+mood: calm -> excited
+magic: running
+magic: idle
+fld: running
+fld: idle
+psi: running
+mood forced sleepy by mood_cli
+mood: excited -> sleepy
+mood: excited -> sleepy
+psi: idle
+mood forced excited by mood_cli
+mood: sleepy -> excited
+mood: sleepy -> excited
+fld: running (manual)
+tfld: claimed (manual)
+bfld: claimed (manual)
+intent express-5754b122 accepted: fld effect  from manual
+psi: running
+fld: claimed (manual)
+psi: idle
+fld: idle
+tfld: idle
+bfld: idle
+psi: running
+psi: idle
+magic: running
+magic: idle
+fld: running
+mood: excited -> calm (d=0.47)
+mood: excited -> calm
+mood: excited -> calm
+fld: idle
+mood forced excited by mood_cli
+mood: calm -> excited
+mood: calm -> excited
+fld: running
+fld: idle
+fld: running (manual)
+tfld: claimed (manual)
+bfld: claimed (manual)
+intent express-9a94f70e accepted: fld effect  from manual
+magic: running
+psi: running
+psi: idle
+magic: idle
+magic: running
+mood: excited -> calm (d=0.48)
+mood: excited -> calm
+mood: excited -> calm
+fld: claimed (manual)
+magic: idle
+fld: idle
+tfld: idle
+bfld: idle
+fld: running
+fld: idle
+magic: claimed (console)
+claim magic by console at 199 for 30.0 s: accepted
+mood: calm -> sleepy (d=0.46)
+mood: calm -> sleepy
+mood: calm -> sleepy
+magic: idle
+mood forced excited by mood_cli
+mood: sleepy -> excited
+mood: sleepy -> excited
+magic: running
+magic: idle
+mood: excited -> calm (d=0.50)
+mood: excited -> calm
+mood: excited -> calm
+claim magic by express at 199 for 0.0 s: refused, no claim by 'express' on magic
+claim magic by console at 199 for 0.0 s: refused, no claim by 'console' on magic
+mood: calm -> sleepy (d=0.53)
+mood: calm -> sleepy
+mood: calm -> sleepy
+clear requested by mood_cli (nothing locked)
+magic: claimed (console)
+claim magic by console at 199 for 60.0 s: accepted
+mood forced and locked excited by mood_cli
+mood: sleepy -> excited
+mood: sleepy -> excited
+psi: running
+psi: idle
+claim magic by express at 199 for 0.0 s: refused, no claim by 'express' on magic
+magic: idle
+claim magic by console at 199 for 0.0 s: accepted
+psi: running
+psi: idle
+psi: running
+psi: idle
+lock cleared by mood_cli
+magic: running (manual)
+intent express-22517068 accepted: magic sequence  from manual
+magic: claimed (manual)
+magic: idle
+mood: excited -> calm (d=0.50)
+mood: excited -> calm
+mood: excited -> calm
+magic: running (manual)
+intent express-0e394a36 accepted: magic sequence  from manual
+magic: claimed (manual)
+magic: idle
+mood forced calm by mood_cli
+console 'leds run rld rainbow': ok
+rld: foreign (console)
+fld: running
+fld: idle
+intent express-b3dcd368 accepted: rld effect  from manual
+rld: running (manual)
+mood: calm -> sleepy (d=0.34)
+mood: calm -> sleepy
+mood: calm -> sleepy
+console 'leds stop rld': ok
+rld: foreign (console)
+rld: claimed (manual)
+rld: idle
+mood forced and locked excited by mood_cli
+mood: sleepy -> excited
+mood: sleepy -> excited
+console 'leds run rld rainbow': ok
+rld: foreign (console)
+intent express-ab7a77df accepted: rld effect  from manual
+run rld fire refused: held by console
+rld: run on rld refused 'held by console': channel foreign (console)
+fld: running
+fld: idle
+fld: running
+fld: idle
+magic: running
+fld: running
+magic: idle
+fld: idle
+fld: running
+console 'leds stop rld': ok
+fld: idle
+psi: running
+rld: idle
+psi: idle
+magic: running
+magic: idle
+psi: running
+psi: idle
+magic: running
+magic: idle
+mood forced and locked scared by mood_cli
+mood: excited -> scared
+mood: excited -> scared
+psi: running
+psi: idle
+console 'leds run rld rainbow': ok
+rld: foreign (console)
+psi: running
+psi: idle
+console 'leds stop rld': ok
+rld: idle
+fld: running
+fld: idle
+magic: running
+fld: running
+fld: idle
+mood forced and locked calm by mood_cli
+mood: scared -> calm
+mood: scared -> calm
+magic: idle
+console 'leds mode tfld off': ok
+fld: foreign (console)
+tfld: foreign (console)
+fld: idle
+tfld: idle
+fld: running
+fld: idle
+console 'magic_panel start 44': ok
+magic: foreign (console)
+magic: idle
+fld: running
+fld: idle
+fld: foreign (text_topic)
+tfld: foreign (text_topic)
+bfld: foreign (text_topic)
+fld: idle
+tfld: idle
+bfld: idle
+fld: running
+fld: idle
+console 'leds rostext off': ok
+console 'leds rostext on': ok
+fld: running
+console 'leds owner manual': ok
+fld: foreign (manual)
+magic: foreign (manual)
+tfld: foreign (manual)
+bfld: foreign (manual)
+rld: foreign (manual)
+psi: foreign (manual)
+mood forced and locked excited by mood_cli
+mood: calm -> excited
+mood: calm -> excited
+intent express-2aa5b549 accepted: fld effect  from manual
+run fld fire refused: held: manual
+fld: run on fld refused 'held: manual': channel foreign (manual)
+intent express-1126aab8 accepted: fld effect  from manual
+console 'leds owner auto': ok
+fld: idle
+tfld: idle
+bfld: idle
+magic: idle
+rld: idle
+psi: idle
+psi: running
+psi: idle
+magic: running
+magic: idle
+magic: running
+fld: running
+magic: idle
+fld: idle
+fld: running
+fld: idle
+console 'leds enable off': ok
+fld: dark
+tfld: dark
+bfld: dark
+rld: dark
+psi: dark
+magic: running
+magic: idle
+magic: running
+console 'leds enable on': ok
+fld: idle
+tfld: idle
+bfld: idle
+rld: idle
+psi: idle
+magic: idle
+fld: running
+fld: idle
+fld: running
+magic: running
+fld: idle
+magic: idle
+mood forced and locked calm by mood_cli
+mood: excited -> calm
+mood: excited -> calm
+stimulus bump from accept i=1.00: no change -> aro=0.00 val=0.20 cur=0.40 con=0.10 (locked, not applied)
+stimulus bump from accept i=1.00: no change -> aro=0.00 val=0.20 cur=0.40 con=0.10 (locked, not applied)
+fld: running (manual)
+tfld: claimed (manual)
+bfld: claimed (manual)
+intent express-ce4538cf accepted: fld effect  from manual
+fld: claimed (manual)
+fld: idle
+tfld: idle
+bfld: idle
+psi: running (manual)
+intent express-4cd6ff4a accepted: psi effect  from manual
+psi: claimed (manual)
+psi: idle
+psi: running
+magic: running (manual)
+intent express-a5199c8c accepted: magic sequence  from manual
+psi: idle
+magic: claimed (manual)
+magic: idle
+mood forced and locked excited by mood_cli
+mood: calm -> excited
+mood: calm -> excited
+fld: stale
+tfld: stale
+bfld: stale
+rld: stale
+psi: stale
+magic: stale
+r2_affect up: config /ws/install/r2_affect/share/r2_affect/config/affect.yaml, 10.0 Hz, mood calm (aro=0.00 val=0.20 cur=0.40 con=0.60)
+mood: excited -> calm
+mood: excited -> calm
+magic: idle
+fld: idle
+tfld: idle
+bfld: idle
+rld: idle
+psi: idle
+fld: running
+fld: idle
+mood forced and locked excited by mood_cli
+mood: calm -> excited
+mood: calm -> excited
+fld: running
+mood forced and locked sleepy by mood_cli
+mood: excited -> sleepy
+led_arbiter up: config /ws/install/r2_expression/share/r2_expression/config/expression.yaml, device /dome_mock, channels fld tfld bfld rld psi
+mood: - -> sleepy
+fld: offline
+tfld: offline
+bfld: offline
+rld: offline
+psi: offline
+device /dome_mock answered list; catalogue loaded
+fld: idle
+tfld: idle
+bfld: idle
+rld: idle
+psi: idle
+rld: running (manual)
+led_arbiter up: config /ws/install/r2_expression/share/r2_expression/config/expression.yaml, device /dome_mock, channels fld tfld bfld rld psi
+mood: - -> sleepy
+fld: offline
+tfld: offline
+bfld: offline
+rld: offline
+psi: offline
+device /dome_mock answered list; catalogue loaded
+fld: idle
+tfld: idle
+bfld: idle
+rld: idle
+psi: idle
+fld: offline
+magic: offline
+tfld: offline
+bfld: offline
+rld: offline
+psi: offline
+dome mock up as /dome_mock (config /ws/install/r2_mocks/share/r2_mocks/config/dome_mock.yaml, state_hz 1, hold_ms 5000, magic panel fitted)
+magic: idle
+fld: idle
+tfld: idle
+bfld: idle
+rld: idle
+psi: idle
+Advertising new channel 81 for topic "/dome_mock/mock/picture"
+Advertising new channel 82 for topic "/dome_mock/mock/image"
+Advertising new channel 83 for topic "/dome_mock/mock/console"
+Advertising new channel 84 for topic "/dome_mock/dome/text/line1"
+Advertising new channel 85 for topic "/dome_mock/dome/text/line0"
+Advertising new channel 86 for topic "/dome_mock/dome/audio/level"
+Pausing recording.
+Recording stopped
+failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:333
