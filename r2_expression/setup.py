@@ -26,6 +26,7 @@ setup(
         ('share/ament_index/resource_index/packages', [f'resource/{package_name}']),
         (f'share/{package_name}', ['package.xml', 'README.md']),
         (f'share/{package_name}/config', glob('config/*.yaml')),
+        (f'share/{package_name}/foxglove', glob('foxglove/*.json')),
     ],
     install_requires=['setuptools', 'PyYAML'],
     zip_safe=True,
@@ -40,6 +41,8 @@ setup(
         ],
     },
     entry_points={
-        'console_scripts': [],
+        'console_scripts': [
+            'express = r2_expression.express_cli:main',
+        ],
     },
 )

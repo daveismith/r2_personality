@@ -1,0 +1,168 @@
+{
+  "configById": {
+    "Publish!fire": {
+      "topicName": "/expression/intent",
+      "datatype": "astromech_msgs/msg/ExpressionIntent",
+      "buttonText": "fld fire",
+      "buttonTooltip": "Publish this ExpressionIntent on /expression/intent (manual, 199: a person at the dome still wins)",
+      "buttonColor": "#e5534b",
+      "advancedView": true,
+      "value": "{\n  \"header\": {\n    \"stamp\": {\n      \"sec\": 0,\n      \"nanosec\": 0\n    },\n    \"frame_id\": \"\"\n  },\n  \"channel\": \"fld\",\n  \"source\": \"manual\",\n  \"priority\": 199,\n  \"action\": \"effect\",\n  \"params\": \"{\\\"name\\\": \\\"fire\\\"}\",\n  \"duration_ms\": 5000,\n  \"interruptible\": true,\n  \"intent_id\": \"foxglove-fire\"\n}",
+      "foxglovePanelTitle": "Intent: effect fire on fld"
+    },
+    "Publish!seq44": {
+      "topicName": "/expression/intent",
+      "datatype": "astromech_msgs/msg/ExpressionIntent",
+      "buttonText": "magic sequence 44",
+      "buttonTooltip": "Publish this ExpressionIntent on /expression/intent (manual, 199: a person at the dome still wins)",
+      "buttonColor": "#539bf5",
+      "advancedView": true,
+      "value": "{\n  \"header\": {\n    \"stamp\": {\n      \"sec\": 0,\n      \"nanosec\": 0\n    },\n    \"frame_id\": \"\"\n  },\n  \"channel\": \"magic\",\n  \"source\": \"manual\",\n  \"priority\": 199,\n  \"action\": \"sequence\",\n  \"params\": \"{\\\"id\\\": 44}\",\n  \"duration_ms\": 3000,\n  \"interruptible\": true,\n  \"intent_id\": \"foxglove-seq44\"\n}",
+      "foxglovePanelTitle": "Intent: sequence 44 on magic"
+    },
+    "Publish!lively": {
+      "topicName": "/expression/intent",
+      "datatype": "astromech_msgs/msg/ExpressionIntent",
+      "buttonText": "rld drift lively",
+      "buttonTooltip": "Publish this ExpressionIntent on /expression/intent (manual, 199: a person at the dome still wins)",
+      "buttonColor": "#57ab5a",
+      "advancedView": true,
+      "value": "{\n  \"header\": {\n    \"stamp\": {\n      \"sec\": 0,\n      \"nanosec\": 0\n    },\n    \"frame_id\": \"\"\n  },\n  \"channel\": \"rld\",\n  \"source\": \"manual\",\n  \"priority\": 199,\n  \"action\": \"configure\",\n  \"params\": \"{\\\"drift\\\": \\\"lively\\\"}\",\n  \"duration_ms\": 0,\n  \"interruptible\": true,\n  \"intent_id\": \"foxglove-lively\"\n}",
+      "foxglovePanelTitle": "Intent: configure rld drift lively"
+    },
+    "Publish!stopfld": {
+      "topicName": "/expression/intent",
+      "datatype": "astromech_msgs/msg/ExpressionIntent",
+      "buttonText": "stop fld",
+      "buttonTooltip": "Publish this ExpressionIntent on /expression/intent (manual, 199: a person at the dome still wins)",
+      "buttonColor": "#c69026",
+      "advancedView": true,
+      "value": "{\n  \"header\": {\n    \"stamp\": {\n      \"sec\": 0,\n      \"nanosec\": 0\n    },\n    \"frame_id\": \"\"\n  },\n  \"channel\": \"fld\",\n  \"source\": \"manual\",\n  \"priority\": 199,\n  \"action\": \"stop\",\n  \"params\": \"\",\n  \"duration_ms\": 0,\n  \"interruptible\": true,\n  \"intent_id\": \"foxglove-stop\"\n}",
+      "foxglovePanelTitle": "Intent: stop fld"
+    },
+    "CallService!claim": {
+      "serviceName": "/expression/claim",
+      "requestPayload": "{\n  \"channel\": \"fld\",\n  \"owner\": \"foxglove\",\n  \"priority\": 199,\n  \"lease_s\": 30\n}",
+      "layout": "vertical",
+      "buttonText": "Claim fld for 30 s",
+      "buttonTooltip": "astromech_msgs/srv/ClaimChannel: hold a channel at 199",
+      "buttonColor": "#986ee2",
+      "foxglovePanelTitle": "Claim (/expression/claim)"
+    },
+    "CallService!release": {
+      "serviceName": "/expression/claim",
+      "requestPayload": "{\n  \"channel\": \"fld\",\n  \"owner\": \"foxglove\",\n  \"priority\": 199,\n  \"lease_s\": 0\n}",
+      "layout": "vertical",
+      "buttonText": "Release fld",
+      "buttonTooltip": "ClaimChannel with lease_s 0 releases",
+      "buttonColor": "#986ee2",
+      "foxglovePanelTitle": "Release (/expression/claim)"
+    },
+    "StateTransitions!state": {
+      "paths": [
+        {
+          "value": "/expression/status{channel==\"fld\"}.state",
+          "timestampMethod": "receiveTime",
+          "label": "fld",
+          "enabled": true
+        },
+        {
+          "value": "/expression/status{channel==\"tfld\"}.state",
+          "timestampMethod": "receiveTime",
+          "label": "tfld",
+          "enabled": true
+        },
+        {
+          "value": "/expression/status{channel==\"bfld\"}.state",
+          "timestampMethod": "receiveTime",
+          "label": "bfld",
+          "enabled": true
+        },
+        {
+          "value": "/expression/status{channel==\"rld\"}.state",
+          "timestampMethod": "receiveTime",
+          "label": "rld",
+          "enabled": true
+        },
+        {
+          "value": "/expression/status{channel==\"psi\"}.state",
+          "timestampMethod": "receiveTime",
+          "label": "psi",
+          "enabled": true
+        },
+        {
+          "value": "/expression/status{channel==\"magic\"}.state",
+          "timestampMethod": "receiveTime",
+          "label": "magic",
+          "enabled": true
+        }
+      ],
+      "isSynced": true,
+      "xAxisRange": 120,
+      "showPoints": false,
+      "foxglovePanelTitle": "Channel state (0 idle, 1 running, 2 claimed, 3 foreign, 4 stale, 5 offline, 6 dark)"
+    },
+    "RawMessages!picture": {
+      "topicPath": "/r2_dome/mock/picture",
+      "diffTopicPath": "",
+      "diffMethod": "custom",
+      "diffEnabled": false,
+      "showFullMessageForDiff": false,
+      "expansion": "all",
+      "foxglovePanelTitle": "Dome picture (sim)"
+    },
+    "Image!picture": {
+      "cameraTopic": "/r2_dome/mock/image",
+      "enabledMarkerTopics": [],
+      "synchronize": false,
+      "mode": "fit",
+      "foxglovePanelTitle": "Dome image (sim)"
+    }
+  },
+  "globalVariables": {},
+  "userNodes": {},
+  "playbackConfig": {
+    "speed": 1
+  },
+  "layout": {
+    "direction": "row",
+    "first": {
+      "direction": "column",
+      "first": "StateTransitions!state",
+      "second": {
+        "direction": "row",
+        "first": "RawMessages!picture",
+        "second": "Image!picture",
+        "splitPercentage": 50
+      },
+      "splitPercentage": 45
+    },
+    "second": {
+      "direction": "row",
+      "first": {
+        "direction": "column",
+        "first": "Publish!fire",
+        "second": {
+          "direction": "column",
+          "first": "Publish!seq44",
+          "second": {
+            "direction": "column",
+            "first": "Publish!lively",
+            "second": "Publish!stopfld",
+            "splitPercentage": 50.0
+          },
+          "splitPercentage": 33.33
+        },
+        "splitPercentage": 25.0
+      },
+      "second": {
+        "direction": "column",
+        "first": "CallService!claim",
+        "second": "CallService!release",
+        "splitPercentage": 50.0
+      },
+      "splitPercentage": 50
+    },
+    "splitPercentage": 62
+  }
+}

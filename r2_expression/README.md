@@ -144,6 +144,40 @@ leaves the other's run in place. Snapshots and intents may be ROS messages or di
 their fields. `arb.reload(config, now)` keeps claims, runs, holds and counts and returns
 the re-styling actions.
 
+## Driving the lights by hand
+
+Two ways, same messages: the `express` CLI and the Foxglove tab
+`foxglove/expression-panels.json` (installed under `share/r2_expression/foxglove`).
+
+| | CLI | Foxglove panel |
+|---|---|---|
+| run an effect | `express effect fld fire --duration 5` | Publish "fld fire" (`/expression/intent`) |
+| Magic Panel sequence | `express sequence magic 44 --duration 3` | Publish "magic sequence 44" |
+| drift | `express configure rld --drift lively` | Publish "rld drift lively" |
+| stop | `express stop fld` | Publish "stop fld" |
+| hold a channel | `express claim fld --owner me --lease 30` / `express release fld` | Call Service `/expression/claim` (claim, release) |
+| why is it quiet | `express status [--watch]` | State Transitions on `/expression/status{channel=="fld"}.state` |
+| see the lights (sim) | `express dome "leds run fld fire"` | Raw Messages `/r2_dome/mock/picture`, Image `/r2_dome/mock/image` |
+
+Also `clip`, `text "line1" "line2" [--motion loop] [--on-black]`, `configure --brightness N`
+(0-100; magic 0-15), `--rgb rrggbb`, `--speed 1-9`, `--hold` (not interruptible), `--id`.
+Exit codes: 0 done (claim accepted, intent sent to a subscriber), 1 refused or nothing
+answering, 2 bad arguments. An intent is fire-and-forget: one an arbiter drops (a higher
+priority holds the channel) shows only as `dropped` in `express status`. If each arbiter
+offers its own claim service, `--claim-service NAME` points claim and release at the right one
+(the shared `/expression/claim` name answers "not my channel" for the other kind).
+
+**199 and `--override`.** Every intent goes out as `source: manual` at priority 199, which
+yields to a person at the dome (their hold on the device is 200 or the device's own).
+`--override` sends 200, which beats that hold and is never refused; the Foxglove panels
+send 199 and have no override. `--source idle|behavior` (10 / 100, or `--priority N`) is for
+testing the arbiter's ladder only.
+
+**The dome's own console is not routed.** `express dome` and the mock's console topic exist
+only in the sim; on the robot, a line typed at the dome's console (or the touchscreen, or
+the panel's rotary switch) holds those lights directly, and the arbiters show the channel as
+`foreign` until it ends. The real device has no `mock/console` topic, so `express dome` there prints the "nobody subscribes" note and exits 1.
+
 ## Tests
 
 ```bash
