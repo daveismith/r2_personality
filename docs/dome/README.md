@@ -9,8 +9,10 @@ routers. They are the source for `r2_mocks`'s `dome_mock.yaml` catalogue (phase 
   (`alarm`, `alarm-twinkle`, `colourswap`, `colourwheel`, `fadescroll`, `failure` (18 s,
   does not loop), `flash`, `flipflop`, `flipflop-alt`, `fractal`, `hscan`, `march` (48 s,
   does not loop), `metaballs`, `plasma`, `pulse`, `vscan`).
-- `2026-10-20-workbench-magic-list.txt`: `ListMagicPanel` with no panel fitted
-  (`link` 0, empty catalogue). The droid's panel, if fitted, needs its own capture.
+- `2026-10-20-workbench-magic-list.txt`: `ListMagicPanel` with the bench's simulated panel
+  (the Pico simulator): `link` 1, firmware 0.12.1, protocol 1.1, `has_repeat`,
+  `has_brightness`, `has_names`, 58 sequences (ids 0-57) with names and measured lengths.
+  The droid's real panel needs its own capture.
 
 Measured the same day from the dev container: `RunLedEffect` round trip 8-14 ms, median
 10 ms, over ten calls.
