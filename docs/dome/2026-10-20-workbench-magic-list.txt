@@ -1,0 +1,5 @@
+requester: making request: astromech_msgs.srv.ListMagicPanel_Request()
+
+response:
+astromech_msgs.srv.ListMagicPanel_Response(panel=astromech_msgs.msg.MagicPanelDescriptor(link=0, unsupported=0, fw_major=0, fw_minor=12, fw_patch=1, proto_major=1, proto_minor=1, seq_count=0, cached=0, has_legacy=False, has_repeat=False, has_brightness=False, has_names=False, has_eeprom_config=False, has_orientation=False, address=20, scl_hz=100000, poll_period_ms=1000, catalogue_age_ms=2047494), sequences=[])
+
