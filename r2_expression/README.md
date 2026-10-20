@@ -7,14 +7,18 @@ arbiter of that channel decides whether it runs, and it is the only ROS client o
 device's LED and Magic Panel services. A person at the dome (its console, its touchscreen,
 the text topics) holds the lights on the device, and the arbiter yields.
 
-Phase 1, step 3 delivered the pure-Python core (`docs/personality-phase1-plan.md` in
-`r2_dev`); the nodes, renderers, CLI and launch files follow in steps 4-7.
+Phase 1, step 3 delivered the pure-Python core and step 4 the renderers and the two arbiter
+nodes (`docs/personality-phase1-plan.md` in `r2_dev`); the CLI, panels and bringup follow in
+steps 6-7.
 
 | file | what |
 |---|---|
 | `r2_expression/core.py` | `Arbiter`: channels, claims, leases, priorities, the device's holds and the state-topic fallback, the watchdog, flourish firing. No ROS imports. |
 | `r2_expression/palette.py` | label + strength to a style per channel, `ListLeds`/`ListMagicPanel` pick validation, the flourish scheduler. Pure. |
 | `r2_expression/config.py` | `load_config()`: reads and validates `expression.yaml` into frozen dataclasses; every rejection raises `ExpressionConfigError` naming the dotted key. |
+| `r2_expression/led_renderer.py`, `magic_renderer.py` | a core `Action` to the exact service request, or a local refusal with the device's own string. Pure (message types only). `render_common.py` holds what they share. |
+| `r2_expression/arbiter_node.py` | the node, one class for both kinds; entry points `led_arbiter` and `magic_arbiter`. |
+| `launch/expression.launch.py` | `use_sim_time`, `config`, `device`; starts both nodes. |
 | `config/expression.yaml` | the shipped settings and a palette for every mood of `r2_affect`'s `affect.yaml`. |
 
 ## The rules in a page
@@ -115,6 +119,84 @@ on the PSIs or the panel, a pick with no kind or two, `every_s` min above max, a
 `duration_ms` 0. Effect, clip and sequence names are checked against the device's
 `ListLeds`/`ListMagicPanel` at startup: a pick the device lacks is dropped with one WARN,
 so a palette can name clips only some droids carry.
+
+## Running the nodes
+
+```bash
+ros2 launch r2_expression expression.launch.py                       # against /r2_dome
+ros2 launch r2_expression expression.launch.py device:=/dome_mock use_sim_time:=true
+ros2 run r2_expression led_arbiter --ros-args -p device:=/dome_mock   # one node alone
+ros2 run r2_expression magic_arbiter --ros-args -p config:=/path/expression.yaml
+```
+
+With a real dome on the graph, test against a mock under another name (`ros2 launch r2_mocks
+dome_mock.launch.py node_name:=dome_mock`) and pass that name as `device`; remap the
+`/expression/*` and `/mood/state` names too if a live stack is running.
+
+Parameters, all read at startup (a later `ros2 param set` is refused, as in `r2_affect`):
+
+| parameter | default | |
+|---|---|---|
+| `config` | the installed `expression.yaml` | settings and palettes |
+| `device` | `/r2_dome` | the dome device node; services are `<device>/leds/...` or `<device>/magic/...` |
+| `use_sim_time` | false | node clock follows `/clock`; the 10 Hz tick runs on the steady clock |
+
+| | `led_arbiter` | `magic_arbiter` |
+|---|---|---|
+| channels | `fld`, `tfld`, `bfld`, `rld`, `psi` | `magic` |
+| subscribes | `/expression/intent` (reliable, depth 50), `/mood/state`, `<device>/leds/states` | same intent and mood, `<device>/magic/states` (reliable, depth 10) |
+| serves | `/expression/claim/led` | `/expression/claim/magic` |
+| clients | `<device>/leds/list`, `run`, `say`, `stop`, `configure` | `<device>/magic/list`, `start`, `stop`, `configure` |
+| publishes | `/expression/status` (`ChannelStatus`) | same |
+
+Nothing else is published but `/rosout` and `/parameter_events`; no other client of the device
+exists (a test checks both by graph introspection).
+
+### The claim service
+
+The plan names one service, `/expression/claim`, offered by both nodes. **That does not work
+on rmw_zenoh**: with two servers on one name a request goes to either of them (measured: about
+half the requests for `magic` reached the LED node, which answered `not my channel`). So each
+node offers its own: **`/expression/claim/led`** and **`/expression/claim/magic`**. A node still
+refuses the other's channels with `not my channel` and `accepted false`, so a client that tries
+both is correct. The later `express` CLI and Foxglove panels pick the service by channel.
+
+### Status semantics
+
+`/expression/status` carries one `ChannelStatus` per channel at `status_hz` and at once on a
+change of state, owner, priority, active intent, mood, or the `dropped`/`refused` counts (not
+for the lease and remaining-time countdowns). The LED node publishes `fld`, `rld` and `psi`
+always and `tfld`/`bfld` only while they are not `IDLE` (plus the one message that returns them
+to `IDLE`). States and their order of precedence are in the rules above; `OFFLINE` is shown from
+the start until the device has answered `list` and sent a state message, and again when no state
+message arrives for `device_stale_s`.
+
+### Startup and the single worker
+
+1. The worker waits for `<device>/.../list` to appear on the graph (polled, nothing sent), calls
+   it, and retries every 5 s while a call gets no answer. Meanwhile every channel is `OFFLINE`.
+2. The catalogue is built (`palette.led_catalogue` / `magic_catalogue`) and given to the core.
+   State messages before that are ignored; the first one after it adopts this arbiter's own
+   runs (`source ros`, `owner r2_expression`: stopped, plan 4.2), then the current mood's
+   palette goes out. The Magic Panel node lists again when `interrogations` moves or the link
+   comes back.
+
+All device calls are made by **one worker thread**, from a queue, in the order the core produced
+them: one request in flight per device, a 5 s timeout, and a timed-out call is reported to the
+core as refused with reason `timeout`. The executor thread (subscriptions, the claim service,
+the tick) never waits on the device; the core is guarded by one lock. Before a request is sent
+the renderer checks what it can: text on a PSI, more than two lines, a line of 64 characters
+or more, a name over 63 bytes (`name too long`: the device never answers it), an owner over 31
+bytes; a refusal is local, logged, and reported to the core as the device's refusal would be.
+
+### Logging
+
+INFO: startup, each state change of a channel, each accepted intent and claim, the mood label,
+each device refusal that is new (`held by ...` once per hold, not on each repeat), the device
+answering `list`. WARNING: each core warning once (unknown mood label, a pick the device lacks),
+a request that got no answer, a local refusal, a device refusal other than a hold. DEBUG:
+dropped intents, each device call (`fld: run on fld (intent)`), repeats of a hold refusal.
+`--ros-args --log-level debug` shows them.
 
 ## How the nodes use the core (step 4)
 

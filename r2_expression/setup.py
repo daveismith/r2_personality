@@ -27,6 +27,7 @@ setup(
         (f'share/{package_name}', ['package.xml', 'README.md']),
         (f'share/{package_name}/config', glob('config/*.yaml')),
         (f'share/{package_name}/foxglove', glob('foxglove/*.json')),
+        (f'share/{package_name}/launch', glob('launch/*.launch.py')),
     ],
     install_requires=['setuptools', 'PyYAML'],
     zip_safe=True,
@@ -43,6 +44,8 @@ setup(
     entry_points={
         'console_scripts': [
             'express = r2_expression.express_cli:main',
+            'led_arbiter = r2_expression.arbiter_node:main_led',
+            'magic_arbiter = r2_expression.arbiter_node:main_magic',
         ],
     },
 )
