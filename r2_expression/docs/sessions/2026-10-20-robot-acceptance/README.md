@@ -31,7 +31,7 @@ time from the container with
 | 13 kill `led_arbiter` | PASS | 25 s manual `rld cycle` started 23:56:45; killed about 23:56:49: LED-channel status stopped, `magic_arbiter` kept 2 Hz; the device ran `roam`, `rainbow`, `fire` and ended `last_end: duration` at 23:57:10. Restart (`ros2 run r2_expression led_arbiter --ros-args -p device:=/r2_dome`) 23:58:57.986: `offline` until `answered list; catalogue loaded` (0.22 s), `idle` at 23:58:58.827, palette by `r2_expression` (58: calm at a lower `mood_strength` after the item 12 restart; brightness scales with strength, `palette.scale_brightness`) |
 | 14 stop the device | PASS | `ros stop` on the console: last `/r2_dome/leds/states` 00:00:08.811, every LED channel `offline` 00:00:13.861 (5.05 s, `device_stale_s` 5); no `list` attempt and no error in the 72 s outage; `ros start`: first state 00:01:21.321, `idle` 00:01:21.333. The device took some seconds after `ros start` to reach the router |
 | 15 graph check | PASS | `item15-graph.txt`: `/r2_dome/leds|magic/*` clients are `/led_arbiter` (5), `/magic_arbiter` (4) and the live `/foxglove_bridge` (9 of its 18); no other node |
-| 16 load | **FAIL** (CPU); PASS (rate) | `ps -eo pcpu,etime,args` on the Pi: `magic_arbiter` 2.6 % over 1:29:35, `led_arbiter` 2.8 % over 1:03:02 (the `ros2 run` wrapper 0.0), together **5.4 %**, target 3 %. `/dome/joint_states` 10.0 Hz with both arbiters, 10.0 Hz with `led_arbiter` down. See Findings 1 |
+| 16 load | FAIL as run; **PASS after the fix** (2.74 %, see below); PASS (rate) | `ps -eo pcpu,etime,args` on the Pi: `magic_arbiter` 2.6 % over 1:29:35, `led_arbiter` 2.8 % over 1:03:02 (the `ros2 run` wrapper 0.0), together **5.4 %**, target 3 %. `/dome/joint_states` 10.0 Hz with both arbiters, 10.0 Hz with `led_arbiter` down. See Findings 1 |
 
 ## Findings
 
@@ -41,7 +41,7 @@ time from the container with
    channel `offline`, so the cost looks fixed per node (the 2 Hz status timer, the
    `/mood/state` subscription at the affect rate, the 1 Hz dome state topics, rclpy
    executor overhead) rather than work. Phase 0's item 14 failed the same way (6.8 % for
-   four processes). Not investigated here.
+   four processes). **Fixed the same night, below.**
 2. **The device hold protects a person for 5 s after their last write, not for the run.**
    First attempt at item 7: the effect was sent after David replied, well past the hold;
    `rld` still showed `foreign owner=console lease=0.0s` (the arbiter waits for a run it
@@ -62,3 +62,31 @@ time from the container with
 6. **Not covered by this run**: the droid's own dome (step 0's droid part: firmware,
    router, catalogue capture), the Magic Panel (items 5, 6, 9 and the panel parts of 2
    and 13), and the palettes seen on a physical strip (the web GUI only).
+
+## Item 16 after the wake-up cut (2026-10-21)
+
+Measured from `/proc/<pid>/stat` (utime + stime) over 60 s windows on the Pi 5 with the
+droid idle, then over 10 minutes (01:49:18 to 01:59:18 UTC) once the fix was in. Two
+reference nodes first: an idle rclpy node (`floor_idle`) costs **0.02 %**, one that only
+receives `/mood/state` at 10 Hz (`floor_mood`) **1.03 %**. So the cost was wake-ups, not
+work or a per-process floor; the core's mood plus status work is about 12 us a message.
+
+The fix (r2_personality 7595052, r2_bringup b7e27d9): `r2_affect` publishes `/mood/state`
+at 5 Hz (was 10); the arbiter worker sleeps on its queue instead of polling every 0.1 s;
+the tick is 0.25 s (was 0.1) and the executor's idle timeout 0.5 s (was 0.2).
+
+| process | before (60 s) | after (10 min) |
+|---|---|---|
+| `led_arbiter` | 3.03 % | 1.42 % |
+| `magic_arbiter` | 2.68 % | 1.32 % |
+| **the two arbiters** | **5.71 %** | **2.74 %** (target 3 %: pass) |
+| `r2_affect` | 1.38 % | 0.67 % |
+| `stimulus_adapters` (unchanged) | 2.37 % | 2.32 % |
+
+After the restart all channels were `idle` on `calm` and `/mood/state` ran at 5.0 Hz.
+
+The same measurement found the droid's largest CPU cost outside this stack:
+`irq/174-spi0.0`, the MCP2515 on `spi0.0` (`can0`, the shoulder bus), at 23.9 % of a core,
+21 227 interrupts a second for about 209 frames received a second; the SPI controller's
+runtime PM adds about 15 % in `kworker/*-pm`. Not a personality issue; followed up
+separately.
