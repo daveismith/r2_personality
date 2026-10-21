@@ -21,9 +21,11 @@ One node class, two kinds. ``led_arbiter`` serves ``fld``, ``tfld``, ``bfld``, `
 ``<device>/magic/*`` (plan 5.3). Each is the only ROS client of its device services.
 
 Threads. The executor thread (``main``) runs every subscription, the claim service and the
-10 Hz tick; each takes ``_lock`` around the core and never waits on the device. One worker
+4 Hz tick; each takes ``_lock`` around the core and never waits on the device. One worker
 thread makes the device calls from a queue, in order, one request in flight at a time with a
-5 s timeout; its replies go back into the core under the same lock. All time is the node
+5 s timeout; its replies go back into the core under the same lock. An idle worker sleeps
+on the queue until an action arrives or the queue is closed (no polling: a wake-up costs
+about 0.1 % of a Pi 5 core per Hz). All time is the node
 clock (``use_sim_time`` aware); the tick timer runs on the steady clock.
 """
 
@@ -80,8 +82,8 @@ STARTUP_PARAMETERS = ('config', 'device', 'use_sim_time', 'allow_duplicate')
 
 REQUEST_TIMEOUT_S = 5.0      # one device request, plan 2.1
 LIST_RETRY_S = 5.0           # between attempts at the device's `list`
-TICK_S = 0.1                 # the core's timers, 10 Hz
-POLL_S = 0.1                 # how often a waiting worker looks at the stop flag
+TICK_S = 0.25                # the core's timers, 4 Hz: leases, holds and durations to 0.25 s
+POLL_S = 0.1                 # how often a worker in a call or offline looks at the stop flag
 DUPLICATE_WAIT_S = 1.0       # discovery time before the graph is asked for a node of our name
 GUARD_LOG_S = 60.0           # a failing callback is logged at most this often
 # Where the nodes meet. Both offer a claim service; rmw_zenoh gives a request to either
@@ -120,6 +122,7 @@ class _ActionQueue:
     def __init__(self):
         self._items = deque()
         self._ready = threading.Condition()
+        self._closed = False
 
     def put_replacing(self, item):
         """
@@ -140,12 +143,24 @@ class _ActionQueue:
             self._ready.notify()
         return [old[1] for old in replaced]
 
-    def get(self, timeout):
-        """Return the oldest item; raise ``queue.Empty`` after ``timeout`` seconds."""
+    def get(self, timeout=None):
+        """
+        Return the oldest item.
+
+        Raise ``queue.Empty`` after ``timeout`` seconds (None: no limit), or at once when the
+        queue is closed and empty.
+        """
         with self._ready:
-            if not self._items and not self._ready.wait_for(lambda: self._items, timeout):
+            if not self._ready.wait_for(lambda: self._items or self._closed, timeout) or \
+                    not self._items:
                 raise queue.Empty
             return self._items.popleft()
+
+    def close(self):
+        """Wake every waiting :meth:`get`; from now on an empty queue raises at once."""
+        with self._ready:
+            self._closed = True
+            self._ready.notify_all()
 
     @staticmethod
     def _run_key(item):
@@ -451,7 +466,9 @@ class ArbiterNode(Node):
         self._await_catalogue()
         while not self._stop.is_set():
             try:
-                queued_at, item = self._queue.get(timeout=POLL_S)
+                # Polled only during a stale burst, so its summary is logged once the
+                # queue has caught up; otherwise asleep until an action or stop_worker.
+                queued_at, item = self._queue.get(timeout=POLL_S if self._stale_burst else None)
             except queue.Empty:
                 self._end_stale_burst()
                 continue
@@ -596,6 +613,7 @@ class ArbiterNode(Node):
     def stop_worker(self):
         """Ask the worker to finish (it notices within POLL_S) and wait briefly."""
         self._stop.set()
+        self._queue.close()
         self._worker.join(timeout=2.0)
 
 
@@ -621,7 +639,7 @@ def main(kind, args=None):
         try:
             # spin_once with a timeout, so SIGINT/SIGTERM are noticed on an idle node.
             while rclpy.ok():
-                executor.spin_once(timeout_sec=0.2)
+                executor.spin_once(timeout_sec=0.5)
         except (KeyboardInterrupt, ExternalShutdownException):
             pass
         except RCLError:

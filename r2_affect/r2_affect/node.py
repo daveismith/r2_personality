@@ -104,7 +104,7 @@ class AffectNode(Node):
         self.declare_parameter('config', default_config_path())
         # Dynamic typing so `-p rate_hz:=10` (an int) is accepted; read once at startup.
         loose = ParameterDescriptor(dynamic_typing=True)
-        self.declare_parameter('rate_hz', 10.0, loose)
+        self.declare_parameter('rate_hz', 5.0, loose)
         self.declare_parameter('min_confidence', 0.0, loose)
         self.declare_parameter('max_dt_s', 0.5, loose)
 

@@ -204,7 +204,7 @@ Parameters, all read at startup (a later `ros2 param set` is refused, as in `r2_
 | `config` | the installed `expression.yaml` | settings and palettes |
 | `device` | `/r2_dome` | the dome device node; services are `<device>/leds/...` or `<device>/magic/...` |
 | `allow_duplicate` | false | start although another node of this name is on the graph |
-| `use_sim_time` | false | node clock follows `/clock`; the 10 Hz tick runs on the steady clock |
+| `use_sim_time` | false | node clock follows `/clock`; the 4 Hz tick runs on the steady clock |
 
 | | `led_arbiter` | `magic_arbiter` |
 |---|---|---|
@@ -286,7 +286,7 @@ do(arb.mood(msg.mood, msg.mood_strength, now))           # every /mood/state
 result = arb.intent(intent_msg, now); do(result.actions) # every /expression/intent
 claim = arb.claim(req.channel, req.owner, req.priority, req.lease_s, now)
 do(claim.actions)                                        # answer with claim.accepted/reason/status
-do(arb.tick(now))                                        # a timer, 10 Hz say
+do(arb.tick(now))                                        # a timer, 4 Hz in the node
 for status in arb.statuses(now): publish(status)         # status_hz and on change
 for line in arb.take_warnings(): log.warn(line)
 ```

@@ -23,7 +23,7 @@ tuning tools (`docs/personality-phase0-plan.md` in `r2_dev`):
 ```bash
 ros2 launch r2_affect affect.launch.py                       # robot / real time
 ros2 launch r2_affect affect.launch.py use_sim_time:=true    # with the simulator
-ros2 launch r2_affect affect.launch.py config:=/path/to/affect.yaml rate_hz:=10.0
+ros2 launch r2_affect affect.launch.py config:=/path/to/affect.yaml rate_hz:=5.0
 # or without the launch file
 ros2 run r2_affect r2_affect --ros-args -p config:=/path/to/affect.yaml
 ```
@@ -31,7 +31,7 @@ ros2 run r2_affect r2_affect --ros-args -p config:=/path/to/affect.yaml
 | parameter | default | meaning |
 |---|---|---|
 | `config` | installed `share/r2_affect/config/affect.yaml` | the YAML to load, and to re-read on reload |
-| `rate_hz` | 10.0 | tick and `/mood/state` publish rate |
+| `rate_hz` | 5.0 | tick and `/mood/state` publish rate (each subscriber pays about 0.1 % of a Pi 5 core per Hz) |
 | `min_confidence` | 0.0 | stimuli below this confidence are dropped |
 | `max_dt_s` | 0.5 | longest time step one tick takes (a longer gap is clamped and warned about once) |
 | `use_sim_time` | false | follow `/clock`; with the clock stopped the state does not change |

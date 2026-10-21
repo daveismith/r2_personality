@@ -271,7 +271,7 @@ def test_state_is_published_every_tick(start_node):
     time.sleep(2.0)
     with h.lock:
         count = len(h.states) - start
-    assert 15 <= count <= 25, 'expected about 20 messages in 2 s, got %d' % count
+    assert 7 <= count <= 13, 'expected about 10 messages in 2 s (5 Hz), got %d' % count
 
 
 def test_set_mood_force_switches_label_at_once(start_node):
@@ -408,7 +408,7 @@ def test_sim_time_drives_the_node(start_node):
     time.sleep(2.0)
     with h.lock:
         quiet = list(h.states[mark:])
-    assert len(quiet) >= 15, 'expected a steady heartbeat, got %d messages' % len(quiet)
+    assert len(quiet) >= 7, 'expected a steady 5 Hz heartbeat, got %d messages' % len(quiet)
     for msg in quiet:
         assert vector(msg) == pytest.approx(start_vector, abs=1e-6)
         assert msg.header.stamp == quiet[0].header.stamp

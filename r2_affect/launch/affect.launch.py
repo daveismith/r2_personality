@@ -51,7 +51,7 @@ def generate_launch_description():
             description='Path of the affect.yaml to load (reload with /mood/reload_config)'),
         DeclareLaunchArgument(
             'rate_hz',
-            default_value='10.0',
+            default_value='5.0',
             description='Tick and /mood/state publish rate'),
         node,
     ])

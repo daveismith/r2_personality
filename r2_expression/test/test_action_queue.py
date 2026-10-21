@@ -15,6 +15,8 @@
 """The device queue: a newer run replaces an older queued one for the same target."""
 
 import queue
+import threading
+import time
 
 import pytest
 from r2_expression.arbiter_node import _ActionQueue
@@ -43,3 +45,39 @@ def test_newest_run_per_target_wins_and_stops_configures_and_relists_are_kept():
     assert got == [stop, other, cfg, None, runs[2], None]
     with pytest.raises(queue.Empty):
         q.get(0.05)
+
+
+def test_a_blocking_get_sleeps_until_an_item_or_close():
+    q = _ActionQueue()
+    got = []
+    waiter = threading.Thread(target=lambda: got.append(q.get()[1]))
+    waiter.start()
+    time.sleep(0.2)
+    assert waiter.is_alive()                             # no timeout: still asleep
+    run = act(CALL_RUN, effect='a')
+    q.put_replacing((1, run))
+    waiter.join(1.0)
+    assert got == [run]
+
+    def closed_get():
+        try:
+            q.get()
+        except queue.Empty:
+            got.append('empty')
+    waiter = threading.Thread(target=closed_get)
+    waiter.start()
+    time.sleep(0.1)
+    started = time.monotonic()
+    q.close()
+    waiter.join(1.0)
+    assert got[-1] == 'empty' and time.monotonic() - started < 0.5
+
+
+def test_a_closed_queue_still_hands_out_what_it_holds():
+    q = _ActionQueue()
+    stop = act(CALL_STOP)
+    q.put_replacing((1, stop))
+    q.close()
+    assert q.get()[1] == stop
+    with pytest.raises(queue.Empty):
+        q.get()                                          # at once, not forever
