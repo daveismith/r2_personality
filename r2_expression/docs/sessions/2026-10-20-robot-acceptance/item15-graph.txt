@@ -1,0 +1,6 @@
+# Item 15 on the robot, 2026-10-21 ~00:03 UTC: clients of /(r2_dome|dome_mock)/(leds|magic)/* per node
+# (rclpy get_client_names_and_types_by_node over every node on the graph)
+/foxglove_bridge: dome_mock, r2_dome (18)
+/led_arbiter: r2_dome (5)
+/magic_arbiter: r2_dome (4)
+nodes: 28
