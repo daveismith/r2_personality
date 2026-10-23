@@ -34,7 +34,8 @@ setup(
     maintainer='David Smith',
     maintainer_email='1734595+daveismith@users.noreply.github.com',
     description="R2's expression arbiters: claims, priorities and the dome's holds over the "
-                'LED and Magic Panel channels, and mood palettes from expression.yaml.',
+                'LED and Magic Panel channels, the dome motion channel, and mood palettes '
+                'from expression.yaml.',
     license='Apache-2.0',
     extras_require={
         'test': [
@@ -46,6 +47,7 @@ setup(
             'express = r2_expression.express_cli:main',
             'led_arbiter = r2_expression.arbiter_node:main_led',
             'magic_arbiter = r2_expression.arbiter_node:main_magic',
+            'dome_arbiter = r2_expression.arbiter_node:main_dome',
         ],
     },
 )

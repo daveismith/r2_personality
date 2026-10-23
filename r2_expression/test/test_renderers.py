@@ -13,13 +13,14 @@
 # limitations under the License.
 
 
-"""The LED and Magic Panel renderers: requests built exactly, local refusals, rules 6 and 9."""
+"""The renderers: requests built exactly, local refusals, rules 6 and 9; the dome's Twist."""
 
 import copy
 
-from fixtures import BASE, LED_CAT, MAGIC_CAT
+from fixtures import BASE, dome_cfg, LED_CAT, MAGIC_CAT
 import pytest
 from r2_expression import core
+from r2_expression import dome_renderer
 from r2_expression import led_renderer
 from r2_expression import magic_renderer
 from r2_expression.config import parse_config
@@ -252,3 +253,45 @@ def test_magic_catalogue_actions_render():
     assert any(a.call == core.CALL_START for a in actions)
     for act in actions:
         magic_renderer.render(act)
+
+
+# --- the dome --------------------------------------------------------------------------------
+
+def velocity(value):
+    return action(core.CALL_VELOCITY, {'velocity_rad_s': value}, 'dome', 'dome')
+
+
+@pytest.mark.parametrize('value', [0.0, 0.5, -1.25, 2.0, -2.0])
+def test_dome_velocity_is_angular_z_of_a_twist_stamped_and_nothing_else(value):
+    msg = dome_renderer.render(velocity(value), 0.5, 2.0)
+    assert type(msg).__name__ == 'TwistStamped'
+    assert msg.twist.angular.z == value
+    assert (msg.twist.linear.x, msg.twist.linear.y, msg.twist.linear.z,
+            msg.twist.angular.x, msg.twist.angular.y) == (0.0,) * 5
+    assert msg.header.stamp.sec == 0 and msg.header.frame_id == ''   # the node stamps it
+
+
+@pytest.mark.parametrize('value', [0.3, -0.49, 2.01, float('nan'), float('inf'), True, '1.0',
+                                   None])
+def test_dome_velocity_outside_0_or_min_to_cap_is_a_bug_not_a_refusal(value):
+    act = raw_action(core.CALL_VELOCITY, {'velocity_rad_s': value}, 'dome', 'dome')
+    with pytest.raises(ValueError):
+        dome_renderer.render(act, 0.5, 2.0)
+
+
+def test_dome_renderer_refuses_every_call_but_velocity():
+    with pytest.raises(RenderRefusal) as info:
+        dome_renderer.render(action(core.CALL_STOP, {'surface': 'fld'}))
+    assert info.value.reason == 'unknown action'
+
+
+def test_dome_core_actions_render():
+    arb = core.Arbiter(dome_cfg(), core.DOME_CHANNELS)
+    actions = list(arb.dome_state({'source': 'idle', 'position_rad': 0.0}, 0.0))
+    actions += arb.mood('excited', 1.0, 0.0)
+    actions += arb.intent(core.Intent('dome', 'manual', 199, 'look_at',
+                                      '{"bearing": 1.0}'), 0.1).actions
+    actions += arb.intent(core.Intent('dome', 'manual', 199, 'stop'), 0.2).actions
+    assert [a.call for a in actions] == [core.CALL_VELOCITY] * 2
+    for act in actions:
+        dome_renderer.render(act, 0.5, 2.0)

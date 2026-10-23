@@ -17,8 +17,9 @@ steps 6-7.
 | `r2_expression/palette.py` | label + strength to a style per channel, `ListLeds`/`ListMagicPanel` pick validation, the flourish scheduler. Pure. |
 | `r2_expression/config.py` | `load_config()`: reads and validates `expression.yaml` into frozen dataclasses; every rejection raises `ExpressionConfigError` naming the dotted key. |
 | `r2_expression/led_renderer.py`, `magic_renderer.py` | a core `Action` to the exact service request, or a local refusal with the device's own string. Pure (message types only). `render_common.py` holds what they share. |
-| `r2_expression/arbiter_node.py` | the node, one class for both kinds; entry points `led_arbiter` and `magic_arbiter`. |
-| `launch/expression.launch.py` | `use_sim_time`, `config`, `device`; starts both nodes. |
+| `r2_expression/motion.py`, `dome_renderer.py` | the dome's motion model (moves, profiles, the coast stop, `CoastMemory`; pure), and a `CALL_VELOCITY` action to the `TwistStamped` for the converter. |
+| `r2_expression/arbiter_node.py` | the nodes: a shared base, `DeviceArbiterNode` (entry points `led_arbiter`, `magic_arbiter`) and `DomeArbiterNode` (`dome_arbiter`). |
+| `launch/expression.launch.py` | `use_sim_time`, `config`, `device`, `dome` (true) and the dome's four topics; starts the three nodes. |
 | `config/expression.yaml` | the shipped settings and a palette for every mood of `r2_affect`'s `affect.yaml`. |
 
 ## The rules in a page
@@ -272,6 +273,81 @@ a request that got no answer, a local refusal, a device refusal other than a hol
 dropped intents, each device call (`fld: run on fld (intent)`), repeats of a hold refusal.
 `--ros-args --log-level debug` shows them.
 
+## The dome channel
+
+`dome_arbiter` serves channel `dome` (phase 2 plan 4.3, 5.4). It is the same base node as the
+other two (claims, leases, priorities, the manual auto-claim, status, the namesake refusal,
+the guarded callbacks, startup parameters) with a different device: **the device is
+`dome_twist_converter`** (`r2_bringup`), and the arbiter reaches it only by publishing
+`geometry_msgs/TwistStamped` (`twist.angular.z` in rad/s, positive = positive joint) on
+`command_topic`. It calls no service and has no catalogue and no worker thread. The converter
+is the authority: it ranks the joystick, then Foxglove, then the personality, caps the
+personality's speed and acceleration, and stops the dome `personality_timeout_s` (0.5 s) after
+the arbiter falls silent, so a dead arbiter cannot leave the dome turning. Nothing here
+publishes to `/dome_controller/commands`, `/cmd_vel*` or `/dome/joint_command`, and the
+position interface, `~/setup` and the bench services are never touched.
+
+| parameter (startup) | default | |
+|---|---|---|
+| `config`, `use_sim_time`, `allow_duplicate` | as above | |
+| `command_topic` | `/dome/cmd/personality` | the converter's personality input (published, reliable, depth 1) |
+| `status_topic` | `/dome/cmd/status` | the converter's `DomeCommandStatus` (reliable, depth 1) |
+| `joint_states_topic` | `/dome_state_broadcaster/joint_states` | `sensor_msgs/JointState` (best effort, depth 1) |
+| `odom_topic` | `/diff_cont/odom` | `nav_msgs/Odometry` (best effort, depth 1, one message in 3 read) |
+| `joint_name` | `dome_joint` | whose `position` is the dome's |
+
+It also takes `/expression/intent`, `/mood/state`, serves **`/expression/claim/dome`** and
+publishes `/expression/status`, as the others. The verbs (`look_at`, `glance`, `turn`, `rest`,
+`stop`; `track` is refused `not in this phase`) and the motion settings are in
+`expression.yaml` (`defaults.dome`, `profiles`, each mood's `dome`).
+
+What the states mean here, beyond the phase 1 ones:
+
+- **`foreign`** (owner `joystick` or `foxglove`, lease 0): the converter's status says a
+  person drives the dome. A move in progress is abandoned at once with a 0 (a 0 on the lowest
+  input overrides nobody) and is not resumed; the channel is `idle` again when the source is
+  `idle` or `personality`, the mood's rest (if any) is re-applied and glances wait
+  `after_foreign_s`. There is no attribution on a Twist: the converter's status is the dome's
+  `held_by`.
+- **`suppressed`** (`STATE_SUPPRESSED`, 7): the body drives faster than `body_speed_m_s` or
+  yaws faster than `body_yaw_rad_s`. The move in progress is stopped with a 0, `idle` and
+  `behavior` intents are dropped and counted, `manual` and `safety` still run; it clears
+  `after_still_s` after the odometry says the body is still.
+- **`offline`**: no joint state or no converter status for `device_stale_s` (or never).
+  Nothing is sent; intents are dropped. At start the arbiter sends nothing until it has both.
+- **`stale`**: the mood went quiet; an `idle` or `behavior` move stops, no glances, `manual`
+  still runs.
+
+**Threads, timers and CPU** (rule 11: 1.5 % of a Pi 5 core idle, 4 % in a move). One thread:
+every subscription, the claim service and both timers run on the executor, under the lock.
+Every velocity the core returns is published at once from the callback that produced it, so a
+stop (foreign, suppressed, a claim, a stop intent) leaves the node in the same callback. A
+move runs on a **20 Hz timer** (the converter's rate) that the first move action creates and
+the end of the move destroys; while it exists it ticks the core and the 4 Hz tick skips its
+turn. Idle, the node wakes for the joint state (10 Hz), the converter's status (2 Hz), the
+mood (5 Hz), the odometry (one in three read, all received) and the 4 Hz tick, nothing else.
+On SIGINT or SIGTERM a node in a move publishes one 0 before it exits and waits up to 0.2 s
+for it to be acknowledged (it installs its own signal handlers so the context is still up for
+it, and ignores a repeated signal while it closes); a SIGKILL is covered by the converter's
+timeout. Measured in the dev container (`test_dome_node.py`, logged not asserted): idle
+3.8 % of a container core, against 3.6 % for `led_arbiter` measured the same way (the two
+phase 1 arbiters together are 2.74 % on the Pi), so roughly 1.4 % on the Pi: inside the
+budget, but an estimate until step 8b measures it there.
+
+**The coast is learned and carried.** Each stop shows how far the dome really ran on after
+its 0, and the move scales the coast fit by observed over predicted (motion rule 5). The
+arbiter keeps that scale for the next move (`motion.CoastMemory`, `Arbiter.coast_scale`), so
+on Gazebo's ideal plant only the first move after a start stops short and creeps; on the real
+dome the scale stays near 1. The carried scale fades toward 1.0 with a 10-minute half-life
+(the coast drifts with the battery and the temperature, and one odd stop, a hand on the dome
+while it settled, should not outlive a quiet spell); a move that never stopped, or that was
+stopped (a person, a claim, suppression), teaches nothing. `dome: move over, coast scale X for the next` is logged at INFO after every move.
+
+```bash
+ros2 run r2_expression dome_arbiter                              # against the converter
+ros2 run r2_expression dome_arbiter --ros-args -p joint_states_topic:=/dome_drive_mock/joint_states
+```
+
 ## How the nodes use the core (step 4)
 
 ```python
@@ -290,6 +366,11 @@ do(arb.tick(now))                                        # a timer, 4 Hz in the 
 for status in arb.statuses(now): publish(status)         # status_hz and on change
 for line in arb.take_warnings(): log.warn(line)
 ```
+
+The dome node does the same with `arb.dome_state({'position_rad': p}, now)` (each joint
+state), `{'source': status.source}` (each converter status) and `{'body_speed_m_s': v,
+'body_yaw_rad_s': w}` (odometry), and ticks at 20 Hz while `arb.moving`; its actions are all
+`CALL_VELOCITY` with `{velocity_rad_s}`, published at once (`dome_renderer.render`).
 
 `do(actions)` hands each `Action` to the single worker: `action.call` names the service
 (`run`, `say`, `stop`, `configure`, `start`, `magic_stop`, `magic_brightness`) and

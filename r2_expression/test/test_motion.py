@@ -20,8 +20,9 @@ import pytest
 
 from fixtures import PlantDouble, simulate  # noqa: I100
 from r2_expression import motion
-from r2_expression.motion import (Coast, glance, Heading, Limits, look_at, MAX_TURN_RAD,
-                                  Profile, RateLimiter, rest, RestHold, turn, wrap)
+from r2_expression.motion import (Coast, CoastMemory, glance, Heading, Limits, look_at,
+                                  MAX_TURN_RAD, Profile, RateLimiter, rest, RestHold, turn,
+                                  wrap)
 from r2_mocks.dome_plant import GAP_HIGH_RAD, GAP_LOW_RAD
 
 PROFILES = {'snappy': Profile(v_max=2.0, accel=4.0, k=3.0, settle_band_rad=0.05),
@@ -342,3 +343,56 @@ def test_rule2_acceleration_between_non_zero_commands_never_above_the_profile():
 
 def test_module_has_no_ros_imports():
     assert not any(name.startswith(('rclpy', 'astromech')) for name in vars(motion))
+
+
+# --- rule 5 across moves: the coast memory ------------------------------------------------
+
+def test_rule5_the_coast_memory_carries_a_learned_scale_and_fades_it_toward_1():
+    plant = PlantDouble(0.0, ideal=True)                  # Gazebo: no coast
+    first = look_at(-1.5, PROFILES['smooth'], LIMITS, 0.0)
+    run(first, plant)
+    assert first.coast_learned and first.coast_scale < 0.1
+    memory = CoastMemory(half_life_s=600.0)
+    assert memory.recall(0.0) == 1.0                      # nothing learned yet
+    memory.learn(first, 10.0)
+    assert memory.recall(10.0) == pytest.approx(first.coast_scale)
+    assert memory.recall(610.0) == pytest.approx(1.0 - (1.0 - first.coast_scale) / 2.0)
+    assert memory.recall(1e6) == pytest.approx(1.0)
+    assert memory.recall(0.0) == pytest.approx(first.coast_scale)   # no fade backwards
+
+
+def test_rule5_a_move_that_never_stopped_teaches_the_memory_nothing():
+    memory = CoastMemory()
+    taught = look_at(-1.5, PROFILES['smooth'], LIMITS, 0.0)
+    run(taught, PlantDouble(0.0, ideal=True))
+    memory.learn(taught, 20.0)
+    untaught = look_at(1.0, PROFILES['smooth'], LIMITS, 20.0, coast_scale=memory.recall(20.0))
+    untaught.step(0.0, 20.0)
+    untaught.stop()
+    assert not untaught.coast_learned
+    memory.learn(untaught, 620.0)                         # the fade is not restarted
+    assert memory.recall(620.0) == pytest.approx(1.0 - (1.0 - taught.coast_scale) / 2.0)
+
+
+def test_rule5_a_stopped_move_teaches_the_memory_nothing_even_if_a_stop_taught_it():
+    memory = CoastMemory()
+    move = glance(1.0, 2.0, PROFILES['smooth'], LIMITS, 0.0)
+    plant = PlantDouble(0.0, ideal=True)
+    t = 0.0
+    while not move.coast_learned and t < 10.0:            # out, stopped, settled: learned
+        move.step(plant.reading(), t)
+        plant.step(move.velocity, 0.05)
+        t += 0.05
+    assert move.coast_learned and not move.done           # now in its dwell
+    move.stop()
+    memory.learn(move, t)
+    assert memory.recall(t) == 1.0
+
+
+def test_rule5_a_carried_scale_spares_the_ideal_plant_its_second_approach():
+    def approaches(scale):
+        move = look_at(-1.5, PROFILES['smooth'], LIMITS, 0.0, coast_scale=scale)
+        _, log = run(move, PlantDouble(0.0, ideal=True))
+        return sum(1 for (_, a, _), (_, b, _) in zip([(0, 0.0, 0)] + log, log) if b and not a)
+    assert approaches(1.0) == 2                           # stops short by the fit, creeps
+    assert approaches(0.0) == 1

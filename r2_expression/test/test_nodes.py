@@ -54,13 +54,13 @@ STATE_IDLE, STATE_RUNNING, STATE_CLAIMED, STATE_FOREIGN, STATE_STALE, STATE_OFFL
 _counter = 0
 
 
-def config_text(flourish=None, **defaults):
+def config_text(flourish=None, data=None, **defaults):
     """
     Return the YAML text of a config with short staleness windows and no flourishes.
 
-    ``flourish`` (a dict) is put on the ``calm`` mood.
+    ``flourish`` (a dict) is put on the ``calm`` mood; ``data`` replaces BASE.
     """
-    data = copy.deepcopy(BASE)
+    data = copy.deepcopy(BASE if data is None else data)
     data['defaults'].update(mood_stale_s=1.0, device_stale_s=2.0, status_hz=5.0)
     data['defaults'].update(defaults)
     for mood in data['moods'].values():

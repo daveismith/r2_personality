@@ -136,7 +136,8 @@ as above, with these differences, each named by a test:
     a foreign channel. A new move of equal or higher priority replaces the one
     in progress without a 0 (the velocity changes; the new move takes over the
     old one's rate limiter and samples); ``interruptible: false`` holds a move
-    against equal priority.
+    against equal priority. The coast scale a move learns (motion rule 5) is
+    carried to the next move, fading toward 1.0 (:class:`motion.CoastMemory`).
 15. **Foreign.** The converter's source ``joystick`` or ``foxglove`` makes the
     channel FOREIGN at once, owner the source, lease 0, and abandons the move
     (it is not resumed). It is IDLE again when the source is ``idle`` or
@@ -583,6 +584,7 @@ class Arbiter:
         self._was_foreign = self._was_suppressed = False
         self._glance_wait_until = 0.0
         self._rest = motion.RestHold(config.defaults.dome.rest_recheck_s)
+        self._coast = motion.CoastMemory()   # rule 14: the coast scale, from move to move
         self._limits = self._dome_limits(config)
         self._serial = 0
         self._validate_picks()
@@ -603,6 +605,11 @@ class Arbiter:
     def moving(self):
         """Return True while a dome move runs (the node then ticks at 20 Hz)."""
         return any(cs.run is not None and cs.run.move is not None for cs in self._ch.values())
+
+    @property
+    def coast_scale(self):
+        """Return the coast scale the next dome move starts with (rule 14)."""
+        return self._coast.recall(self._last_now)
 
     def status(self, channel, now):
         """Return the :class:`Status` of ``channel`` at ``now``."""
@@ -1196,6 +1203,7 @@ class Arbiter:
         if run is not None and run.source == 'manual' and auto is not None and auto.auto:
             auto.until = max(auto.floor, now + self._config.defaults.manual_hold_s)
         if run is not None and run.move is not None:
+            self._coast.learn(run.move, now)  # rule 14
             self._rest.arm(now)               # rule 19: the next drift check, and glance
             if not self._was_stale:
                 self._restart_flourish(now)
@@ -1410,18 +1418,20 @@ class Arbiter:
         if creep:                             # rule 19: a drift is corrected at min_speed
             profile = replace(profile, v_max=limits.min_speed)
         old = cs.run.move if cs.run is not None else None
+        # A replacement takes its predecessor's coast scale; a fresh move the carried one.
+        carried = {'coast_scale': self._coast.recall(now)}
         if f.action == 'look_at':
             move = motion.look_at(heading.joint(_number_param(params, 'bearing')), profile,
-                                  limits, now, old)
+                                  limits, now, old, **carried)
         elif f.action == 'turn':
             move = motion.turn(heading.delta(_number_param(params, 'delta')), profile, limits,
-                               now, old)
+                               now, old, **carried)
         elif f.action == 'rest':
             bearing = (_number_param(params, 'bearing') if 'bearing' in params
                        else self._mood_dome(now).rest_rad)
             if bearing is None:
                 raise _Refuse('bad params: the mood has no rest heading; give a bearing')
-            move = motion.rest(heading.joint(bearing), profile, limits, now, old)
+            move = motion.rest(heading.joint(bearing), profile, limits, now, old, **carried)
         else:
             amplitude, dwell = self._glance_draw(f, params, now)
             side = params.get('side')
@@ -1430,7 +1440,7 @@ class Arbiter:
             if side not in ('left', 'right'):
                 raise _Refuse('bad params: side must be left or right')
             move = motion.glance(heading.delta(amplitude if side == 'left' else -amplitude),
-                                 dwell, profile, limits, now, old)
+                                 dwell, profile, limits, now, old, **carried)
         velocity, _, _ = move.step(self._position, now, self._position_at)
         run = _Run(intent_id, f.source, f.action, f.priority, f.interruptible, f.action,
                    {'dome'}, move.deadline, device_ends=False, move=move)

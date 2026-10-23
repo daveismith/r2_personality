@@ -47,6 +47,8 @@ reason)``. Rules, each named by a test:
    really coasted: the move scales its coast prediction by observed over predicted
    (``coast_scale``, 0 to 2) from then on, so the retry is not stopped by a coast an
    ideal plant (Gazebo) never has, and a dome coasting longer than the fit is caught.
+   The arbiter carries the learned scale to the next move (:class:`CoastMemory`), so
+   only the first move after a start (or a long rest) learns the plant from scratch.
 6. **Bounded.** At ``max_move_s`` after it began (plus the dwell, for a glance) the move
    sends 0 and ends ``timeout``; with no new sample for ``feedback_timeout_s`` it sends 0
    and ends ``no feedback``; :meth:`Move.stop` sends 0 and ends ``stopped``. A finished
@@ -79,6 +81,7 @@ EXTRAPOLATE_MAX_S = 0.35       # past this a sample is not moved on any further
 STILL_RAD_S = 0.05             # measured speed under this: the dome has stopped
 LEARN_MIN_RAD = 0.02           # a predicted coast shorter than this teaches nothing
 MAX_COAST_SCALE = 2.0
+COAST_HALF_LIFE_S = 600.0      # a carried coast scale halves its distance to 1.0 this often
 
 REACHED = 'reached'
 SETTLED_SHORT = 'settled_short'
@@ -189,7 +192,8 @@ class RateLimiter:
 class Move:
     """One ``look_at``, ``glance``, ``turn`` or ``rest`` (see the module docstring)."""
 
-    def __init__(self, verb, legs, profile, limits, now, budget_s, follows=None):
+    def __init__(self, verb, legs, profile, limits, now, budget_s, follows=None,
+                 coast_scale=1.0):
         self.verb = verb
         self.profile = profile
         self.limits = limits
@@ -205,7 +209,8 @@ class Move:
         self._leg_reason = REACHED
         self._v_peak = 0.0           # the fastest command of this approach (rule 7)
         self._start = None           # unwrapped position where the move began
-        self.coast_scale = 1.0       # observed coast over predicted (rule 5)
+        self.coast_scale = coast_scale   # observed coast over predicted (rule 5)
+        self.coast_learned = False   # a stop of this move has set coast_scale
         self._stop = None            # (position, direction, predicted coast) at the last 0
         self._inherited = follows is not None    # the first command is the predecessor's
         self._reversed = False       # stopped a taken-over command going the wrong way
@@ -359,6 +364,7 @@ class Move:
             if predicted >= LEARN_MIN_RAD:
                 observed = max(0.0, (self._u - at) * direction)
                 self.coast_scale = min(MAX_COAST_SCALE, observed / predicted)
+                self.coast_learned = True
             self._stop = None
 
     def _finish(self, reason):
@@ -367,28 +373,65 @@ class Move:
         return 0.0, True, reason
 
 
-def look_at(target_joint, profile, limits, now, follows=None, verb='look_at'):
+# Every builder takes ``follows`` (rule 8; it brings its own coast scale) and ``coast_scale``
+# (the starting scale of a move that follows none: the arbiter's :class:`CoastMemory`).
+
+def look_at(target_joint, profile, limits, now, follows=None, verb='look_at', coast_scale=1.0):
     """Return a move to joint angle ``target_joint``, the short way."""
     return Move(verb, [('to', wrap(target_joint))], profile, limits, now, limits.max_move_s,
-                follows)
+                follows, coast_scale)
 
 
-def rest(target_joint, profile, limits, now, follows=None):
+def rest(target_joint, profile, limits, now, follows=None, coast_scale=1.0):
     """Return a ``look_at`` that the arbiter then holds (see :class:`RestHold`)."""
-    return look_at(target_joint, profile, limits, now, follows, verb='rest')
+    return look_at(target_joint, profile, limits, now, follows, 'rest', coast_scale)
 
 
-def turn(delta_joint, profile, limits, now, follows=None):
+def turn(delta_joint, profile, limits, now, follows=None, coast_scale=1.0):
     """Return a move by ``delta_joint`` (may exceed pi; capped at +-:data:`MAX_TURN_RAD`)."""
     delta = max(-MAX_TURN_RAD, min(MAX_TURN_RAD, delta_joint))
-    return Move('turn', [('by', delta)], profile, limits, now, limits.max_move_s, follows)
+    return Move('turn', [('by', delta)], profile, limits, now, limits.max_move_s, follows,
+                coast_scale)
 
 
-def glance(delta_joint, dwell_s, profile, limits, now, follows=None):
+def glance(delta_joint, dwell_s, profile, limits, now, follows=None, coast_scale=1.0):
     """Return a move out by ``delta_joint``, a dwell of ``dwell_s``, and back to the start."""
     delta = max(-math.pi, min(math.pi, delta_joint))
     return Move('glance', [('by', delta), ('dwell', dwell_s), ('back', None)], profile,
-                limits, now, limits.max_move_s + dwell_s, follows)
+                limits, now, limits.max_move_s + dwell_s, follows, coast_scale)
+
+
+class CoastMemory:
+    """
+    Rule 5 across moves: the coast scale the last move learned, for the next one.
+
+    The scale fades toward 1.0 (the fit) with a half-life of ``half_life_s``: the coast
+    drifts with the battery and the temperature (plan section 8), and one odd stop (a hand
+    on the dome while it settled) should not outlive a quiet spell. Every move that stops
+    learns again, so on a busy dome the fade hardly matters.
+    """
+
+    def __init__(self, half_life_s=COAST_HALF_LIFE_S):
+        self.half_life_s = half_life_s
+        self._scale = 1.0
+        self._at = None
+
+    def learn(self, move, now):
+        """
+        Keep ``move``'s scale if one of its stops taught it one.
+
+        Not from a move that was stopped (a person, a claim, suppression) or lost its
+        feedback: what its last settle saw may have been a hand on the dome.
+        """
+        if move.coast_learned and move.reason not in (STOPPED, NO_FEEDBACK):
+            self._scale, self._at = move.coast_scale, now
+
+    def recall(self, now):
+        """Return the scale for a move starting at ``now``."""
+        if self._at is None:
+            return 1.0
+        fade = 0.5 ** (max(0.0, now - self._at) / self.half_life_s)
+        return 1.0 + (self._scale - 1.0) * fade
 
 
 class RestHold:

@@ -1725,6 +1725,38 @@ def test_dome_status_suppressed_is_state_7():
 
 # --- the sweeps (keep last: they read what every test above produced) -----------------------
 
+def _approaches(sent):
+    count, previous = 0, 0.0
+    for v in speeds(sent):
+        count += bool(v and not previous)
+        previous = v
+    return count
+
+
+def test_dome_the_learned_coast_is_carried_to_the_next_move():
+    a = dome()                                           # an ideal plant: no coast
+    assert a.coast_scale == 1.0
+    first = list(dome_intent(a, 'look_at', {'bearing': 1.5, 'profile': 'smooth'}).actions)
+    first += live(a, 6.0)
+    assert not a.moving and a.coast_scale < 0.1
+    second = list(dome_intent(a, 'look_at', {'bearing': 0.2, 'profile': 'smooth'}).actions)
+    second += live(a, 12.0)
+    assert not a.moving and a.test_plant.position == pytest.approx(-0.2, abs=0.05)
+    assert (_approaches(first), _approaches(second)) == (2, 1)   # no creep the second time
+    assert a.coast_scale < 0.1
+
+
+def test_dome_a_move_stopped_before_it_learned_leaves_the_carried_coast_alone():
+    a = dome()
+    dome_intent(a, 'look_at', {'bearing': 1.5, 'profile': 'smooth'})
+    live(a, 6.0)
+    learned = a.coast_scale
+    dome_intent(a, 'turn', {'delta': 3.0})
+    live(a, 6.5)
+    dome_intent(a, 'stop')
+    assert not a.moving and a.coast_scale == pytest.approx(learned, abs=0.01)
+
+
 def test_rule14_every_dome_move_ends_with_a_0_or_is_replaced():
     assert len(DOME_ARBITERS) > 20
     for a in DOME_ARBITERS:

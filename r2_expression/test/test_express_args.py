@@ -26,9 +26,9 @@ PKG_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PKG_ROOT not in sys.path:
     sys.path.insert(0, PKG_ROOT)
 
+from r2_expression.core import DOME_ACTIONS  # noqa: E402
 from r2_expression.express_cli import (  # noqa: E402
     build_intent, DOME_VERBS, format_status, parse_args)
-from r2_expression.core import DOME_ACTIONS  # noqa: E402
 
 
 def intent(*argv):
