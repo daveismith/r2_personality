@@ -32,7 +32,8 @@ setup(
     zip_safe=True,
     maintainer='David Smith',
     maintainer_email='1734595+daveismith@users.noreply.github.com',
-    description="Stand-ins for hardware R2's personality stack talks to: dome_mock.",
+    description=(
+        "Stand-ins for hardware R2's personality stack talks to: dome_mock, dome_drive_mock."),
     license='Apache-2.0',
     extras_require={
         'test': [
@@ -42,6 +43,7 @@ setup(
     entry_points={
         'console_scripts': [
             'dome_mock = r2_mocks.dome_mock:main',
+            'dome_drive_mock = r2_mocks.dome_drive_mock:main',
         ],
     },
 )

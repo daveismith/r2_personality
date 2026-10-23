@@ -3,13 +3,14 @@
 <package format="3">
   <name>r2_mocks</name>
   <version>0.1.0</version>
-  <description>Stand-ins for hardware R2's personality stack talks to: dome_mock, the dome device's LED and Magic Panel ROS surface with the 2.0.0 attribution and holds.</description>
+  <description>Stand-ins for hardware R2's personality stack talks to: dome_mock (the dome device's LED and Magic Panel ROS surface, 2.0.0 attribution and holds) and dome_drive_mock (the dome motor and its joint state).</description>
   <maintainer email="1734595+daveismith@users.noreply.github.com">David Smith</maintainer>
   <license>Apache-2.0</license>
 
   <depend>rclpy</depend>
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
+  <depend>nav_msgs</depend>
   <depend>rcl_interfaces</depend>
   <depend>astromech_msgs</depend>
 
@@ -19,6 +20,8 @@
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
 
+  <!-- No test_depend on r2_bringup (its converter drives the node tests): r2_bringup
+       exec_depends on r2_mocks, so it would be a cycle. The node tests skip without it. -->
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>
