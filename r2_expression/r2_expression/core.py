@@ -19,7 +19,8 @@ Pure Python (no ROS imports): the arbiter nodes map messages onto it and turn
 the :class:`Action` values it returns into service calls. Every call takes
 ``now`` (seconds, any monotonic clock); the first call sets the time base.
 One :class:`Arbiter` serves one channel group: the LED node passes
-``fld, tfld, bfld, rld, psi``, the Magic Panel node passes ``magic``.
+``fld, tfld, bfld, rld, psi``, the Magic Panel node passes ``magic``, the dome
+node passes ``dome``.
 
 Channels (plan 4.1). ``fld`` runs on surface ``fld`` (displays ``tfld`` and
 ``bfld``); ``tfld`` and ``bfld`` are its sub-channels, one board each; ``rld``
@@ -108,19 +109,75 @@ Rules (plan 4.2), each named by a test:
     refusal-inferred hold gives way to a snapshot that arrives that long
     after the refusal.
 
-Status precedence: OFFLINE, DARK, FOREIGN, RUNNING, CLAIMED, STALE, IDLE.
+The dome (phase 2 plan 4.3). ``dome`` is a channel with no device services:
+its "device" is ``dome_twist_converter`` and the controller behind it. Its runs
+are *moves* (:mod:`r2_expression.motion`), and its one call is
+:data:`CALL_VELOCITY`, ``{velocity_rad_s}`` for ``/dome/cmd/personality``,
+where 0 is the stop. The node feeds :meth:`Arbiter.dome_state` (the
+converter's source, the joint position, the body's speed and yaw), calls
+:meth:`Arbiter.tick` at 20 Hz while :attr:`Arbiter.moving` and at 4 Hz
+otherwise, and publishes every velocity returned. Rules 1-4, 6 and 8-10 apply
+as above, with these differences, each named by a test:
+
+13. **Vocabulary** (:data:`DOME_ACTIONS`): ``look_at`` ``{bearing, profile}``,
+    ``glance`` ``{amplitude, dwell_s, side}``, ``turn`` ``{delta}``, ``rest``
+    ``{bearing}`` or ``{}`` (the mood's ``rest_rad``), ``stop``; ``track`` is
+    reserved and refused ``not in this phase``. Bearings are +ve left, 0
+    forward; malformed params are refused ``bad params: ...``. A move takes the
+    mood's profile when idle, else ``params.profile`` (a named profile or
+    ``mood``). ``duration_ms`` is ignored but for a glance without ``dwell_s``,
+    whose dwell it is; the duration cap (rule 5) does not apply: every move is
+    bounded by ``max_move_s`` (plus a glance's dwell), which
+    ``active_remaining_ms`` counts down.
+14. **Every move ends with a 0**: when it ends by itself (``why`` ``done``),
+    by a stop, a claim's pre-emption, the channel going foreign, offline or
+    suppressed, or the mood going stale. A 0 goes to the converter's
+    lowest-priority input and cannot override a person, so it is sent even to
+    a foreign channel. A new move of equal or higher priority replaces the one
+    in progress without a 0 (the velocity changes; the new move takes over the
+    old one's rate limiter and samples); ``interruptible: false`` holds a move
+    against equal priority.
+15. **Foreign.** The converter's source ``joystick`` or ``foxglove`` makes the
+    channel FOREIGN at once, owner the source, lease 0, and abandons the move
+    (it is not resumed). It is IDLE again when the source is ``idle`` or
+    ``personality``; the mood's rest, if any, is re-applied then (rule 8),
+    and idle glances wait ``after_foreign_s``. Moves of every source are
+    refused while foreign or offline.
+16. **Suppressed.** The body faster than ``body_speed_m_s`` or yawing faster
+    than ``body_yaw_rad_s``: SUPPRESSED until ``after_still_s`` after it is
+    still. The onset stops the move in progress; while it lasts ``idle`` and
+    ``behavior`` intents are dropped and counted, ``manual`` and ``safety``
+    ones still run. Only a still reading ends it: odometry that falls silent
+    while the body moves leaves the dome SUPPRESSED (the safe side).
+17. **Offline.** No joint position, or no converter status, for
+    ``device_stale_s`` (or never): OFFLINE, the move ends with its 0, nothing
+    else is sent.
+18. **Stale.** The mood going stale stops an ``idle`` or ``behavior`` move;
+    no glances while stale; ``manual`` still runs.
+19. **Idle glances and rest** (plan 4.5). The mood's ``rest_rad`` is the
+    dome's palette: a ``rest`` at idle priority whenever rule 8 re-styles.
+    Glances fire from :class:`~r2_expression.palette.GlanceScheduler` as idle
+    intents through rule 4 (a claimed, foreign or suppressed channel drops and
+    counts them), never during a move; the schedule restarts when a move
+    ends. A resting dome that drifts beyond the profile's band is corrected
+    at ``min_speed``, at most once per ``rest_recheck_s``.
+
+Status precedence: OFFLINE, DARK, FOREIGN, SUPPRESSED, RUNNING, CLAIMED, STALE, IDLE.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 import json
 import math
 import random
 from types import MappingProxyType
 from typing import Any, Mapping, Optional, Tuple
 
-from r2_expression.config import BRIGHTNESS_RANGE, DRIFT_PRESETS, HUE_KEY, LED_STYLE_CHANNELS
-from r2_expression.palette import (field_of as _field, FlourishScheduler, LedCatalogue,
-                                   MagicCatalogue, pick_intent_fields, resolve_styles,
+from r2_expression import motion
+from r2_expression.config import (BRIGHTNESS_RANGE, DRIFT_PRESETS, HUE_KEY,
+                                  LED_STYLE_CHANNELS, MOOD_PROFILE)
+from r2_expression.palette import (field_of as _field, FlourishScheduler, glance_intent_fields,
+                                   GlanceScheduler, LedCatalogue, MagicCatalogue,
+                                   pick_intent_fields, random_side, resolve_styles, uniform,
                                    validate_picks)
 
 # ChannelStatus.STATE_*
@@ -131,7 +188,9 @@ STATE_FOREIGN = 3
 STATE_STALE = 4
 STATE_OFFLINE = 5
 STATE_DARK = 6
-STATE_NAMES = ('idle', 'running', 'claimed', 'foreign', 'stale', 'offline', 'dark')
+STATE_SUPPRESSED = 7
+STATE_NAMES = ('idle', 'running', 'claimed', 'foreign', 'stale', 'offline', 'dark',
+               'suppressed')
 
 # ExpressionIntent.PRIORITY_* and the ladder: the highest priority each source may use.
 PRIORITY_IDLE = 10
@@ -151,13 +210,18 @@ CALL_CONFIGURE = 'configure'                # ConfigureLedDisplay
 CALL_START = 'start'                        # StartMagicSequence
 CALL_MAGIC_STOP = 'magic_stop'              # StopMagicSequence
 CALL_MAGIC_BRIGHTNESS = 'magic_brightness'  # ConfigureMagicPanel (takes no priority)
+CALL_VELOCITY = 'velocity'                  # /dome/cmd/personality; 0 is the stop
 CALLS = (CALL_RUN, CALL_SAY, CALL_STOP, CALL_CONFIGURE, CALL_START, CALL_MAGIC_STOP,
-         CALL_MAGIC_BRIGHTNESS)
+         CALL_MAGIC_BRIGHTNESS, CALL_VELOCITY)
 RUN_CALLS = (CALL_RUN, CALL_SAY, CALL_START)
 
 LED_ACTIONS = ('effect', 'clip', 'text', 'configure', 'stop')
 MAGIC_ACTIONS = ('sequence', 'brightness', 'stop')
-_RUN_ACTIONS = ('effect', 'clip', 'text', 'sequence')
+DOME_ACTIONS = ('look_at', 'glance', 'turn', 'rest', 'stop', 'track')
+_MOVE_ACTIONS = ('look_at', 'glance', 'turn', 'rest')
+_RUN_ACTIONS = ('effect', 'clip', 'text', 'sequence') + _MOVE_ACTIONS
+_ACTIONS = MappingProxyType({'led': LED_ACTIONS, 'magic': MAGIC_ACTIONS,
+                             'dome': DOME_ACTIONS})
 
 # Device constants (astromech_msgs 2.0.0), repeated so this module needs no ROS.
 APPLY_MODE = 1                 # ConfigureLedDisplay
@@ -175,6 +239,12 @@ HOLD_FOREVER = MAX_UINT32
 LINK_PRESENT = 1
 MAGIC_RUNNING = 1              # MagicPanelState.STATE_RUNNING
 MAX_OWNER_BYTES = 31
+# DomeCommandStatus.source values (astromech_msgs 2.2.0) of a person driving the dome; the
+# others, idle and personality, leave the channel to us.
+FOREIGN_SOURCES = ('joystick', 'foxglove')
+# A glance asked of a mood that has none.
+DEFAULT_GLANCE_AMPLITUDE_RAD = 0.5
+DEFAULT_GLANCE_DWELL_S = 1.0
 
 # A refusal says who holds the display, not for how long: assume the device's 5 s.
 DEVICE_HOLD_S = 5.0
@@ -193,7 +263,7 @@ class Channel:
     """A channel: its device surfaces, the displays they cover, its palette channel."""
 
     name: str
-    kind: str                     # led | magic
+    kind: str                     # led | magic | dome
     surfaces: Tuple[str, ...]     # where its runs go
     displays: Tuple[str, ...]     # what they cover
     parent: str = ''              # fld for tfld and bfld
@@ -218,9 +288,11 @@ CHANNELS = MappingProxyType({
     'rld': Channel('rld', 'led', ('rld',), ('rld',)),
     'psi': Channel('psi', 'led', ('fpsi', 'rpsi'), ('fpsi', 'rpsi')),
     'magic': Channel('magic', 'magic', ('magic',), ('magic',)),
+    'dome': Channel('dome', 'dome', ('dome',), ('dome',)),
 })
 LED_CHANNELS = ('fld', 'tfld', 'bfld', 'rld', 'psi')
 MAGIC_CHANNELS = ('magic',)
+DOME_CHANNELS = ('dome',)
 _SURFACE_CHANNEL = MappingProxyType({'fpsi': 'psi', 'rpsi': 'psi'})
 # The displays of every device surface (2.2), for runs reported on the state topic.
 SURFACE_DISPLAYS = MappingProxyType({
@@ -274,7 +346,8 @@ class Action:
     owner: str
     priority: int                 # what the request carries (rule 6); never 0
     intent_id: str = ''
-    why: str = ''                 # intent | palette | preempt | duration
+    why: str = ''                 # intent | palette | preempt | duration | move | done |
+    #                               the dome's halts: foreign | offline | suppressed | stale
 
     def __post_init__(self):
         if self.call not in CALLS:
@@ -361,6 +434,7 @@ class _Run:
     confirmed_at: Optional[float] = None
     displaced: list = field(default_factory=list)   # (channel state, run) it replaced
     stopping: bool = False        # its duration stop is sent; cleared once accepted
+    move: Any = None              # the dome: its motion.Move
 
 
 @dataclass
@@ -427,6 +501,18 @@ def _rgb_param(params):
     return value
 
 
+def _number_param(params, key):
+    """Return ``params[key]`` as a finite float, else refuse it (rule 13)."""
+    value = params.get(key)
+    try:
+        number = None if isinstance(value, bool) else float(value)
+    except (TypeError, ValueError, OverflowError):      # OverflowError: a huge integer
+        number = None
+    if number is None or isinstance(value, str) or not math.isfinite(number):
+        raise _Refuse('bad params: %s must be a finite number, got %.40r' % (key, value))
+    return number
+
+
 def held_by(reason):
     """Return the holder a device refusal names (console, ui, text_topic, manual), or ''."""
     return HELD_REFUSALS.get((reason or '').strip(), '')
@@ -448,7 +534,8 @@ class Arbiter:
             specs.append(spec)
         kinds = {spec.kind for spec in specs}
         if len(kinds) != 1:
-            raise ValueError('an arbiter serves one channel group (LEDs or the Magic Panel)')
+            raise ValueError('an arbiter serves one channel group (the LEDs, the Magic Panel '
+                             'or the dome)')
         if not _valid_owner(owner):
             raise ValueError('owner must be 1-%d bytes' % MAX_OWNER_BYTES)
         self.kind = kinds.pop()
@@ -458,7 +545,8 @@ class Arbiter:
         self._ch = {spec.name: _ChannelState(spec) for spec in specs}
         self._overlap = {name: tuple(o for o in self._ch.values() if o.spec.overlaps(cs.spec))
                          for name, cs in self._ch.items()}
-        styled = LED_STYLE_CHANNELS if self.kind == 'led' else MAGIC_CHANNELS
+        styled = {'led': LED_STYLE_CHANNELS, 'magic': MAGIC_CHANNELS,
+                  'dome': DOME_CHANNELS}[self.kind]
         self._palette_channels = tuple(ch for ch in styled if ch in self._ch)
         self._catalogue = None
         self._picks = MappingProxyType({})
@@ -483,7 +571,19 @@ class Arbiter:
         self._needs_palette = set()
         self._palette_retry_at = {}      # channel -> earliest re-send of a failed palette
         self._eligible = {}
-        self._flourish = FlourishScheduler(self._rng)
+        # The flourishes, or for the dome its idle glances (rule 19).
+        self._flourish = (GlanceScheduler if self.kind == 'dome' else FlourishScheduler)(
+            self._rng)
+        # The dome: what the converter, the joint state and the odometry last said.
+        self._source = self._source_at = None
+        self._position = self._position_at = None
+        self._body_speed = self._body_yaw = 0.0
+        self._body_moving = False
+        self._still_since = None
+        self._was_foreign = self._was_suppressed = False
+        self._glance_wait_until = 0.0
+        self._rest = motion.RestHold(config.defaults.dome.rest_recheck_s)
+        self._limits = self._dome_limits(config)
         self._serial = 0
         self._validate_picks()
 
@@ -498,6 +598,11 @@ class Arbiter:
     def config(self):
         """Return the :class:`~r2_expression.config.ExpressionConfig` in use."""
         return self._config
+
+    @property
+    def moving(self):
+        """Return True while a dome move runs (the node then ticks at 20 Hz)."""
+        return any(cs.run is not None and cs.run.move is not None for cs in self._ch.values())
 
     def status(self, channel, now):
         """Return the :class:`Status` of ``channel`` at ``now``."""
@@ -547,6 +652,8 @@ class Arbiter:
     def set_catalogue(self, catalogue, now):
         """Take the device's catalogue (``ListLeds``/``ListMagicPanel``); return actions."""
         now = self._clock(now)
+        if self.kind == 'dome':
+            raise TypeError('the dome has no catalogue')
         wanted = LedCatalogue if self.kind == 'led' else MagicCatalogue
         if not isinstance(catalogue, wanted):
             raise TypeError('a %s arbiter needs a %s' % (self.kind, wanted.__name__))
@@ -558,6 +665,8 @@ class Arbiter:
         """Swap in a new, validated config, keeping claims, runs, holds and counts; re-style."""
         now = self._clock(self._last_now if now is None else now)
         self._config = config
+        self._rest.recheck_s = config.defaults.dome.rest_recheck_s
+        self._limits = self._dome_limits(config)
         self._validate_picks()
         self._want_palette()
         if self._label and not self._was_stale:
@@ -647,7 +756,7 @@ class Arbiter:
             return drop('priority must be an integer 1-255, got %r' % (f.priority,))
         if f.priority > slot:
             return drop('priority %d is above the %s slot (%d)' % (f.priority, f.source, slot))
-        if f.action not in (LED_ACTIONS if self.kind == 'led' else MAGIC_ACTIONS):
+        if f.action not in _ACTIONS[self.kind]:
             return drop('unknown action %r' % f.action)
         try:
             params = _params(f.params)
@@ -657,7 +766,7 @@ class Arbiter:
             return drop("hue is the droid's colour scheme; the personality never sets it")
         if f.source in CAPPED_SOURCES:         # the personality, not an operator
             state = self._state(cs, now)
-            if state in (STATE_FOREIGN, STATE_DARK, STATE_OFFLINE):
+            if state in (STATE_FOREIGN, STATE_DARK, STATE_OFFLINE, STATE_SUPPRESSED):
                 return drop('channel is %s' % STATE_NAMES[state])
             if f.source == 'idle' and self._stale(now):
                 return drop('mood is stale')
@@ -682,11 +791,7 @@ class Arbiter:
             return drop(str(exc))
 
         if run is not None:
-            for other in self._overlapping(cs):
-                if other.run is not None:     # the device replaces them, once it accepts
-                    run.displaced.append((other, other.run))
-                    self._end_run(other, now)
-            cs.run = run
+            self._start_run(cs, run, now)
         pre = []
         if f.source == 'manual':
             hold_s = self._config.defaults.manual_hold_s
@@ -701,6 +806,17 @@ class Arbiter:
                 pre = self._preempt(cs, f.priority, now)
         note = '' if actions else 'nothing running'
         return IntentResult(True, note, tuple(pre + actions), intent_id)
+
+    def _start_run(self, cs, run, now):
+        """Make ``run`` the channel's, replacing every run on an overlapping channel."""
+        for other in self._overlapping(cs):
+            if other.run is not None:         # the device replaces them, once it accepts
+                if run.move is None:          # a move has no device to refuse it
+                    run.displaced.append((other, other.run))
+                self._end_run(other, now)
+        cs.run = run
+        if run.move is not None and run.move.done:
+            self._end_run(cs, now)            # there already: its first command was the 0
 
     def device_reply(self, action, accepted, reason, now):
         """
@@ -788,6 +904,37 @@ class Arbiter:
                 self._end_run(cs, now)
         return self._settle(now)
 
+    def dome_state(self, state, now):
+        """
+        Take what the dome node hears; return actions.
+
+        ``state`` is a mapping (or an object) with any of: ``source`` (the
+        converter's ``DomeCommandStatus.source``), ``position_rad`` (the joint
+        position), ``body_speed_m_s`` and ``body_yaw_rad_s`` (from the odometry,
+        signed or not). A field left out keeps its last value.
+        """
+        now = self._clock(now)
+        self._require('dome')
+        source = _field(state, 'source', None)
+        if source is not None:
+            self._source, self._source_at = str(source), now
+        position = _field(state, 'position_rad', None)
+        if position is not None and math.isfinite(position):
+            self._position, self._position_at = motion.wrap(float(position)), now
+        speed = _field(state, 'body_speed_m_s', None)
+        yaw = _field(state, 'body_yaw_rad_s', None)
+        if speed is not None or yaw is not None:
+            if speed is not None:
+                self._body_speed = abs(speed)
+            if yaw is not None:
+                self._body_yaw = abs(yaw)
+            dome = self._config.defaults.dome
+            if self._body_speed > dome.body_speed_m_s or self._body_yaw > dome.body_yaw_rad_s:
+                self._body_moving = True
+            elif self._body_moving:
+                self._body_moving, self._still_since = False, now
+        return self._settle(now)
+
     def magic_state(self, snapshot, now):
         """Take one ``MagicPanelState`` (a message or a dict of its fields); return actions."""
         now = self._clock(now)
@@ -818,7 +965,8 @@ class Arbiter:
             for owner in [o for o, c in cs.claims.items() if c.until <= now]:
                 del cs.claims[owner]
             run = cs.run
-            if run is not None and run.until is not None and now >= run.until:
+            if run is not None and run.move is None and run.until is not None and \
+                    now >= run.until:
                 if not run.device_ends:
                     if self._hold(cs, now) is not None:
                         continue              # a person holds it: stop once they let go
@@ -832,8 +980,11 @@ class Arbiter:
                         self._size_auto_claim(cs)
                         continue
                 self._end_run(cs, now)
+        actions += self._step_moves(now)
         actions += self._settle(now)
-        if not self._was_stale and self._label in self._config.moods:
+        if self.kind == 'dome':
+            actions += self._idle_dome(now)
+        elif not self._was_stale and self._label in self._config.moods:
             pick = self._flourish.poll(self._picks.get(self._label, ()), now)
             if pick is not None and pick.channel in self._ch:
                 actions += self.intent(Intent(**pick_intent_fields(
@@ -870,8 +1021,15 @@ class Arbiter:
         self._picks, warnings = validate_picks(self._config, led=led, magic=magic)
         for key, text in warnings:
             self._warn(key, text)
+        if self.kind == 'dome':
+            for text in self._config.dome_warnings:
+                self._warn(('dome', text), text)
 
     def _restart_flourish(self, now):
+        if self.kind == 'dome':
+            glance = self._config.mood_dome(self._label).glance
+            self._flourish.restart(glance, now, self._strength)
+            return
         mood = self._config.moods.get(self._label)
         self._flourish.restart(mood.flourish if mood is not None else None, now)
 
@@ -921,6 +1079,10 @@ class Arbiter:
                           until, device_ends=False, confirmed_at=now - SNAPSHOT_GRACE_S)
 
     def _offline(self, now):
+        if self.kind == 'dome':
+            stale_s = self._config.defaults.device_stale_s
+            return any(at is None or now - at > stale_s
+                       for at in (self._position_at, self._source_at))
         if self._catalogue is None or self._snapshot_at is None:
             return True
         if now - self._snapshot_at > self._config.defaults.device_stale_s:
@@ -938,6 +1100,8 @@ class Arbiter:
         The snapshot's holds win; without one, a recent refusal's. A hold ends
         when its time runs out, before the next snapshot confirms it.
         """
+        if self.kind == 'dome':
+            return None                   # the converter has no hold timer (rule 15)
         if self.kind == 'magic':
             snapped = [self._magic['hold']] if self._magic else []
         elif self._manual:
@@ -958,6 +1122,8 @@ class Arbiter:
 
     def _foreign_run_owner(self, cs):
         """Who runs something on the channel's displays that we did not start, or ''."""
+        if self.kind == 'dome':
+            return self._source if self._source in FOREIGN_SOURCES else ''
         if self.kind == 'magic':
             snaps = [self._magic] if self._magic else []
         else:
@@ -996,7 +1162,15 @@ class Arbiter:
             return STATE_DARK
         if self._foreign(cs, now) is not None:
             return STATE_FOREIGN
+        if self._suppressed(now):
+            return STATE_SUPPRESSED
         return None
+
+    def _suppressed(self, now):
+        """Rule 16: the body moves, or was moving less than after_still_s ago."""
+        return self.kind == 'dome' and (self._body_moving or (
+            self._still_since is not None and
+            now - self._still_since < self._config.defaults.dome.after_still_s))
 
     def _state(self, cs, now):
         blocked = self._blocked(cs, now)
@@ -1021,6 +1195,10 @@ class Arbiter:
         auto = cs.claims.get(MANUAL_OWNER)
         if run is not None and run.source == 'manual' and auto is not None and auto.auto:
             auto.until = max(auto.floor, now + self._config.defaults.manual_hold_s)
+        if run is not None and run.move is not None:
+            self._rest.arm(now)               # rule 19: the next drift check, and glance
+            if not self._was_stale:
+                self._restart_flourish(now)
 
     def _size_auto_claim(self, cs):
         """Rule 6: a manual run keeps its auto-claim until manual_hold_s after its end."""
@@ -1046,6 +1224,8 @@ class Arbiter:
         A stop names a surface, not a run, so a surface the snapshot shows
         running a run we did not start is skipped.
         """
+        if self.kind == 'dome':               # a 0 overrides nobody (rule 14)
+            return [self._velocity(0.0, priority, intent_id, why)]
         actions = []
         for surface in sorted(surfaces):
             if self.kind == 'magic':
@@ -1099,6 +1279,10 @@ class Arbiter:
                         set(surfaces), None if not duration else now + duration / 1000.0,
                         device_ends=spec.kind == 'led')
 
+        if f.action == 'track':
+            raise _Refuse('not in this phase')
+        if f.action in _MOVE_ACTIONS:
+            return self._render_move(cs, f, params, intent_id, now)
         if f.action in ('effect', 'clip'):
             name = params.get('name')
             if not isinstance(name, str) or not name:
@@ -1118,8 +1302,8 @@ class Arbiter:
                 raise _Refuse('no text')
             if len(lines) > len(spec.displays):
                 raise _Refuse('more lines than the surface has displays')
-            motion = params.get('motion', 'bounce')
-            if motion not in TEXT_MOTIONS:
+            text_motion = params.get('motion', 'bounce')
+            if text_motion not in TEXT_MOTIONS:
                 raise _Refuse('unknown text motion')
             rgb, speed = _rgb_param(params), _int_param(params, 'speed', 0, 0, 9)
             duration = self._duration(f, params)
@@ -1127,7 +1311,7 @@ class Arbiter:
             return ([action(CALL_SAY, surface, {
                 'surface': surface, 'lines': list(lines),
                 'linked': bool(params.get('linked', False)),
-                'motion': TEXT_MOTIONS.index(motion),
+                'motion': TEXT_MOTIONS.index(text_motion),
                 'on_black': bool(params.get('on_black', False)), 'rgb': rgb, 'speed': speed,
                 'duration_ms': duration, 'owner': owner, 'priority': pr})],
                 new_run('text', spec.surfaces, duration))
@@ -1191,6 +1375,153 @@ class Arbiter:
             self._end_run(other, now)
         return actions, None
 
+    # --- the dome --------------------------------------------------------------------------
+
+    def _velocity(self, velocity, priority, intent_id, why):
+        return Action(CALL_VELOCITY, 'dome', 'dome', {'velocity_rad_s': float(velocity)},
+                      self.owner, priority, intent_id, why)
+
+    @staticmethod
+    def _dome_limits(config):
+        dome = config.defaults.dome
+        return motion.Limits(min_speed=dome.min_speed_rad_s, max_move_s=dome.max_move_s,
+                             settle_s=dome.settle_s, coast=dome.coast)
+
+    def _mood_dome(self, now):
+        return self._config.mood_dome(self._label, self._stale(now))
+
+    def _move_profile(self, f, params, now):
+        """Rule 13: the mood's profile for idle intents, else ``params.profile``."""
+        name = MOOD_PROFILE if f.source == 'idle' else params.get('profile', MOOD_PROFILE)
+        if name == MOOD_PROFILE:
+            return self._config.profile(self._mood_dome(now).profile)
+        if not isinstance(name, str) or name not in self._config.profiles:
+            raise _Refuse('bad params: unknown profile %r' % (name,))
+        return self._config.profiles[name]
+
+    def _render_move(self, cs, f, params, intent_id, now, creep=False):
+        """Return ``(actions, run)`` for a ``look_at``, ``glance``, ``turn`` or ``rest``."""
+        state = self._state(cs, now)
+        if state in (STATE_OFFLINE, STATE_FOREIGN):
+            raise _Refuse('channel is %s' % STATE_NAMES[state])
+        dome = self._config.defaults.dome
+        heading, limits = dome.heading, self._limits
+        profile = self._move_profile(f, params, now)
+        if creep:                             # rule 19: a drift is corrected at min_speed
+            profile = replace(profile, v_max=limits.min_speed)
+        old = cs.run.move if cs.run is not None else None
+        if f.action == 'look_at':
+            move = motion.look_at(heading.joint(_number_param(params, 'bearing')), profile,
+                                  limits, now, old)
+        elif f.action == 'turn':
+            move = motion.turn(heading.delta(_number_param(params, 'delta')), profile, limits,
+                               now, old)
+        elif f.action == 'rest':
+            bearing = (_number_param(params, 'bearing') if 'bearing' in params
+                       else self._mood_dome(now).rest_rad)
+            if bearing is None:
+                raise _Refuse('bad params: the mood has no rest heading; give a bearing')
+            move = motion.rest(heading.joint(bearing), profile, limits, now, old)
+        else:
+            amplitude, dwell = self._glance_draw(f, params, now)
+            side = params.get('side')
+            if side is None:
+                side = random_side(self._rng)
+            if side not in ('left', 'right'):
+                raise _Refuse('bad params: side must be left or right')
+            move = motion.glance(heading.delta(amplitude if side == 'left' else -amplitude),
+                                 dwell, profile, limits, now, old)
+        velocity, _, _ = move.step(self._position, now, self._position_at)
+        run = _Run(intent_id, f.source, f.action, f.priority, f.interruptible, f.action,
+                   {'dome'}, move.deadline, device_ends=False, move=move)
+        return [self._velocity(velocity, f.priority, intent_id, 'intent')], run
+
+    def _glance_draw(self, f, params, now):
+        """Return a glance's ``(amplitude, dwell_s)``: the params', else the mood's draw."""
+        glance = self._mood_dome(now).glance
+        if 'amplitude' in params:
+            amplitude = _number_param(params, 'amplitude')
+        elif glance is not None:
+            amplitude = uniform(glance.amplitude_rad, self._rng)
+        else:
+            amplitude = DEFAULT_GLANCE_AMPLITUDE_RAD
+        if not 0.0 < amplitude <= math.pi:
+            raise _Refuse('bad params: amplitude must be in (0, pi]')
+        if 'dwell_s' in params:
+            dwell = _number_param(params, 'dwell_s')
+        elif f.duration_ms:
+            dwell = f.duration_ms / 1000.0
+        elif glance is not None:
+            dwell = uniform(glance.dwell_s, self._rng)
+        else:
+            dwell = DEFAULT_GLANCE_DWELL_S
+        if not 0.0 <= dwell <= self._config.defaults.dome.max_move_s:
+            raise _Refuse('bad params: the dwell (dwell_s, or duration_ms) must be 0 to '
+                          'max_move_s')
+        return amplitude, dwell
+
+    def _step_moves(self, now):
+        """Step the move in progress; it sends its velocity every tick and a 0 at its end."""
+        actions = []
+        for cs in self._ch.values():
+            run = cs.run
+            if run is None or run.move is None:
+                continue
+            velocity, done, _ = run.move.step(self._position, now, self._position_at)
+            actions.append(self._velocity(velocity, run.priority, run.intent_id,
+                                          'done' if done else 'move'))
+            if done:
+                self._end_run(cs, now)
+        return actions
+
+    def _halt(self, cs, why, now, sources=None):
+        """Rule 14: stop the move in progress (of ``sources``, default any) with its 0."""
+        run = cs.run
+        if run is None or run.move is None or (sources is not None and
+                                               run.source not in sources):
+            return []
+        run.move.stop()
+        self._end_run(cs, now)
+        return [self._velocity(0.0, run.priority, run.intent_id, why)]
+
+    def _dome_guard(self, now):
+        """Rules 15-17: halt on foreign, offline and the onset of suppression."""
+        cs = self._ch['dome']
+        state = self._blocked(cs, now)
+        foreign = state == STATE_FOREIGN
+        if self._was_foreign and not foreign:
+            self._glance_wait_until = now + self._config.defaults.dome.after_foreign_s
+        suppressed = self._suppressed(now)
+        onset = suppressed and not self._was_suppressed
+        self._was_foreign, self._was_suppressed = foreign, suppressed
+        if state in (STATE_OFFLINE, STATE_FOREIGN):
+            return self._halt(cs, STATE_NAMES[state], now)
+        return self._halt(cs, 'suppressed', now) if onset else []
+
+    def _idle_dome(self, now):
+        """Rule 19: the rest's drift check, then the idle glances."""
+        cs = self._ch['dome']
+        if self._was_stale or cs.run is not None:
+            return []
+        mood = self._mood_dome(now)
+        if mood.rest_rad is not None and self._palette_eligible(cs, now):
+            dome = self._config.defaults.dome
+            drift = motion.wrap(dome.heading.joint(mood.rest_rad) - self._position)
+            band = self._config.profile(mood.profile).settle_band_rad
+            if self._rest.poll(drift, band, now):
+                f = Intent('dome', 'idle', PRIORITY_IDLE, 'rest', {},
+                           intent_id=self._new_id('rest'))
+                actions, run = self._render_move(cs, f, {}, f.intent_id, now, creep=True)
+                self._start_run(cs, run, now)
+                return actions
+        if now < self._glance_wait_until:
+            return []
+        pick = self._flourish.poll(now, self._strength)
+        if pick is None:
+            return []
+        return self.intent(Intent(**glance_intent_fields(pick, self._new_id('glance'))),
+                           now).actions
+
     def _palette_eligible(self, cs, now):
         """Return True when nothing keeps the palette off: a blocking state, a claim, a run."""
         return (self._blocked(cs, now) is None and
@@ -1201,14 +1532,18 @@ class Arbiter:
     def _settle(self, now):
         """Rule 8 and 9: follow staleness, and re-style every channel that needs it."""
         stale = self._stale(now)
+        actions = []
         if stale != self._was_stale:
             self._was_stale = stale
             self._want_palette()
             if stale:
                 self._flourish.stop()
+                if self.kind == 'dome':       # rule 18
+                    actions += self._halt(self._ch['dome'], 'stale', now, CAPPED_SOURCES)
             else:
                 self._restart_flourish(now)
-        actions = []
+        if self.kind == 'dome':
+            actions += self._dome_guard(now)
         for name in self._palette_channels:
             cs = self._ch[name]
             eligible = self._palette_eligible(cs, now)
@@ -1229,6 +1564,12 @@ class Arbiter:
             self._palette_retry_at.pop(name, None)
 
     def _palette_actions(self, cs, stale):
+        if self.kind == 'dome':               # rule 19: the mood's rest is the dome's palette
+            if stale or self._config.mood_dome(self._label).rest_rad is None:
+                return []
+            return list(self.intent(Intent('dome', 'idle', PRIORITY_IDLE, 'rest', {},
+                                           intent_id=self._new_id('rest')),
+                                    self._last_now).actions)
         style = resolve_styles(self._config, self._label, self._strength,
                                stale).get(cs.spec.name)
         if style is None:

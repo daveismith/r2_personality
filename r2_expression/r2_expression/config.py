@@ -21,14 +21,34 @@ schema (plan section 4.3):
 
 * ``defaults`` (optional): ``manual_hold_s`` (5.0), ``mood_stale_s`` (3.0),
   ``max_duration_ms`` (30000, an integer), ``status_hz`` (2.0),
-  ``max_lease_s`` (60.0), ``device_stale_s`` (5.0). Each > 0.
+  ``max_lease_s`` (60.0), ``device_stale_s`` (5.0). Each > 0. And ``dome``
+  (phase 2 plan 4.5, :class:`DomeDefaults`): ``min_speed_rad_s`` (0.5),
+  ``max_speed_rad_s`` (2.0) and ``max_accel_rad_s2`` (4.0), the converter's
+  personality caps repeated here; ``max_move_s`` (8.0), ``settle_s`` (0.8),
+  ``rest_recheck_s`` (30.0), ``coast: {c1_s: 0.37, c2_rad: 0.07}``,
+  ``heading: {sign: -1, offset_rad: 0.0}`` (sign -1 or 1, offset in (-pi, pi]),
+  ``body_speed_m_s`` (0.15), ``body_yaw_rad_s`` (0.3), ``after_foreign_s``
+  (3.0), ``after_still_s`` (1.0). ``c2_rad`` may be 0; ``min_speed_rad_s``
+  may not exceed ``max_speed_rad_s``.
+* ``profiles`` (optional): name -> dome motion profile ``{v_max, accel, k,
+  settle_band_rad}``, all > 0, ``settle_band_rad`` at most pi, ``v_max`` at
+  least ``min_speed_rad_s``. A ``v_max`` or ``accel`` above the cap is clamped
+  to it with one warning (:attr:`ExpressionConfig.dome_warnings`). ``mood``
+  is reserved (an intent's ``profile: mood`` means the mood's own).
 * ``neutral`` (required): the styles used while ``/mood/state`` is stale and
   for any mood without its own entry. Per style channel, as below, but
   ``brightness`` is a single number (there is no strength to scale by) and
   there is no ``flourish``. A channel left out is not touched while neutral.
+  ``dome`` here is ``{profile}`` only (no glances, no rest); absent, the dome
+  moves with :data:`DEFAULT_PROFILE`.
 * ``moods`` (required, non-empty): label -> mood. A mood has a style per
   channel and an optional ``flourish``; a channel it leaves out takes the
-  neutral style.
+  neutral style. Its ``dome`` is ``{profile, glance, rest_rad}``: ``profile``
+  (required) names a profile; ``glance`` (optional) is ``{every_s,
+  amplitude_rad, dwell_s}``, each ``[min, max]`` with 0 < min <= max and
+  amplitudes at most pi and dwells at most ``max_move_s``; ``rest_rad``
+  (optional) is the bearing the dome rests at (+ve left), in (-pi, pi]. A mood
+  without ``dome`` moves as neutral, with one warning.
 
 A style channel is one of :data:`STYLE_CHANNELS`:
 
@@ -59,11 +79,12 @@ Every rejection raises :class:`ExpressionConfigError` whose message starts
 with the dotted path of the offending key.
 """
 
-from dataclasses import asdict, dataclass, fields
+from dataclasses import asdict, dataclass, field, fields, replace
 import math
 from types import MappingProxyType
 from typing import Hashable, Mapping, Optional, Tuple, Union
 
+from r2_expression.motion import Coast, Heading, Profile
 import yaml
 
 LED_STYLE_CHANNELS = ('fld', 'rld', 'psi')
@@ -80,7 +101,10 @@ BRIGHTNESS_RANGE = MappingProxyType({'fld': (0, 100), 'rld': (0, 100), 'psi': (0
 _DRIFT_CHANNELS = ('fld', 'rld')
 
 HUE_KEY = 'hue'
-TOP_LEVEL_KEYS = ('defaults', 'neutral', 'moods')
+TOP_LEVEL_KEYS = ('defaults', 'profiles', 'neutral', 'moods')
+MOOD_PROFILE = 'mood'          # an intent's profile: the mood's own; never a profile name
+# The dome's profile when nothing names one (the plan's ``smooth``).
+DEFAULT_PROFILE = Profile(v_max=1.0, accel=1.5, k=1.5, settle_band_rad=0.05)
 _PICK_KEYS = ('channel',) + PICK_KINDS + ('weight', 'rgb', 'speed', 'repeat', 'end',
                                           'duration_ms')
 _LED_ONLY_PICK_KEYS = ('rgb', 'speed')
@@ -93,6 +117,24 @@ class ExpressionConfigError(ValueError):
 
 
 @dataclass(frozen=True)
+class DomeDefaults:
+    """The dome arbiter's settings (``defaults.dome``)."""
+
+    min_speed_rad_s: float = 0.5
+    max_speed_rad_s: float = 2.0
+    max_accel_rad_s2: float = 4.0
+    max_move_s: float = 8.0
+    settle_s: float = 0.8
+    rest_recheck_s: float = 30.0
+    coast: Coast = Coast()
+    heading: Heading = Heading()
+    body_speed_m_s: float = 0.15
+    body_yaw_rad_s: float = 0.3
+    after_foreign_s: float = 3.0
+    after_still_s: float = 1.0
+
+
+@dataclass(frozen=True)
 class Defaults:
     """The arbiters' timing settings."""
 
@@ -102,9 +144,13 @@ class Defaults:
     status_hz: float = 2.0
     max_lease_s: float = 60.0
     device_stale_s: float = 5.0
+    dome: DomeDefaults = DomeDefaults()
 
 
 _DEFAULT_FIELDS = tuple(f.name for f in fields(Defaults))
+_DOME_FIELDS = tuple(f.name for f in fields(DomeDefaults))
+_PROFILE_FIELDS = tuple(f.name for f in fields(Profile))
+_GLANCE_KEYS = ('every_s', 'amplitude_rad', 'dwell_s')
 
 
 @dataclass(frozen=True)
@@ -158,11 +204,39 @@ class Flourish:
 
 
 @dataclass(frozen=True)
+class Glance:
+    """A mood's idle glances: each a ``(min, max)`` range drawn from uniformly."""
+
+    every_s: Tuple[float, float]
+    amplitude_rad: Tuple[float, float]
+    dwell_s: Tuple[float, float]
+
+
+@dataclass(frozen=True)
+class MoodDome:
+    """A mood's dome: its profile's name ('' for :data:`DEFAULT_PROFILE`), glances, rest."""
+
+    profile: str = ''
+    glance: Optional[Glance] = None
+    rest_rad: Optional[float] = None     # a bearing, +ve left
+
+    def to_dict(self):
+        """Return the YAML form."""
+        out = {'profile': self.profile}
+        if self.glance is not None:
+            out['glance'] = {key: list(getattr(self.glance, key)) for key in _GLANCE_KEYS}
+        if self.rest_rad is not None:
+            out['rest_rad'] = self.rest_rad
+        return out
+
+
+@dataclass(frozen=True)
 class Mood:
-    """A palette: a style per channel (only those given) and an optional flourish."""
+    """A palette: a style per channel (only those given), a flourish and a dome, optional."""
 
     styles: Mapping[str, Style]
     flourish: Optional[Flourish] = None
+    dome: Optional[MoodDome] = None      # None: the neutral dome
 
     def to_dict(self):
         """Return the YAML form."""
@@ -170,6 +244,8 @@ class Mood:
         if self.flourish is not None:
             out['flourish'] = {'every_s': list(self.flourish.every_s),
                                'picks': [p.to_dict() for p in self.flourish.picks]}
+        if self.dome is not None and self.dome.profile:
+            out['dome'] = self.dome.to_dict()
         return out
 
 
@@ -180,14 +256,30 @@ class ExpressionConfig:
     defaults: Defaults
     neutral: Mood
     moods: Mapping[str, Mood]
+    profiles: Mapping[str, Profile] = MappingProxyType({})
+    default_profile: Profile = DEFAULT_PROFILE    # within the caps and the floor
+    # What loading clamped or defaulted for the dome; the dome arbiter logs each once.
+    dome_warnings: Tuple[str, ...] = field(default=(), compare=False)
 
     def to_dict(self):
         """Return the plain-data form, which :func:`parse_config` accepts back."""
         return {
             'defaults': asdict(self.defaults),
+            'profiles': {name: asdict(p) for name, p in self.profiles.items()},
             'neutral': self.neutral.to_dict(),
             'moods': {name: mood.to_dict() for name, mood in self.moods.items()},
         }
+
+    def profile(self, name):
+        """Return a named profile, '' the default one; KeyError for another name."""
+        return self.profiles[name] if name else self.default_profile
+
+    def mood_dome(self, label, stale=False):
+        """Return the :class:`MoodDome` for ``label`` (neutral's when stale or absent)."""
+        mood = None if stale else self.moods.get(label)
+        if mood is not None and mood.dome is not None:
+            return mood.dome
+        return self.neutral.dome
 
 
 class _UniqueKeyLoader(yaml.SafeLoader):
@@ -247,7 +339,9 @@ def parse_config(data):
         if key not in data:
             raise ExpressionConfigError('%s: required key missing' % key)
     defaults = _defaults(data.get('defaults', {}))
-    neutral = _mood(data['neutral'], 'neutral', defaults, neutral=True)
+    warnings = []
+    profiles = _profiles(data.get('profiles', {}), defaults.dome, warnings)
+    neutral = _mood(data['neutral'], 'neutral', defaults, profiles, neutral=True)
     table = _mapping(data['moods'], 'moods')
     if not table:
         raise ExpressionConfigError('moods: must name at least one mood')
@@ -255,9 +349,17 @@ def parse_config(data):
     for name, entry in table.items():
         if not isinstance(name, str) or not name:
             raise ExpressionConfigError('moods.%r: names must be non-empty strings' % (name,))
-        moods[name] = _mood(entry, 'moods.%s' % name, defaults, neutral=False)
+        moods[name] = _mood(entry, 'moods.%s' % name, defaults, profiles, neutral=False)
+        if moods[name].dome is None:
+            warnings.append('moods.%s: no dome entry; the dome moves as neutral, with no '
+                            'glances' % name)
+    dome = defaults.dome
+    default = DEFAULT_PROFILE.capped(dome.max_speed_rad_s, dome.max_accel_rad_s2)
+    default = replace(default, v_max=max(default.v_max, dome.min_speed_rad_s))
     return ExpressionConfig(defaults=defaults, neutral=neutral,
-                            moods=MappingProxyType(moods))
+                            moods=MappingProxyType(moods),
+                            profiles=MappingProxyType(profiles), default_profile=default,
+                            dome_warnings=tuple(warnings))
 
 
 def missing_moods(config, labels):
@@ -304,6 +406,12 @@ def _known_keys(mapping, allowed, path, what='key'):
                                         % (_join(path, key), what, ', '.join(allowed)))
 
 
+def _required(mapping, keys, path):
+    for key in keys:
+        if key not in mapping:
+            raise ExpressionConfigError('%s: required key missing' % _join(path, key))
+
+
 def _number(value, path):
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise ExpressionConfigError('%s: must be a number, got %s %r'
@@ -334,6 +442,27 @@ def _positive(value, path):
     return number
 
 
+def _angle(value, path):
+    """Return an angle in (-pi, pi]."""
+    number = _number(value, path)
+    if not -math.pi < number <= math.pi:
+        raise ExpressionConfigError('%s: %g is outside (-pi, pi]' % (path, number))
+    return number
+
+
+def _range(value, path, top=None):
+    """Return ``(min, max)`` with 0 < min <= max (<= ``top`` when given)."""
+    if not isinstance(value, (list, tuple)) or len(value) != 2:
+        raise ExpressionConfigError('%s: must be [min, max]' % path)
+    lo = _positive(value[0], '%s[0]' % path)
+    hi = _positive(value[1], '%s[1]' % path)
+    if lo > hi:
+        raise ExpressionConfigError('%s: min %g is above max %g' % (path, lo, hi))
+    if top is not None and hi > top:
+        raise ExpressionConfigError('%s: max %g is above %g' % (path, hi, top))
+    return (lo, hi)
+
+
 def _defaults(value):
     mapping = _mapping(value, 'defaults')
     _known_keys(mapping, _DEFAULT_FIELDS, 'defaults')
@@ -342,9 +471,103 @@ def _defaults(value):
         path = 'defaults.%s' % key
         if key == 'max_duration_ms':
             out[key] = _integer(raw, path, 1, MAX_UINT32)
+        elif key == 'dome':
+            out[key] = _dome_defaults(raw, path)
         else:
             out[key] = _positive(raw, path)
     return Defaults(**out)
+
+
+def _dome_defaults(value, path):
+    mapping = _mapping(value, path)
+    _known_keys(mapping, _DOME_FIELDS, path)
+    out = {}
+    for key, raw in mapping.items():
+        here = _join(path, key)
+        if key == 'coast':
+            coast = _mapping(raw, here)
+            _known_keys(coast, ('c1_s', 'c2_rad'), here)
+            c2 = _number(coast.get('c2_rad', Coast.c2_rad), _join(here, 'c2_rad'))
+            if c2 < 0.0:
+                raise ExpressionConfigError('%s.c2_rad: must be >= 0, got %g' % (here, c2))
+            out[key] = Coast(c1_s=_positive(coast.get('c1_s', Coast.c1_s), _join(here, 'c1_s')),
+                             c2_rad=c2)
+        elif key == 'heading':
+            heading = _mapping(raw, here)
+            _known_keys(heading, ('sign', 'offset_rad'), here)
+            sign = heading.get('sign', Heading.sign)
+            if sign not in (-1, 1) or isinstance(sign, bool):
+                raise ExpressionConfigError('%s.sign: must be -1 or 1, got %r' % (here, sign))
+            out[key] = Heading(sign=int(sign), offset_rad=_angle(
+                heading.get('offset_rad', 0.0), _join(here, 'offset_rad')))
+        else:
+            out[key] = _positive(raw, here)
+    dome = DomeDefaults(**out)
+    if dome.min_speed_rad_s > dome.max_speed_rad_s:
+        raise ExpressionConfigError('%s.min_speed_rad_s: %g is above max_speed_rad_s %g'
+                                    % (path, dome.min_speed_rad_s, dome.max_speed_rad_s))
+    return dome
+
+
+def _profiles(value, dome, warnings):
+    table = _mapping(value, 'profiles')
+    out = {}
+    for name, raw in table.items():
+        path = 'profiles.%s' % (name,)
+        if not isinstance(name, str) or not name:
+            raise ExpressionConfigError('%s: names must be non-empty strings' % path)
+        if name == MOOD_PROFILE:
+            raise ExpressionConfigError("%s: 'mood' is reserved (an intent's profile: mood "
+                                        "is the mood's own)" % path)
+        mapping = _mapping(raw, path)
+        _known_keys(mapping, _PROFILE_FIELDS, path)
+        _required(mapping, _PROFILE_FIELDS, path)
+        values = {key: _positive(mapping[key], '%s.%s' % (path, key))
+                  for key in _PROFILE_FIELDS}
+        if values['settle_band_rad'] > math.pi:
+            raise ExpressionConfigError('%s.settle_band_rad: %g is above pi'
+                                        % (path, values['settle_band_rad']))
+        if values['v_max'] < dome.min_speed_rad_s:
+            raise ExpressionConfigError(
+                '%s.v_max: %g is below defaults.dome.min_speed_rad_s %g (rule 4: a command is '
+                '0 or at least min_speed)' % (path, values['v_max'], dome.min_speed_rad_s))
+        for key, cap, cap_name in (('v_max', dome.max_speed_rad_s, 'max_speed_rad_s'),
+                                   ('accel', dome.max_accel_rad_s2, 'max_accel_rad_s2')):
+            if values[key] > cap:
+                warnings.append('%s.%s: %g is above defaults.dome.%s; clamped to %g'
+                                % (path, key, values[key], cap_name, cap))
+                values[key] = cap
+        out[name] = Profile(**values)
+    return out
+
+
+def _mood_dome(value, path, profiles, neutral, max_move_s):
+    mapping = _mapping(value, path)
+    for key in ('glance', 'rest_rad'):
+        if neutral and key in mapping:
+            raise ExpressionConfigError('%s.%s: neutral has no glances and no rest (they '
+                                        'stop while the mood is stale)' % (path, key))
+    _known_keys(mapping, ('profile', 'glance', 'rest_rad'), path)
+    _required(mapping, ('profile',), path)
+    profile = mapping['profile']
+    if not isinstance(profile, str) or profile not in profiles:
+        raise ExpressionConfigError('%s.profile: unknown profile %r (profiles: %s)' % (
+            path, profile, ', '.join(profiles) or 'none'))
+    glance = None
+    if 'glance' in mapping:
+        gpath = '%s.glance' % path
+        gmap = _mapping(mapping['glance'], gpath)
+        _known_keys(gmap, _GLANCE_KEYS, gpath)
+        _required(gmap, _GLANCE_KEYS, gpath)
+        glance = Glance(every_s=_range(gmap['every_s'], '%s.every_s' % gpath),
+                        amplitude_rad=_range(gmap['amplitude_rad'],
+                                             '%s.amplitude_rad' % gpath, top=math.pi),
+                        dwell_s=_range(gmap['dwell_s'], '%s.dwell_s' % gpath,
+                                       top=max_move_s))
+    rest_rad = None
+    if 'rest_rad' in mapping:
+        rest_rad = _angle(mapping['rest_rad'], '%s.rest_rad' % path)
+    return MoodDome(profile=profile, glance=glance, rest_rad=rest_rad)
 
 
 def _brightness(value, path, channel, allow_range):
@@ -388,9 +611,9 @@ def _style(channel, value, path, neutral):
     return Style(drift=drift, brightness=brightness)
 
 
-def _mood(value, path, defaults, neutral):
+def _mood(value, path, defaults, profiles, neutral):
     mapping = _mapping(value, path)
-    allowed = STYLE_CHANNELS if neutral else STYLE_CHANNELS + ('flourish',)
+    allowed = STYLE_CHANNELS + (('dome',) if neutral else ('flourish', 'dome'))
     for key in mapping:
         if key not in allowed:
             if key == 'flourish':
@@ -405,36 +628,30 @@ def _mood(value, path, defaults, neutral):
     flourish = None
     if 'flourish' in mapping:
         flourish = _flourish(mapping['flourish'], '%s.flourish' % path, defaults)
-    return Mood(styles=MappingProxyType(styles), flourish=flourish)
+    dome = MoodDome() if neutral else None
+    if 'dome' in mapping:
+        dome = _mood_dome(mapping['dome'], '%s.dome' % path, profiles, neutral,
+                          defaults.dome.max_move_s)
+    return Mood(styles=MappingProxyType(styles), flourish=flourish, dome=dome)
 
 
 def _flourish(value, path, defaults):
     mapping = _mapping(value, path)
     _known_keys(mapping, ('every_s', 'picks'), path)
-    for key in ('every_s', 'picks'):
-        if key not in mapping:
-            raise ExpressionConfigError('%s.%s: required key missing' % (path, key))
-    every = mapping['every_s']
-    epath = '%s.every_s' % path
-    if not isinstance(every, (list, tuple)) or len(every) != 2:
-        raise ExpressionConfigError('%s: must be [min, max] in seconds' % epath)
-    emin = _positive(every[0], '%s[0]' % epath)
-    emax = _positive(every[1], '%s[1]' % epath)
-    if emin > emax:
-        raise ExpressionConfigError('%s: min %g is above max %g' % (epath, emin, emax))
+    _required(mapping, ('every_s', 'picks'), path)
+    every = _range(mapping['every_s'], '%s.every_s' % path)
     picks = mapping['picks']
     ppath = '%s.picks' % path
     if not isinstance(picks, (list, tuple)) or not picks:
         raise ExpressionConfigError('%s: must be a non-empty list' % ppath)
     out = tuple(_pick(p, '%s[%d]' % (ppath, i), defaults) for i, p in enumerate(picks))
-    return Flourish(every_s=(emin, emax), picks=out)
+    return Flourish(every_s=every, picks=out)
 
 
 def _pick(value, path, defaults):
     mapping = _mapping(value, path)
     _known_keys(mapping, _PICK_KEYS, path)
-    if 'channel' not in mapping:
-        raise ExpressionConfigError('%s.channel: required key missing' % path)
+    _required(mapping, ('channel',), path)
     channel = mapping['channel']
     if channel not in PICK_CHANNELS:
         raise ExpressionConfigError('%s.channel: unknown channel %r (expected one of: %s)'

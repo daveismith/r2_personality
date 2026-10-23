@@ -19,11 +19,12 @@ import math
 
 import pytest
 
-from fixtures import base_data, cfg, FixedRng, LED_CAT, MAGIC_CAT  # noqa: I100
+from fixtures import base_data, cfg, dome_cfg, FixedRng, LED_CAT, MAGIC_CAT  # noqa: I100
 from r2_expression.config import parse_config
-from r2_expression.palette import (choose, FlourishScheduler, led_catalogue,
+from r2_expression.palette import (choose, FlourishScheduler, glance_intent_fields,
+                                   GlancePick, GlanceScheduler, led_catalogue,
                                    magic_catalogue, pick_intent_fields, resolve_styles,
-                                   scale_brightness, validate_picks)
+                                   scale_brightness, unit_strength, validate_picks)
 
 
 @pytest.mark.parametrize('strength, expected', [(0.0, 50), (1.0, 60), (0.5, 55), (0.26, 53),
@@ -116,3 +117,55 @@ def test_pick_becomes_an_idle_intent_with_its_duration():
     assert json.loads(fields['params']) == {'name': 'pulse', 'rgb': 0x2060ff}
     fields = pick_intent_fields(excited.flourish.picks[1], 'flourish-2')
     assert fields['action'] == 'sequence' and json.loads(fields['params']) == {'id': 27}
+
+
+# --- idle glances (phase 2 plan 4.5) -------------------------------------------------------
+
+class Sequence:
+    """An RNG that returns ``values`` in turn."""
+
+    def __init__(self, *values):
+        self.values = list(values)
+
+    def random(self):
+        return self.values.pop(0)
+
+
+@pytest.mark.parametrize('strength, expected', [(0.3, 0.3), (-1.0, 0.0), (7.0, 1.0),
+                                                (math.nan, 0.0), ('x', 0.0)])
+def test_unit_strength_clamps_to_0_1(strength, expected):
+    assert unit_strength(strength) == expected
+
+
+def test_glance_scheduler_fires_within_every_s_scaled_toward_the_lower_bound_by_strength():
+    glance = dome_cfg().moods['calm'].dome.glance         # every_s [10, 20]
+    sched = GlanceScheduler(FixedRng(0.5))
+    sched.restart(glance, 100.0, strength=0.0)
+    assert sched.next_due == 115.0                        # the whole window
+    sched.restart(glance, 100.0, strength=0.5)
+    assert sched.next_due == 112.5                        # [10, 15]
+    sched.restart(glance, 100.0, strength=1.0)
+    assert sched.next_due == 110.0                        # always the lower bound
+    assert sched.poll(109.9) is None
+    pick = sched.poll(110.0, strength=0.0)
+    assert sched.next_due == 125.0                        # the next drawn at strength 0
+    assert pick == GlancePick(amplitude_rad=0.4, dwell_s=0.75, side='right')
+    sched.stop()
+    assert sched.poll(1e9) is None
+    sched.restart(None, 0.0)
+    assert sched.next_due is None
+
+
+def test_glance_draws_amplitude_dwell_and_side_from_the_mood():
+    glance = dome_cfg().moods['calm'].dome.glance         # amplitude [0.3, 0.5], dwell [0.5, 1]
+    sched = GlanceScheduler(Sequence(0.0, 0.0, 1.0, 0.0, 0.49))   # due, next, the draw
+    sched.restart(glance, 0.0, strength=1.0)
+    assert sched.poll(10.0) == GlancePick(amplitude_rad=0.5, dwell_s=0.5, side='left')
+
+
+def test_glance_becomes_an_idle_dome_intent():
+    fields = glance_intent_fields(GlancePick(0.4, 1.5, 'left'), 'glance-3')
+    assert (fields['channel'], fields['source'], fields['priority'], fields['action']) == (
+        'dome', 'idle', 10, 'glance')
+    assert json.loads(fields['params']) == {'amplitude': 0.4, 'dwell_s': 1.5, 'side': 'left'}
+    assert fields['intent_id'] == 'glance-3' and fields['interruptible']

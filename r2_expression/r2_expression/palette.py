@@ -32,6 +32,13 @@ Pure helpers used by :mod:`r2_expression.core`; no ROS imports.
   two arbiters together keep the mood's rate and its weights across channels.
   The RNG is injected (anything with ``random()`` in [0, 1)), so tests are
   deterministic.
+* :class:`GlanceScheduler`: the dome's idle glances, the flourishes' twin. The
+  next is due a uniform draw from the mood's ``glance.every_s`` after the last,
+  with ``mood_strength`` pulling the window's top down toward its bottom (at 1
+  every glance comes at the lower bound); a due glance draws its amplitude and
+  dwell uniformly from their ranges and its side at random. The arbiter
+  decides when it may poll (never while claimed, foreign, suppressed,
+  offline, stale or during a move: plan 4.5).
 """
 
 from dataclasses import dataclass
@@ -115,19 +122,23 @@ def magic_catalogue(response):
     return MagicCatalogue(sequences=MappingProxyType(names), unbounded=frozenset(unbounded))
 
 
+def unit_strength(strength):
+    """Return ``mood_strength`` clamped to [0, 1]; anything not a number is 0."""
+    try:
+        strength = float(strength)
+    except (TypeError, ValueError):
+        return 0.0
+    if not strength >= 0.0:          # NaN too
+        return 0.0
+    return min(strength, 1.0)
+
+
 def scale_brightness(brightness, strength):
     """Brightness for ``strength`` in [0, 1] between ``(min, max)``; None stays None."""
     if brightness is None:
         return None
-    try:
-        strength = float(strength)
-    except (TypeError, ValueError):
-        strength = 0.0
-    if not strength >= 0.0:          # NaN too
-        strength = 0.0
-    strength = min(strength, 1.0)
     lo, hi = brightness
-    return int(round(lo + (hi - lo) * strength))
+    return int(round(lo + (hi - lo) * unit_strength(strength)))
 
 
 def resolve_styles(config, label, strength, stale=False):
@@ -226,14 +237,75 @@ class FlourishScheduler:
 
     def poll(self, picks, now):
         """Return a pick when one is due (rescheduling the next), else None."""
-        if self.next_due is None or now < self.next_due:
+        if not self._due(now):
             return None
-        self.next_due = now + self._draw()
         return choose(picks, self._rng)
+
+    def _due(self, now):
+        """Return True when one is due, and schedule the next."""
+        if self.next_due is None or now < self.next_due:
+            return False
+        self.next_due = now + self._draw()
+        return True
+
+    def _draw(self):
+        return uniform(self._every, self._rng)
+
+
+def uniform(bounds, rng):
+    """Return a uniform draw from ``(min, max)``."""
+    lo, hi = bounds
+    return lo + (hi - lo) * rng.random()
+
+
+def random_side(rng):
+    """Return ``left`` or ``right``, evens."""
+    return 'left' if rng.random() < 0.5 else 'right'
+
+
+@dataclass(frozen=True)
+class GlancePick:
+    """One idle glance: how far, how long it looks, and which way."""
+
+    amplitude_rad: float
+    dwell_s: float
+    side: str                         # left | right
+
+
+class GlanceScheduler(FlourishScheduler):
+    """When the next idle glance is due, and its draw (see the module docstring)."""
+
+    def __init__(self, rng):
+        super().__init__(rng)
+        self._glance = None
+        self._strength = 0.0
+
+    def restart(self, glance, now, strength=0.0):
+        """Follow ``glance`` (a :class:`~r2_expression.config.Glance` or None) from ``now``."""
+        self._glance, self._strength = glance, unit_strength(strength)
+        super().restart(glance, now)
+
+    def poll(self, now, strength=None):
+        """Return a :class:`GlancePick` when one is due (rescheduling the next), else None."""
+        if strength is not None:
+            self._strength = unit_strength(strength)
+        if not self._due(now):
+            return None
+        return GlancePick(amplitude_rad=uniform(self._glance.amplitude_rad, self._rng),
+                          dwell_s=uniform(self._glance.dwell_s, self._rng),
+                          side=random_side(self._rng))
 
     def _draw(self):
         lo, hi = self._every
-        return lo + (hi - lo) * self._rng.random()
+        return uniform((lo, hi - (hi - lo) * self._strength), self._rng)
+
+
+def glance_intent_fields(pick, intent_id):
+    """Return the ``ExpressionIntent`` fields of an idle intent making ``pick``."""
+    return {'channel': 'dome', 'source': 'idle', 'priority': 10, 'action': 'glance',
+            'params': json.dumps({'amplitude': pick.amplitude_rad, 'dwell_s': pick.dwell_s,
+                                  'side': pick.side}),
+            'duration_ms': 0, 'interruptible': True, 'intent_id': intent_id}
 
 
 def choose(picks, rng) -> Any:
@@ -249,6 +321,8 @@ def choose(picks, rng) -> Any:
     return picks[-1]
 
 
-__all__ = ['FlourishScheduler', 'LedCatalogue', 'MagicCatalogue', 'ResolvedStyle', 'choose',
-           'field_of', 'is_led_pick', 'led_catalogue', 'magic_catalogue',
-           'pick_intent_fields', 'resolve_styles', 'scale_brightness', 'validate_picks']
+__all__ = ['FlourishScheduler', 'GlancePick', 'GlanceScheduler', 'LedCatalogue',
+           'MagicCatalogue', 'ResolvedStyle', 'choose', 'field_of', 'glance_intent_fields',
+           'is_led_pick', 'led_catalogue', 'magic_catalogue', 'pick_intent_fields',
+           'random_side', 'resolve_styles', 'scale_brightness', 'uniform', 'unit_strength',
+           'validate_picks']

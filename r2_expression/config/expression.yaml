@@ -11,6 +11,11 @@
 # priority with a duration (never 0; capped at max_duration_ms). Clip and effect names are
 # checked against ListLeds at startup, sequences against ListMagicPanel; a pick the device
 # lacks is dropped with one WARN.
+# Dome (phase 2 plan 4.5): each mood names a motion profile (profiles below), optional idle
+# glances (every_s, amplitude_rad, dwell_s: [min, max]; mood_strength pulls every_s toward
+# its lower bound) and an optional rest heading, rest_rad: a bearing, +ve left, 0 forward.
+# The dome is only ever driven by velocity, through dome_twist_converter, at idle priority
+# for glances and rest; a joystick or Foxglove command beats it at once.
 
 defaults:
   manual_hold_s: 5.0       # a manual intent holds its channel this long after it
@@ -19,6 +24,25 @@ defaults:
   status_hz: 2.0
   max_lease_s: 60.0        # cap on a ClaimChannel lease
   device_stale_s: 5.0      # no state message for this long: OFFLINE
+  dome:
+    min_speed_rad_s: 0.5   # every command is 0 or at least this (the hardware's floor is 0.44)
+    max_speed_rad_s: 2.0   # the converter's personality_max_speed_rad_s: keep them equal
+    max_accel_rad_s2: 4.0  # the converter's personality_max_accel_rad_s2
+    max_move_s: 8.0        # every move ends by then (a glance: plus its dwell)
+    settle_s: 0.8          # wait after the stop before judging where the dome came to rest
+    rest_recheck_s: 30.0   # a resting dome that drifted is corrected at most this often
+    coast: {c1_s: 0.37, c2_rad: 0.07}     # run-on after a 0: c1 * v - c2 (re-fit in 8b)
+    heading: {sign: -1, offset_rad: 0.0}  # joint positive = clockwise, bearings +ve left
+    body_speed_m_s: 0.15   # body faster than this (or yawing faster than below): SUPPRESSED
+    body_yaw_rad_s: 0.3
+    after_foreign_s: 3.0   # no idle glance this long after a joystick or Foxglove lets go
+    after_still_s: 1.0     # SUPPRESSED clears this long after the body is still
+
+# Named dome motion profiles, for moods and for an intent's params.profile.
+profiles:
+  snappy: {v_max: 2.0, accel: 4.0, k: 3.0, settle_band_rad: 0.05}
+  smooth: {v_max: 1.0, accel: 1.5, k: 1.5, settle_band_rad: 0.05}
+  lazy:   {v_max: 0.6, accel: 0.8, k: 1.0, settle_band_rad: 0.09}
 
 # While the mood is stale, and for any mood without an entry: the device's own default
 # look. The Magic Panel is left untouched.
@@ -26,6 +50,7 @@ neutral:
   fld: {drift: calm, brightness: 40}
   rld: {drift: calm, brightness: 40}
   psi: {brightness: 40}
+  dome: {profile: smooth}  # no glances, no rest
 
 moods:
   calm:
@@ -33,6 +58,8 @@ moods:
     rld:   {drift: calm, brightness: [50, 65]}
     psi:   {brightness: [50, 65]}
     magic: {brightness: 5}
+    dome: {profile: smooth,
+           glance: {every_s: [20, 60], amplitude_rad: [0.26, 0.70], dwell_s: [0.5, 1.5]}}
     flourish:
       every_s: [40, 90]
       picks:
@@ -44,6 +71,8 @@ moods:
     rld:   {drift: calm, brightness: [55, 70]}
     psi:   {brightness: [55, 75]}
     magic: {brightness: 7}
+    dome: {profile: snappy,
+           glance: {every_s: [8, 20], amplitude_rad: [0.5, 1.4], dwell_s: [0.8, 2.0]}}
     flourish:
       every_s: [20, 45]
       picks:
@@ -59,6 +88,8 @@ moods:
     rld:   {drift: lively, brightness: [80, 100]}
     psi:   {brightness: [80, 100]}
     magic: {brightness: 12}
+    dome: {profile: snappy,
+           glance: {every_s: [4, 10], amplitude_rad: [0.3, 0.9], dwell_s: [0.2, 0.6]}}
     flourish:
       every_s: [6, 15]
       picks:
@@ -71,6 +102,8 @@ moods:
     rld:   {drift: lively, brightness: [60, 80]}
     psi:   {brightness: [65, 85]}
     magic: {brightness: 9}
+    dome: {profile: snappy,
+           glance: {every_s: [6, 15], amplitude_rad: [0.4, 1.1], dwell_s: [0.3, 0.9]}}
     flourish:
       every_s: [10, 25]
       picks:
@@ -84,6 +117,8 @@ moods:
     rld:   {drift: lively, brightness: [55, 75]}
     psi:   {brightness: [60, 80]}
     magic: {brightness: 8}
+    dome: {profile: snappy,
+           glance: {every_s: [15, 40], amplitude_rad: [0.2, 0.5], dwell_s: [0.3, 0.8]}}
     flourish:
       every_s: [15, 35]
       picks:
@@ -98,6 +133,8 @@ moods:
     rld:   {drift: lively, brightness: [65, 85]}
     psi:   {brightness: [70, 90]}
     magic: {brightness: 10}
+    dome: {profile: snappy,
+           glance: {every_s: [5, 12], amplitude_rad: [0.4, 1.2], dwell_s: [0.2, 0.5]}}
     flourish:
       every_s: [8, 20]
       picks:
@@ -112,6 +149,8 @@ moods:
     rld:   {drift: calm, brightness: [25, 35]}
     psi:   {brightness: [20, 30]}                 # the PSIs floor at ~18/255 and stay visible
     magic: {brightness: 1}
+    dome: {profile: lazy, rest_rad: 0.35,
+           glance: {every_s: [120, 300], amplitude_rad: [0.1, 0.3], dwell_s: [2.0, 4.0]}}
     flourish:
       every_s: [120, 300]
       picks:
@@ -124,6 +163,8 @@ moods:
     rld:   {drift: calm, brightness: [30, 45]}
     psi:   {brightness: [25, 40]}
     magic: {brightness: 2}
+    dome: {profile: lazy, rest_rad: 2.6,      # rests looking away
+           glance: {every_s: [60, 150], amplitude_rad: [0.1, 0.3], dwell_s: [1.5, 3.0]}}
     flourish:
       every_s: [60, 150]
       picks:

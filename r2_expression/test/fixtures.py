@@ -25,6 +25,7 @@ if PKG_ROOT not in sys.path:
 
 from r2_expression.config import parse_config  # noqa: E402
 from r2_expression.palette import LedCatalogue, MagicCatalogue  # noqa: E402
+from r2_mocks.dome_plant import DomePlant  # noqa: E402
 
 SHIPPED = os.path.join(PKG_ROOT, 'config', 'expression.yaml')
 AFFECT_YAML = os.path.join(PKG_ROOT, '..', 'r2_affect', 'config', 'affect.yaml')
@@ -73,6 +74,22 @@ MAGIC_CAT = MagicCatalogue(
     unbounded=frozenset({56}))
 
 
+PROFILES = {'snappy': {'v_max': 2.0, 'accel': 4.0, 'k': 3.0, 'settle_band_rad': 0.05},
+            'smooth': {'v_max': 1.0, 'accel': 1.5, 'k': 1.5, 'settle_band_rad': 0.05},
+            'lazy': {'v_max': 0.6, 'accel': 0.8, 'k': 1.0, 'settle_band_rad': 0.09}}
+CALM_GLANCE = {'every_s': [10, 20], 'amplitude_rad': [0.3, 0.5], 'dwell_s': [0.5, 1.0]}
+
+
+def dome_data():
+    """Return BASE with the dome: profiles, calm glancing, excited snappy, sleepy resting."""
+    data = base_data(profiles=PROFILES)
+    data['neutral']['dome'] = {'profile': 'smooth'}
+    data['moods']['calm']['dome'] = {'profile': 'smooth', 'glance': CALM_GLANCE}
+    data['moods']['excited']['dome'] = {'profile': 'snappy'}
+    data['moods']['sleepy'] = {'dome': {'profile': 'lazy', 'rest_rad': 0.35}}
+    return data
+
+
 def base_data(**changes):
     """Return a deep copy of BASE; top-level keys in ``changes`` replace BASE's."""
     data = copy.deepcopy(BASE)
@@ -82,6 +99,10 @@ def base_data(**changes):
 
 def cfg(**changes):
     return parse_config(base_data(**changes))
+
+
+def dome_cfg():
+    return parse_config(dome_data())
 
 
 def led_snap(strip=True, manual=False, displays=None, surfaces=None):
@@ -149,3 +170,55 @@ def shutdown_rclpy():
         rclpy.try_shutdown()
     except RuntimeError:
         pass
+
+
+# --- the dome plant ----------------------------------------------------------------------
+
+class PlantDouble(DomePlant):
+    """
+    ``r2_mocks``' plant of plan 2.1, with the tests' names and a hand to push it.
+
+    ``position`` is the true angle (unwrapped; settable: a push), :meth:`reading` the
+    joint state's. ``quirks`` is the firmware's 9-degree crossing of 0 (off by default).
+    """
+
+    def __init__(self, position=0.0, ideal=False, quirks=False):
+        super().__init__(ideal=ideal, firmware_quirks=quirks, initial_rad=position)
+
+    @property
+    def position(self):
+        return self.position_rad
+
+    @position.setter
+    def position(self, value):
+        self._position, self._velocity, self._coast_decel = float(value), 0.0, 0.0
+
+    def reading(self):
+        return self.reported_rad
+
+
+def simulate(move, plant, t0=0.0, horizon_s=20.0, physics_hz=60, step_hz=20, state_hz=10):
+    """
+    Run ``move`` against ``plant`` as the node would; return ``(reason, log)``.
+
+    The plant runs at ``physics_hz``, the move is stepped at ``step_hz`` with the latest
+    joint state, published at ``state_hz`` (with its time). ``log`` is
+    ``[(t, command, true position)]``, one per step; the command holds between steps.
+    """
+    physics_dt = 1.0 / physics_hz
+    per_step, per_state = physics_hz // step_hz, physics_hz // state_hz
+    log, command = [], 0.0
+    sample, sample_at = plant.reading(), t0
+    for n in range(int(horizon_s * physics_hz) + 1):
+        t = t0 + n * physics_dt
+        if n % per_state == 0:
+            sample, sample_at = plant.reading(), t
+        if n % per_step == 0:
+            command, done, reason = move.step(sample, t, sample_at)
+            log.append((t, command, plant.position))
+            if done:
+                for _ in range(int(3.0 * physics_hz)):     # let the coast finish
+                    plant.step(0.0, physics_dt)
+                return reason, log
+        plant.step(command, physics_dt)
+    return 'still running', log

@@ -15,18 +15,22 @@
 """Tests for the arbiter core, named for the rules of plan 4.2 (no ROS, ``now`` advanced)."""
 
 import dataclasses
+import math
 
 import pytest
 
-from fixtures import base_data, cfg, FixedRng, held, LED_CAT, led_snap  # noqa: I100
-from fixtures import MAGIC_CAT, magic_snap, OWNER, running
+from fixtures import base_data, cfg, dome_cfg, dome_data, FixedRng, held  # noqa: I100
+from fixtures import LED_CAT, led_snap, MAGIC_CAT, magic_snap, OWNER, PlantDouble, running
 from r2_expression.config import parse_config
 from r2_expression.core import (Action, APPLY_BRIGHTNESS, APPLY_DRIFT, APPLY_HUE, APPLY_MODE,
                                 Arbiter, CALL_CONFIGURE, CALL_MAGIC_BRIGHTNESS,
                                 CALL_MAGIC_STOP, CALL_RUN, CALL_SAY, CALL_START, CALL_STOP,
-                                channel_of, held_by, Intent, LED_CHANNELS, Status)
+                                CALL_VELOCITY,
+                                channel_of, DOME_CHANNELS, held_by, Intent, LED_CHANNELS,
+                                Status)
 from r2_expression.core import (STATE_CLAIMED, STATE_DARK, STATE_FOREIGN, STATE_IDLE,
-                                STATE_OFFLINE, STATE_RUNNING, STATE_STALE)
+                                STATE_NAMES, STATE_OFFLINE, STATE_RUNNING, STATE_STALE,
+                                STATE_SUPPRESSED)
 
 ALL_ACTIONS = []
 
@@ -114,7 +118,9 @@ def test_channel_of_maps_sub_channels_and_the_psi_fan_out():
     assert channel_of('psi').surfaces == ('fpsi', 'rpsi')
     assert channel_of('fpsi').name == channel_of('rpsi').name == 'psi'
     assert channel_of('magic').kind == 'magic'
-    assert channel_of('dome') is None
+    assert channel_of('dome').kind == 'dome' and channel_of('dome').surfaces == ('dome',)
+    assert not channel_of('dome').overlaps(channel_of('fld'))
+    assert channel_of('head') is None
     assert channel_of('tfld').overlaps(channel_of('fld'))
     assert not channel_of('tfld').overlaps(channel_of('bfld'))
 
@@ -124,6 +130,8 @@ def test_arbiter_serves_one_channel_group():
         Arbiter(cfg(), ('fld', 'magic'))
     with pytest.raises(ValueError):
         Arbiter(cfg(), ('fld', 'dome'))
+    with pytest.raises(ValueError):
+        Arbiter(cfg(), ('magic', 'dome'))
     with pytest.raises(ValueError):
         Arbiter(cfg(), ('fld',), owner='x' * 32)
 
@@ -1253,7 +1261,488 @@ def test_status_fields_complete_for_every_state():
     assert seen[STATE_IDLE].owner == '' and seen[STATE_IDLE].lease_remaining_s == 0.0
 
 
+# --- the dome (phase 2 plan 4.3) ----------------------------------------------------------
+
+DOME_ARBITERS = []               # every dome arbiter a test drove, for the rule 14 sweep
+STILL = {'body_speed_m_s': 0.0, 'body_yaw_rad_s': 0.0}
+DRIVING = {'body_speed_m_s': 0.3, 'body_yaw_rad_s': 0.0}
+
+
+def dome(config=None, rng=None, mood='excited', position=0.0):
+    """Return a dome arbiter that has a status, a joint state and ``mood``; an ideal plant."""
+    a = Arbiter(config or dome_cfg(), DOME_CHANNELS, rng=rng or FixedRng(0.0))
+    a.test_plant, a.test_t, a.test_cmd, a.test_log = PlantDouble(position, ideal=True), 0.0, \
+        0.0, []
+    DOME_ARBITERS.append(a)
+    feed(a, a.dome_state({'source': 'idle', 'position_rad': position}, 0.0))
+    if mood:
+        feed(a, a.mood(mood, 1.0, 0.0))
+    return a
+
+
+def feed(a, actions):
+    """Collect ``actions``; the last velocity among them drives the plant from now on."""
+    actions = collect(actions)
+    sent = [x for x in actions if x.call == CALL_VELOCITY]
+    a.test_log += sent
+    if sent:
+        a.test_cmd = sent[-1].request['velocity_rad_s']
+    return actions
+
+
+def live(a, t, source='idle', mood='excited', body=None, position=True):
+    """
+    Run the dome node's loop up to ``t`` at 20 Hz; return the velocities sent.
+
+    The joint state (unless ``position`` is False) and the converter's ``source``
+    (unless None) at 10 Hz, with ``body`` (odometry fields) if given; ``mood`` at
+    20 Hz (unless None); a tick; the plant follows the last velocity.
+    """
+    out = []
+    while a.test_t < t - 1e-9:
+        now = round(a.test_t + 0.05, 6)
+        a.test_plant.step(a.test_cmd, 0.05)
+        if round(now * 20) % 2 == 0:
+            state = dict(body or {})
+            if position:
+                state['position_rad'] = a.test_plant.reading()
+            if source is not None:
+                state['source'] = source
+            out += feed(a, a.dome_state(state, now))
+        if mood:
+            out += feed(a, a.mood(mood, 1.0, now))
+        out += feed(a, a.tick(now))
+        a.test_t = now
+    return [x for x in out if x.call == CALL_VELOCITY]
+
+
+def dome_intent(a, action, params=None, source='manual', priority=199, **kwargs):
+    result = intent(a, a.test_t, 'dome', source, priority, action, params, **kwargs)
+    feed(a, result.actions)
+    return result
+
+
+def speeds(actions):
+    return [x.request['velocity_rad_s'] for x in actions]
+
+
+def test_dome_look_at_sends_a_velocity_closes_on_the_joint_and_ends_with_a_0():
+    a = dome()
+    r = dome_intent(a, 'look_at', {'bearing': 1.0, 'profile': 'smooth'})
+    assert r.accepted and calls(r.actions) == [(CALL_VELOCITY, 'dome')]
+    assert speeds(r.actions) == [-0.5]                  # bearing left: joint negative
+    st = a.status('dome', 0.0)
+    assert (st.state, st.active_action, st.active_source, st.active_remaining_ms) == (
+        STATE_RUNNING, 'look_at', 'manual', 8000)
+    assert (st.owner, st.priority) == ('manual', 199)   # the manual auto-claim
+    assert a.moving
+    sent = live(a, 6.0)
+    assert not a.moving and a.test_plant.position == pytest.approx(-1.0, abs=0.05)
+    assert sent[-1].request['velocity_rad_s'] == 0.0 and sent[-1].why == 'done'
+    assert max(abs(v) for v in speeds(sent)) <= 1.0     # smooth's v_max
+    assert a.status('dome', 6.0).state == STATE_CLAIMED
+    live(a, 12.0)
+    assert a.status('dome', 12.0).state == STATE_IDLE
+
+
+def test_dome_active_remaining_ms_counts_down_the_budget_to_max_move_s():
+    a = dome()
+    dome_intent(a, 'turn', {'delta': 6.0, 'profile': 'lazy'}, source='behavior', priority=100)
+    live(a, 2.0)
+    assert a.status('dome', 2.0).active_remaining_ms == 6000
+    sent = live(a, 8.0)
+    assert not a.moving and sent[-1].request['velocity_rad_s'] == 0.0
+    assert a.status('dome', 8.0).state == STATE_IDLE
+
+
+def test_dome_track_is_refused_not_in_this_phase_and_counted():
+    a = dome()
+    r = dome_intent(a, 'track', {'bearing': 0.2})
+    assert (r.accepted, r.reason, r.actions) == (False, 'not in this phase', ())
+    assert a.status('dome', 0.0).dropped == 1
+
+
+@pytest.mark.parametrize('action, params, fragment', [
+    ('look_at', {}, 'bearing must be a finite number'),
+    ('look_at', {'bearing': 'left'}, 'bearing must be a finite number'),
+    ('look_at', {'bearing': True}, 'bearing must be a finite number'),
+    ('look_at', {'bearing': 1.0, 'profile': 'zippy'}, "unknown profile 'zippy'"),
+    ('turn', {'delta': float('inf')}, 'delta must be a finite number'),
+    ('turn', {'delta': 10 ** 400}, 'delta must be a finite number'),
+    ('turn', {'delta': '1.5'}, 'delta must be a finite number'),
+    ('glance', {'amplitude': 4.0}, 'amplitude must be in (0, pi]'),
+    ('glance', {'side': 'up'}, 'side must be left or right'),
+    ('glance', {'dwell_s': -1}, 'dwell (dwell_s, or duration_ms) must be 0 to max_move_s'),
+    ('rest', {}, 'the mood has no rest heading'),
+    ('dance', {}, 'unknown action'),
+    ('effect', {'name': 'fire'}, 'unknown action')])
+def test_dome_malformed_params_are_refused_with_bad_params(action, params, fragment):
+    a = dome()
+    r = dome_intent(a, action, params)
+    assert not r.accepted and fragment in r.reason, r.reason
+    assert r.reason.startswith('bad params: ') or 'action' in r.reason
+    assert a.status('dome', 0.0).dropped == 1 and not a.moving
+
+
+def test_dome_turn_is_in_the_bearing_convention_and_goes_beyond_pi():
+    a = dome()
+    dome_intent(a, 'turn', {'delta': -4.0, 'profile': 'snappy'})
+    live(a, 7.0)
+    assert a.test_plant.position == pytest.approx(4.0, abs=0.05)    # right: joint positive
+
+
+def test_dome_glance_duration_ms_is_the_dwell_when_dwell_s_is_absent():
+    a = dome()
+    dome_intent(a, 'glance', {'amplitude': 0.5, 'side': 'right'}, duration_ms=3000)
+    assert a.status('dome', 0.0).active_remaining_ms == 11000      # max_move_s + the dwell
+
+
+@pytest.mark.parametrize('source', ['joystick', 'foxglove'])
+def test_dome_foreign_on_joystick_or_foxglove_abandons_the_move_with_no_lease(source):
+    a = dome()
+    dome_intent(a, 'look_at', {'bearing': 2.0}, source='behavior', priority=100)
+    live(a, 0.5)
+    sent = live(a, 0.6, source=source)                 # the status arrives at 0.6
+    assert speeds(sent)[-1] == 0.0 and sent[-1].why == 'foreign'
+    st = a.status('dome', 0.6)
+    assert (st.state, st.owner, st.lease_remaining_s, st.active_action) == (
+        STATE_FOREIGN, source, 0.0, '')
+    assert not a.moving
+    assert live(a, 3.0, source=source) == []            # nothing while the person drives
+    assert live(a, 6.0, source='idle') == []            # let go: not resumed
+    assert a.status('dome', 6.0).state == STATE_IDLE
+
+
+def test_dome_moves_of_every_source_are_refused_while_foreign():
+    a = dome()
+    live(a, 0.2, source='joystick')
+    for source, priority in (('manual', 200), ('safety', 255), ('behavior', 100)):
+        r = dome_intent(a, 'look_at', {'bearing': 1.0}, source=source, priority=priority)
+        assert (r.accepted, r.reason) == (False, 'channel is foreign')
+    r = dome_intent(a, 'stop')                         # a stop is a 0: never a fight
+    assert r.accepted and speeds(r.actions) == [0.0]
+
+
+def test_dome_personality_source_at_the_converter_is_not_foreign():
+    a = dome()
+    live(a, 0.2, source='personality')
+    assert a.status('dome', 0.2).state == STATE_IDLE
+
+
+def test_dome_glances_resume_only_after_after_foreign_s():
+    a = dome(mood='calm')                              # rng 0: a glance at 10 s
+    live(a, 8.0, mood='calm')
+    live(a, 9.5, source='foxglove', mood='calm')       # idle again at 9.6
+    assert live(a, 12.55, mood='calm') == []           # due at 10, held to 9.6 + 3
+    sent = live(a, 12.6, mood='calm')
+    assert speeds(sent) == [-0.5] and a.status('dome', 12.6).active_action == 'glance'
+
+
+def test_dome_suppressed_on_body_speed_stops_the_move_and_drops_idle_and_behaviour():
+    a = dome()
+    dome_intent(a, 'look_at', {'bearing': 2.0}, source='behavior', priority=100)
+    live(a, 0.5)
+    sent = live(a, 0.6, body=DRIVING)
+    assert speeds(sent)[-1] == 0.0 and sent[-1].why == 'suppressed'
+    assert a.status('dome', 0.6).state == STATE_SUPPRESSED and not a.moving
+    for source, priority, action in (('idle', 10, 'glance'), ('behavior', 100, 'look_at')):
+        r = dome_intent(a, action, {'bearing': 1.0}, source=source, priority=priority)
+        assert (r.accepted, r.reason) == (False, 'channel is suppressed')
+    assert a.status('dome', 0.6).dropped == 2
+
+
+def test_dome_suppressed_on_body_yaw_too():
+    a = dome()
+    live(a, 0.2, body={'body_speed_m_s': 0.0, 'body_yaw_rad_s': -0.5})
+    assert a.status('dome', 0.2).state == STATE_SUPPRESSED
+    live(a, 0.4, body={'body_speed_m_s': -0.1, 'body_yaw_rad_s': 0.2})   # under both
+    assert a.status('dome', 0.4).state == STATE_SUPPRESSED                # after_still_s
+
+
+def test_dome_manual_still_runs_while_suppressed():
+    a = dome()
+    live(a, 0.2, body=DRIVING)
+    r = dome_intent(a, 'look_at', {'bearing': 1.0})
+    assert r.accepted and speeds(r.actions) == [-0.5]
+    sent = live(a, 1.0, body=DRIVING)
+    assert a.moving and sent and all(x.why == 'move' for x in sent)
+    st = a.status('dome', 1.0)
+    assert (st.state, st.active_action) == (STATE_SUPPRESSED, 'look_at')
+
+
+def test_dome_body_fields_left_out_keep_their_last_value():
+    a = dome()
+    live(a, 0.2, body={'body_speed_m_s': 0.5})
+    live(a, 3.0, body={'body_yaw_rad_s': 0.0})               # says nothing of the speed
+    assert a.status('dome', 3.0).state == STATE_SUPPRESSED
+
+
+def test_dome_suppressed_clears_after_still_s_after_the_body_stops():
+    a = dome()
+    live(a, 1.0, body=DRIVING)
+    live(a, 1.9, body=STILL)                           # still from 1.2
+    assert a.status('dome', 1.9).state == STATE_SUPPRESSED
+    live(a, 2.2, body=STILL)
+    assert a.status('dome', 2.2).state == STATE_IDLE
+
+
+def test_dome_stale_mood_stops_a_personality_move_and_manual_still_runs():
+    a = dome()
+    dome_intent(a, 'turn', {'delta': 6.0, 'profile': 'lazy'}, source='behavior', priority=100)
+    assert live(a, 3.0, mood=None)[-1].why == 'move'
+    sent = live(a, 3.5, mood=None)
+    assert speeds(sent)[-1] == 0.0 and sent[-1].why == 'stale'
+    assert a.status('dome', 3.5).state == STATE_STALE and not a.moving
+    assert not dome_intent(a, 'glance', source='idle', priority=10).accepted
+    r = dome_intent(a, 'look_at', {'bearing': 0.0})
+    assert r.accepted and a.moving
+    assert live(a, 4.0, mood=None)[-1].why == 'move'
+
+
+def test_dome_offline_until_both_a_joint_state_and_a_status_arrive():
+    a = Arbiter(dome_cfg(), DOME_CHANNELS, rng=FixedRng(0.0))
+    assert a.status('dome', 0.0).state == STATE_OFFLINE
+    assert a.dome_state({'position_rad': 0.0}, 0.1) == []
+    assert a.status('dome', 0.1).state == STATE_OFFLINE
+    r = a.intent(Intent('dome', 'manual', 199, 'look_at', {'bearing': 1.0}), 0.1)
+    assert (r.accepted, r.reason) == (False, 'channel is offline')
+    a.mood('excited', 1.0, 0.2)
+    assert a.dome_state({'source': 'idle'}, 0.2) == []
+    assert a.status('dome', 0.2).state == STATE_IDLE
+
+
+@pytest.mark.parametrize('lost', ['status', 'joint state'])
+def test_dome_offline_mid_move_when_status_or_feedback_is_stale_ends_it_with_a_0(lost):
+    a = dome()
+    dome_intent(a, 'turn', {'delta': 6.0, 'profile': 'lazy'}, source='behavior', priority=100)
+    live(a, 0.5)
+    if lost == 'status':
+        sent = live(a, 5.6, source=None)
+        assert sent[-1].why == 'offline' and speeds(sent)[-1] == 0.0
+    else:
+        sent = live(a, 5.6, position=False)
+        assert sent[-1].why == 'done' and speeds(sent)[-1] == 0.0    # the move's own 0.5 s
+        assert a.test_log[-1].request['velocity_rad_s'] == 0.0
+    assert a.status('dome', 5.6).state == STATE_OFFLINE and not a.moving
+    assert live(a, 8.0, source=None, position=False) == []          # nothing sent
+    live(a, 8.2)
+    assert a.status('dome', 8.2).state == STATE_IDLE
+
+
+def test_dome_a_claim_stops_the_move_with_a_0():
+    a = dome()
+    dome_intent(a, 'look_at', {'bearing': 2.0}, source='behavior', priority=100)
+    live(a, 0.5)
+    c = a.claim('dome', 'console', 200, 30.0, 0.5)
+    feed(a, c.actions)
+    assert c.accepted and speeds(c.actions) == [0.0] and c.actions[0].why == 'preempt'
+    assert c.status.state == STATE_CLAIMED and not a.moving
+    r = dome_intent(a, 'look_at', {'bearing': 1.0}, source='behavior', priority=100)
+    assert not r.accepted and "claimed by 'console'" in r.reason
+
+
+def test_dome_equal_priority_replaces_the_move_without_a_0_unless_non_interruptible():
+    a = dome()
+    dome_intent(a, 'look_at', {'bearing': 2.0}, source='behavior', priority=100,
+                intent_id='a')
+    before = live(a, 0.5)[-1].request['velocity_rad_s']
+    r = dome_intent(a, 'look_at', {'bearing': 1.5}, source='behavior', priority=100,
+                    intent_id='b')
+    assert r.accepted and speeds(r.actions)[0] < 0.0          # same way, no 0 between
+    assert abs(speeds(r.actions)[0] - before) <= 4.0 * 0.05 + 1e-9
+    assert a.status('dome', 0.5).active_intent_id == 'b'
+    dome_intent(a, 'turn', {'delta': 3.0}, source='behavior', priority=100,
+                interruptible=False, intent_id='keep')
+    r = dome_intent(a, 'look_at', {'bearing': 0.0}, source='behavior', priority=100)
+    assert not r.accepted and 'non-interruptible' in r.reason
+    assert a.status('dome', 0.5).active_intent_id == 'keep'
+    r = dome_intent(a, 'look_at', {'bearing': 0.0}, source='manual', priority=199)
+    assert r.accepted and a.status('dome', 0.5).active_source == 'manual'
+    r = dome_intent(a, 'look_at', {'bearing': 0.0}, source='behavior', priority=100)
+    assert not r.accepted                                    # below the running one
+
+
+def test_dome_stop_ends_the_move_with_a_0_and_manual_stop_sends_one_anyway():
+    a = dome()
+    dome_intent(a, 'look_at', {'bearing': 2.0}, source='behavior', priority=100)
+    live(a, 0.3)
+    r = dome_intent(a, 'stop', source='behavior', priority=100)
+    assert speeds(r.actions) == [0.0] and not a.moving
+    r = dome_intent(a, 'stop', source='behavior', priority=100)
+    assert (r.accepted, r.reason, r.actions) == (True, 'nothing running', ())
+    assert speeds(dome_intent(a, 'stop').actions) == [0.0]
+
+
+def test_dome_profile_comes_from_params_for_manual_and_from_the_mood_for_idle():
+    a = dome(mood='sleepy')                                   # lazy
+    live(a, 8.0, mood='sleepy')                               # the rest move first
+    dome_intent(a, 'look_at', {'bearing': -2.0, 'profile': 'snappy'}, source='idle',
+                priority=10)
+    assert max(abs(v) for v in speeds(live(a, 9.5, mood='sleepy'))) <= 0.6
+    b = dome()
+    dome_intent(b, 'look_at', {'bearing': -2.0, 'profile': 'lazy'})
+    assert max(abs(v) for v in speeds(live(b, 1.5))) <= 0.6
+    c = dome()
+    dome_intent(c, 'look_at', {'bearing': -2.0, 'profile': 'mood'})   # excited: snappy
+    assert max(abs(v) for v in speeds(live(c, 1.5))) > 1.0
+
+
+def test_dome_moves_are_never_given_the_duration_cap():
+    a = dome()
+    r = dome_intent(a, 'look_at', {'bearing': 1.0}, source='idle', priority=10,
+                    duration_ms=500)
+    assert r.accepted and a.status('dome', 0.0).active_remaining_ms == 8000
+
+
+# --- the dome: glances and rest ------------------------------------------------------------
+
+def test_dome_idle_glance_fires_within_every_s_and_returns_to_where_it_started():
+    a = dome(mood='calm', position=0.4)                       # every_s [10, 20], strength 1
+    assert live(a, 9.9, mood='calm') == []
+    sent = live(a, 10.0, mood='calm')
+    assert speeds(sent) == [-0.5]                             # rng 0: left, amplitude 0.3
+    st = a.status('dome', 10.0)
+    assert (st.active_source, st.active_action, st.priority) == ('idle', 'glance', 0)
+    assert st.active_intent_id.startswith('glance-')
+    sent = live(a, 16.0, mood='calm')
+    assert not a.moving and speeds(sent)[-1] == 0.0
+    assert a.test_plant.position == pytest.approx(0.4, abs=0.05)
+
+
+def test_dome_glance_never_while_claimed_and_the_drop_is_counted():
+    a = dome(mood='calm')
+    live(a, 5.0, mood='calm')
+    a.claim('dome', 'op', 10, 30.0, 5.0)
+    assert live(a, 10.0, mood='calm') == []
+    assert a.status('dome', 10.0).dropped == 1
+
+
+def test_dome_glance_never_during_a_move_and_the_cadence_restarts_after_it():
+    a = dome(mood='calm')
+    live(a, 9.0, mood='calm')
+    dome_intent(a, 'turn', {'delta': 1.0}, source='behavior', priority=100)
+    live(a, 11.0, mood='calm')
+    assert a.status('dome', 11.0).active_action == 'turn'     # not replaced, not dropped
+    assert a.status('dome', 11.0).dropped == 0
+    while a.moving:
+        live(a, a.test_t + 0.05, mood='calm')
+    ended = a.test_t
+    assert live(a, ended + 9.9, mood='calm') == []
+    assert speeds(live(a, ended + 10.05, mood='calm'))[0] != 0.0
+
+
+def test_dome_no_glances_while_stale():
+    a = dome(mood='calm')
+    live(a, 2.0, mood='calm')
+    assert live(a, 30.0, mood=None) == []
+    assert a.status('dome', 30.0).dropped == 0
+
+
+def test_dome_mood_rest_is_its_palette_on_a_label_change_and_after_foreign():
+    a = dome(mood='sleepy')                                   # rest_rad 0.35: joint -0.35
+    assert a.status('dome', 0.0).active_action == 'rest'
+    assert speeds(a.test_log) == [-0.5]
+    live(a, 8.0, mood='sleepy')
+    assert not a.moving and a.test_plant.position == pytest.approx(-0.35, abs=0.09)
+    live(a, 9.0, source='joystick', mood='sleepy')
+    a.test_plant.position = 1.0                               # the person turned it
+    sent = live(a, 9.1, mood='sleepy')
+    assert sent and sent[0].request['velocity_rad_s'] < 0.0 and sent[0].why == 'intent'
+    live(a, 20.0, mood='sleepy')
+    assert a.test_plant.position == pytest.approx(-0.35, abs=0.09)
+    a.mood('excited', 1.0, 20.0)                               # no rest: nothing sent
+    assert not a.moving
+
+
+def test_dome_rest_is_re_applied_when_a_manual_claim_ends():
+    a = dome(mood='sleepy')
+    live(a, 8.0, mood='sleepy')
+    dome_intent(a, 'look_at', {'bearing': -1.0})
+    live(a, 13.0, mood='sleepy')
+    assert a.status('dome', 13.0).state == STATE_CLAIMED       # the auto-claim
+    while a.status('dome', a.test_t).state == STATE_CLAIMED:
+        live(a, a.test_t + 0.05, mood='sleepy')
+    assert a.status('dome', a.test_t).active_action == 'rest'
+
+
+def test_dome_rest_drift_is_corrected_at_min_speed_once_per_rest_recheck_s():
+    a = dome(mood='sleepy')
+    while a.moving or a.test_t < 1.0:
+        live(a, a.test_t + 0.05, mood='sleepy')
+    ended = a.test_t
+    a.test_plant.position = 0.0                                # pushed 0.35 away
+    assert live(a, ended + 29.9, mood='sleepy') == []
+    sent = live(a, ended + 30.0, mood='sleepy')
+    assert speeds(sent) == [-0.5] and a.status('dome', a.test_t).active_action == 'rest'
+    live(a, ended + 40.0, mood='sleepy')
+    assert all(abs(v) in (0.0, 0.5) for v in speeds(a.test_log[-200:]))
+    assert a.test_plant.position == pytest.approx(-0.35, abs=0.09)
+
+
+def test_dome_rest_within_the_band_is_not_corrected():
+    a = dome(mood='sleepy')
+    while a.moving or a.test_t < 1.0:
+        live(a, a.test_t + 0.05, mood='sleepy')
+    assert live(a, a.test_t + 65.0, mood='sleepy') == []
+
+
+# --- the dome: the arbiter's surface -------------------------------------------------------
+
+def test_dome_arbiter_takes_only_dome_state():
+    a = dome()
+    with pytest.raises(TypeError):
+        a.set_catalogue(LED_CAT, 0.0)
+    with pytest.raises(TypeError):
+        a.led_state(led_snap(), 0.0)
+    with pytest.raises(TypeError):
+        led().dome_state({'source': 'idle'}, 0.0)
+
+
+def test_dome_state_ignores_a_position_that_is_not_finite_and_wraps_the_rest():
+    a = dome()
+    a.dome_state({'position_rad': math.nan}, 0.1)
+    a.dome_state({'position_rad': 7.0}, 0.2)
+    r = dome_intent(a, 'look_at', {'bearing': -(7.0 - 2 * math.pi)})
+    assert r.accepted and r.actions[0].request['velocity_rad_s'] == 0.0   # already there
+
+
+def test_dome_config_warnings_are_raised_once_by_the_dome_arbiter_only():
+    data = dome_data()
+    data['profiles']['snappy']['v_max'] = 3.0
+    config = parse_config(data)
+    a = Arbiter(config, DOME_CHANNELS)
+    warnings = a.take_warnings()
+    assert any('profiles.snappy.v_max' in w and 'clamped to 2' in w for w in warnings)
+    a.reload(config, 1.0)
+    assert a.take_warnings() == []
+    assert Arbiter(config, LED_CHANNELS).take_warnings() == []
+
+
+def test_dome_status_suppressed_is_state_7():
+    assert STATE_SUPPRESSED == 7 and STATE_NAMES[STATE_SUPPRESSED] == 'suppressed'
+    assert len(STATE_NAMES) == 8
+
+
 # --- the sweeps (keep last: they read what every test above produced) -----------------------
+
+def test_rule14_every_dome_move_ends_with_a_0_or_is_replaced():
+    assert len(DOME_ARBITERS) > 20
+    for a in DOME_ARBITERS:
+        log = a.test_log
+        for x, after in zip(log, log[1:]):
+            if x.request['velocity_rad_s'] != 0.0 and after.intent_id != x.intent_id:
+                assert after.request['velocity_rad_s'] == 0.0 or after.why == 'intent', (
+                    x, after)
+        if not a.moving and log:
+            assert log[-1].request['velocity_rad_s'] == 0.0
+
+
+def test_rule4_every_dome_velocity_is_0_or_between_min_speed_and_the_cap():
+    for a in DOME_ARBITERS:
+        for x in a.test_log:
+            assert x.request['velocity_rad_s'] == 0.0 or 0.5 <= abs(
+                x.request['velocity_rad_s']) <= 2.0
+
 
 def test_rule6_every_outgoing_request_carries_owner_and_a_nonzero_priority():
     assert len(ALL_ACTIONS) > 50
@@ -1261,7 +1750,7 @@ def test_rule6_every_outgoing_request_carries_owner_and_a_nonzero_priority():
         assert x.owner == OWNER and 1 <= x.priority <= 255
         if 'owner' in x.request:
             assert x.request['owner'] == OWNER
-        if x.call not in (CALL_MAGIC_BRIGHTNESS,):
+        if x.call not in (CALL_MAGIC_BRIGHTNESS, CALL_VELOCITY):   # no priority field
             assert x.request['priority'] == x.priority
     assert {x.call for x in ALL_ACTIONS} >= {CALL_RUN, CALL_SAY, CALL_STOP, CALL_CONFIGURE,
                                              CALL_START, CALL_MAGIC_STOP,
