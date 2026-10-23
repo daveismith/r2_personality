@@ -22,11 +22,16 @@ The ``express`` operator tool: drive R2's lights by hand through the arbiters.
     express text    <channel> "line1" ["line2"] [--motion bounce] [--on-black] [...]
     express configure <channel> [--drift calm|lively] [--brightness N]   # drift: fld tfld bfld rld
     express sequence magic <id|name> [--repeat 1] [--end blank|leave] [--duration 5]
-    express stop    <channel> [--mode blank|freeze]
+    express stop    <channel> [--mode blank|freeze]       # channel may be dome
+    express look    <bearing_rad> [--profile NAME]        # the dome: +ve left, 0 forward
+    express glance  [--amplitude RAD] [--dwell S] [--side left|right]
+    express turn    <delta_rad>
+    express rest    [<bearing_rad>]
     express status  [--watch]
     express dome    "<console line>" [--device /dome_mock]   # the sim mock's console only
 
-claim/release call /expression/claim/led, or .../magic for magic (--claim-service overrides).
+claim/release call /expression/claim/led, or .../magic for magic and .../dome for dome
+(--claim-service overrides).
 Intents go out as ``source: manual`` at priority 199, which a person at the dome still
 beats; ``--override`` sends 200.  Exit codes: 0 done (claim accepted), 1 refused or
 unavailable, 2 bad arguments.  The argument handling (:func:`parse_args`,
@@ -35,6 +40,7 @@ unavailable, 2 bad arguments.  The argument handling (:func:`parse_args`,
 
 import argparse
 import json
+import math
 import os
 import re
 import sys
@@ -47,6 +53,13 @@ from r2_expression.core import END_VALUES, LADDER, STATE_NAMES, STOP_MODES, TEXT
 from r2_expression.render_common import MAX_LINE_BYTES, too_long
 
 CHANNELS = PICK_CHANNELS
+DOME = 'dome'
+STOPPABLE = CHANNELS + (DOME,)      # stop and claim reach the dome channel as well
+DOME_VERBS = {'look': 'look_at', 'glance': 'glance', 'turn': 'turn', 'rest': 'rest'}
+# the params key each verb sends, and the argparse dest it comes from
+DOME_PARAMS = {'look': {'bearing': 'bearing', 'profile': 'profile'},
+               'glance': {'amplitude': 'amplitude', 'dwell_s': 'dwell', 'side': 'side'},
+               'turn': {'delta': 'delta'}, 'rest': {'bearing': 'bearing'}}
 MOTIONS = TEXT_MOTIONS
 DRIFTS = DRIFT_PRESETS
 ENDS = tuple(END_VALUES)
@@ -63,6 +76,7 @@ INTENT_TOPIC = '/expression/intent'
 STATUS_TOPIC = '/expression/status'
 CLAIM_SERVICE_LED = '/expression/claim/led'       # the LED arbiter's (fld tfld bfld rld psi)
 CLAIM_SERVICE_MAGIC = '/expression/claim/magic'
+CLAIM_SERVICE_DOME = '/expression/claim/dome'
 DRIFT_CHANNELS = ('fld', 'tfld', 'bfld', 'rld')
 DEFAULT_DEVICE = '/dome_mock'          # the sim's mock; never the real /r2_dome
 
@@ -73,17 +87,24 @@ SERVICE_REPLY_S = 5.0
 STATUS_WINDOW_S = 1.5
 
 _RGB = re.compile(r'(?:0x)?([0-9a-fA-F]{6})\Z')
+_PROFILE = re.compile(r'[A-Za-z0-9_-]+\Z')
 
 
 def _is_id(ref):
     return ref.isascii() and ref.isdigit()
 
 
-def _channel(value):
-    if value not in CHANNELS:
-        raise argparse.ArgumentTypeError(
-            'unknown channel %r (one of %s)' % (value, ', '.join(CHANNELS)))
-    return value
+def _channel_of(channels):
+    def parse(value):
+        if value not in channels:
+            raise argparse.ArgumentTypeError(
+                'unknown channel %r (one of %s)' % (value, ', '.join(channels)))
+        return value
+    return parse
+
+
+_channel = _channel_of(CHANNELS)
+_any_channel = _channel_of(STOPPABLE)
 
 
 def _name(value):
@@ -121,6 +142,52 @@ def _seconds(value):
     return number
 
 
+def _finite(value):
+    try:
+        number = float(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError('%r is not a number' % value)
+    if not math.isfinite(number):
+        raise argparse.ArgumentTypeError('%r is not a finite number' % value)
+    return number
+
+
+def _bearing(value):
+    """Parse a heading in the stimulus convention: (-pi, pi], +ve left."""
+    number = _finite(value)
+    if not -math.pi < number <= math.pi:
+        raise argparse.ArgumentTypeError('%s is outside (-pi, pi] radians' % value)
+    return number
+
+
+def _delta(value):
+    number = _finite(value)
+    if abs(number) > 2 * math.pi:
+        raise argparse.ArgumentTypeError('%s is outside -2pi to 2pi radians' % value)
+    return number
+
+
+def _amplitude(value):
+    number = _finite(value)
+    if not 0.0 < number <= math.pi:
+        raise argparse.ArgumentTypeError('%s is outside (0, pi] radians' % value)
+    return number
+
+
+def _dwell(value):
+    number = _finite(value)
+    if number <= 0.0:
+        raise argparse.ArgumentTypeError('%s must be more than 0 seconds' % value)
+    return number
+
+
+def _profile(value):
+    if not _PROFILE.match(value) or len(value) > MAX_NAME:
+        raise argparse.ArgumentTypeError(
+            '%r is not a profile name (letters, digits, - and _)' % value)
+    return value
+
+
 def _line(value):
     if too_long(value, MAX_LINE_BYTES):                    # the device counts bytes
         raise argparse.ArgumentTypeError('a text line must be under 64 bytes in UTF-8')
@@ -132,9 +199,11 @@ def build_parser():
     parser = argparse.ArgumentParser(prog='express', description="Drive R2's lights by hand.")
     sub = parser.add_subparsers(dest='command', required=True)
 
-    def sender(p, channel=True):
+    def sender(p, channel=_channel, duration=True):
         if channel:
-            p.add_argument('channel', type=_channel)
+            p.add_argument('channel', type=channel)
+        else:
+            p.set_defaults(channel=DOME)
         p.add_argument('--override', action='store_true',
                        help='send at 200 (OVERRIDE_PRIORITY): beats a person at the dome')
         p.add_argument('--source', choices=sorted(SOURCE_PRIORITY),
@@ -142,8 +211,11 @@ def build_parser():
                             'manual at 199)')
         p.add_argument('--priority', type=_ranged_int(0, 255), metavar='N',
                        help='with --source only: the priority to send')
-        p.add_argument('--duration', type=_seconds, default=0.0, metavar='S',
-                       help="seconds (0: the action's own length, or until stopped)")
+        if duration:
+            p.add_argument('--duration', type=_seconds, default=0.0, metavar='S',
+                           help="seconds (0: the action's own length, or until stopped)")
+        else:
+            p.set_defaults(duration=0.0)
         p.add_argument('--hold', action='store_true',
                        help='not interruptible by a newer intent of the same priority')
         p.add_argument('--id', dest='intent_id', type=_name,
@@ -178,15 +250,36 @@ def build_parser():
     p.add_argument('--end', choices=ENDS, default='blank',
                    help='default blank: the panel is not left lit')
     p = sub.add_parser('stop', help='stop what a channel is running')
-    sender(p)
+    sender(p, _any_channel)
     p.add_argument('--mode', choices=STOP_MODE_NAMES, help='magic only')
+
+    bearing_help = 'radians, +ve left, 0 forward'
+    p = sub.add_parser('look', help='turn the dome to a bearing')
+    sender(p, None, False)
+    p.add_argument('bearing', type=_bearing, metavar='bearing_rad', help=bearing_help)
+    p.add_argument('--profile', type=_profile, metavar='NAME',
+                   help="motion profile (default: the mood's)")
+    p = sub.add_parser('glance', help='look aside and back')
+    sender(p, None, False)
+    p.add_argument('--amplitude', type=_amplitude, metavar='RAD',
+                   help="how far, in (0, pi] (default: the mood's)")
+    p.add_argument('--dwell', type=_dwell, metavar='S', help='seconds held aside')
+    p.add_argument('--side', choices=('left', 'right'), help='default: random')
+    p = sub.add_parser('turn', help='turn the dome by an angle')
+    sender(p, None, False)
+    p.add_argument('delta', type=_delta, metavar='delta_rad',
+                   help='radians, +ve left, within +-2pi')
+    p = sub.add_parser('rest', help='go to the resting heading')
+    sender(p, None, False)
+    p.add_argument('bearing', type=_bearing, metavar='bearing_rad', nargs='?',
+                   help=bearing_help + " (default: the mood's)")
 
     for verb, text in (('claim', 'hold a channel'), ('release', 'release a claim')):
         p = sub.add_parser(verb, help=text)
-        p.add_argument('channel', type=_channel)
+        p.add_argument('channel', type=_any_channel)
         p.add_argument('--owner', default='express', type=_name)
         p.add_argument('--claim-service', metavar='NAME',
-                       help='override: /expression/claim/led, or .../magic for magic')
+                       help='override: /expression/claim/led, or .../magic, .../dome')
         if verb == 'claim':
             p.add_argument('--priority', type=_ranged_int(0, 255), default=DEFAULT_PRIORITY)
             p.add_argument('--override', action='store_true', help='claim at 200')
@@ -206,10 +299,11 @@ def parse_args(argv):
     ns = parser.parse_args(argv)
     cmd = ns.command
     if cmd in ('claim', 'release') and ns.claim_service is None:
-        ns.claim_service = CLAIM_SERVICE_MAGIC if ns.channel == 'magic' else CLAIM_SERVICE_LED
+        ns.claim_service = {'magic': CLAIM_SERVICE_MAGIC, DOME: CLAIM_SERVICE_DOME}.get(
+            ns.channel, CLAIM_SERVICE_LED)
     if cmd == 'claim' and ns.override:
         ns.priority = OVERRIDE_PRIORITY
-    if cmd not in ('effect', 'clip', 'text', 'configure', 'sequence', 'stop'):
+    if cmd not in ('effect', 'clip', 'text', 'configure', 'sequence', 'stop', *DOME_VERBS):
         return ns
     if ns.priority is not None and ns.source is None:
         parser.error('--priority needs --source idle or behavior')
@@ -241,6 +335,12 @@ def parse_args(argv):
     if cmd == 'sequence' and len(ns.ref) > MAX_NAME:
         parser.error('a sequence name must be under 64 characters')
     return ns
+
+
+def _dome_params(ns):
+    """Return the params of a dome verb: only what was given, under the core's keys."""
+    given = {key: getattr(ns, dest) for key, dest in DOME_PARAMS[ns.command].items()}
+    return {key: value for key, value in given.items() if value is not None}
 
 
 def build_intent(ns):
@@ -280,6 +380,9 @@ def build_intent(ns):
         params['end'] = ns.end
     elif action == 'stop' and ns.mode:
         params['mode'] = ns.mode
+    elif action in DOME_VERBS:
+        action = DOME_VERBS[action]
+        params = _dome_params(ns)
     if ns.source:
         source = ns.source
         priority = SOURCE_PRIORITY[source] if ns.priority is None else ns.priority

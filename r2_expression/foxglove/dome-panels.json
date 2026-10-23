@@ -1,0 +1,124 @@
+{
+  "configById": {
+    "Publish!look": {
+      "topicName": "/expression/intent",
+      "datatype": "astromech_msgs/msg/ExpressionIntent",
+      "buttonText": "look_at 0.8 rad",
+      "buttonTooltip": "Publish this ExpressionIntent on /expression/intent (manual, 199: a person at the dome still wins); bearing +ve left, 0 forward. Edit the bearing in the JSON",
+      "buttonColor": "#e5534b",
+      "advancedView": true,
+      "value": "{\n  \"header\": {\n    \"stamp\": {\n      \"sec\": 0,\n      \"nanosec\": 0\n    },\n    \"frame_id\": \"\"\n  },\n  \"channel\": \"dome\",\n  \"source\": \"manual\",\n  \"priority\": 199,\n  \"action\": \"look_at\",\n  \"params\": \"{\\\"bearing\\\": 0.8}\",\n  \"duration_ms\": 0,\n  \"interruptible\": true,\n  \"intent_id\": \"foxglove-look\"\n}",
+      "foxglovePanelTitle": "Intent: look_at 0.8 on dome"
+    },
+    "Publish!stopdome": {
+      "topicName": "/expression/intent",
+      "datatype": "astromech_msgs/msg/ExpressionIntent",
+      "buttonText": "stop dome",
+      "buttonTooltip": "Publish this ExpressionIntent on /expression/intent (manual, 199: a person at the dome still wins)",
+      "buttonColor": "#c69026",
+      "advancedView": true,
+      "value": "{\n  \"header\": {\n    \"stamp\": {\n      \"sec\": 0,\n      \"nanosec\": 0\n    },\n    \"frame_id\": \"\"\n  },\n  \"channel\": \"dome\",\n  \"source\": \"manual\",\n  \"priority\": 199,\n  \"action\": \"stop\",\n  \"params\": \"\",\n  \"duration_ms\": 0,\n  \"interruptible\": true,\n  \"intent_id\": \"foxglove-stop-dome\"\n}",
+      "foxglovePanelTitle": "Intent: stop dome"
+    },
+    "CallService!claimdome": {
+      "serviceName": "/expression/claim/dome",
+      "requestPayload": "{\n  \"channel\": \"dome\",\n  \"owner\": \"foxglove\",\n  \"priority\": 199,\n  \"lease_s\": 30\n}",
+      "layout": "vertical",
+      "buttonText": "Claim dome for 30 s",
+      "buttonTooltip": "astromech_msgs/srv/ClaimChannel on the dome arbiter: hold the dome at 199",
+      "buttonColor": "#986ee2",
+      "foxglovePanelTitle": "Claim dome for 30 s"
+    },
+    "CallService!releasedome": {
+      "serviceName": "/expression/claim/dome",
+      "requestPayload": "{\n  \"channel\": \"dome\",\n  \"owner\": \"foxglove\",\n  \"priority\": 199,\n  \"lease_s\": 0\n}",
+      "layout": "vertical",
+      "buttonText": "Release dome",
+      "buttonTooltip": "ClaimChannel with lease_s 0 releases",
+      "buttonColor": "#986ee2",
+      "foxglovePanelTitle": "Release dome"
+    },
+    "StateTransitions!dome": {
+      "paths": [
+        {
+          "value": "/expression/status{channel==\"dome\"}.state",
+          "timestampMethod": "receiveTime",
+          "label": "dome",
+          "enabled": true
+        }
+      ],
+      "isSynced": true,
+      "xAxisRange": 120,
+      "showPoints": false,
+      "foxglovePanelTitle": "Dome state (0 idle, 1 running, 2 claimed, 3 foreign, 4 stale, 5 offline, 6 dark, 7 suppressed)"
+    },
+    "Plot!position": {
+      "paths": [
+        {
+          "value": "/dome_state_broadcaster/joint_states.position[0]",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "label": "dome joint (rad)",
+          "color": "#539bf5",
+          "showLine": true,
+          "lineSize": 1.5
+        }
+      ],
+      "showLegend": true,
+      "legendDisplay": "floating",
+      "showPlotValuesInLegend": true,
+      "showXAxisLabels": true,
+      "showYAxisLabels": true,
+      "isSynced": true,
+      "xAxisVal": "timestamp",
+      "followingViewWidth": 60,
+      "sidebarDimension": 240,
+      "foxglovePanelTitle": "Dome joint position (rad; the intent's bearing is JSON text in params, read it in Raw Messages)"
+    },
+    "RawMessages!source": {
+      "topicPath": "/dome/cmd/status.source",
+      "diffTopicPath": "",
+      "diffMethod": "custom",
+      "diffEnabled": false,
+      "showFullMessageForDiff": false,
+      "expansion": "all",
+      "foxglovePanelTitle": "Who drives the dome (/dome/cmd/status.source)"
+    }
+  },
+  "globalVariables": {},
+  "userNodes": {},
+  "playbackConfig": {
+    "speed": 1
+  },
+  "layout": {
+    "direction": "row",
+    "first": {
+      "direction": "column",
+      "first": "StateTransitions!dome",
+      "second": {
+        "direction": "row",
+        "first": "Plot!position",
+        "second": "RawMessages!source",
+        "splitPercentage": 65
+      },
+      "splitPercentage": 35
+    },
+    "second": {
+      "direction": "row",
+      "first": {
+        "direction": "column",
+        "first": "Publish!look",
+        "second": "Publish!stopdome",
+        "splitPercentage": 50
+      },
+      "second": {
+        "direction": "column",
+        "first": "CallService!claimdome",
+        "second": "CallService!releasedome",
+        "splitPercentage": 50
+      },
+      "splitPercentage": 50
+    },
+    "splitPercentage": 62
+  }
+}

@@ -161,6 +161,15 @@ def test_dome_publishes_a_console_line_on_a_private_device(harness):
     assert [m.data for m in harness.consoles] == ['leds run fld fire']
 
 
+def test_look_publishes_a_manual_199_dome_look_at(harness):
+    code, out, err = run(harness, 'look', '-0.8', '--profile', 'snappy', '--id', 'lk')
+    assert code == 0, err
+    (m,) = harness.intents
+    assert (m.channel, m.source, m.priority, m.action) == ('dome', 'manual', 199, 'look_at')
+    assert json.loads(m.params) == {'bearing': -0.8, 'profile': 'snappy'}
+    assert (m.duration_ms, m.interruptible, m.intent_id) == (0, True, 'lk')
+
+
 def test_a_sequence_goes_out_with_end_blank_by_default(harness):
     code, _, _ = run(harness, 'sequence', 'magic', '44', '--duration', '3')
     assert code == 0

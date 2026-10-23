@@ -15,8 +15,10 @@
 """The express argument parser and intent builder (no ROS)."""
 
 import json
+import math
 import os
 import sys
+from types import SimpleNamespace
 
 import pytest
 
@@ -24,7 +26,9 @@ PKG_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PKG_ROOT not in sys.path:
     sys.path.insert(0, PKG_ROOT)
 
-from r2_expression.express_cli import build_intent, parse_args  # noqa: E402
+from r2_expression.express_cli import (  # noqa: E402
+    build_intent, DOME_VERBS, format_status, parse_args)
+from r2_expression.core import DOME_ACTIONS  # noqa: E402
 
 
 def intent(*argv):
@@ -118,7 +122,90 @@ def test_drift_is_accepted_on_the_logic_displays():
         assert params('configure', channel, '--drift', 'calm') == {'drift': 'calm'}
 
 
+def test_look_builds_a_dome_look_at_at_manual_199():
+    f = intent('look', '0.8', '--profile', 'snappy')
+    assert (f['channel'], f['source'], f['priority'], f['action']) == \
+        ('dome', 'manual', 199, 'look_at')
+    assert json.loads(f['params']) == {'bearing': 0.8, 'profile': 'snappy'}
+    assert (f['duration_ms'], f['interruptible']) == (0, True)
+    assert params('look', '-1.5') == {'bearing': -1.5}           # negative bearings parse
+    assert params('look', str(math.pi)) == {'bearing': math.pi}
+    assert params('look', '0') == {'bearing': 0.0}               # 0 is a bearing, not absent
+
+
+def test_dome_verbs_are_core_actions():
+    assert set(DOME_VERBS.values()) <= set(DOME_ACTIONS)
+
+
+def test_glance_sends_only_what_was_given():
+    assert intent('glance')['params'] == '' and intent('glance')['action'] == 'glance'
+    assert params('glance', '--amplitude', '0.5', '--dwell', '1.5', '--side', 'right') == \
+        {'amplitude': 0.5, 'dwell_s': 1.5, 'side': 'right'}
+    assert params('glance', '--side', 'left') == {'side': 'left'}
+
+
+def test_turn_and_rest():
+    f = intent('turn', '-1.57')
+    assert (f['action'], f['channel']) == ('turn', 'dome')
+    assert json.loads(f['params']) == {'delta': -1.57}
+    assert params('turn', str(2 * math.pi)) == {'delta': 2 * math.pi}
+    assert params('turn', str(-2 * math.pi)) == {'delta': -2 * math.pi}
+    assert intent('rest')['params'] == '' and intent('rest')['action'] == 'rest'
+    assert params('rest', '0.35') == {'bearing': 0.35}
+    assert params('rest', '0') == {'bearing': 0.0}
+
+
+def test_dome_verbs_honour_override_source_hold_and_id():
+    assert intent('turn', '1', '--override')['priority'] == 200
+    f = intent('look', '0', '--source', 'behavior', '--hold', '--id', 'd1')
+    assert (f['source'], f['priority'], f['interruptible'], f['intent_id']) == \
+        ('behavior', 100, False, 'd1')
+    assert intent('rest', '--source', 'idle')['priority'] == 10
+
+
+def test_stop_and_claim_reach_the_dome_channel():
+    f = intent('stop', 'dome')
+    assert (f['channel'], f['action'], f['params'], f['priority']) == ('dome', 'stop', '', 199)
+    assert parse_args(['claim', 'dome']).claim_service == '/expression/claim/dome'
+    assert parse_args(['release', 'dome']).claim_service == '/expression/claim/dome'
+
+
+def test_status_names_the_suppressed_state():
+    msg = SimpleNamespace(channel='dome', state=7, owner='', priority=0,
+                          lease_remaining_s=-1.0, active_action='', mood='', dropped=0,
+                          refused=0)
+    assert format_status(msg).startswith('dome  suppressed')
+
+
 @pytest.mark.parametrize('argv', [
+    ['look'],
+    ['look', 'abc'],
+    ['look', 'nan'],
+    ['look', 'inf'],
+    ['look', '3.1416'],
+    ['look', str(-math.pi)],                      # (-pi, pi]: -pi is pi
+    ['look', '0', '--profile', 'a b'],
+    ['look', '0', '--profile', 'x/y'],
+    ['look', '0', '--profile', ''],
+    ['look', '0', '--profile', 'x' * 64],
+    ['look', '0', '--duration', '2'],
+    ['look', '0', '--priority', '50'],
+    ['look', '0', '--override', '--source', 'idle'],
+    ['glance', '--amplitude', '0'],
+    ['glance', '--amplitude', '3.2'],
+    ['glance', '--dwell', '0'],
+    ['glance', '--dwell', '-1'],
+    ['glance', '--dwell', 'inf'],
+    ['glance', '--side', 'up'],
+    ['turn'],
+    ['turn', '6.29'],
+    ['turn', '-6.29'],
+    ['turn', 'x'],
+    ['rest', '4'],
+    ['rest', '0.1', '0.2'],
+    ['stop', 'dome', '--mode', 'freeze'],
+    ['effect', 'dome', 'fire'],
+    ['claim', 'dome', '--lease', 'abc'],
     ['effect', 'nope', 'fire'],
     ['effect', 'fld', 'fire', '--rgb', 'ff22'],
     ['effect', 'fld', 'fire', '--rgb', 'gg2200'],

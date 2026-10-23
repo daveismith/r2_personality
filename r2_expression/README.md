@@ -314,6 +314,9 @@ Two ways, same messages: the `express` CLI and the Foxglove tab
 | hold a channel | `express claim fld --owner me --lease 30` / `express release fld` (`magic` for the panel) | Call Service `/expression/claim/led` and `/expression/claim/magic` (a claim and a release panel each) |
 | why is it quiet | `express status [--watch]` | State Transitions on `/expression/status{channel=="fld"}.state` |
 | see the lights (sim) | `express dome "leds run fld fire"` | Raw Messages `/dome_mock/mock/picture`, Image `/dome_mock/mock/image` |
+| turn the dome | `express look 0.8 [--profile snappy]`, `express turn -1.57`, `express rest [0.35]` | Publish "look_at 0.8 rad" (edit the bearing) |
+| glance | `express glance [--amplitude 0.5] [--dwell 1.0] [--side left]` | |
+| stop the dome | `express stop dome` | Publish "stop dome"; Call Service `/expression/claim/dome` |
 
 `configure --drift` works on `fld`, `tfld`, `bfld` and `rld` (the PSIs have no drift).
 Also `clip`, `text "line1" "line2" [--motion loop] [--on-black]`, `configure --brightness N`
@@ -325,6 +328,20 @@ priority holds the channel) shows only as `dropped` in `express status`. `claim`
 `/expression/claim/magic` for `magic`; `--claim-service NAME` overrides the choice. A `release`
 by an owner that holds nothing on the channel exits 1 and prints the refusal with the status
 line, which shows the real holder. `sequence` defaults to `--repeat 1 --end blank`.
+
+**The dome verbs** (`look`, `glance`, `turn`, `rest`, and `stop dome`) send `look_at`, `glance`,
+`turn`, `rest` and `stop` intents on channel `dome`. Bearings are radians, positive left, 0
+forward, within (-pi, pi]; `turn` takes a change within -2pi to 2pi; `--dwell` is more than 0
+seconds; `--amplitude` is in (0, pi]; `--profile` is a bare profile name (default: the mood's).
+`claim dome` calls `/expression/claim/dome`. `express status` shows the dome's `suppressed` state
+(the body is moving). The Foxglove tab is `foxglove/dome-panels.json`: a `look_at` Publish panel, claim
+and release, the dome's state, the joint position, and `/dome/cmd/status.source`.
+
+```bash
+express look 0.8 --profile snappy     # 0.8 rad to the left
+express glance --side right --dwell 1.5
+express stop dome
+```
 
 **199 and `--override`.** Every intent goes out as `source: manual` at priority 199, which
 yields to a person at the dome (their hold on the device is 200 or the device's own).
