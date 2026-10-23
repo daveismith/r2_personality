@@ -1,0 +1,405 @@
+[1] sim=130.934 $ /ws/install/r2_expression/lib/r2_expression/express turn 0.3
+sent manual dome turn at 199 ({"delta": 0.3}) id=express-298ac4e4
+
+[2] sim=170.612 $ /ws/install/r2_expression/lib/r2_expression/express look 1.0 --profile smooth
+sent manual dome look_at at 199 ({"bearing": 1.0, "profile": "smooth"}) id=express-ce71052f
+
+[2] sim=188.564 $ /ws/install/r2_expression/lib/r2_expression/express look -1.0 --profile smooth
+[2m2026-10-23T07:56:13.629638Z[0m [33m WARN[0m ThreadId(24) [2mzenoh::net::runtime::orchestrator[0m[2m:[0m Scouting delay elapsed before start conditions are met.
+sent manual dome look_at at 199 ({"bearing": -1.0, "profile": "smooth"}) id=express-14cba36e
+
+[2] sim=206.312 $ /ws/install/r2_expression/lib/r2_expression/express look 3.0 --profile smooth
+[2m2026-10-23T07:56:34.182446Z[0m [33m WARN[0m ThreadId(23) [2mzenoh::net::runtime::orchestrator[0m[2m:[0m Scouting delay elapsed before start conditions are met.
+sent manual dome look_at at 199 ({"bearing": 3.0, "profile": "smooth"}) id=express-c969a2b7
+
+171.247 ST dome running owner=manual prio=199 lease=13.0 src=manual act=look_at rem=8000 mood=calm dropped=0 refused=0
+171.251 CS source=personality capped=False v=-0.600
+172.995 ST dome claimed owner=manual prio=199 lease=5.0 src= act= rem=0 mood=calm dropped=0 refused=0
+173.501 CS source=idle capped=False v=0.000
+178.004 ST dome idle owner= prio=0 lease=0.0 src= act= rem=0 mood=calm dropped=0 refused=0
+189.482 ST dome running owner=manual prio=199 lease=13.0 src=manual act=look_at rem=8000 mood=calm dropped=0 refused=0
+189.502 CS source=personality capped=False v=0.600
+192.674 ST dome claimed owner=manual prio=199 lease=5.0 src= act= rem=0 mood=calm dropped=0 refused=0
+193.201 CS source=idle capped=False v=0.000
+197.748 ST dome idle owner= prio=0 lease=0.0 src= act= rem=0 mood=calm dropped=0 refused=0
+207.454 ST dome running owner=manual prio=199 lease=13.0 src=manual act=look_at rem=8000 mood=calm dropped=0 refused=0
+207.504 CS source=personality capped=False v=0.600
+210.973 ST dome claimed owner=manual prio=199 lease=5.0 src= act= rem=0 mood=calm dropped=0 refused=0
+211.451 CS source=idle capped=False v=0.000
+
+[3] sim=239.428 $ /ws/install/r2_expression/lib/r2_expression/express look 0 --profile snappy
+[2m2026-10-23T07:57:10.921504Z[0m [33m WARN[0m ThreadId(22) [2mzenoh::net::runtime::orchestrator[0m[2m:[0m Scouting delay elapsed before start conditions are met.
+sent manual dome look_at at 199 ({"bearing": 0.0, "profile": "snappy"}) id=express-20ae0809
+
+240.483 ST dome running owner=manual prio=199 lease=13.0 src=manual act=look_at rem=8000 mood=calm dropped=0 refused=0
+240.502 CS source=personality capped=False v=0.600
+244.079 ST dome claimed owner=manual prio=199 lease=5.0 src= act= rem=0 mood=calm dropped=0 refused=0
+244.600 CS source=idle capped=False v=0.000
+249.121 ST dome idle owner= prio=0 lease=0.0 src= act= rem=0 mood=calm dropped=0 refused=0
+
+[3] sim=273.300 $ ros2 param set /dome_twist_converter personality_max_speed_rad_s 1.0
+[2m2026-10-23T07:57:49.042162Z[0m [33m WARN[0m ThreadId(18) [2mzenoh::net::runtime::orchestrator[0m[2m:[0m Scouting delay elapsed before start conditions are met.
+Set parameter successful
+
+[3] sim=284.410 $ /ws/install/r2_expression/lib/r2_expression/express look 2.0 --profile snappy
+[2m2026-10-23T07:58:01.670123Z[0m [33m WARN[0m ThreadId(16) [2mzenoh::net::runtime::orchestrator[0m[2m:[0m Scouting delay elapsed before start conditions are met.
+sent manual dome look_at at 199 ({"bearing": 2.0, "profile": "snappy"}) id=express-b3ec7657
+
+285.507 ST dome running owner=manual prio=199 lease=13.0 src=manual act=look_at rem=8000 mood=calm dropped=0 refused=0
+285.552 CS source=personality capped=False v=-0.600
+287.716 ST dome claimed owner=manual prio=199 lease=5.0 src= act= rem=0 mood=calm dropped=0 refused=0
+288.202 CS source=idle capped=False v=0.000
+292.725 ST dome idle owner= prio=0 lease=0.0 src= act= rem=0 mood=calm dropped=0 refused=0
+
+[3] sim=300.934 $ ros2 param set /dome_twist_converter personality_max_speed_rad_s 2.0
+[2m2026-10-23T07:58:20.907389Z[0m [33m WARN[0m ThreadId(19) [2mzenoh::net::runtime::orchestrator[0m[2m:[0m Scouting delay elapsed before start conditions are met.
+Set parameter successful
+
+[3] sim=340.410 $ SIGTERM converter, restart with -p personality_max_speed_rad_s:=1.0 (ros2 param set is startup-only)
+[3] sim=357.748 $ /ws/install/r2_expression/lib/r2_expression/express look -1.0 --profile snappy
+sent manual dome look_at at 199 ({"bearing": -1.0, "profile": "snappy"}) id=express-e3b8d9a1
+
+358.472 ST dome running owner=manual prio=199 lease=13.0 src=manual act=look_at rem=8000 mood=calm dropped=0 refused=0
+358.507 CS source=personality capped=False v=0.600
+359.001 CS source=personality capped=True v=1.000
+361.501 CS source=personality capped=False v=0.600
+362.457 ST dome claimed owner=manual prio=199 lease=5.0 src= act= rem=0 mood=calm dropped=0 refused=0
+362.903 CS source=idle capped=False v=0.000
+367.504 ST dome idle owner= prio=0 lease=0.0 src= act= rem=0 mood=calm dropped=0 refused=0
+
+[3] sim=409.260 $ converter restored with cap 2.0
+[4] sim=419.050 $ /ws/install/r2_expression/lib/r2_expression/express glance --amplitude 0.6 --dwell 1
+sent manual dome glance at 199 ({"amplitude": 0.6, "dwell_s": 1.0}) id=express-670a88eb
+
+419.712 ST dome running owner=manual prio=199 lease=14.0 src=manual act=glance rem=9000 mood=sleepy dropped=0 refused=0
+419.751 CS source=personality capped=False v=0.600
+424.459 ST dome claimed owner=manual prio=199 lease=5.0 src= act= rem=0 mood=sleepy dropped=0 refused=0
+424.951 CS source=idle capped=False v=0.000
+429.457 ST dome idle owner= prio=0 lease=0.0 src= act= rem=0 mood=sleepy dropped=0 refused=0
+429.501 CS source=personality capped=False v=0.000
+429.950 CS source=idle capped=False v=0.000
+
+[5] sim=453.119 $ /ws/install/r2_affect/lib/r2_affect/mood set calm --lock
+[2m2026-10-23T08:01:11.845209Z[0m [33m WARN[0m ThreadId(18) [2mzenoh::net::runtime::orchestrator[0m[2m:[0m Scouting delay elapsed before start conditions are met.
+accepted: mood calm (1.00), locked by mood_cli
+    sys.exit(load_entry_point('r2-affect', 'console_scripts', 'mood')())
+    _try_shutdown()
+    g_default_context.try_shutdown()
+
+[5] sim=479.842 $ /ws/install/r2_expression/lib/r2_expression/express look 2.0
+[5] sim=481.573 $ pub.py /cmd_vel_dome stamped linear.x 1.0 20 2
+[2m2026-10-23T08:01:42.043746Z[0m [33m WARN[0m ThreadId(26) [2mzenoh::net::runtime::orchestrator[0m[2m:[0m Scouting delay elapsed before start conditions are met.
+sent manual dome look_at at 199 ({"bearing": 2.0}) id=express-6dc2adbf
+
+pub start sim=0.000
+pub end sim=0.000 sent=40
+480.980 ST dome running owner=manual prio=199 lease=13.0 src=manual act=look_at rem=8000 mood=calm dropped=0 refused=0
+481.001 CS source=personality capped=False v=-0.600
+483.352 CS source=joystick capped=False v=1.000
+483.356 ST dome foreign owner=joystick prio=0 lease=0.0 src= act= rem=0 mood=calm dropped=0 refused=0
+485.551 CS source=idle capped=False v=0.000
+485.554 ST dome claimed owner=manual prio=199 lease=2.8 src= act= rem=0 mood=calm dropped=0 refused=0
+488.414 ST dome idle owner= prio=0 lease=0.0 src= act= rem=0 mood=calm dropped=0 refused=0
+503.441 ST dome running owner= prio=0 lease=0.0 src=idle act=glance rem=8569 mood=calm dropped=0 refused=0
+503.451 CS source=personality capped=False v=-0.600
+
+[5] sim=526.082 $ pub.py /cmd_vel_dome stamped linear.x 1.0 20 2 (starts 0.8 s after the dome starts running)
+[5] sim=526.592 $ /ws/install/r2_expression/lib/r2_expression/express look 2.5
+sent manual dome look_at at 199 ({"bearing": 2.5}) id=express-442b66e3
+
+pub start
+pub end sent=40
+527.292 ST dome running owner=manual prio=199 lease=13.0 src=manual act=look_at rem=8000 mood=calm dropped=0 refused=0
+527.305 CS source=personality capped=False v=-0.600
+529.401 CS source=joystick capped=False v=1.000
+529.406 ST dome foreign owner=joystick prio=0 lease=0.0 src= act= rem=0 mood=calm dropped=0 refused=0
+531.452 CS source=idle capped=False v=0.000
+531.456 ST dome claimed owner=manual prio=199 lease=2.9 src= act= rem=0 mood=calm dropped=0 refused=0
+534.449 ST dome idle owner= prio=0 lease=0.0 src= act= rem=0 mood=calm dropped=0 refused=0
+
+[5f] sim=558.722 $ pub.py /cmd_vel_dome_foxglove plain angular.z 0.5 20 2 (starts 0.8 s after the dome starts running)
+[5f] sim=559.334 $ /ws/install/r2_expression/lib/r2_expression/express look 2.5
+[2m2026-10-23T08:03:13.329767Z[0m [33m WARN[0m ThreadId(21) [2mzenoh::net::runtime::orchestrator[0m[2m:[0m Scouting delay elapsed before start conditions are met.
+sent manual dome look_at at 199 ({"bearing": 2.5}) id=express-fb509d23
+
+[2m2026-10-23T08:03:09.450009Z[0m [33m WARN[0m ThreadId(20) [2mzenoh::net::runtime::orchestrator[0m[2m:[0m Scouting delay elapsed before start conditions are met.
+pub start
+pub end sent=40
+[2m2026-10-23T08:03:26.550910Z[0m [31mERROR[0m ThreadId(20) [2mzenohc::session[0m[2m:[0m Error closing session: close operation timed out! at /home/buildfarm/.cargo/git/checkouts/zenoh-cc237f2570fab813/2687c51/zenoh/src/api/builders/close.rs:124.
+terminate called after throwing an instance of 'zenoh::ZException'
+  what():  Failed to close the session(Error code: -128 )
+560.346 ST dome running owner=manual prio=199 lease=13.0 src=manual act=look_at rem=8000 mood=calm dropped=0 refused=0
+560.351 CS source=personality capped=False v=-0.600
+561.001 CS source=foxglove capped=False v=0.750
+561.002 ST dome foreign owner=foxglove prio=0 lease=0.0 src= act= rem=0 mood=calm dropped=0 refused=0
+563.300 CS source=idle capped=False v=0.000
+563.302 ST dome claimed owner=manual prio=199 lease=2.7 src= act= rem=0 mood=calm dropped=0 refused=0
+566.004 ST dome idle owner= prio=0 lease=0.0 src= act= rem=0 mood=calm dropped=0 refused=0
+
+[6] sim=601.256 $ /ws/install/r2_expression/lib/r2_expression/express claim dome --owner console --lease 30 --override
+[6] sim=607.070 $ /ws/install/r2_expression/lib/r2_expression/express look 1.0
+accepted: dome  claimed  owner=console prio=200 lease=30.0s active=- mood=calm dropped=0 refused=0
+
+[6] sim=612.272 $ /ws/install/r2_expression/lib/r2_expression/express look 1.0 --override
+sent manual dome look_at at 200 ({"bearing": 1.0}) id=express-86fc227b
+
+[2m2026-10-23T08:04:07.831058Z[0m [33m WARN[0m ThreadId(19) [2mzenoh::net::runtime::orchestrator[0m[2m:[0m Scouting delay elapsed before start conditions are met.
+sent manual dome look_at at 199 ({"bearing": 1.0}) id=express-e67ccfc5
+
+[6] sim=619.412 $ /ws/install/r2_expression/lib/r2_expression/express release dome --owner console
+accepted: dome  claimed  owner=manual prio=200 lease=1.3s active=- mood=calm dropped=2 refused=0
+
+601.992 ST dome claimed owner=console prio=200 lease=30.0 src= act= rem=0 mood=calm dropped=0 refused=0
+605.235 ST dome claimed owner=console prio=200 lease=26.8 src= act= rem=0 mood=calm dropped=1 refused=0
+608.255 ST dome claimed owner=console prio=200 lease=23.7 src= act= rem=0 mood=calm dropped=2 refused=0
+612.927 ST dome running owner=console prio=200 lease=19.1 src=manual act=look_at rem=8000 mood=calm dropped=2 refused=0
+612.956 CS source=personality capped=False v=-0.600
+616.419 ST dome claimed owner=console prio=200 lease=15.6 src= act= rem=0 mood=calm dropped=2 refused=0
+616.802 CS source=idle capped=False v=0.000
+620.158 ST dome claimed owner=manual prio=200 lease=1.3 src= act= rem=0 mood=calm dropped=2 refused=0
+621.419 ST dome idle owner= prio=0 lease=0.0 src= act= rem=0 mood=calm dropped=2 refused=0
+
+[7] sim=659.090 $ /ws/install/r2_affect/lib/r2_affect/mood set curious --lock
+accepted: mood curious (1.00), locked by mood_cli
+
+[7] sim=767.720 $ /ws/install/r2_affect/lib/r2_affect/mood set calm --lock
+accepted: mood calm (1.00), locked by mood_cli
+    sys.exit(load_entry_point('r2-affect', 'console_scripts', 'mood')())
+    _try_shutdown()
+    g_default_context.try_shutdown()
+
+[7] sim=941.630 $ /ws/install/r2_affect/lib/r2_affect/mood set excited --lock
+accepted: mood excited (1.00), locked by mood_cli
+    sys.exit(load_entry_point('r2-affect', 'console_scripts', 'mood')())
+    _try_shutdown()
+    g_default_context.try_shutdown()
+
+[8] sim=1026.106 $ /ws/install/r2_affect/lib/r2_affect/mood set sleepy --lock
+[2m2026-10-23T08:11:50.512419Z[0m [33m WARN[0m ThreadId(26) [2mzenoh::net::runtime::orchestrator[0m[2m:[0m Scouting delay elapsed before start conditions are met.
+accepted: mood sleepy (1.00), locked by mood_cli
+    sys.exit(load_entry_point('r2-affect', 'console_scripts', 'mood')())
+    _try_shutdown()
+    g_default_context.try_shutdown()
+
+1027.301 MOOD sleepy locked=True
+1027.303 ST dome running owner= prio=0 lease=0.0 src=idle act=rest rem=8000 mood=sleepy dropped=2 refused=0
+1029.893 ST dome idle owner= prio=0 lease=0.0 src= act= rem=0 mood=sleepy dropped=2 refused=0
+1030.402 CS source=idle capped=False v=0.000
+
+[8] sim=1075.692 $ /ws/install/r2_expression/lib/r2_expression/express turn 0.35 --source behavior
+[2m2026-10-23T08:12:46.785329Z[0m [33m WARN[0m ThreadId(26) [2mzenoh::net::runtime::orchestrator[0m[2m:[0m Scouting delay elapsed before start conditions are met.
+sent behavior dome turn at 100 ({"delta": 0.35}) id=express-2bc9c6ba
+
+1076.707 ST dome running owner= prio=0 lease=0.0 src=behavior act=turn rem=8000 mood=sleepy dropped=2 refused=0
+1076.755 CS source=personality capped=False v=-0.600
+1078.121 ST dome running owner= prio=0 lease=0.0 src=idle act=rest rem=8000 mood=sleepy dropped=2 refused=0
+1079.575 ST dome idle owner= prio=0 lease=0.0 src= act= rem=0 mood=sleepy dropped=2 refused=0
+1080.052 CS source=idle capped=False v=0.000
+
+[8] sim=1150.051 $ push.py 0.7 0.5  (probe publishes Float64MultiArray [0.7] at 20 Hz for 0.5 s straight on /dome_controller/commands: a hand push the arbiter cannot see; test-only)
+1169.844 ST dome running owner= prio=0 lease=0.0 src=idle act=rest rem=8000 mood=sleepy dropped=2 refused=0
+1169.857 CS source=personality capped=False v=-0.600
+1171.185 ST dome idle owner= prio=0 lease=0.0 src= act= rem=0 mood=sleepy dropped=2 refused=0
+1171.700 CS source=idle capped=False v=0.000
+
+[9] sim=1220.532 $ /ws/install/r2_affect/lib/r2_affect/mood set excited --lock
+[2m2026-10-23T08:15:28.689013Z[0m [33m WARN[0m ThreadId(17) [2mzenoh::net::runtime::orchestrator[0m[2m:[0m Scouting delay elapsed before start conditions are met.
+accepted: mood excited (1.00), locked by mood_cli
+    sys.exit(load_entry_point('r2-affect', 'console_scripts', 'mood')())
+    _try_shutdown()
+    g_default_context.try_shutdown()
+
+[9] sim=1236.472 $ pub.py /diff_cont/cmd_vel stamped linear.x 0.3 10 14 (starts 0.8 s after the dome starts running)
+[9] sim=1237.051 $ /ws/install/r2_expression/lib/r2_expression/express look 2.8 --profile smooth
+[9] sim=1244.774 $ /ws/install/r2_expression/lib/r2_expression/express look 0 --profile smooth
+[2m2026-10-23T08:15:47.559083Z[0m [33m WARN[0m ThreadId(19) [2mzenoh::net::runtime::orchestrator[0m[2m:[0m Scouting delay elapsed before start conditions are met.
+sent manual dome look_at at 199 ({"bearing": 2.8, "profile": "smooth"}) id=express-fc8eaee9
+
+pub start
+sent manual dome look_at at 199 ({"bearing": 0.0, "profile": "smooth"}) id=express-08495b44
+
+1233.322 ST dome running owner= prio=0 lease=0.0 src=idle act=glance rem=8585 mood=excited dropped=2 refused=0
+1233.352 CS source=personality capped=False v=0.600
+1238.036 ST dome running owner=manual prio=199 lease=13.0 src=manual act=look_at rem=8000 mood=excited dropped=2 refused=0
+1238.756 ST dome suppressed owner=manual prio=199 lease=5.0 src= act= rem=0 mood=excited dropped=2 refused=0
+1239.144 STIM being_driven src=drive_stimulus i=0.3000519573688507
+1239.202 CS source=idle capped=False v=0.000
+1240.207 STIM being_driven src=drive_stimulus i=0.3020460903644562
+1241.251 STIM being_driven src=drive_stimulus i=0.30295518040657043
+1242.287 STIM being_driven src=drive_stimulus i=0.30052274465560913
+1242.837 ST dome suppressed owner=manual prio=199 lease=0.9 src= act= rem=0 mood=excited dropped=3 refused=0
+1243.377 STIM being_driven src=drive_stimulus i=0.30096104741096497
+1243.755 ST dome suppressed owner= prio=0 lease=0.0 src= act= rem=0 mood=excited dropped=3 refused=0
+1244.398 STIM being_driven src=drive_stimulus i=0.30192694067955017
+1245.427 STIM being_driven src=drive_stimulus i=0.30763354897499084
+1245.509 ST dome suppressed owner=manual prio=199 lease=13.0 src=manual act=look_at rem=8000 mood=excited dropped=3 refused=0
+1245.552 CS source=personality capped=False v=0.600
+1246.484 STIM being_driven src=drive_stimulus i=0.3058673143386841
+1247.507 STIM being_driven src=drive_stimulus i=0.3049090802669525
+1247.780 ST dome suppressed owner=manual prio=199 lease=5.0 src= act= rem=0 mood=excited dropped=3 refused=0
+1248.251 CS source=idle capped=False v=0.000
+1248.530 STIM being_driven src=drive_stimulus i=0.301166832447052
+1249.543 STIM being_driven src=drive_stimulus i=0.3010129928588867
+1250.616 STIM being_driven src=drive_stimulus i=0.3011217415332794
+1251.813 ST dome suppressed owner=manual prio=199 lease=1.0 src= act= rem=0 mood=excited dropped=4 refused=0
+1251.907 ST dome claimed owner=manual prio=199 lease=0.9 src= act= rem=0 mood=excited dropped=4 refused=0
+1252.264 STIM stopped src=drive_stimulus i=1.0
+1252.834 ST dome idle owner= prio=0 lease=0.0 src= act= rem=0 mood=excited dropped=4 refused=0
+1255.896 ST dome running owner= prio=0 lease=0.0 src=idle act=glance rem=8236 mood=excited dropped=4 refused=0
+1255.902 CS source=personality capped=False v=-0.600
+1258.797 ST dome idle owner= prio=0 lease=0.0 src= act= rem=0 mood=excited dropped=4 refused=0
+1259.256 CS source=idle capped=False v=0.000
+
+[10] sim=1279.019 $ /ws/install/r2_affect/lib/r2_affect/mood set calm --lock
+[2m2026-10-23T08:16:36.630121Z[0m [33m WARN[0m ThreadId(20) [2mzenoh::net::runtime::orchestrator[0m[2m:[0m Scouting delay elapsed before start conditions are met.
+accepted: mood calm (1.00), locked by mood_cli
+    sys.exit(load_entry_point('r2-affect', 'console_scripts', 'mood')())
+    _try_shutdown()
+    g_default_context.try_shutdown()
+
+[10] sim=1292.307 $ ros2 topic pub --once /stimuli astromech_msgs/msg/Stimulus {kind: bump, source: accept, intensity: 1.0, confidence: 1.0}
+[2m2026-10-23T08:16:51.701670Z[0m [33m WARN[0m ThreadId(18) [2mzenoh::net::runtime::orchestrator[0m[2m:[0m Scouting delay elapsed before start conditions are met.
+publisher: beginning loop
+publishing #1: astromech_msgs.msg.Stimulus(header=std_msgs.msg.Header(stamp=builtin_interfaces.msg.Time(sec=0, nanosec=0), frame_id=''), kind='bump', source='accept', intensity=1.0, confidence=1.0, subject='', bearing_rad=0.0, ttl_s=0.0, extra='')
+
+
+[10] sim=1303.628 $ ros2 topic pub --once /stimuli astromech_msgs/msg/Stimulus {kind: bump, source: accept, intensity: 1.0, confidence: 1.0}
+publisher: beginning loop
+publishing #1: astromech_msgs.msg.Stimulus(header=std_msgs.msg.Header(stamp=builtin_interfaces.msg.Time(sec=0, nanosec=0), frame_id=''), kind='bump', source='accept', intensity=1.0, confidence=1.0, subject='', bearing_rad=0.0, ttl_s=0.0, extra='')
+
+
+[10] sim=1314.440 $ /ws/install/r2_expression/lib/r2_expression/express look 0.5 --profile smooth
+sent manual dome look_at at 199 ({"bearing": 0.5, "profile": "smooth"}) id=express-97726de8
+
+1293.871 STIM bump src=accept i=1.0
+1301.596 ST dome running owner= prio=0 lease=0.0 src=idle act=glance rem=8536 mood=calm dropped=4 refused=0
+1301.602 CS source=personality capped=False v=0.600
+1304.614 STIM bump src=accept i=1.0
+1305.201 ST dome idle owner= prio=0 lease=0.0 src= act= rem=0 mood=calm dropped=4 refused=0
+1305.701 CS source=idle capped=False v=0.000
+1315.017 ST dome running owner=manual prio=199 lease=13.0 src=manual act=look_at rem=8000 mood=calm dropped=4 refused=0
+1315.052 CS source=personality capped=False v=-0.600
+1316.834 ST dome claimed owner=manual prio=199 lease=5.0 src= act= rem=0 mood=calm dropped=4 refused=0
+1317.352 CS source=idle capped=False v=0.000
+1321.891 ST dome idle owner= prio=0 lease=0.0 src= act= rem=0 mood=calm dropped=4 refused=0
+
+[11] sim=1348.102 $ /ws/install/r2_expression/lib/r2_expression/express look 2.8 --source behavior --profile smooth
+[11] sim=1350.167 $ pkill -9 -f lib/r2_affect/r2_affect
+1349.018 ST dome running owner= prio=0 lease=0.0 src=behavior act=look_at rem=8000 mood=calm dropped=4 refused=0
+1349.051 CS source=personality capped=False v=-0.600
+1352.504 ST dome idle owner= prio=0 lease=0.0 src= act= rem=0 mood=calm dropped=4 refused=0
+1352.903 CS source=idle capped=False v=0.000
+1353.100 ST dome stale owner= prio=0 lease=0.0 src= act= rem=0 mood=neutral dropped=4 refused=0
+
+[2m2026-10-23T08:17:54.548441Z[0m [33m WARN[0m ThreadId(20) [2mzenoh::net::runtime::orchestrator[0m[2m:[0m Scouting delay elapsed before start conditions are met.
+sent behavior dome look_at at 100 ({"bearing": 2.8, "profile": "smooth"}) id=express-0c45b578
+
+[11] sim=1369.724 $ ros2 launch r2_affect affect.launch.py use_sim_time:=true  (restart #1)
+1353.100 ST dome stale owner= prio=0 lease=0.0 src= act= rem=0 mood=neutral dropped=4 refused=0
+1370.938 ST dome idle owner= prio=0 lease=0.0 src= act= rem=0 mood=calm dropped=4 refused=0
+
+1370.938 ST dome idle owner= prio=0 lease=0.0 src= act= rem=0 mood=calm dropped=4 refused=0
+1390.947 ST dome running owner= prio=0 lease=0.0 src=idle act=glance rem=8608 mood=calm dropped=4 refused=0
+1390.953 CS source=personality capped=False v=-0.600
+
+[11] sim=1406.445 $ /ws/install/r2_expression/lib/r2_expression/express look 0 --source behavior --profile lazy
+[11] sim=1407.801 $ pkill -9 -f lib/r2_affect/r2_affect
+sent behavior dome look_at at 100 ({"bearing": 0.0, "profile": "lazy"}) id=express-c375fdd9
+
+1407.198 ST dome running owner= prio=0 lease=0.0 src=behavior act=look_at rem=8000 mood=calm dropped=4 refused=0
+1407.209 CS source=personality capped=False v=0.600
+1410.734 ST dome stale owner= prio=0 lease=0.0 src= act= rem=0 mood=neutral dropped=4 refused=0
+1411.201 CS source=idle capped=False v=0.000
+
+[11] sim=1429.394 $ ros2 launch r2_affect affect.launch.py use_sim_time:=true  (restart #2)
+1430.797 ST dome idle owner= prio=0 lease=0.0 src= act= rem=0 mood=calm dropped=4 refused=0
+
+[12] sim=1464.584 $ /ws/install/r2_expression/lib/r2_expression/express look 2.8 --profile smooth
+[12] sim=1470.952 $ pkill -9 -f [l]ib/r2_expression/dome_arbiter
+[2m2026-10-23T08:20:09.065554Z[0m [33m WARN[0m ThreadId(20) [2mzenoh::net::runtime::orchestrator[0m[2m:[0m Scouting delay elapsed before start conditions are met.
+sent manual dome look_at at 199 ({"bearing": 2.8, "profile": "smooth"}) id=express-0e838158
+
+[12] sim=1484.678 $ ros2 run r2_expression dome_arbiter --ros-args -p use_sim_time:=true
+1471.450 CS source=idle capped=False v=0.000
+1486.973 ST dome offline owner= prio=0 lease=0.0 src= act= rem=0 mood=calm dropped=0 refused=0
+1487.002 ST dome idle owner= prio=0 lease=0.0 src= act= rem=0 mood=calm dropped=0 refused=0
+
+[13] sim=1509.226 $ ros2 control switch_controllers --deactivate dome_state_broadcaster
+Successfully switched controllers!
+Deactivated controllers: [ dome_state_broadcaster ]
+
+1510.924 ST dome idle owner= prio=0 lease=0.0 src= act= rem=0 mood=calm dropped=0 refused=0
+1511.353 CS source=idle capped=False v=0.000
+
+1510.924 ST dome idle owner= prio=0 lease=0.0 src= act= rem=0 mood=calm dropped=0 refused=0
+1511.353 CS source=idle capped=False v=0.000
+1515.503 ST dome offline owner= prio=0 lease=0.0 src= act= rem=0 mood=calm dropped=0 refused=0
+
+[13] sim=1515.503 $ /ws/install/r2_expression/lib/r2_expression/express look 0 --profile smooth
+[2m2026-10-23T08:21:19.100358Z[0m [33m WARN[0m ThreadId(22) [2mzenoh::net::runtime::orchestrator[0m[2m:[0m Scouting delay elapsed before start conditions are met.
+sent manual dome look_at at 199 ({"bearing": 0.0, "profile": "smooth"}) id=express-a548df36
+
+1515.503 ST dome offline owner= prio=0 lease=0.0 src= act= rem=0 mood=calm dropped=0 refused=0
+1528.370 ST dome offline owner= prio=0 lease=0.0 src= act= rem=0 mood=calm dropped=1 refused=0
+1531.291 ST dome offline owner= prio=0 lease=0.0 src= act= rem=0 mood=calm dropped=2 refused=0
+
+[13] sim=1531.291 $ ros2 control switch_controllers --activate dome_state_broadcaster
+[2m2026-10-23T08:21:36.591945Z[0m [33m WARN[0m ThreadId(25) [2mzenoh::net::runtime::orchestrator[0m[2m:[0m Scouting delay elapsed before start conditions are met.
+Successfully switched controllers!
+Activated controllers: [ dome_state_broadcaster ]
+
+1531.291 ST dome offline owner= prio=0 lease=0.0 src= act= rem=0 mood=calm dropped=2 refused=0
+1542.416 ST dome idle owner= prio=0 lease=0.0 src= act= rem=0 mood=calm dropped=2 refused=0
+
+[14] sim=1568.319 $ python3 graph.py
+nodes checked: 34
+/cmd_vel_dome <- /dome_teleop_node (geometry_msgs/msg/TwistStamped)
+/cmd_vel_dome_foxglove <- /foxglove_bridge_sim (geometry_msgs/msg/Twist)
+/cmd_vel_joy <- /teleop_node (geometry_msgs/msg/TwistStamped)
+/diff_cont/cmd_vel <- /twist_mux (geometry_msgs/msg/TwistStamped)
+/diff_cont/odom <- /diff_cont (nav_msgs/msg/Odometry)
+/diff_cont/transition_event <- /diff_cont (lifecycle_msgs/msg/TransitionEvent)
+/dome/cmd/personality <- /dome_arbiter (geometry_msgs/msg/TwistStamped)
+/dome_controller/commands <- /dome_twist_converter (std_msgs/msg/Float64MultiArray)
+PUBLISHERS of /dome_controller/commands : ['/dome_twist_converter (std_msgs/msg/Float64MultiArray)']
+PUBLISHERS of /dome/cmd/personality : ['/dome_arbiter (geometry_msgs/msg/TwistStamped)']
+PUBLISHERS of /dome/joint_command : none
+[7] glance analysis (gl.py over watch.log: ST dome running src=idle act=glance ... to the next non-running status; excursion and return error from the joint state)
+-- curious --lock (mood set at sim 658.6)
+   glance start 667.8 end 673.8 (6.1 s) src=idle act=glance excursion 1.086 rad (62 deg) return err -0.045 rad (-2.5 deg)
+   glance start 681.8 end 687.1 (5.3 s) src=idle act=glance excursion 0.589 rad (34 deg) return err -0.014 rad (-0.8 deg)  gap since last start 14.1 s
+   glance start 695.2 end 700.1 (4.9 s) src=idle act=glance excursion 1.289 rad (74 deg) return err 0.041 rad (2.4 deg)  gap since last start 13.4 s
+   glance start 708.2 end 713.1 (5.0 s) src=idle act=glance excursion 0.844 rad (48 deg) return err -0.015 rad (-0.9 deg)  gap since last start 13.0 s
+   glance start 721.2 end 726.2 (4.9 s) src=idle act=glance excursion 0.529 rad (30 deg) return err 0.005 rad (0.3 deg)  gap since last start 13.1 s
+   glance start 734.2 end 739.3 (5.1 s) src=idle act=glance excursion 0.893 rad (51 deg) return err -0.045 rad (-2.5 deg)  gap since last start 13.0 s
+   glance start 747.3 end 754.0 (6.6 s) src=idle act=glance excursion 1.206 rad (69 deg) return err -0.023 rad (-1.3 deg)  gap since last start 13.2 s
+   glance start 747.3 end 754.0 (6.6 s) src=idle act=glance excursion 1.206 rad (69 deg) return err -0.023 rad (-1.3 deg)
+-- calm --lock (set at sim 767.2)
+   glance start 788.4 end 793.1 (4.7 s) src=idle act=glance excursion 0.626 rad (36 deg) return err -0.003 rad (-0.2 deg)
+   glance start 813.1 end 817.1 (3.9 s) src=idle act=glance excursion 0.561 rad (32 deg) return err 0.022 rad (1.2 deg)  gap since last start 24.7 s
+   glance start 837.1 end 841.2 (4.1 s) src=idle act=glance excursion -0.430 rad (-25 deg) return err -0.016 rad (-0.9 deg)  gap since last start 24.0 s
+   glance start 861.3 end 864.7 (3.4 s) src=idle act=glance excursion 0.326 rad (19 deg) return err 0.000 rad (0.0 deg)  gap since last start 24.2 s
+   glance start 884.7 end 888.8 (4.1 s) src=idle act=glance excursion 0.460 rad (26 deg) return err 0.003 rad (0.2 deg)  gap since last start 23.5 s
+   glance start 908.9 end 913.2 (4.3 s) src=idle act=glance excursion -0.489 rad (-28 deg) return err 0.012 rad (0.7 deg)  gap since last start 24.2 s
+   glance start 933.3 end 937.9 (4.6 s) src=idle act=glance excursion 0.479 rad (27 deg) return err -0.008 rad (-0.5 deg)  gap since last start 24.4 s
+   (completed: )glance start 933.3 end 937.9 (4.6 s) src=idle act=glance excursion 0.479 rad (27 deg) return err -0.008 rad (-0.5 deg)
+-- excited --lock (set at sim 941.0)
+   glance start 946.6 end 951.3 (4.7 s) src=idle act=glance excursion 0.781 rad (45 deg) return err -0.041 rad (-2.4 deg)
+   glance start 955.3 end 959.9 (4.6 s) src=idle act=glance excursion -0.695 rad (-40 deg) return err -0.000 rad (-0.0 deg)  gap since last start 8.7 s
+   glance start 964.0 end 967.2 (3.2 s) src=idle act=glance excursion -0.397 rad (-23 deg) return err -0.011 rad (-0.6 deg)  gap since last start 8.7 s
+   glance start 971.2 end 974.3 (3.1 s) src=idle act=glance excursion 0.433 rad (25 deg) return err 0.007 rad (0.4 deg)  gap since last start 7.2 s
+   glance start 978.4 end 982.5 (4.1 s) src=idle act=glance excursion -0.578 rad (-33 deg) return err 0.016 rad (0.9 deg)  gap since last start 7.1 s
+   glance start 986.5 end 990.1 (3.6 s) src=idle act=glance excursion -0.636 rad (-36 deg) return err -0.018 rad (-1.1 deg)  gap since last start 8.2 s
+   glance start 994.2 end 997.7 (3.5 s) src=idle act=glance excursion -0.709 rad (-41 deg) return err -0.005 rad (-0.3 deg)  gap since last start 7.6 s
+   glance start 1001.7 end 1004.8 (3.0 s) src=idle act=glance excursion 0.442 rad (25 deg) return err -0.027 rad (-1.5 deg)  gap since last start 7.6 s
+   glance start 1008.9 end 1012.0 (3.2 s) src=idle act=glance excursion -0.350 rad (-20 deg) return err -0.001 rad (-0.1 deg)  gap since last start 7.1 s
+
+[12] /expression/status per-second counts around the dome_arbiter SIGKILL at sim 1470.98 (cnt.py; channel=messages in that second; 'last' = sim stamp of the latest message per channel)
+1469.00 dome=2 fld=2 magic=2 psi=2 rld=2 | last dome=1468.87 fld=1468.80 magic=1468.80 psi=1468.80 rld=1468.80
+1470.00 dome=4 fld=3 magic=3 psi=3 rld=3 | last dome=1469.93 fld=1469.90 magic=1469.90 psi=1469.90 rld=1469.90
+1471.00 dome=2 fld=2 magic=2 psi=2 rld=2 | last dome=1470.84 fld=1470.87 magic=1470.87 psi=1470.87 rld=1470.87
+1472.00 fld=2 magic=2 psi=2 rld=2 | last dome=1470.84 fld=1471.74 magic=1471.74 psi=1471.74 rld=1471.74
+1473.00 fld=2 magic=2 psi=2 rld=2 | last dome=1470.84 fld=1472.74 magic=1472.74 psi=1472.74 rld=1472.74
+1474.00 fld=2 magic=2 psi=2 rld=2 | last dome=1470.84 fld=1473.84 magic=1473.84 psi=1473.84 rld=1473.84
+1475.00 fld=2 magic=2 psi=2 rld=2 | last dome=1470.84 fld=1474.86 magic=1474.87 psi=1474.86 rld=1474.86
+

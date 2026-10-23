@@ -1,0 +1,642 @@
+90.203 [INFO] [dome_arbiter]: dome_arbiter up: config /ws/install/r2_expression/share/r2_expression/config/expression.yaml, device dome_twist_converter via /dome/cmd/personality, channels dome
+90.203 [INFO] [dome_arbiter]: mood: - -> calm
+90.203 [INFO] [dome_arbiter]: dome: offline
+90.203 [INFO] [dome_arbiter]: dome: idle
+90.203 [INFO] [dome_arbiter]: dome: running
+90.203 [INFO] [dome_arbiter]: dome: move over, coast scale 0.33 for the next
+90.203 [INFO] [dome_arbiter]: dome: idle
+90.203 [INFO] [dome_arbiter]: dome: running
+90.203 [INFO] [dome_arbiter]: dome: move over, coast scale 0.24 for the next
+90.203 [INFO] [dome_arbiter]: dome: idle
+90.203 [INFO] [dome_arbiter]: dome: running
+90.203 [INFO] [dome_arbiter]: dome: move over, coast scale 0.17 for the next
+90.203 [INFO] [dome_arbiter]: dome: idle
+90.204 [INFO] [controller_manager]: Using ROS clock for triggering controller manager cycles.
+90.204 [WARN] [controller_manager]: The resource manager is not yet initialized, will wait for the robot description to initialize it..
+90.204 [INFO] [controller_manager]: Subscribing to '/robot_description' topic for robot description.
+90.204 [INFO] [controller_manager]: Received robot description from topic.
+90.204 [INFO] [controller_manager]: Enforcing command limits is disabled. Command limits from URDF will be ignored.
+90.204 [INFO] [controller_manager]: Initialize hardware 'GazeboSystem' 
+90.204 [INFO] [controller_manager]: Successful initialization of hardware 'GazeboSystem'
+90.204 [INFO] [controller_manager]: Activating component 'GazeboSystem'.
+90.204 [WARN] [controller_manager]: Component 'GazeboSystem' does not have read or write statistics initialized, skipping registration.
+90.204 [INFO] [controller_manager]: Resource Manager has been successfully initialized. Starting Controller Manager services...
+90.204 [INFO] [controller_manager]: Loading controller : 'joint_broad' of type 'joint_state_broadcaster/JointStateBroadcaster'
+90.204 [INFO] [controller_manager]: Loading controller 'joint_broad'
+90.204 [INFO] [controller_manager]: Controller 'joint_broad' node arguments: --ros-args --params-file /ws/install/r2_bringup/share/r2_bringup/config/my_controllers.yaml --params-file /ws/install/r2_sim/share/r2_sim/config/sim_controllers.yaml --params-file /ws/install/r2_sim/share/r2_sim/config/gaz_ros2_ctl_use_sim.yaml -p use_sim_time:=true --param use_sim_time:=true 
+90.204 [INFO] [controller_manager]: Configuring controller: 'joint_broad'
+90.204 [INFO] [controller_manager]: Activating controllers: [ joint_broad ]
+90.204 [INFO] [controller_manager]: Successfully switched controllers!
+90.204 [INFO] [controller_manager]: Loading controller : 'servo_pos' of type 'position_controllers/JointGroupPositionController'
+90.204 [INFO] [controller_manager]: Loading controller 'servo_pos'
+90.204 [INFO] [controller_manager]: Controller 'servo_pos' node arguments: --ros-args --params-file /ws/install/r2_bringup/share/r2_bringup/config/my_controllers.yaml --params-file /ws/install/r2_sim/share/r2_sim/config/sim_controllers.yaml --params-file /ws/install/r2_sim/share/r2_sim/config/gaz_ros2_ctl_use_sim.yaml -p use_sim_time:=true --param use_sim_time:=true 
+90.205 [INFO] [controller_manager]: Configuring controller: 'servo_pos'
+90.205 [INFO] [controller_manager]: Activating controllers: [ servo_pos ]
+90.205 [INFO] [controller_manager]: Successfully switched controllers!
+90.205 [INFO] [controller_manager]: Loading controller : 'diff_cont' of type 'diff_drive_controller/DiffDriveController'
+90.205 [INFO] [controller_manager]: Loading controller 'diff_cont'
+90.205 [INFO] [controller_manager]: Controller 'diff_cont' node arguments: --ros-args --params-file /ws/install/r2_bringup/share/r2_bringup/config/my_controllers.yaml --params-file /ws/install/r2_sim/share/r2_sim/config/sim_controllers.yaml --params-file /ws/install/r2_sim/share/r2_sim/config/gaz_ros2_ctl_use_sim.yaml -p use_sim_time:=true --param use_sim_time:=true 
+90.205 [INFO] [controller_manager]: Configuring controller: 'diff_cont'
+90.205 [INFO] [controller_manager]: Activating controllers: [ diff_cont ]
+90.205 [INFO] [controller_manager]: Successfully switched controllers!
+90.205 [INFO] [controller_manager]: Loading controller : 'dome_controller' of type 'forward_command_controller/ForwardCommandController'
+90.205 [INFO] [controller_manager]: Loading controller 'dome_controller'
+90.205 [INFO] [controller_manager]: Controller 'dome_controller' node arguments: --ros-args --params-file /ws/install/r2_bringup/share/r2_bringup/config/my_controllers.yaml --params-file /ws/install/r2_sim/share/r2_sim/config/sim_controllers.yaml --params-file /ws/install/r2_sim/share/r2_sim/config/gaz_ros2_ctl_use_sim.yaml -p use_sim_time:=true --param use_sim_time:=true 
+90.205 [INFO] [controller_manager]: Configuring controller: 'dome_controller'
+90.205 [INFO] [controller_manager]: Activating controllers: [ dome_controller ]
+90.205 [INFO] [controller_manager]: Successfully switched controllers!
+90.205 [INFO] [controller_manager]: Loading controller : 'ankle_pos' of type 'position_controllers/JointGroupPositionController'
+90.205 [INFO] [controller_manager]: Loading controller 'ankle_pos'
+90.205 [INFO] [controller_manager]: Controller 'ankle_pos' node arguments: --ros-args --params-file /ws/install/r2_bringup/share/r2_bringup/config/my_controllers.yaml --params-file /ws/install/r2_sim/share/r2_sim/config/sim_controllers.yaml --params-file /ws/install/r2_sim/share/r2_sim/config/gaz_ros2_ctl_use_sim.yaml -p use_sim_time:=true --param use_sim_time:=true 
+90.205 [INFO] [controller_manager]: Configuring controller: 'ankle_pos'
+90.205 [INFO] [controller_manager]: Activating controllers: [ ankle_pos ]
+90.205 [INFO] [controller_manager]: Successfully switched controllers!
+90.205 [INFO] [controller_manager]: Loading controller : 'dome_state_broadcaster' of type 'joint_state_broadcaster/JointStateBroadcaster'
+90.205 [INFO] [controller_manager]: Loading controller 'dome_state_broadcaster'
+90.205 [INFO] [controller_manager]: Controller 'dome_state_broadcaster' node arguments: --ros-args --params-file /ws/install/r2_bringup/share/r2_bringup/config/my_controllers.yaml --params-file /ws/install/r2_sim/share/r2_sim/config/sim_controllers.yaml --params-file /ws/install/r2_sim/share/r2_sim/config/gaz_ros2_ctl_use_sim.yaml -p use_sim_time:=true --param use_sim_time:=true 
+90.205 [INFO] [controller_manager]: Configuring controller: 'dome_state_broadcaster'
+90.205 [INFO] [controller_manager]: Activating controllers: [ dome_state_broadcaster ]
+90.205 [INFO] [controller_manager]: Successfully switched controllers!
+90.205 [INFO] [r2_affect]: r2_affect up: config /ws/install/r2_affect/share/r2_affect/config/affect.yaml, 5.0 Hz, mood calm (aro=0.00 val=0.20 cur=0.40 con=0.60)
+90.208 [INFO] [dome_controller]: configure successful
+90.208 [INFO] [dome_controller]: activate successful
+90.208 [INFO] [dome_mock]: dome mock up as /dome_mock (config /ws/install/r2_mocks/share/r2_mocks/config/dome_mock.yaml, state_hz 1, hold_ms 5000, magic panel fitted)
+90.208 [INFO] [dome_state_broadcaster]: Publishing state interfaces defined in 'joints' and 'interfaces' parameters.
+90.208 [INFO] [dome_twist_converter]: Dome command arbiter: joystick cmd_vel_dome (linear.x) has precedence, Foxglove cmd_vel_dome_foxglove (angular.z x 1.50), hold 0.50 s, timeouts 0.50 / 0.50 s, personality dome/cmd/personality (angular.z, timeout 0.50 s, 0.60 <= |v| <= 2.00 rad/s, |a| <= 6.00 rad/s2), output dome_controller/commands
+90.208 [INFO] [dome_twist_converter]: Dome command source: personality
+90.208 [INFO] [dome_twist_converter]: Dome command source: idle
+90.208 [INFO] [dome_twist_converter]: Dome command source: personality
+90.208 [INFO] [dome_twist_converter]: Dome command source: idle
+90.208 [INFO] [dome_twist_converter]: Dome command source: personality
+90.208 [INFO] [dome_twist_converter]: Dome command source: idle
+90.208 [INFO] [magic_arbiter]: magic_arbiter up: config /ws/install/r2_expression/share/r2_expression/config/expression.yaml, device /dome_mock, channels magic
+90.208 [INFO] [magic_arbiter]: mood: - -> calm
+90.208 [INFO] [magic_arbiter]: magic: offline
+90.208 [INFO] [magic_arbiter]: device /dome_mock answered list; catalogue loaded
+90.208 [INFO] [magic_arbiter]: magic: idle
+90.208 [INFO] [led_arbiter]: led_arbiter up: config /ws/install/r2_expression/share/r2_expression/config/expression.yaml, device /dome_mock, channels fld tfld bfld rld psi
+90.208 [INFO] [led_arbiter]: mood: - -> calm
+90.208 [INFO] [led_arbiter]: fld: offline
+90.208 [INFO] [led_arbiter]: tfld: offline
+90.208 [INFO] [led_arbiter]: bfld: offline
+90.208 [INFO] [led_arbiter]: rld: offline
+90.208 [INFO] [led_arbiter]: psi: offline
+90.208 [INFO] [led_arbiter]: device /dome_mock answered list; catalogue loaded
+90.208 [INFO] [led_arbiter]: fld: idle
+90.208 [INFO] [led_arbiter]: tfld: idle
+90.208 [INFO] [led_arbiter]: bfld: idle
+90.208 [INFO] [led_arbiter]: rld: idle
+90.208 [INFO] [led_arbiter]: psi: idle
+90.208 [INFO] [led_arbiter]: psi: running
+90.208 [INFO] [led_arbiter]: psi: idle
+94.221 [INFO] [dome_arbiter]: dome: running
+94.251 [INFO] [dome_twist_converter]: Dome command source: personality
+98.215 [INFO] [dome_arbiter]: dome: move over, coast scale 0.30 for the next
+98.216 [INFO] [dome_arbiter]: dome: idle
+98.702 [INFO] [dome_twist_converter]: Dome command source: idle
+118.288 [INFO] [dome_arbiter]: dome: running
+118.299 [INFO] [dome_twist_converter]: Dome command source: personality
+121.800 [INFO] [dome_arbiter]: dome: move over, coast scale 0.09 for the next
+121.801 [INFO] [dome_arbiter]: dome: idle
+122.301 [INFO] [dome_twist_converter]: Dome command source: idle
+131.563 [INFO] [dome_arbiter]: dome: running (manual)
+131.565 [INFO] [dome_arbiter]: intent express-298ac4e4 accepted: dome turn  from manual
+131.601 [INFO] [dome_twist_converter]: Dome command source: personality
+132.907 [INFO] [dome_arbiter]: dome: move over, coast scale 0.17 for the next
+132.908 [INFO] [dome_arbiter]: dome: claimed (manual)
+133.351 [INFO] [dome_twist_converter]: Dome command source: idle
+137.976 [INFO] [dome_arbiter]: dome: idle
+138.156 [INFO] [led_arbiter]: psi: running
+140.788 [INFO] [led_arbiter]: psi: idle
+152.975 [INFO] [dome_arbiter]: dome: running
+153.001 [INFO] [dome_twist_converter]: Dome command source: personality
+157.405 [INFO] [dome_arbiter]: dome: move over, coast scale 0.28 for the next
+157.407 [INFO] [dome_arbiter]: dome: idle
+157.900 [INFO] [dome_twist_converter]: Dome command source: idle
+171.246 [INFO] [dome_arbiter]: dome: running (manual)
+171.249 [INFO] [dome_arbiter]: intent express-ce71052f accepted: dome look_at  from manual
+171.251 [INFO] [dome_twist_converter]: Dome command source: personality
+172.995 [INFO] [dome_arbiter]: dome: move over, coast scale 0.11 for the next
+172.995 [INFO] [dome_arbiter]: dome: claimed (manual)
+173.500 [INFO] [dome_twist_converter]: Dome command source: idle
+178.003 [INFO] [dome_arbiter]: dome: idle
+189.482 [INFO] [dome_arbiter]: dome: running (manual)
+189.484 [INFO] [dome_arbiter]: intent express-14cba36e accepted: dome look_at  from manual
+189.501 [INFO] [dome_twist_converter]: Dome command source: personality
+192.673 [INFO] [dome_arbiter]: dome: move over, coast scale 0.11 for the next
+192.674 [INFO] [dome_arbiter]: dome: claimed (manual)
+193.201 [INFO] [dome_twist_converter]: Dome command source: idle
+194.167 [INFO] [led_arbiter]: psi: running
+196.834 [INFO] [led_arbiter]: psi: idle
+197.747 [INFO] [dome_arbiter]: dome: idle
+207.454 [INFO] [dome_arbiter]: dome: running (manual)
+207.456 [INFO] [dome_arbiter]: intent express-c969a2b7 accepted: dome look_at  from manual
+207.502 [INFO] [dome_twist_converter]: Dome command source: personality
+210.973 [INFO] [dome_arbiter]: dome: move over, coast scale 0.04 for the next
+210.973 [INFO] [dome_arbiter]: dome: claimed (manual)
+211.451 [INFO] [dome_twist_converter]: Dome command source: idle
+216.003 [INFO] [dome_arbiter]: dome: idle
+231.989 [INFO] [dome_arbiter]: dome: running
+232.002 [INFO] [dome_twist_converter]: Dome command source: personality
+236.897 [INFO] [dome_arbiter]: dome: move over, coast scale 0.15 for the next
+236.898 [INFO] [dome_arbiter]: dome: idle
+237.352 [INFO] [dome_twist_converter]: Dome command source: idle
+240.483 [INFO] [dome_arbiter]: dome: running (manual)
+240.484 [INFO] [dome_arbiter]: intent express-20ae0809 accepted: dome look_at  from manual
+240.501 [INFO] [dome_twist_converter]: Dome command source: personality
+244.078 [INFO] [dome_arbiter]: dome: move over, coast scale 0.34 for the next
+244.079 [INFO] [dome_arbiter]: dome: claimed (manual)
+244.600 [INFO] [dome_twist_converter]: Dome command source: idle
+245.520 [INFO] [led_arbiter]: fld: running
+248.228 [INFO] [led_arbiter]: fld: idle
+249.120 [INFO] [dome_arbiter]: dome: idle
+271.256 [INFO] [dome_arbiter]: dome: running
+271.302 [INFO] [dome_twist_converter]: Dome command source: personality
+275.714 [INFO] [dome_arbiter]: dome: move over, coast scale 0.21 for the next
+275.715 [INFO] [dome_arbiter]: dome: idle
+276.202 [INFO] [dome_twist_converter]: Dome command source: idle
+285.507 [INFO] [dome_arbiter]: dome: running (manual)
+285.509 [INFO] [dome_arbiter]: intent express-b3ec7657 accepted: dome look_at  from manual
+285.552 [INFO] [dome_twist_converter]: Dome command source: personality
+287.715 [INFO] [dome_arbiter]: dome: move over, coast scale 0.19 for the next
+287.715 [INFO] [dome_arbiter]: dome: claimed (manual)
+288.202 [INFO] [dome_twist_converter]: Dome command source: idle
+292.725 [INFO] [dome_arbiter]: dome: idle
+320.529 [INFO] [dome_arbiter]: dome: running
+320.551 [INFO] [dome_twist_converter]: Dome command source: personality
+324.806 [INFO] [dome_arbiter]: dome: move over, coast scale 0.22 for the next
+324.806 [INFO] [dome_arbiter]: dome: idle
+324.932 [INFO] [led_arbiter]: fld: running
+325.303 [INFO] [dome_twist_converter]: Dome command source: idle
+327.554 [INFO] [led_arbiter]: fld: idle
+345.077 [INFO] [dome_arbiter]: dome: offline
+345.140 [INFO] [dome_twist_converter]: Dome command arbiter: joystick cmd_vel_dome (linear.x) has precedence, Foxglove cmd_vel_dome_foxglove (angular.z x 1.50), hold 0.50 s, timeouts 0.50 / 0.50 s, personality dome/cmd/personality (angular.z, timeout 0.50 s, 0.60 <= |v| <= 1.00 rad/s, |a| <= 6.00 rad/s2), output dome_controller/commands
+345.144 [INFO] [dome_arbiter]: dome: idle
+345.818 [INFO] [dome_arbiter]: dome: running
+345.851 [INFO] [dome_twist_converter]: Dome command source: personality
+349.569 [INFO] [dome_arbiter]: dome: move over, coast scale 0.19 for the next
+349.570 [INFO] [dome_arbiter]: dome: idle
+350.104 [INFO] [dome_twist_converter]: Dome command source: idle
+358.471 [INFO] [dome_arbiter]: dome: running (manual)
+358.473 [INFO] [dome_arbiter]: intent express-e3b8d9a1 accepted: dome look_at  from manual
+358.507 [INFO] [dome_twist_converter]: Dome command source: personality
+362.455 [INFO] [dome_arbiter]: dome: move over, coast scale 0.13 for the next
+362.455 [INFO] [dome_arbiter]: dome: claimed (manual)
+362.903 [INFO] [dome_twist_converter]: Dome command source: idle
+367.503 [INFO] [dome_arbiter]: dome: idle
+385.395 [INFO] [dome_arbiter]: dome: running
+386.514 [INFO] [dome_arbiter]: dome: move over, coast scale 0.16 for the next
+386.514 [INFO] [dome_arbiter]: dome: offline
+394.724 [INFO] [r2_affect]: mood: calm -> sleepy (d=0.35)
+394.727 [INFO] [led_arbiter]: mood: calm -> sleepy
+394.727 [INFO] [dome_arbiter]: mood: calm -> sleepy
+394.728 [INFO] [magic_arbiter]: mood: calm -> sleepy
+399.421 [INFO] [dome_twist_converter]: Dome command arbiter: joystick cmd_vel_dome (linear.x) has precedence, Foxglove cmd_vel_dome_foxglove (angular.z x 1.50), hold 0.50 s, timeouts 0.50 / 0.50 s, personality dome/cmd/personality (angular.z, timeout 0.50 s, 0.60 <= |v| <= 2.00 rad/s, |a| <= 6.00 rad/s2), output dome_controller/commands
+399.426 [INFO] [dome_arbiter]: dome: running
+399.451 [INFO] [dome_twist_converter]: Dome command source: personality
+402.468 [INFO] [dome_arbiter]: dome: move over, coast scale 0.13 for the next
+402.469 [INFO] [dome_arbiter]: dome: idle
+402.952 [INFO] [dome_twist_converter]: Dome command source: idle
+419.712 [INFO] [dome_arbiter]: dome: running (manual)
+419.713 [INFO] [dome_arbiter]: intent express-670a88eb accepted: dome glance  from manual
+419.751 [INFO] [dome_twist_converter]: Dome command source: personality
+424.458 [INFO] [dome_arbiter]: dome: move over, coast scale 0.25 for the next
+424.459 [INFO] [dome_arbiter]: dome: claimed (manual)
+424.951 [INFO] [dome_twist_converter]: Dome command source: idle
+429.458 [INFO] [dome_arbiter]: dome: idle
+429.501 [INFO] [dome_twist_converter]: Dome command source: personality
+429.950 [INFO] [dome_twist_converter]: Dome command source: idle
+454.118 [INFO] [r2_affect]: mood forced and locked calm by mood_cli
+454.174 [INFO] [magic_arbiter]: mood: sleepy -> calm
+454.174 [INFO] [dome_arbiter]: mood: sleepy -> calm
+454.175 [INFO] [led_arbiter]: mood: sleepy -> calm
+474.176 [INFO] [dome_arbiter]: dome: running
+474.203 [INFO] [dome_twist_converter]: Dome command source: personality
+478.106 [INFO] [dome_arbiter]: dome: move over, coast scale 0.13 for the next
+478.109 [INFO] [dome_arbiter]: dome: idle
+478.552 [INFO] [dome_twist_converter]: Dome command source: idle
+480.980 [INFO] [dome_arbiter]: dome: running (manual)
+480.981 [INFO] [dome_arbiter]: intent express-6dc2adbf accepted: dome look_at  from manual
+481.000 [INFO] [dome_twist_converter]: Dome command source: personality
+483.352 [INFO] [dome_twist_converter]: Dome command source: joystick
+483.355 [INFO] [dome_arbiter]: dome: move over, coast scale 0.13 for the next
+483.356 [INFO] [dome_arbiter]: dome: foreign (joystick)
+485.551 [INFO] [dome_twist_converter]: Dome command source: idle
+485.554 [INFO] [dome_arbiter]: dome: claimed (manual)
+488.414 [INFO] [dome_arbiter]: dome: idle
+503.441 [INFO] [dome_arbiter]: dome: running
+503.451 [INFO] [dome_twist_converter]: Dome command source: personality
+507.476 [INFO] [dome_arbiter]: dome: move over, coast scale 0.16 for the next
+507.477 [INFO] [dome_arbiter]: dome: idle
+507.951 [INFO] [dome_twist_converter]: Dome command source: idle
+527.292 [INFO] [dome_arbiter]: dome: running (manual)
+527.292 [INFO] [dome_arbiter]: intent express-442b66e3 accepted: dome look_at  from manual
+527.305 [INFO] [dome_twist_converter]: Dome command source: personality
+529.401 [INFO] [dome_twist_converter]: Dome command source: joystick
+529.404 [INFO] [dome_arbiter]: dome: move over, coast scale 0.18 for the next
+529.405 [INFO] [dome_arbiter]: dome: foreign (joystick)
+531.447 [INFO] [led_arbiter]: psi: running
+531.450 [INFO] [dome_twist_converter]: Dome command source: idle
+531.455 [INFO] [dome_arbiter]: dome: claimed (manual)
+534.081 [INFO] [led_arbiter]: psi: idle
+534.449 [INFO] [dome_arbiter]: dome: idle
+549.448 [INFO] [dome_arbiter]: dome: running
+549.452 [INFO] [dome_twist_converter]: Dome command source: personality
+554.012 [INFO] [dome_arbiter]: dome: move over, coast scale 0.18 for the next
+554.014 [INFO] [dome_arbiter]: dome: idle
+554.501 [INFO] [dome_twist_converter]: Dome command source: idle
+560.346 [INFO] [dome_arbiter]: dome: running (manual)
+560.346 [INFO] [dome_arbiter]: intent express-fb509d23 accepted: dome look_at  from manual
+560.351 [INFO] [dome_twist_converter]: Dome command source: personality
+561.000 [INFO] [dome_twist_converter]: Dome command source: foxglove
+561.001 [INFO] [dome_arbiter]: dome: move over, coast scale 0.19 for the next
+561.002 [INFO] [dome_arbiter]: dome: foreign (foxglove)
+563.300 [INFO] [dome_twist_converter]: Dome command source: idle
+563.302 [INFO] [dome_arbiter]: dome: claimed (manual)
+566.003 [INFO] [dome_arbiter]: dome: idle
+581.062 [INFO] [dome_arbiter]: dome: running
+581.101 [INFO] [dome_twist_converter]: Dome command source: personality
+585.144 [INFO] [dome_arbiter]: dome: move over, coast scale 0.15 for the next
+585.145 [INFO] [dome_arbiter]: dome: idle
+585.651 [INFO] [dome_twist_converter]: Dome command source: idle
+601.991 [INFO] [dome_arbiter]: dome: claimed (console)
+601.993 [INFO] [dome_arbiter]: claim dome by console at 200 for 30.0 s: accepted
+612.795 [INFO] [led_arbiter]: fld: running
+612.927 [INFO] [dome_arbiter]: dome: running (console)
+612.928 [INFO] [dome_arbiter]: intent express-86fc227b accepted: dome look_at  from manual
+612.953 [INFO] [dome_twist_converter]: Dome command source: personality
+615.392 [INFO] [led_arbiter]: fld: idle
+616.417 [INFO] [dome_arbiter]: dome: move over, coast scale 0.14 for the next
+616.419 [INFO] [dome_arbiter]: dome: claimed (console)
+616.802 [INFO] [dome_twist_converter]: Dome command source: idle
+620.161 [INFO] [dome_arbiter]: claim dome by console at 199 for 0.0 s: accepted
+621.419 [INFO] [dome_arbiter]: dome: idle
+636.455 [INFO] [dome_arbiter]: dome: running
+636.500 [INFO] [dome_twist_converter]: Dome command source: personality
+641.371 [INFO] [dome_arbiter]: dome: move over, coast scale 0.09 for the next
+641.372 [INFO] [dome_arbiter]: dome: idle
+641.851 [INFO] [dome_twist_converter]: Dome command source: idle
+659.708 [INFO] [r2_affect]: mood forced and locked curious by mood_cli
+659.752 [INFO] [led_arbiter]: mood: calm -> curious
+659.752 [INFO] [magic_arbiter]: mood: calm -> curious
+659.753 [INFO] [dome_arbiter]: mood: calm -> curious
+667.763 [INFO] [dome_arbiter]: dome: running
+667.803 [INFO] [dome_twist_converter]: Dome command source: personality
+673.826 [INFO] [dome_arbiter]: dome: move over, coast scale 0.22 for the next
+673.826 [INFO] [dome_arbiter]: dome: idle
+674.205 [INFO] [dome_twist_converter]: Dome command source: idle
+681.843 [INFO] [dome_arbiter]: dome: running
+681.852 [INFO] [dome_twist_converter]: Dome command source: personality
+687.124 [INFO] [dome_arbiter]: dome: move over, coast scale 0.10 for the next
+687.125 [INFO] [dome_arbiter]: dome: idle
+687.601 [INFO] [dome_twist_converter]: Dome command source: idle
+695.200 [INFO] [dome_arbiter]: dome: running
+695.201 [INFO] [dome_twist_converter]: Dome command source: personality
+700.080 [INFO] [dome_arbiter]: dome: move over, coast scale 0.00 for the next
+700.082 [INFO] [dome_arbiter]: dome: idle
+700.601 [INFO] [dome_twist_converter]: Dome command source: idle
+708.156 [INFO] [dome_arbiter]: dome: running
+708.200 [INFO] [dome_twist_converter]: Dome command source: personality
+713.125 [INFO] [dome_arbiter]: dome: move over, coast scale 0.21 for the next
+713.125 [INFO] [dome_arbiter]: dome: idle
+713.552 [INFO] [dome_twist_converter]: Dome command source: idle
+721.214 [INFO] [dome_arbiter]: dome: running
+721.253 [INFO] [dome_twist_converter]: Dome command source: personality
+726.155 [INFO] [dome_arbiter]: dome: move over, coast scale 0.11 for the next
+726.155 [INFO] [dome_arbiter]: dome: idle
+726.652 [INFO] [dome_twist_converter]: Dome command source: idle
+734.166 [INFO] [dome_arbiter]: dome: running
+734.202 [INFO] [dome_twist_converter]: Dome command source: personality
+739.262 [INFO] [dome_arbiter]: dome: move over, coast scale 0.71 for the next
+739.263 [INFO] [dome_arbiter]: dome: idle
+739.801 [INFO] [dome_twist_converter]: Dome command source: idle
+747.323 [INFO] [dome_arbiter]: dome: running
+747.351 [INFO] [dome_twist_converter]: Dome command source: personality
+753.957 [INFO] [dome_arbiter]: dome: move over, coast scale 0.10 for the next
+753.960 [INFO] [dome_arbiter]: dome: idle
+754.453 [INFO] [dome_twist_converter]: Dome command source: idle
+762.011 [INFO] [dome_arbiter]: dome: running
+762.051 [INFO] [dome_twist_converter]: Dome command source: personality
+763.060 [INFO] [led_arbiter]: fld: running
+765.181 [INFO] [led_arbiter]: fld: idle
+767.072 [INFO] [dome_arbiter]: dome: move over, coast scale 0.30 for the next
+767.072 [INFO] [dome_arbiter]: dome: idle
+767.554 [INFO] [dome_twist_converter]: Dome command source: idle
+768.287 [INFO] [r2_affect]: mood forced and locked calm by mood_cli
+768.388 [INFO] [dome_arbiter]: mood: curious -> calm
+768.388 [INFO] [led_arbiter]: mood: curious -> calm
+768.389 [INFO] [magic_arbiter]: mood: curious -> calm
+788.431 [INFO] [dome_arbiter]: dome: running
+788.452 [INFO] [dome_twist_converter]: Dome command source: personality
+793.093 [INFO] [dome_arbiter]: dome: move over, coast scale 0.13 for the next
+793.097 [INFO] [dome_arbiter]: dome: idle
+793.600 [INFO] [dome_twist_converter]: Dome command source: idle
+813.115 [INFO] [dome_arbiter]: dome: running
+813.151 [INFO] [dome_twist_converter]: Dome command source: personality
+815.250 [INFO] [led_arbiter]: fld: running
+817.056 [INFO] [dome_arbiter]: dome: move over, coast scale 0.09 for the next
+817.056 [INFO] [dome_arbiter]: dome: idle
+817.551 [INFO] [dome_twist_converter]: Dome command source: idle
+818.003 [INFO] [led_arbiter]: fld: idle
+837.084 [INFO] [dome_arbiter]: dome: running
+837.100 [INFO] [dome_twist_converter]: Dome command source: personality
+841.197 [INFO] [dome_arbiter]: dome: move over, coast scale 0.12 for the next
+841.199 [INFO] [dome_arbiter]: dome: idle
+841.552 [INFO] [dome_twist_converter]: Dome command source: idle
+861.260 [INFO] [dome_arbiter]: dome: running
+861.300 [INFO] [dome_twist_converter]: Dome command source: personality
+864.674 [INFO] [dome_arbiter]: dome: move over, coast scale 0.18 for the next
+864.674 [INFO] [dome_arbiter]: dome: idle
+865.200 [INFO] [dome_twist_converter]: Dome command source: idle
+879.844 [INFO] [led_arbiter]: fld: running
+882.640 [INFO] [led_arbiter]: fld: idle
+884.719 [INFO] [dome_arbiter]: dome: running
+884.752 [INFO] [dome_twist_converter]: Dome command source: personality
+888.843 [INFO] [dome_arbiter]: dome: move over, coast scale 0.27 for the next
+888.843 [INFO] [dome_arbiter]: dome: idle
+889.350 [INFO] [dome_twist_converter]: Dome command source: idle
+908.890 [INFO] [dome_arbiter]: dome: running
+908.901 [INFO] [dome_twist_converter]: Dome command source: personality
+913.205 [INFO] [dome_arbiter]: dome: move over, coast scale 0.16 for the next
+913.207 [INFO] [dome_arbiter]: dome: idle
+913.701 [INFO] [dome_twist_converter]: Dome command source: idle
+933.270 [INFO] [dome_arbiter]: dome: running
+933.300 [INFO] [dome_twist_converter]: Dome command source: personality
+937.878 [INFO] [dome_arbiter]: dome: move over, coast scale 0.23 for the next
+937.878 [INFO] [dome_arbiter]: dome: idle
+938.301 [INFO] [dome_twist_converter]: Dome command source: idle
+942.352 [INFO] [r2_affect]: mood forced and locked excited by mood_cli
+942.533 [INFO] [led_arbiter]: mood: calm -> excited
+942.533 [INFO] [magic_arbiter]: mood: calm -> excited
+942.533 [INFO] [dome_arbiter]: mood: calm -> excited
+946.630 [INFO] [dome_arbiter]: dome: running
+946.651 [INFO] [dome_twist_converter]: Dome command source: personality
+951.290 [INFO] [dome_arbiter]: dome: move over, coast scale 0.50 for the next
+951.291 [INFO] [dome_arbiter]: dome: idle
+951.602 [INFO] [dome_twist_converter]: Dome command source: idle
+955.334 [INFO] [dome_arbiter]: dome: running
+955.352 [INFO] [dome_twist_converter]: Dome command source: personality
+957.137 [INFO] [led_arbiter]: psi: running
+958.342 [INFO] [led_arbiter]: psi: idle
+959.914 [INFO] [dome_arbiter]: dome: move over, coast scale 0.04 for the next
+959.915 [INFO] [dome_arbiter]: dome: idle
+960.451 [INFO] [dome_twist_converter]: Dome command source: idle
+964.006 [INFO] [dome_arbiter]: dome: running
+964.050 [INFO] [dome_twist_converter]: Dome command source: personality
+966.966 [INFO] [led_arbiter]: fld: running
+967.216 [INFO] [dome_arbiter]: dome: move over, coast scale 0.12 for the next
+967.218 [INFO] [dome_arbiter]: dome: idle
+967.602 [INFO] [dome_twist_converter]: Dome command source: idle
+971.004 [INFO] [led_arbiter]: fld: idle
+971.247 [INFO] [dome_arbiter]: dome: running
+971.251 [INFO] [dome_twist_converter]: Dome command source: personality
+974.337 [INFO] [dome_arbiter]: dome: move over, coast scale 0.10 for the next
+974.338 [INFO] [dome_arbiter]: dome: idle
+974.852 [INFO] [dome_twist_converter]: Dome command source: idle
+976.734 [INFO] [led_arbiter]: psi: running
+978.011 [INFO] [led_arbiter]: psi: idle
+978.386 [INFO] [dome_arbiter]: dome: running
+978.402 [INFO] [dome_twist_converter]: Dome command source: personality
+982.500 [INFO] [dome_arbiter]: dome: move over, coast scale 0.12 for the next
+982.501 [INFO] [dome_arbiter]: dome: idle
+982.951 [INFO] [dome_twist_converter]: Dome command source: idle
+986.548 [INFO] [dome_arbiter]: dome: running
+986.553 [INFO] [dome_twist_converter]: Dome command source: personality
+988.638 [INFO] [magic_arbiter]: magic: running
+990.122 [INFO] [dome_arbiter]: dome: move over, coast scale 0.13 for the next
+990.124 [INFO] [dome_arbiter]: dome: idle
+990.601 [INFO] [dome_twist_converter]: Dome command source: idle
+992.339 [INFO] [magic_arbiter]: magic: idle
+994.198 [INFO] [dome_arbiter]: dome: running
+994.203 [INFO] [dome_twist_converter]: Dome command source: personality
+997.704 [INFO] [dome_arbiter]: dome: move over, coast scale 0.13 for the next
+997.705 [INFO] [dome_arbiter]: dome: idle
+998.200 [INFO] [dome_twist_converter]: Dome command source: idle
+1001.748 [INFO] [dome_arbiter]: dome: running
+1001.751 [INFO] [dome_twist_converter]: Dome command source: personality
+1004.795 [INFO] [dome_arbiter]: dome: move over, coast scale 0.27 for the next
+1004.796 [INFO] [dome_arbiter]: dome: idle
+1005.200 [INFO] [dome_twist_converter]: Dome command source: idle
+1008.884 [INFO] [dome_arbiter]: dome: running
+1008.900 [INFO] [dome_twist_converter]: Dome command source: personality
+1008.996 [INFO] [magic_arbiter]: magic: running
+1009.647 [INFO] [led_arbiter]: fld: running
+1012.036 [INFO] [dome_arbiter]: dome: move over, coast scale 0.11 for the next
+1012.037 [INFO] [dome_arbiter]: dome: idle
+1012.550 [INFO] [dome_twist_converter]: Dome command source: idle
+1012.701 [INFO] [magic_arbiter]: magic: idle
+1013.650 [INFO] [led_arbiter]: fld: idle
+1016.128 [INFO] [dome_arbiter]: dome: running
+1016.152 [INFO] [dome_twist_converter]: Dome command source: personality
+1020.631 [INFO] [dome_arbiter]: dome: move over, coast scale 0.16 for the next
+1020.631 [INFO] [dome_arbiter]: dome: idle
+1021.055 [INFO] [led_arbiter]: fld: running
+1021.100 [INFO] [dome_twist_converter]: Dome command source: idle
+1022.928 [INFO] [magic_arbiter]: magic: running
+1024.695 [INFO] [dome_arbiter]: dome: running
+1024.701 [INFO] [dome_twist_converter]: Dome command source: personality
+1025.096 [INFO] [led_arbiter]: fld: idle
+1026.601 [INFO] [magic_arbiter]: magic: idle
+1027.141 [INFO] [r2_affect]: mood forced and locked sleepy by mood_cli
+1027.301 [INFO] [magic_arbiter]: mood: excited -> sleepy
+1027.303 [INFO] [led_arbiter]: mood: excited -> sleepy
+1027.303 [INFO] [dome_arbiter]: mood: excited -> sleepy
+1029.892 [INFO] [dome_arbiter]: dome: move over, coast scale 0.18 for the next
+1029.892 [INFO] [dome_arbiter]: dome: idle
+1030.402 [INFO] [dome_twist_converter]: Dome command source: idle
+1076.706 [INFO] [dome_arbiter]: dome: running
+1076.708 [INFO] [dome_arbiter]: intent express-2bc9c6ba accepted: dome turn  from behavior
+1076.755 [INFO] [dome_twist_converter]: Dome command source: personality
+1079.575 [INFO] [dome_arbiter]: dome: move over, coast scale 0.07 for the next
+1079.575 [INFO] [dome_arbiter]: dome: idle
+1080.052 [INFO] [dome_twist_converter]: Dome command source: idle
+1169.845 [INFO] [dome_arbiter]: dome: running
+1169.857 [INFO] [dome_twist_converter]: Dome command source: personality
+1171.184 [INFO] [dome_arbiter]: dome: move over, coast scale 0.23 for the next
+1171.185 [INFO] [dome_arbiter]: dome: idle
+1171.700 [INFO] [dome_twist_converter]: Dome command source: idle
+1221.537 [INFO] [r2_affect]: mood forced and locked excited by mood_cli
+1221.547 [INFO] [led_arbiter]: mood: sleepy -> excited
+1221.547 [INFO] [dome_arbiter]: mood: sleepy -> excited
+1221.547 [INFO] [magic_arbiter]: mood: sleepy -> excited
+1225.568 [INFO] [dome_arbiter]: dome: running
+1225.603 [INFO] [dome_twist_converter]: Dome command source: personality
+1229.312 [INFO] [dome_arbiter]: dome: move over, coast scale 0.15 for the next
+1229.313 [INFO] [dome_arbiter]: dome: idle
+1229.800 [INFO] [dome_twist_converter]: Dome command source: idle
+1230.035 [INFO] [led_arbiter]: psi: running
+1231.296 [INFO] [led_arbiter]: psi: idle
+1233.321 [INFO] [dome_arbiter]: dome: running
+1233.352 [INFO] [dome_twist_converter]: Dome command source: personality
+1238.037 [INFO] [dome_arbiter]: intent express-fc8eaee9 accepted: dome look_at  from manual
+1238.756 [INFO] [dome_arbiter]: dome: move over, coast scale 0.16 for the next
+1238.756 [INFO] [dome_arbiter]: dome: suppressed (manual)
+1239.149 [INFO] [r2_affect]: stimulus being_driven from drive_stimulus i=0.30: no change -> aro=0.80 val=0.80 cur=0.80 con=0.60 (locked, not applied)
+1239.200 [INFO] [dome_twist_converter]: Dome command source: idle
+1239.217 [INFO] [drive_stimulus]: emit being_driven intensity=0.30
+1240.207 [INFO] [drive_stimulus]: emit being_driven intensity=0.30
+1240.208 [INFO] [r2_affect]: stimulus being_driven from drive_stimulus dropped: refractory (2.0 s window; further drops in this window are not logged)
+1241.251 [INFO] [drive_stimulus]: emit being_driven intensity=0.30
+1241.253 [INFO] [r2_affect]: stimulus being_driven from drive_stimulus i=0.30: no change -> aro=0.80 val=0.80 cur=0.80 con=0.60 (locked, not applied)
+1242.287 [INFO] [drive_stimulus]: emit being_driven intensity=0.30
+1242.287 [INFO] [r2_affect]: stimulus being_driven from drive_stimulus dropped: refractory (2.0 s window; further drops in this window are not logged)
+1242.689 [INFO] [led_arbiter]: fld: running
+1243.378 [INFO] [r2_affect]: stimulus being_driven from drive_stimulus i=0.30: no change -> aro=0.80 val=0.80 cur=0.80 con=0.60 (locked, not applied)
+1243.378 [INFO] [drive_stimulus]: emit being_driven intensity=0.30
+1244.398 [INFO] [drive_stimulus]: emit being_driven intensity=0.30
+1244.398 [INFO] [r2_affect]: stimulus being_driven from drive_stimulus dropped: refractory (2.0 s window; further drops in this window are not logged)
+1245.429 [INFO] [drive_stimulus]: emit being_driven intensity=0.31
+1245.431 [INFO] [r2_affect]: stimulus being_driven from drive_stimulus i=0.31: no change -> aro=0.80 val=0.80 cur=0.80 con=0.60 (locked, not applied)
+1245.510 [INFO] [dome_arbiter]: intent express-08495b44 accepted: dome look_at  from manual
+1245.552 [INFO] [dome_twist_converter]: Dome command source: personality
+1246.484 [INFO] [drive_stimulus]: emit being_driven intensity=0.31
+1246.484 [INFO] [r2_affect]: stimulus being_driven from drive_stimulus dropped: refractory (2.0 s window; further drops in this window are not logged)
+1246.781 [INFO] [led_arbiter]: fld: idle
+1247.512 [INFO] [drive_stimulus]: emit being_driven intensity=0.30
+1247.512 [INFO] [r2_affect]: stimulus being_driven from drive_stimulus i=0.30: no change -> aro=0.80 val=0.80 cur=0.80 con=0.60 (locked, not applied)
+1247.780 [INFO] [dome_arbiter]: dome: move over, coast scale 0.15 for the next
+1248.251 [INFO] [dome_twist_converter]: Dome command source: idle
+1248.530 [INFO] [drive_stimulus]: emit being_driven intensity=0.30
+1248.531 [INFO] [r2_affect]: stimulus being_driven from drive_stimulus dropped: refractory (2.0 s window; further drops in this window are not logged)
+1249.543 [INFO] [drive_stimulus]: emit being_driven intensity=0.30
+1249.544 [INFO] [r2_affect]: stimulus being_driven from drive_stimulus i=0.30: no change -> aro=0.80 val=0.80 cur=0.80 con=0.60 (locked, not applied)
+1250.616 [INFO] [drive_stimulus]: emit being_driven intensity=0.30
+1250.619 [INFO] [r2_affect]: stimulus being_driven from drive_stimulus dropped: refractory (2.0 s window; further drops in this window are not logged)
+1251.907 [INFO] [dome_arbiter]: dome: claimed (manual)
+1252.266 [INFO] [r2_affect]: stimulus stopped from drive_stimulus i=1.00: no change -> aro=0.80 val=0.80 cur=0.80 con=0.60 (locked, not applied)
+1252.266 [INFO] [drive_stimulus]: emit stopped intensity=1.00
+1252.834 [INFO] [dome_arbiter]: dome: idle
+1255.896 [INFO] [dome_arbiter]: dome: running
+1255.902 [INFO] [dome_twist_converter]: Dome command source: personality
+1258.796 [INFO] [dome_arbiter]: dome: move over, coast scale 0.28 for the next
+1258.797 [INFO] [dome_arbiter]: dome: idle
+1259.255 [INFO] [dome_twist_converter]: Dome command source: idle
+1262.833 [INFO] [dome_arbiter]: dome: running
+1262.852 [INFO] [dome_twist_converter]: Dome command source: personality
+1265.934 [INFO] [led_arbiter]: psi: running
+1266.658 [INFO] [dome_arbiter]: dome: move over, coast scale 0.01 for the next
+1266.658 [INFO] [dome_arbiter]: dome: idle
+1267.151 [INFO] [dome_twist_converter]: Dome command source: idle
+1267.337 [INFO] [led_arbiter]: psi: idle
+1270.684 [INFO] [dome_arbiter]: dome: running
+1270.702 [INFO] [dome_twist_converter]: Dome command source: personality
+1274.421 [INFO] [dome_arbiter]: dome: move over, coast scale 0.12 for the next
+1274.421 [INFO] [dome_arbiter]: dome: idle
+1274.899 [INFO] [dome_twist_converter]: Dome command source: idle
+1278.437 [INFO] [dome_arbiter]: dome: running
+1278.452 [INFO] [dome_twist_converter]: Dome command source: personality
+1279.987 [INFO] [r2_affect]: mood forced and locked calm by mood_cli
+1280.066 [INFO] [dome_arbiter]: mood: excited -> calm
+1280.066 [INFO] [magic_arbiter]: mood: excited -> calm
+1280.068 [INFO] [led_arbiter]: mood: excited -> calm
+1281.518 [INFO] [dome_arbiter]: dome: move over, coast scale 0.31 for the next
+1281.519 [INFO] [dome_arbiter]: dome: idle
+1282.002 [INFO] [dome_twist_converter]: Dome command source: idle
+1293.872 [INFO] [r2_affect]: stimulus bump from accept i=1.00: no change -> aro=0.00 val=0.20 cur=0.80 con=0.60 (locked, not applied)
+1301.596 [INFO] [dome_arbiter]: dome: running
+1301.603 [INFO] [dome_twist_converter]: Dome command source: personality
+1304.621 [INFO] [r2_affect]: stimulus bump from accept i=1.00: no change -> aro=0.00 val=0.20 cur=0.80 con=0.60 (locked, not applied)
+1305.202 [INFO] [dome_arbiter]: dome: move over, coast scale 0.08 for the next
+1305.202 [INFO] [dome_arbiter]: dome: idle
+1305.700 [INFO] [dome_twist_converter]: Dome command source: idle
+1315.017 [INFO] [dome_arbiter]: dome: running (manual)
+1315.018 [INFO] [dome_arbiter]: intent express-97726de8 accepted: dome look_at  from manual
+1315.052 [INFO] [dome_twist_converter]: Dome command source: personality
+1316.833 [INFO] [dome_arbiter]: dome: move over, coast scale 0.18 for the next
+1316.834 [INFO] [dome_arbiter]: dome: claimed (manual)
+1317.352 [INFO] [dome_twist_converter]: Dome command source: idle
+1321.890 [INFO] [dome_arbiter]: dome: idle
+1336.883 [INFO] [dome_arbiter]: dome: running
+1336.904 [INFO] [dome_twist_converter]: Dome command source: personality
+1341.175 [INFO] [dome_arbiter]: dome: move over, coast scale 0.20 for the next
+1341.176 [INFO] [dome_arbiter]: dome: idle
+1341.701 [INFO] [dome_twist_converter]: Dome command source: idle
+1349.018 [INFO] [dome_arbiter]: dome: running
+1349.020 [INFO] [dome_arbiter]: intent express-0c45b578 accepted: dome look_at  from behavior
+1349.052 [INFO] [dome_twist_converter]: Dome command source: personality
+1352.502 [INFO] [dome_arbiter]: dome: move over, coast scale 0.11 for the next
+1352.504 [INFO] [dome_arbiter]: dome: idle
+1352.903 [INFO] [dome_twist_converter]: Dome command source: idle
+1353.100 [INFO] [dome_arbiter]: dome: stale
+1353.181 [INFO] [led_arbiter]: fld: stale
+1353.183 [INFO] [led_arbiter]: tfld: stale
+1353.183 [INFO] [led_arbiter]: bfld: stale
+1353.184 [INFO] [led_arbiter]: rld: stale
+1353.186 [INFO] [led_arbiter]: psi: stale
+1353.192 [INFO] [magic_arbiter]: magic: stale
+1370.823 [INFO] [r2_affect]: r2_affect up: config /ws/install/r2_affect/share/r2_affect/config/affect.yaml, 5.0 Hz, mood calm (aro=0.00 val=0.20 cur=0.40 con=0.60)
+1370.939 [INFO] [dome_arbiter]: dome: idle
+1370.939 [INFO] [magic_arbiter]: magic: idle
+1370.940 [INFO] [led_arbiter]: fld: idle
+1370.941 [INFO] [led_arbiter]: tfld: idle
+1370.941 [INFO] [led_arbiter]: bfld: idle
+1370.942 [INFO] [led_arbiter]: rld: idle
+1370.942 [INFO] [led_arbiter]: psi: idle
+1390.947 [INFO] [dome_arbiter]: dome: running
+1390.952 [INFO] [dome_twist_converter]: Dome command source: personality
+1394.634 [INFO] [dome_arbiter]: dome: move over, coast scale 0.19 for the next
+1394.635 [INFO] [dome_arbiter]: dome: idle
+1395.150 [INFO] [dome_twist_converter]: Dome command source: idle
+1407.198 [INFO] [dome_arbiter]: dome: running
+1407.199 [INFO] [dome_arbiter]: intent express-c375fdd9 accepted: dome look_at  from behavior
+1407.209 [INFO] [dome_twist_converter]: Dome command source: personality
+1410.733 [INFO] [dome_arbiter]: dome: move over, coast scale 0.20 for the next
+1410.734 [INFO] [dome_arbiter]: dome: stale
+1410.786 [INFO] [led_arbiter]: fld: stale
+1410.786 [INFO] [led_arbiter]: tfld: stale
+1410.787 [INFO] [led_arbiter]: bfld: stale
+1410.788 [INFO] [led_arbiter]: rld: stale
+1410.788 [INFO] [led_arbiter]: psi: stale
+1410.797 [INFO] [magic_arbiter]: magic: stale
+1411.201 [INFO] [dome_twist_converter]: Dome command source: idle
+1430.698 [INFO] [r2_affect]: r2_affect up: config /ws/install/r2_affect/share/r2_affect/config/affect.yaml, 5.0 Hz, mood calm (aro=0.00 val=0.20 cur=0.40 con=0.60)
+1430.797 [INFO] [led_arbiter]: fld: idle
+1430.797 [INFO] [dome_arbiter]: dome: idle
+1430.797 [INFO] [led_arbiter]: tfld: idle
+1430.798 [INFO] [led_arbiter]: bfld: idle
+1430.798 [INFO] [magic_arbiter]: magic: idle
+1430.799 [INFO] [led_arbiter]: rld: idle
+1430.800 [INFO] [led_arbiter]: psi: idle
+1450.816 [INFO] [dome_arbiter]: dome: running
+1450.852 [INFO] [dome_twist_converter]: Dome command source: personality
+1455.191 [INFO] [dome_arbiter]: dome: move over, coast scale 0.12 for the next
+1455.192 [INFO] [dome_arbiter]: dome: idle
+1455.551 [INFO] [dome_twist_converter]: Dome command source: idle
+1469.728 [INFO] [dome_arbiter]: dome: running (manual)
+1469.729 [INFO] [dome_arbiter]: intent express-0e838158 accepted: dome look_at  from manual
+1469.753 [INFO] [dome_twist_converter]: Dome command source: personality
+1471.451 [INFO] [dome_twist_converter]: Dome command source: idle
+1475.534 [INFO] [led_arbiter]: fld: running
+1478.129 [INFO] [led_arbiter]: fld: idle
+1486.968 [INFO] [dome_arbiter]: dome_arbiter up: config /ws/install/r2_expression/share/r2_expression/config/expression.yaml, device dome_twist_converter via /dome/cmd/personality, channels dome
+1486.971 [INFO] [dome_arbiter]: mood: - -> calm
+1486.971 [INFO] [dome_arbiter]: dome: offline
+1487.001 [INFO] [dome_arbiter]: dome: idle
+1507.021 [INFO] [dome_arbiter]: dome: running
+1507.054 [INFO] [dome_twist_converter]: Dome command source: personality
+1510.387 [WARN] [controller_manager]: Controller Manager: to switch controllers you need to specify a strictness level of controller_manager_msgs::SwitchController::STRICT (2) or ::BEST_EFFORT (1). When unspecified, the default is BEST_EFFORT
+1510.387 [INFO] [controller_manager]: Deactivating controllers: [ dome_state_broadcaster ]
+1510.417 [INFO] [controller_manager]: Requested controller switch from non-realtime loop
+1510.418 [INFO] [controller_manager]: Deactivated controllers: [ dome_state_broadcaster ]
+1510.418 [INFO] [controller_manager]: Successfully switched controllers!
+1510.924 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+1510.924 [INFO] [dome_arbiter]: dome: idle
+1511.352 [INFO] [dome_twist_converter]: Dome command source: idle
+1515.504 [INFO] [dome_arbiter]: dome: offline
+1542.373 [INFO] [controller_manager]: Activating controllers: [ dome_state_broadcaster ]
+1542.376 [INFO] [controller_manager]: Requested controller switch from non-realtime loop
+1542.376 [INFO] [controller_manager]: Activated controllers: [ dome_state_broadcaster ]
+1542.376 [INFO] [controller_manager]: Successfully switched controllers!
+1542.415 [INFO] [dome_arbiter]: dome: idle
+1551.391 [INFO] [dome_arbiter]: dome: running
+1551.403 [INFO] [dome_twist_converter]: Dome command source: personality
+1555.641 [INFO] [dome_arbiter]: dome: move over, coast scale 0.11 for the next
+1555.642 [INFO] [dome_arbiter]: dome: idle
+1556.154 [INFO] [dome_twist_converter]: Dome command source: idle
+1558.630 [INFO] [led_arbiter]: fld: running
+1561.349 [INFO] [led_arbiter]: fld: idle
+1575.667 [INFO] [dome_arbiter]: dome: running
+1575.705 [INFO] [dome_twist_converter]: Dome command source: personality
+1579.512 [INFO] [dome_arbiter]: dome: move over, coast scale 0.23 for the next
+1579.513 [INFO] [dome_arbiter]: dome: idle
+1580.001 [INFO] [dome_twist_converter]: Dome command source: idle
