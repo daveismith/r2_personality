@@ -40,7 +40,7 @@ reason)``. Rules, each named by a test:
 3. **Approach.** ``v = clamp(k * |err|, min_speed, v_max)`` toward the target (rule 1 and
    2 applied after).
 4. **Early stop by the coast.** The dome coasts ``max(0, c1 * v - c2)`` after a 0
-   (calibration findings: 0.37 s and 4 degrees), so the move sends 0 once ``|err|`` is
+   (measured on the droid, step 8b: 0.52 s and 0), so the move sends 0 once ``|err|`` is
    within that of the target (plus half of what the dome covers in one step: the stop
    falls on the nearest step, not the one after), or once it has passed the target.
 5. **Settle.** After the 0 the move waits ``settle_s`` (longer, up to twice that, while the
@@ -72,6 +72,15 @@ reason)``. Rules, each named by a test:
    rate limiter and samples, so the velocity simply changes (plan 4.3, one move at a time);
    a command above the new ``v_max`` comes down to it at once. If the new target is behind
    the command, the move sends 0, settles and makes a full approach, keeping its retry.
+9. **Plausibility gate.** The droid's ring sensor misreads: turning clockwise at 1 rad/s the
+   reading drops by about 0.6 rad for one sample as the dome passes 313 to 331 degrees, then
+   jumps forward (measured 2026-10-23, ``docs/dome-motion-measurements.md``). A sample whose
+   speed implied from the last accepted sample exceeds ``Limits.max_plausible_rad_s`` (4.0,
+   twice the converter's cap) is held back and dropped: the previous estimate stands and
+   rule 7's frozen-reading rule applies. If the next sample agrees with the held one within
+   the plausible speed, both are accepted (a genuine fast push, or a wrap crossing with
+   the firmware's 9-degree step, costs one sample); otherwise only the held one is
+   dropped. A held sample still counts as feedback for ``feedback_timeout_s``.
 
 :class:`RestHold` is the ``rest`` recheck cadence: at most one drift check per
 ``rest_recheck_s`` while the dome is meant to rest.
@@ -125,8 +134,8 @@ class Heading:
 class Coast:
     """How far the dome runs on after a 0: ``max(0, c1_s * |v| - c2_rad)``."""
 
-    c1_s: float = 0.37
-    c2_rad: float = 0.07
+    c1_s: float = 0.52
+    c2_rad: float = 0.0
 
     def distance(self, speed):
         """Return the coast after a 0 at ``speed`` rad/s."""
@@ -158,6 +167,7 @@ class Limits:
     coast: Coast = Coast()
     retries: int = 1
     feedback_timeout_s: float = 0.5
+    max_plausible_rad_s: float = 4.0    # rule 9: the fastest dome speed a sample may imply
 
 
 class RateLimiter:
@@ -229,6 +239,7 @@ class Move:
             self._u, self._sample = follows._u, follows._sample
             self._sample_at, self._moved_at = follows._sample_at, follows._moved_at
             self._v_meas = follows._v_meas
+            self._held = follows._held
             self._v_peak = follows._v_peak
             self.coast_scale = follows.coast_scale
             self.coast_learned = follows.coast_learned   # its scale, to teach when done
@@ -237,6 +248,7 @@ class Move:
             self._u = self._sample = 0.0
             self._sample_at = self._moved_at = None
             self._v_meas = None
+            self._held = None        # rule 9: a sample held back, (position, time)
 
     @property
     def velocity(self):
@@ -298,12 +310,27 @@ class Move:
             self._sample_at = self._moved_at = at
         elif at > self._sample_at:
             self._sample_at = at
-            step = wrap(position - self._sample)
-            if step == 0.0 and self._limiter.velocity != 0.0 and self._moving():
-                return               # a commanded dome does not stop dead: a frozen reading
-            self._v_meas = step / (at - self._moved_at)
-            self._u += step
-            self._sample, self._moved_at = position, at
+            held, self._held = self._held, None
+            if held is not None and self._plausible(*held, position, at):
+                self._accept(*held)             # rule 9: the next sample vouches for it
+                self._accept(position, at)
+            elif self._plausible(self._sample, self._moved_at, position, at):
+                self._accept(position, at)      # (a held sample that nothing vouched for is gone)
+            else:
+                self._held = (position, at)     # rule 9: wait for the next sample
+
+    def _plausible(self, from_position, from_at, position, at):
+        """Rule 9: whether the speed from ``from_position`` to ``position`` is possible."""
+        return abs(wrap(position - from_position)) <= self.limits.max_plausible_rad_s * (
+            at - from_at)
+
+    def _accept(self, position, at):
+        step = wrap(position - self._sample)
+        if step == 0.0 and self._limiter.velocity != 0.0 and self._moving():
+            return                   # a commanded dome does not stop dead: a frozen reading
+        self._v_meas = step / (at - self._moved_at)
+        self._u += step
+        self._sample, self._moved_at = position, at
 
     def _moving(self):
         return self._v_meas is not None and abs(self._v_meas) > STILL_RAD_S

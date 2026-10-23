@@ -1559,10 +1559,10 @@ def test_dome_a_claim_stops_the_move_with_a_0():
 
 def test_dome_equal_priority_replaces_the_move_without_a_0_unless_non_interruptible():
     a = dome()
-    dome_intent(a, 'look_at', {'bearing': 2.0}, source='behavior', priority=100,
+    dome_intent(a, 'look_at', {'bearing': 3.0}, source='behavior', priority=100,
                 intent_id='a')
     before = live(a, 0.5)[-1].request['velocity_rad_s']
-    r = dome_intent(a, 'look_at', {'bearing': 1.5}, source='behavior', priority=100,
+    r = dome_intent(a, 'look_at', {'bearing': 2.5}, source='behavior', priority=100,
                     intent_id='b')
     assert r.accepted and speeds(r.actions)[0] < 0.0          # same way, no 0 between
     assert abs(speeds(r.actions)[0] - before) <= 4.0 * 0.05 + 1e-9

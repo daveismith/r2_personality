@@ -202,18 +202,27 @@ Parameters, read at startup: `ideal` (false), `firmware_quirks` (true), `initial
 The commands topic is absolute; remap it (`-r /dome_controller/commands:=/x/commands`) to keep
 a test off a real graph.
 
-The plant (`DomePlant(ideal, firmware_quirks, initial_rad).step(command, dt)` returns the
+The plant (`DomePlant(ideal, firmware_quirks, initial_rad, preset, misread_at).step(command, dt)` returns the
 reported position; `position_rad`, `velocity_rad_s`, `wrapped_rad`, `reported_rad`, `coasting`):
 
 - dead band, per direction as the droid's `velocity_map` has it: a positive command under
   0.44 rad/s or a negative one under 0.567 rad/s turns the motor off;
-- lag: first order, 90 % of the commanded speed at 1.5 s (`tau` = 1.5 / ln 10);
-- coast: when the motor goes off, a further `0.37 s * v - 4 deg` (never negative), slowing at a
-  constant rate over exactly that distance;
+- lag: first order, 90 % of the commanded speed at 0.6 s (`tau` = 0.6 / ln 10), as measured on
+  the droid 2026-10-23 (0.4 to 1.0 s at 0.6 to 2 rad/s);
+- floor: a command under 0.7 rad/s achieves 0.58 of itself (the one point measured, 0.6 -> 0.35
+  rad/s; the velocity map is loose below 2 rad/s);
+- coast: when the motor goes off, a further `0.52 s * v` (the measured fit, no offset; never
+  negative), slowing at a constant rate over exactly that distance;
+- `preset='findings_2026_10'` gives the calibration findings' numbers instead (1.5 s to 90 %,
+  coast `0.37 s * v - 4 deg`, measured at higher speeds); see
+  `r2_expression/docs/dome-motion-measurements.md`;
 - position wrapped to [0, 2*pi); with `firmware_quirks` the angle never reads inside
   (355 deg, 4 deg), so each crossing of 0, in either direction, is one 9 deg step between a
   355 deg and a 4 deg reading (the reading is a function of the true angle alone, error at
   most 4.5 deg, no drift);
+- `misread_at=(313, 331, 279)` (degrees; off by default): the droid's ring sensor misreads. When the
+  true angle enters the sector moving positive the reading is 279 for the next 0.08 s (one 10 Hz
+  sample) and then true again; anticlockwise never misreads (measured 2026-10-23);
 - `ideal`: a pure integrator, the velocity is the command at once; the position is still wrapped.
 
 The node tests start the real converter (`ros2 run r2_bringup dome_twist_converter`); they skip
@@ -224,8 +233,9 @@ if `r2_bringup` is not installed, because `r2_bringup` exec_depends on this pack
 
 - No `:DPA` position moves, no `~/set_home_here` or `~/setup`, no plausibility gate.
 - No `DomeTelemetry` on `/roamadome/telemetry`; no velocity in the joint state.
-- The lag is first order, not the measured step response; the coast is the linear fit
-  `0.37 v - 4 deg`, not the real curve (the fit is reliable from about 2 rad/s).
+- The lag is first order, not the measured response; the coast is the linear fit
+  `0.52 v`, not the real curve (the achieved speed also varies with the command more than
+  the plant shows: the velocity map is loose below 2 rad/s).
 - Above the floor, positive and negative commands are symmetric (the real `velocity_map`'s
   speeds differ per direction a little), and the map's whole-percent steps are not modelled;
   the two floors (0.44 and 0.567 rad/s) are.

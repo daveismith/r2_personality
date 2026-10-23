@@ -303,7 +303,11 @@ publishes `/expression/status`, as the others. The verbs (`look_at`, `glance`, `
 `expression.yaml` (`defaults.dome`, `profiles`, each mood's `dome`). `defaults.dome`'s
 `min_speed_rad_s` (0.6) sits above both floors of the droid's velocity map (a positive command
 under about 0.44 rad/s and a negative one under about 0.567 rad/s send 0 %); `retries` (1) and
-`feedback_timeout_s` (0.5) are the moves' retry budget and feedback timeout. Its
+`feedback_timeout_s` (0.5) are the moves' retry budget and feedback timeout. `max_plausible_rad_s`
+(4.0, twice the cap) is the plausibility gate: the droid's ring sensor sometimes reads about
+0.6 rad low for one sample while the dome passes 313 to 331 degrees clockwise, and a move
+holds back any joint state that implies a faster dome than this, dropping it unless the next
+sample agrees with it (a real fast push is accepted one sample late). Its
 `max_speed_rad_s` (2.0) and `max_accel_rad_s2` (6.0) are the renderer's own clamp on the
 profiles; the converter's `personality_max_speed_rad_s` and `personality_max_accel_rad_s2`
 (launch arguments of `r2_bringup`) are the authority, and the two should be kept equal.

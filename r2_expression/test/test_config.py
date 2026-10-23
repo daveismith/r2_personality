@@ -126,9 +126,9 @@ def test_shipped_dome_defaults_are_the_plan_4_5_values():
     d = load_config(SHIPPED).defaults.dome
     assert (d.min_speed_rad_s, d.max_speed_rad_s, d.max_accel_rad_s2, d.max_move_s,
             d.settle_s, d.rest_recheck_s) == (0.6, 2.0, 6.0, 8.0, 0.8, 30.0)
-    assert (d.retries, d.feedback_timeout_s) == (1, 0.5)
+    assert (d.retries, d.feedback_timeout_s, d.max_plausible_rad_s) == (1, 0.5, 4.0)
     assert d == DomeDefaults()                       # the yaml and the code agree
-    assert d.coast == Coast(0.37, 0.07) and d.heading == Heading(-1, 0.0)
+    assert d.coast == Coast(0.52, 0.0) and d.heading == Heading(-1, 0.0)
     assert (d.body_speed_m_s, d.body_yaw_rad_s, d.after_foreign_s, d.after_still_s) == (
         0.15, 0.3, 3.0, 1.0)
 
@@ -274,7 +274,7 @@ def test_dome_defaults_partial_blocks_keep_the_rest():
     data = dome_data()
     data['defaults']['dome'] = {'coast': {'c2_rad': 0.0}, 'heading': {'sign': 1}}
     d = parse_config(data).defaults.dome
-    assert d.coast == Coast(0.37, 0.0) and d.heading == Heading(1, 0.0)
+    assert d.coast == Coast(0.52, 0.0) and d.heading == Heading(1, 0.0)
     assert d.min_speed_rad_s == 0.6
 
 

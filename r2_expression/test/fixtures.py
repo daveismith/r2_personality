@@ -183,8 +183,8 @@ class PlantDouble(DomePlant):
     joint state's. ``quirks`` is the firmware's 9-degree crossing of 0 (off by default).
     """
 
-    def __init__(self, position=0.0, ideal=False, quirks=False):
-        super().__init__(ideal=ideal, firmware_quirks=quirks, initial_rad=position)
+    def __init__(self, position=0.0, ideal=False, quirks=False, **kwargs):
+        super().__init__(ideal=ideal, firmware_quirks=quirks, initial_rad=position, **kwargs)
 
     @property
     def position(self):

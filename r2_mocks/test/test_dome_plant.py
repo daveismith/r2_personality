@@ -15,9 +15,11 @@
 """
 ``DomePlant`` against the numbers of plan 2.1.
 
-Dead band 0.44 rad/s positive and 0.567 rad/s negative (the velocity map's two floors),
-90 % of the commanded speed at 1.5 s, coast ``0.37 s * v - 4 deg``, the 355-to-4 deg step
-at each crossing of 0.
+Dead band 0.44 rad/s positive and 0.567 rad/s negative (the velocity map's two floors).
+By default the droid's own lag and coast (step 8b, 2026-10-23): 90 % of the speed at 0.6 s,
+coast ``0.52 s * v`` with no offset, and a command of 0.6 rad/s (the floor) achieves 0.35. The
+``findings_2026_10`` preset keeps the calibration findings' 1.5 s and ``0.37 s * v - 4 deg``.
+The 355-to-4 deg step at each crossing of 0.
 """
 
 import math
@@ -37,6 +39,10 @@ def run(plant, command, seconds, dt=DT):
         plant.step(command, dt)
 
 
+PRESET_LAGS_COASTS = {'measured_2026_10': (0.6, 0.52, 0.0),
+                      'findings_2026_10': (1.5, 0.37, math.radians(4.0))}
+
+
 def settle(plant, command=0.0, limit_s=30.0):
     run(plant, command, limit_s)
     assert plant.velocity_rad_s == 0.0
@@ -53,7 +59,7 @@ def test_dead_band_below_0_44_positive_and_0_567_negative_the_dome_does_not_move
 def test_dead_band_at_the_floor_of_each_direction_the_dome_moves(command):
     plant = DomePlant()
     run(plant, command, 5.0)
-    assert abs(plant.velocity_rad_s) > 0.4 and abs(plant.position_rad) > 1.0
+    assert abs(plant.velocity_rad_s) > 0.2 and abs(plant.position_rad) > 1.0
     assert math.copysign(1.0, plant.position_rad) == math.copysign(1.0, command)
 
 
@@ -64,11 +70,17 @@ def test_dead_band_floors_are_the_velocity_maps():
         assert floor == pytest.approx((min_percent - 0.5 - p0) / k, abs=1e-3)
 
 
+@pytest.mark.parametrize('preset', PRESET_LAGS_COASTS)
 @pytest.mark.parametrize('dt', [DT, 0.01, 0.1])
-def test_lag_reaches_90_percent_of_the_commanded_speed_at_1_5_s(dt):
-    plant = DomePlant()
-    run(plant, 2.0, 1.5, dt)
+def test_lag_reaches_90_percent_of_the_commanded_speed_at_the_presets_time(preset, dt):
+    lag_90_s = PRESET_LAGS_COASTS[preset][0]
+    plant = DomePlant(preset=preset)
+    run(plant, 2.0, lag_90_s, dt)
     assert plant.velocity_rad_s == pytest.approx(0.9 * 2.0, rel=1e-6)
+
+
+def test_lag_default_is_the_measured_0_6_s():
+    assert DomePlant().lag_90_s == 0.6 and DomePlant().preset == 'measured_2026_10'
 
 
 def test_lag_is_first_order_the_position_integrates_the_velocity():
@@ -80,14 +92,38 @@ def test_lag_is_first_order_the_position_integrates_the_velocity():
     assert plant.velocity_rad_s == pytest.approx(fine.velocity_rad_s, rel=1e-6)
 
 
-@pytest.mark.parametrize('speed', [0.6, 1.0, 2.0])
-def test_coast_after_a_stop_is_0_37_v_minus_4_degrees_at_v(speed):
-    plant = DomePlant()
+@pytest.mark.parametrize('preset', PRESET_LAGS_COASTS)
+@pytest.mark.parametrize('speed', [1.0, 2.0])
+def test_coast_after_a_stop_is_the_presets_fit_at_v(preset, speed):
+    _, coast_s, offset = PRESET_LAGS_COASTS[preset]
+    plant = DomePlant(preset=preset)
     run(plant, speed, 10.0)                       # settled at the commanded speed
     at_stop, v = plant.position_rad, plant.velocity_rad_s
     assert v == pytest.approx(speed, abs=1e-3)
     settle(plant, 0.0)
-    assert plant.position_rad - at_stop == pytest.approx(0.37 * v - math.radians(4.0), abs=1e-9)
+    assert plant.position_rad - at_stop == pytest.approx(coast_s * v - offset, abs=1e-9)
+
+
+def test_floor_a_command_of_0_6_achieves_0_58_of_it_and_coasts_0_12_rad():
+    # The one point measured near the floor (step 8b): 0.35 rad/s achieved, coast 0.12 rad.
+    plant = DomePlant()
+    run(plant, 0.6, 10.0)
+    at_stop = plant.position_rad
+    assert plant.velocity_rad_s == pytest.approx(0.348, abs=1e-3)
+    settle(plant, 0.0)
+    assert plant.position_rad - at_stop == pytest.approx(0.52 * 0.348, abs=1e-9)
+    assert plant.position_rad - at_stop == pytest.approx(0.122, abs=0.07)
+    findings = DomePlant(preset='findings_2026_10')
+    run(findings, 0.6, 10.0)
+    assert findings.velocity_rad_s == pytest.approx(0.6, abs=1e-3)
+
+
+def test_coast_default_is_0_52_v_with_no_offset():
+    plant = DomePlant()
+    run(plant, 1.5, 10.0)
+    at_stop, v = plant.position_rad, plant.velocity_rad_s
+    settle(plant, 0.0)
+    assert plant.position_rad - at_stop == pytest.approx(0.52 * v, abs=1e-9)
 
 
 def test_coast_a_sub_dead_band_command_stops_the_motor_like_a_zero():
@@ -95,11 +131,11 @@ def test_coast_a_sub_dead_band_command_stops_the_motor_like_a_zero():
     run(plant, 2.0, 10.0)
     at_stop, v = plant.position_rad, plant.velocity_rad_s
     settle(plant, 0.3)
-    assert plant.position_rad - at_stop == pytest.approx(0.37 * v - math.radians(4.0), abs=1e-9)
+    assert plant.position_rad - at_stop == pytest.approx(0.52 * v, abs=1e-9)
 
 
 def test_coast_never_negative_a_slow_dome_stops_at_once():
-    plant = DomePlant()
+    plant = DomePlant(preset='findings_2026_10')
     plant.step(0.45, 0.01)                        # about 0.007 rad/s: the 4 deg offset wins
     at_stop = plant.position_rad
     plant.step(0.0, DT)
@@ -235,3 +271,51 @@ def test_a_bad_dt_changes_nothing():
     for dt in (0.0, -1.0, float('nan'), float('inf')):
         plant.step(2.0, dt)
     assert plant.position_rad == 1.0 and plant.velocity_rad_s == 0.0
+
+
+def sampled(plant, speed, seconds, hz=10):
+    """Return the readings at ``hz`` while running at ``speed`` (stepped at 60 Hz)."""
+    out, per = [], round(60 / hz)
+    for n in range(round(seconds * 60)):
+        plant.step(speed, 1.0 / 60.0)
+        if n % per == 0:
+            out.append(plant.reported_rad)
+    return out
+
+
+def deltas(readings):
+    """Return the successive changes of the readings (shortest way round)."""
+    return [(b - a + math.pi) % TWO_PI - math.pi for a, b in zip(readings, readings[1:])]
+
+
+def test_misread_is_off_by_default():
+    plant = DomePlant(firmware_quirks=False, initial_rad=math.radians(300.0))
+    readings = sampled(plant, 1.0, 5.0)
+    assert all(abs(d) < 0.2 for d in deltas(readings))
+
+
+def test_misread_clockwise_reads_279_for_one_sample_at_each_pass_of_the_sector():
+    plant = DomePlant(firmware_quirks=False, initial_rad=math.radians(300.0),
+                      misread_at=(313.0, 331.0, 279.0))
+    readings = sampled(plant, 1.0, 20.0)                 # 4 passes at about 1 rad/s
+    bogus = [i for i, r in enumerate(readings) if r == pytest.approx(math.radians(279.0))]
+    assert len(bogus) == 4 and all(b - a > 20 for a, b in zip(bogus, bogus[1:]))
+    assert deltas(readings)[bogus[0]] > 0.5              # and it jumps on, as measured
+    assert deltas(readings)[bogus[0] - 1] < -0.4         # after dropping 34 degrees
+    assert readings[bogus[0] - 1] < math.radians(331.0)  # the sample before is true
+
+
+def test_misread_anticlockwise_and_at_rest_never_misread():
+    plant = DomePlant(firmware_quirks=False, initial_rad=math.radians(340.0),
+                      misread_at=(313.0, 331.0, 279.0))
+    readings = sampled(plant, -1.0, 15.0)
+    assert all(abs(d) < 0.2 for d in deltas(readings))
+    resting = DomePlant(initial_rad=math.radians(320.0), misread_at=(313.0, 331.0, 279.0))
+    assert set(sampled(resting, 0.0, 2.0)) == {math.radians(320.0)}
+
+
+def test_misread_is_ignored_by_the_ideal_plant():
+    plant = DomePlant(ideal=True, initial_rad=math.radians(300.0),
+                      misread_at=(313.0, 331.0, 279.0))
+    readings = sampled(plant, 1.0, 3.0)
+    assert all(abs(d) < 0.2 for d in deltas(readings))

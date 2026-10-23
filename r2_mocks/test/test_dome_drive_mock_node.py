@@ -206,11 +206,11 @@ def test_joint_states_at_10hz_named_dome_joint_position_only(make_rig):
 @needs_converter
 def test_the_dome_turns_the_commanded_way_and_coasts_after_the_final_zero(make_rig):
     rig = make_rig('-p', 'initial_rad:=1.0')
-    rig.drive(2.0, 2.5)
-    assert rig.states[-1][1] > 1.0 + 1.5            # about 3.7 rad after the lag, in 2.5 s
+    rig.drive(2.0, 2.0)
+    assert rig.states[-1][1] > 1.0 + 1.5            # about 3.5 rad after the lag, in 2 s
     zero_at, final = rig.stop_and_settle()
     assert rig.commands[-1][1] == 0.0
-    assert final - zero_at > 0.4                    # coast 0.37 * ~1.95 - 0.07 = 0.65 rad
+    assert final - zero_at > 0.4                    # coast 0.52 * ~2 = 1.0 rad
     assert 0.0 <= final < 2.0 * math.pi
 
     rig.drive(-2.0, 2.5)

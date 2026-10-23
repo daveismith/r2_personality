@@ -1410,7 +1410,8 @@ class Arbiter:
         dome = config.defaults.dome
         return motion.Limits(min_speed=dome.min_speed_rad_s, max_move_s=dome.max_move_s,
                              settle_s=dome.settle_s, coast=dome.coast, retries=dome.retries,
-                             feedback_timeout_s=dome.feedback_timeout_s)
+                             feedback_timeout_s=dome.feedback_timeout_s,
+                             max_plausible_rad_s=dome.max_plausible_rad_s)
 
     def _mood_dome(self, now):
         return self._config.mood_dome(self._label, self._stale(now))

@@ -27,8 +27,10 @@ schema (plan section 4.3):
   ``max_speed_rad_s`` (2.0) and ``max_accel_rad_s2`` (6.0), the renderer's own
   clamps (the converter's personality caps are the authority; keep them
   equal); ``max_move_s`` (8.0), ``settle_s`` (0.8), ``retries`` (1, an integer
-  >= 0), ``feedback_timeout_s`` (0.5, at least 0.2), ``rest_recheck_s`` (30.0),
-  ``coast: {c1_s: 0.37, c2_rad: 0.07}``, ``heading: {sign: -1, offset_rad:
+  >= 0), ``feedback_timeout_s`` (0.5, at least 0.2), ``max_plausible_rad_s`` (4.0, the fastest
+  dome speed a joint-state sample may imply before the move holds it back, plan 2.1),
+  ``rest_recheck_s`` (30.0),
+  ``coast: {c1_s: 0.52, c2_rad: 0.0}``, ``heading: {sign: -1, offset_rad:
   0.0}`` (sign -1 or 1, offset in (-pi, pi]), ``body_speed_m_s`` (0.15),
   ``body_yaw_rad_s`` (0.3), ``after_foreign_s`` (3.0), ``after_still_s``
   (1.0). ``c2_rad`` may be 0; ``min_speed_rad_s`` may not exceed
@@ -131,6 +133,7 @@ class DomeDefaults:
     settle_s: float = 0.8
     retries: int = 1
     feedback_timeout_s: float = 0.5
+    max_plausible_rad_s: float = 4.0
     rest_recheck_s: float = 30.0
     coast: Coast = Coast()
     heading: Heading = Heading()
