@@ -76,6 +76,11 @@ degrees after a command ends (ros2_roamadome bench results, 2026-10-16), and its
 stream lags, so a push is only reported after `settle_s` (1.5) since the last non-zero
 command AND once the windowed speed has been seen at or below `pushed_omega` since then
 (the coast is over). A push within about 1.5 s of a command is therefore missed.
+Personality dome moves (phase 2: `look`, `glance`, `turn`, `rest` and the idle glances)
+reach the controller through `dome_twist_converter`, so they appear on
+`/dome_controller/commands` and are commanded motion, not pushes. The price is that a real
+push during a personality move, or within 1.5 s after one, is masked. That is accepted for
+phase 2 (plan 2.4, `docs/personality-phase2-plan.md`).
 The speed is the unwrapped displacement over the last `window_s` (0.4 s) of the 10 Hz,
 roughly 1-degree-quantised positions divided by the time spanned (at least `min_span_s`,
 0.25 s); the 0 / 2 pi wrap is handled. Quantisation noise is at most about 0.05 rad/s over
