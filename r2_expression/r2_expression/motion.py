@@ -32,14 +32,17 @@ dwells and comes back to where it started. :meth:`Move.step` returns ``(velocity
 reason)``. Rules, each named by a test:
 
 1. **The floor.** Every command is 0 or in [``min_speed``, ``v_max``] (plan rule 4): a
-   command under the hardware's dead band would send 0 % and the dome would not move.
+   command under the hardware's dead band would send 0 % and the dome would not move. The
+   band is per direction (about 0.44 rad/s positive, 0.567 negative), so ``min_speed``
+   (0.6) is above the higher of the two.
 2. **Rate limit.** Between non-zero commands the change is at most ``accel * dt``; leaving
    0 jumps straight to ``min_speed``, and 0 itself (a stop) is never delayed.
 3. **Approach.** ``v = clamp(k * |err|, min_speed, v_max)`` toward the target (rule 1 and
    2 applied after).
 4. **Early stop by the coast.** The dome coasts ``max(0, c1 * v - c2)`` after a 0
    (calibration findings: 0.37 s and 4 degrees), so the move sends 0 once ``|err|`` is
-   within that of the target, or once it has passed the target.
+   within that of the target (plus half of what the dome covers in one step: the stop
+   falls on the nearest step, not the one after), or once it has passed the target.
 5. **Settle.** After the 0 the move waits ``settle_s`` (longer, up to twice that, while the
    samples still show motion); then ``|err| <= settle_band`` is a leg ``reached``; else,
    with the retry budget (``retries``, 1) left, it approaches again at ``min_speed``; else
@@ -61,8 +64,10 @@ reason)``. Rules, each named by a test:
    takes 1.5 s to 90 %, the command runs well ahead of the dome and the coast it predicts
    would stop small moves before they start, so the measurement leads and the limiter
    bounds it. The bound also absorbs the firmware's 9-degree step at 0, which would
-   otherwise read as a burst of speed. Before a move has two samples the command is the
-   estimate.
+   otherwise read as a burst of speed. Before a fresh move has two samples the dome is
+   taken to be at rest: on the real dome the command would predict a coast it has not
+   built up yet and stop a short move before it starts. (A replacement before two samples
+   takes its command as the estimate.)
 8. **Replacement.** A move built with ``follows`` takes over its predecessor's command,
    rate limiter and samples, so the velocity simply changes (plan 4.3, one move at a time);
    a command above the new ``v_max`` comes down to it at once. If the new target is behind
@@ -147,7 +152,7 @@ class Profile:
 class Limits:
     """The settings every move shares (``defaults.dome``)."""
 
-    min_speed: float = 0.5
+    min_speed: float = 0.6       # above both floors of the velocity map (0.44 and 0.567)
     max_move_s: float = 8.0
     settle_s: float = 0.8
     coast: Coast = Coast()
@@ -163,6 +168,10 @@ class RateLimiter:
         self.velocity = 0.0
         self._at = None
 
+    def dt(self, now):
+        """Return the time since the last step (0 before the first)."""
+        return 0.0 if self._at is None else max(0.0, now - self._at)
+
     def step(self, wanted, v_max, accel, now):
         """
         Move toward ``wanted`` (0, or at least ``min_speed`` and at most ``v_max``).
@@ -170,7 +179,7 @@ class RateLimiter:
         The caller clamps ``wanted``; a reversal passes through 0 for a tick. A value above
         ``v_max`` (a faster move's, taken over) comes down to it at once (rule 1 over 2).
         """
-        dt = 0.0 if self._at is None else max(0.0, now - self._at)
+        dt = self.dt(now)
         self._at = now
         v, room = self.velocity, accel * dt
         if wanted == 0.0:
@@ -214,6 +223,7 @@ class Move:
         self._stop = None            # (position, direction, predicted coast) at the last 0
         self._inherited = follows is not None    # the first command is the predecessor's
         self._reversed = False       # stopped a taken-over command going the wrong way
+        self._from_rest = follows is None   # rule 7: a fresh move starts from a still dome
         if follows is not None:
             self._limiter = follows._limiter
             self._u, self._sample = follows._u, follows._sample
@@ -221,6 +231,7 @@ class Move:
             self._v_meas = follows._v_meas
             self._v_peak = follows._v_peak
             self.coast_scale = follows.coast_scale
+            self.coast_learned = follows.coast_learned   # its scale, to teach when done
         else:
             self._limiter = RateLimiter(limits.min_speed)
             self._u = self._sample = 0.0
@@ -299,8 +310,8 @@ class Move:
 
     def _estimate(self):
         """Rule 7: the measured speed, bounded by the fastest command of this approach."""
-        if self._v_meas is None:
-            return self._limiter.velocity
+        if self._v_meas is None:     # a fresh move starts from rest; a replacement's dome
+            return 0.0 if self._from_rest else self._limiter.velocity   # runs at its command
         return max(-self._v_peak, min(self._v_peak, self._v_meas))
 
     def _next_leg(self, now):
@@ -334,6 +345,7 @@ class Move:
         age = min(now - self._moved_at, EXTRAPOLATE_MAX_S)
         err = self._target - (self._u + v_est * age)
         cmd = self._limiter.velocity
+        tick = self._limiter.dt(now)
         if cmd == 0.0 and abs(err) <= self.profile.settle_band_rad:
             self._settle(now, now)   # there already: confirm on the samples, no motion
             return None
@@ -344,7 +356,8 @@ class Move:
                 self._settle(now, now + self.limits.settle_s)
                 self._inherited, self._reversed = False, True
                 return 0.0, False, ''
-            if err * cmd <= 0.0 or abs(err) <= self.coast_scale * coast:
+            # The nearest tick: waiting for the next one would overshoot by more.
+            if err * cmd <= 0.0 or abs(err) <= self.coast_scale * coast + 0.5 * toward * tick:
                 self._stop = (self._target - err, math.copysign(1.0, cmd), coast)
                 self._settle(now, now + self.limits.settle_s)
                 return 0.0, False, ''
@@ -418,12 +431,14 @@ class CoastMemory:
 
     def learn(self, move, now):
         """
-        Keep ``move``'s scale if one of its stops taught it one.
+        Keep ``move``'s scale if one of its stops taught it one and it ended by itself.
 
-        Not from a move that was stopped (a person, a claim, suppression) or lost its
-        feedback: what its last settle saw may have been a hand on the dome.
+        Not from a move that was stopped (a person, a claim, suppression), lost its
+        feedback or was cut short without being told (a stop intent, a claim's pre-emption,
+        a replacement: not ``done``): what its last settle saw may have been a hand on the
+        dome, and a replacement carries the scale on by itself.
         """
-        if move.coast_learned and move.reason not in (STOPPED, NO_FEEDBACK):
+        if move.coast_learned and move.done and move.reason not in (STOPPED, NO_FEEDBACK):
             self._scale, self._at = move.coast_scale, now
 
     def recall(self, now):

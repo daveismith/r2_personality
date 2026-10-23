@@ -17,7 +17,9 @@
 Launch the arbiters: LED and Magic Panel (the only clients of the dome's light services), dome.
 
 ``dome`` (true) adds ``dome_arbiter``, which drives the dome through ``dome_twist_converter``
-(phase 2 plan 5.7); the four topic arguments are its parameters.
+(phase 2 plan 5.7); the topic arguments are its parameters. The body's motion comes from
+``cmd_vel_topic`` (the drive's command, silent unless someone drives); set ``odom_topic`` to
+read odometry instead (it also sees a base rolled by hand, at about 3 % of a Pi core).
 """
 
 import os
@@ -36,7 +38,8 @@ DOME_TOPICS = (
     ('command_topic', "dome_twist_converter's personality input"),
     ('status_topic', "dome_twist_converter's DomeCommandStatus"),
     ('joint_states_topic', 'the dome joint position'),
-    ('odom_topic', 'the body odometry (the dome holds off while it drives)'),
+    ('cmd_vel_topic', "the drive's TwistStamped command (the dome holds off while it drives)"),
+    ('odom_topic', "the body odometry, used instead of cmd_vel_topic when set ('': off)"),
 )
 
 

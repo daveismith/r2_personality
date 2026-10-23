@@ -25,11 +25,17 @@ defaults:
   max_lease_s: 60.0        # cap on a ClaimChannel lease
   device_stale_s: 5.0      # no state message for this long: OFFLINE
   dome:
-    min_speed_rad_s: 0.5   # every command is 0 or at least this (the hardware's floor is 0.44)
-    max_speed_rad_s: 2.0   # the converter's personality_max_speed_rad_s: keep them equal
-    max_accel_rad_s2: 4.0  # the converter's personality_max_accel_rad_s2
+    # Every command is 0 or at least min_speed. The droid's velocity_map zeroes a positive
+    # command under about 0.44 rad/s and a negative one under about 0.567 rad/s: above both.
+    min_speed_rad_s: 0.6
+    # The renderer's own clamps. The converter's personality_max_speed_rad_s and
+    # personality_max_accel_rad_s2 are the authority; keep these equal to them.
+    max_speed_rad_s: 2.0
+    max_accel_rad_s2: 6.0
     max_move_s: 8.0        # every move ends by then (a glance: plus its dwell)
     settle_s: 0.8          # wait after the stop before judging where the dome came to rest
+    retries: 1             # approaches again at min_speed if it settled outside the band
+    feedback_timeout_s: 0.5  # no new joint state for this long: the move ends with a 0
     rest_recheck_s: 30.0   # a resting dome that drifted is corrected at most this often
     coast: {c1_s: 0.37, c2_rad: 0.07}     # run-on after a 0: c1 * v - c2 (re-fit in 8b)
     heading: {sign: -1, offset_rad: 0.0}  # joint positive = clockwise, bearings +ve left

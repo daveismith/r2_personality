@@ -17,7 +17,7 @@
 The arbiter nodes: ROS 2 around :class:`r2_expression.core.Arbiter`.
 
 Three kinds on one base, :class:`ArbiterNode` (the core, intents, mood, the claim service,
-status, the 4 Hz tick, the namesake refusal). :class:`DeviceArbiterNode`: ``led_arbiter``
+status, the tick timer, the namesake refusal). :class:`DeviceArbiterNode`: ``led_arbiter``
 serves ``fld``, ``tfld``, ``bfld``, ``rld`` and ``psi`` against ``<device>/leds/*``;
 ``magic_arbiter`` serves ``magic`` against ``<device>/magic/*`` (plan 5.3). Each is the only
 ROS client of its device services. :class:`DomeArbiterNode`: ``dome_arbiter`` serves
@@ -32,9 +32,11 @@ An idle worker sleeps on the queue until an action arrives or the queue is close
 polling: a wake-up costs about 0.1 % of a Pi 5 core per Hz). Dome: every velocity the core
 returns is published at once, from the callback that produced it (a stop leaves the node
 in the same callback); while :attr:`~r2_expression.core.Arbiter.moving`, a 20 Hz timer,
-created by the first move action and destroyed when the move ends, ticks the core in place
-of the 4 Hz tick (which skips its turn meanwhile). All time is the node clock
-(``use_sim_time`` aware); the timers run on the steady clock.
+created by the first move action and destroyed when the move ends, ticks the core. Idle,
+each joint state (10 Hz, already received) ticks it, and a 1 Hz timer too, which matters
+only when the joint states stop (offline detection, the status heartbeat): about 18
+wake-ups a second in all (rule 11). The LED and Magic Panel nodes tick at 4 Hz. All time
+is the node clock (``use_sim_time`` aware); the timers run on the steady clock.
 """
 
 from collections import deque
@@ -59,6 +61,7 @@ from astromech_msgs.msg import LedStateArray
 from astromech_msgs.msg import MagicPanelState
 from astromech_msgs.msg import MoodState
 from astromech_msgs.srv import ClaimChannel
+from geometry_msgs.msg import TwistStamped
 from nav_msgs.msg import Odometry
 from r2_expression import dome_renderer
 from r2_expression import led_renderer
@@ -99,18 +102,24 @@ from sensor_msgs.msg import JointState
 # these; the LED and Magic Panel nodes add `device`, the dome node DOME_PARAMETERS.
 STARTUP_PARAMETERS = ('config', 'use_sim_time', 'allow_duplicate')
 # The dome node's names (plan 5.4), parameters so a test can move them without remapping.
+# The body's motion comes from the drive's velocity command (twist_mux's output, silent
+# unless someone drives), or from odometry when odom_topic is set; '' turns either off.
 DOME_PARAMETERS = {
     'command_topic': '/dome/cmd/personality',
     'status_topic': '/dome/cmd/status',
     'joint_states_topic': '/dome_state_broadcaster/joint_states',
-    'odom_topic': '/diff_cont/odom',
+    'cmd_vel_topic': '/diff_cont/cmd_vel',
+    'odom_topic': '',
     'joint_name': 'dome_joint',
 }
+OPTIONAL_DOME_PARAMETERS = ('cmd_vel_topic', 'odom_topic')
 
 REQUEST_TIMEOUT_S = 5.0      # one device request, plan 2.1
 LIST_RETRY_S = 5.0           # between attempts at the device's `list`
 TICK_S = 0.25                # the core's timers, 4 Hz: leases, holds and durations to 0.25 s
 MOVE_TICK_S = 0.05           # the dome's 20 Hz while a move runs (the converter's rate)
+DOME_TICK_S = 1.0            # the dome's idle timer, for when the joint states stop
+CMD_VEL_SILENCE_S = 0.5      # the drive's command silent this long: the body is still
 CLOSE_ACK_S = 0.2            # how long the dome's last 0 may take to be acknowledged
 ODOM_DECIMATE = 3            # the dome reads one odometry message in 3 (rule 11)
 POLL_S = 0.1                 # how often a worker in a call or offline looks at the stop flag
@@ -278,6 +287,7 @@ class ArbiterNode(Node):
     """
 
     startup_parameters = STARTUP_PARAMETERS
+    tick_s = TICK_S
     # True: main() leaves rclpy's signal handlers out and a signal ends the spin loop, so
     # the context is still up when close() runs (the dome publishes its last 0 there).
     own_signal_handlers = False
@@ -292,7 +302,7 @@ class ArbiterNode(Node):
         self._refuse_a_duplicate()
         self._config_path = str(self.get_parameter('config').value)
         config = load_config(self._config_path)     # ExpressionConfigError: main() exits
-        self._core = Arbiter(config, self._kind.channels)
+        self._core = Arbiter(config, self._kind.channels, **self._core_options())
         self._lock = threading.Lock()
         self._guard_logged = {}            # callback name -> time.monotonic() of its last log
         self._last_key = {}
@@ -308,7 +318,7 @@ class ArbiterNode(Node):
         # Registered after TimeSource's own callback, so it runs first and a refused
         # use_sim_time never reaches TimeSource.
         self.add_on_set_parameters_callback(self._on_parameters)
-        self.create_timer(TICK_S, self._on_tick, clock=_steady())
+        self.create_timer(self.tick_s, self._on_tick, clock=_steady())
         self._open_device(config)
         self.get_logger().info(
             '%s_arbiter up: config %s, device %s, channels %s' % (
@@ -319,6 +329,10 @@ class ArbiterNode(Node):
     def _declare_device(self):
         """Declare the device's parameters; return its name for the logs."""
         raise NotImplementedError
+
+    def _core_options(self):
+        """Return the core's keyword arguments beyond the config and the channels."""
+        return {}
 
     def _open_device(self, config):
         """Create the device's topics, clients and threads."""
@@ -710,23 +724,34 @@ class DomeArbiterNode(ArbiterNode):
     The dome arbiter: velocities on ``command_topic`` for ``dome_twist_converter``.
 
     Feedback, all fed to :meth:`~r2_expression.core.Arbiter.dome_state`: the joint
-    position from ``joint_states_topic`` (depth 1, best effort), who drives the dome from
-    ``status_topic`` (depth 1, reliable like the converter's publisher: a source change
-    must not be lost) and the body's speed and yaw rate from ``odom_topic`` (depth 1, best
-    effort, one message in :data:`ODOM_DECIMATE` deserialised).
+    position from ``joint_states_topic`` (depth 1, best effort; each one also ticks the
+    core while no move runs), who drives the dome from ``status_topic`` (depth 1, reliable
+    like the converter's publisher: a source change must not be lost) and the body's speed
+    and yaw rate. By default these come from ``cmd_vel_topic``, the drive's
+    ``TwistStamped`` command (depth 1, best effort), which is silent unless someone drives:
+    a silence of :data:`CMD_VEL_SILENCE_S` counts as still, so idle it costs nothing, but a
+    base rolled by hand is not seen. With ``odom_topic`` set, odometry is read instead (one
+    message in :data:`ODOM_DECIMATE` deserialised, though every one wakes the node).
     """
 
     startup_parameters = STARTUP_PARAMETERS + tuple(DOME_PARAMETERS)
     own_signal_handlers = True
+    tick_s = DOME_TICK_S
 
     def _declare_device(self):
         for name, default in DOME_PARAMETERS.items():
             self.declare_parameter(name, default)
         self._names = {name: str(self.get_parameter(name).value) for name in DOME_PARAMETERS}
         for name, value in self._names.items():
-            if not value:
+            if not value and name not in OPTIONAL_DOME_PARAMETERS:
                 raise ValueError('%s must not be empty' % name)
         return 'dome_twist_converter via %s' % self._names['command_topic']
+
+    def _core_options(self):
+        # The drive's command falls silent when nobody drives; odometry never should.
+        if self._names['odom_topic'] or not self._names['cmd_vel_topic']:
+            return {}
+        return {'body_silence_s': CMD_VEL_SILENCE_S}
 
     def _open_device(self, config):
         dome = config.defaults.dome
@@ -741,8 +766,12 @@ class DomeArbiterNode(ArbiterNode):
                                  self._on_joint_state, _best_effort(1))
         self.create_subscription(DomeCommandStatus, names['status_topic'],
                                  self._on_command_status, _reliable(1))
-        self.create_subscription(Odometry, names['odom_topic'], self._on_odom,
-                                 _best_effort(1), raw=True)
+        if names['odom_topic']:
+            self.create_subscription(Odometry, names['odom_topic'], self._on_odom,
+                                     _best_effort(1), raw=True)
+        elif names['cmd_vel_topic']:
+            self.create_subscription(TwistStamped, names['cmd_vel_topic'], self._on_cmd_vel,
+                                     _best_effort(1))
 
     def _dispatch(self, actions, now):
         for action in actions:
@@ -777,10 +806,17 @@ class DomeArbiterNode(ArbiterNode):
             self.get_logger().debug('dome: %.2f rad/s (%s %s)' % (
                 velocity, action.why, action.intent_id))
 
-    def _feed(self, state):
+    def _feed(self, state, tick=False):
         with self._lock:
             now = self._now()
-            self._settle(now, self._core.dome_state(state, now))
+            actions = self._core.dome_state(state, now)
+            if tick and self._move_timer is None:     # idle: the joint state is the tick
+                actions += self._core.tick(now)
+            self._settle(now, actions)
+
+    def _feed_body(self, twist):
+        self._feed({'body_speed_m_s': math.hypot(twist.linear.x, twist.linear.y),
+                    'body_yaw_rad_s': twist.angular.z})
 
     # --- feedback (executor thread) ------------------------------------------------------------
 
@@ -791,7 +827,7 @@ class DomeArbiterNode(ArbiterNode):
         except ValueError:
             return
         if index < len(msg.position):
-            self._feed({'position_rad': msg.position[index]})
+            self._feed({'position_rad': msg.position[index]}, tick=True)
 
     @guarded()
     def _on_command_status(self, msg):
@@ -801,11 +837,12 @@ class DomeArbiterNode(ArbiterNode):
     def _on_odom(self, data):
         take = self._odom_count == 0       # the first, then every ODOM_DECIMATE-th
         self._odom_count = (self._odom_count + 1) % ODOM_DECIMATE
-        if not take:
-            return
-        twist = deserialize_message(data, Odometry).twist.twist
-        self._feed({'body_speed_m_s': math.hypot(twist.linear.x, twist.linear.y),
-                    'body_yaw_rad_s': twist.angular.z})
+        if take:
+            self._feed_body(deserialize_message(data, Odometry).twist.twist)
+
+    @guarded()
+    def _on_cmd_vel(self, msg):
+        self._feed_body(msg.twist)
 
     # --- timers --------------------------------------------------------------------------------
 

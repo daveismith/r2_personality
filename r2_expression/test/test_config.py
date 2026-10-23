@@ -25,8 +25,8 @@ import yaml
 
 from fixtures import AFFECT_YAML, base_data, cfg, dome_data, LEDS_LIST, SHIPPED  # noqa: I100
 from fixtures import capture_names, MAGIC_LIST
-from r2_expression.config import (DEFAULT_PROFILE, ExpressionConfigError, load_config,
-                                  load_config_string, missing_moods, parse_config)
+from r2_expression.config import (DEFAULT_PROFILE, DomeDefaults, ExpressionConfigError,
+                                  load_config, load_config_string, missing_moods, parse_config)
 from r2_expression.motion import Coast, Heading, Profile
 from r2_expression.palette import LedCatalogue, MagicCatalogue, validate_picks
 
@@ -125,7 +125,9 @@ def _picked(mood):
 def test_shipped_dome_defaults_are_the_plan_4_5_values():
     d = load_config(SHIPPED).defaults.dome
     assert (d.min_speed_rad_s, d.max_speed_rad_s, d.max_accel_rad_s2, d.max_move_s,
-            d.settle_s, d.rest_recheck_s) == (0.5, 2.0, 4.0, 8.0, 0.8, 30.0)
+            d.settle_s, d.rest_recheck_s) == (0.6, 2.0, 6.0, 8.0, 0.8, 30.0)
+    assert (d.retries, d.feedback_timeout_s) == (1, 0.5)
+    assert d == DomeDefaults()                       # the yaml and the code agree
     assert d.coast == Coast(0.37, 0.07) and d.heading == Heading(-1, 0.0)
     assert (d.body_speed_m_s, d.body_yaw_rad_s, d.after_foreign_s, d.after_still_s) == (
         0.15, 0.3, 3.0, 1.0)
@@ -259,12 +261,12 @@ def test_dome_without_any_dome_config_moves_with_the_default_profile_and_warns_p
 
 def test_dome_v_max_and_accel_above_the_cap_are_clamped_with_a_warning():
     data = dome_data()
-    data['profiles']['snappy'].update(v_max=3.0, accel=6.0)
+    data['profiles']['snappy'].update(v_max=3.0, accel=8.0)
     config = parse_config(data)
-    assert (config.profiles['snappy'].v_max, config.profiles['snappy'].accel) == (2.0, 4.0)
+    assert (config.profiles['snappy'].v_max, config.profiles['snappy'].accel) == (2.0, 6.0)
     assert config.dome_warnings == (
         'profiles.snappy.v_max: 3 is above defaults.dome.max_speed_rad_s; clamped to 2',
-        'profiles.snappy.accel: 6 is above defaults.dome.max_accel_rad_s2; clamped to 4')
+        'profiles.snappy.accel: 8 is above defaults.dome.max_accel_rad_s2; clamped to 6')
     assert parse_config(config.to_dict()) == config              # warnings do not compare
 
 
@@ -273,7 +275,7 @@ def test_dome_defaults_partial_blocks_keep_the_rest():
     data['defaults']['dome'] = {'coast': {'c2_rad': 0.0}, 'heading': {'sign': 1}}
     d = parse_config(data).defaults.dome
     assert d.coast == Coast(0.37, 0.0) and d.heading == Heading(1, 0.0)
-    assert d.min_speed_rad_s == 0.5
+    assert d.min_speed_rad_s == 0.6
 
 
 @pytest.mark.parametrize('dome, fragment', [
@@ -288,6 +290,10 @@ def test_dome_defaults_partial_blocks_keep_the_rest():
     ({'heading': {'offset_rad': 4.0}}, 'defaults.dome.heading.offset_rad: 4 is outside'),
     ({'heading': {'offset_rad': -math.pi}}, 'outside (-pi, pi]'),
     ({'after_foreign_s': 'soon'}, 'defaults.dome.after_foreign_s: must be a number'),
+    ({'retries': 1.5}, 'defaults.dome.retries: must be an integer'),
+    ({'retries': -1}, 'defaults.dome.retries: -1 is out of range'),
+    ({'feedback_timeout_s': 0}, 'defaults.dome.feedback_timeout_s: must be > 0'),
+    ({'feedback_timeout_s': 0.05}, 'defaults.dome.feedback_timeout_s: 0.05 is under 0.2'),
     ('fast', 'defaults.dome: must be a mapping')])
 def test_dome_rejects_bad_defaults(dome, fragment):
     def change(data):

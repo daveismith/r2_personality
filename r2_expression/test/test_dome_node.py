@@ -21,7 +21,10 @@ Three subprocesses, as on the robot (phase 2 plan 5.4, step 5): ``dome_twist_con
 Every name is test-private: the arbiter's topics are its parameters, the converter's and the
 mock's are remapped, and ``/expression/*`` and ``/mood/state`` are remapped as in
 ``test_nodes.py`` (whose ``Proc`` and ``wait_until`` are reused). The test plays the mood
-publisher (5 Hz), the joystick and, where it needs one, the odometry.
+publisher (5 Hz), the joystick and, where it needs one, the drive's velocity command.
+
+Without ``r2_bringup`` the tests skip; with ``R2_PHASE2_FULL=1`` in the environment (the sim
+acceptance sets it) they fail instead, and so does item 15's without ``r2_stimulus``.
 """
 
 import json
@@ -38,9 +41,10 @@ from astromech_msgs.msg import ChannelStatus
 from astromech_msgs.msg import DomeCommandStatus
 from astromech_msgs.msg import ExpressionIntent
 from astromech_msgs.msg import MoodState
-from fixtures import dome_data
+from astromech_msgs.msg import Stimulus
+from astromech_msgs.srv import ClaimChannel
+from fixtures import dome_data, MIN_SPEED
 from geometry_msgs.msg import TwistStamped
-from nav_msgs.msg import Odometry
 import pytest
 from r2_expression.motion import wrap
 import rclpy
@@ -50,7 +54,8 @@ from rclpy.qos import ReliabilityPolicy
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64MultiArray
 from test_nodes import config_text, Proc, ros_context, STARTUP_S, wait_until  # noqa: F401
-from test_nodes import STATE_FOREIGN, STATE_IDLE, STATE_OFFLINE, STATE_RUNNING, STATE_STALE
+from test_nodes import STATE_CLAIMED, STATE_FOREIGN, STATE_IDLE, STATE_OFFLINE, STATE_RUNNING
+from test_nodes import STATE_STALE
 import yaml
 
 STATE_SUPPRESSED = 7             # ChannelStatus.STATE_SUPPRESSED (astromech_msgs 2.2.0)
@@ -59,19 +64,30 @@ CONVERTER_TICK_S = 0.05
 MOOD_STALE_S = 1.0
 DEVICE_STALE_S = 2.0
 BAND_RAD = 0.05                  # the smooth profile's settle band (fixtures.PROFILES)
+FULL = os.environ.get('R2_PHASE2_FULL') == '1'
 _counter = 0
 
 
-def _converter_installed():
+def _installed(package):
     try:
-        get_package_prefix('r2_bringup')
+        get_package_prefix(package)
     except PackageNotFoundError:
         return False
     return True
 
 
-pytestmark = pytest.mark.skipif(
-    not _converter_installed(), reason='r2_bringup (dome_twist_converter) is not installed')
+def require(package, what):
+    """Skip without ``package``; fail instead under ``R2_PHASE2_FULL=1``."""
+    if not _installed(package):
+        message = '%s (%s) is not installed' % (package, what)
+        if FULL:
+            pytest.fail('R2_PHASE2_FULL=1: ' + message)
+        pytest.skip(message)
+
+
+@pytest.fixture(autouse=True)
+def _converter():
+    require('r2_bringup', 'dome_twist_converter')
 
 
 def dome_config_text():
@@ -99,8 +115,8 @@ class DomeRig:
         self.names = {
             'personality': t + '/dome/cmd/personality', 'status': t + '/dome/cmd/status',
             'commands': t + '/dome_controller/commands', 'joystick': t + '/cmd_vel_dome',
-            'foxglove': t + '/cmd_vel_dome_foxglove', 'odom': t + '/diff_cont/odom',
-            'joint_states': '/%s/joint_states' % self.mock_name}
+            'foxglove': t + '/cmd_vel_dome_foxglove', 'cmd_vel': t + '/diff_cont/cmd_vel',
+            'joint_states': '/%s/joint_states' % self.mock_name, 'stimuli': t + '/stimuli'}
         self.topics = {name: t + name for name in (
             '/expression/intent', '/mood/state', '/expression/status', '/expression/claim/dome')}
         self.config = str(tmp_path / ('expression_%s.yaml' % self.tag))
@@ -128,6 +144,8 @@ class DomeRig:
         self.sent = []             # (time, angular.z) on the personality topic
         self.commands = []         # (time, data[0]) on the controller topic
         self.sources = []          # (time, DomeCommandStatus.source)
+        self.capped = []           # (time, DomeCommandStatus.capped)
+        self.stimuli = []          # (time, Stimulus.kind)
         self.position = None
         self.positions = []        # (time, joint position)
         reliable = QoSProfile(depth=50, reliability=ReliabilityPolicy.RELIABLE)
@@ -137,15 +155,19 @@ class DomeRig:
             lambda m: self._record(self.sent, m.twist.angular.z), reliable)
         sub(Float64MultiArray, self.names['commands'],
             lambda m: self._record(self.commands, m.data[0]), reliable)
-        sub(DomeCommandStatus, self.names['status'],
-            lambda m: self._record(self.sources, m.source), reliable)
+        sub(DomeCommandStatus, self.names['status'], self._on_command_status, reliable)
+        sub(Stimulus, self.names['stimuli'], lambda m: self._record(self.stimuli, m.kind),
+            reliable)
         sub(JointState, self.names['joint_states'], self._on_joint, reliable)
         self.intents = self.node.create_publisher(
             ExpressionIntent, self.topics['/expression/intent'], reliable)
         self.mood_pub = self.node.create_publisher(
             MoodState, self.topics['/mood/state'], reliable)
         self.joystick = self.node.create_publisher(TwistStamped, self.names['joystick'], 10)
-        self.odom_pub = self.node.create_publisher(Odometry, self.names['odom'], 10)
+        self.cmd_vel_pub = self.node.create_publisher(TwistStamped, self.names['cmd_vel'], 10)
+        self.claim_client = self.node.create_client(ClaimChannel,
+                                                    self.topics['/expression/claim/dome'])
+        self.extra = []            # more processes, closed with the rig
         self.executor = SingleThreadedExecutor()
         self.executor.add_node(self.node)
         threading.Thread(target=self.executor.spin, daemon=True).start()
@@ -162,7 +184,8 @@ class DomeRig:
             remaps += ['-r', '%s:=%s' % (name, target)]
         params = []
         for param, key in (('command_topic', 'personality'), ('status_topic', 'status'),
-                           ('joint_states_topic', 'joint_states'), ('odom_topic', 'odom')):
+                           ('joint_states_topic', 'joint_states'),
+                           ('cmd_vel_topic', 'cmd_vel')):
             params += ['-p', '%s:=%s' % (param, self.names[key])]
         return ['ros2', 'run', 'r2_expression', 'dome_arbiter', '--ros-args',
                 '-r', '__node:=%s' % self.arbiter_name, '-p', 'config:=%s' % self.config,
@@ -183,6 +206,8 @@ class DomeRig:
         for name in list(self._loops):
             self.stop_loop(name)
         code = self.arbiter.close() if self.arbiter is not None else None
+        for proc in self.extra:
+            proc.close()
         self.mock.close()
         self.converter.close()
         self.executor.shutdown()
@@ -191,6 +216,7 @@ class DomeRig:
 
     def output(self):
         parts = [('converter', self.converter), ('mock', self.mock), ('arbiter', self.arbiter)]
+        parts += [('extra %d' % i, proc) for i, proc in enumerate(self.extra)]
         return '\n'.join('--- %s ---\n%s' % (name, proc.text())
                          for name, proc in parts if proc is not None)
 
@@ -206,6 +232,12 @@ class DomeRig:
     def _record(self, log, value):
         with self.lock:
             log.append((time.monotonic(), value))
+
+    def _on_command_status(self, msg):
+        with self.lock:
+            now = time.monotonic()
+            self.sources.append((now, msg.source))
+            self.capped.append((now, msg.capped))
 
     def _on_status(self, msg):
         if msg.channel != 'dome':
@@ -286,10 +318,21 @@ class DomeRig:
         msg.twist.linear.x = value
         self._loop('joystick', 20.0, lambda: self.joystick.publish(msg))
 
-    def start_odom(self, speed):
-        msg = Odometry()
-        msg.twist.twist.linear.x = speed
-        self._loop('odom', 30.0, lambda: self.odom_pub.publish(msg))
+    def start_driving(self, speed):
+        """Publish the drive's command at 20 Hz, as twist_mux does while someone drives."""
+        msg = TwistStamped()
+        msg.twist.linear.x = speed
+        self._loop('drive', 20.0, lambda: self.cmd_vel_pub.publish(msg))
+
+    def claim(self, owner, priority, lease_s):
+        request = ClaimChannel.Request()
+        request.channel, request.owner = 'dome', owner
+        request.priority, request.lease_s = priority, lease_s
+        wait_until(lambda: self.claim_client.wait_for_service(timeout_sec=0.1), 10.0,
+                   'the claim service', self.output)
+        future = self.claim_client.call_async(request)
+        wait_until(future.done, 10.0, 'claim reply', self.output)
+        return future.result()
 
 
 @pytest.fixture
@@ -330,7 +373,7 @@ def test_a_look_at_reaches_the_heading_and_the_channel_returns_to_idle(rig):
     assert log[-1][1] == 0.0                                 # the move ended with a 0 ...
     time.sleep(1.0)
     assert len(r.sent_since(start)) == len(log)              # ... and nothing came after it
-    assert all(v == 0.0 or 0.5 - 1e-9 <= abs(v) <= 1.0 + 1e-9 for _, v in log)  # rule 4
+    assert all(v == 0.0 or MIN_SPEED - 1e-9 <= abs(v) <= 1.0 + 1e-9 for _, v in log)  # rule 4
     assert abs(wrap(r.position - 2.0)) <= BAND_RAD + 0.01, r.position  # joint = -bearing
     assert 'move over, coast scale' in r.arbiter.text()
 
@@ -363,13 +406,13 @@ def test_b_a_joystick_mid_move_makes_the_channel_foreign_and_the_move_is_not_res
 
 # --- (c) the body drives: suppressed ------------------------------------------------------------
 
-def test_c_odometry_above_the_threshold_suppresses_drops_idle_and_lets_manual_run(rig):
+def test_c_a_drive_command_above_the_threshold_suppresses_drops_idle_and_lets_manual_run(rig):
     r = rig(mock_args=('-p', 'initial_rad:=1.0'))
     r.start_mood('calm')
     r.intent('behavior', 100, 'turn', {'delta': 6.0})
     r.wait_moving()
     started = time.monotonic()
-    r.start_odom(0.4)                                   # above body_speed_m_s 0.15
+    r.start_driving(0.4)                                # above body_speed_m_s 0.15
     status = r.wait_status(lambda s: s.state == STATE_SUPPRESSED, 3.0, 'suppressed')
     assert status.active_action == ''
     after = r.sent_since(started)
@@ -383,9 +426,10 @@ def test_c_odometry_above_the_threshold_suppresses_drops_idle_and_lets_manual_ru
     running = r.wait_status(lambda s: s.active_intent_id == 'manual-c', 3.0, 'manual runs')
     assert running.state == STATE_SUPPRESSED and running.active_source == 'manual'
     r.wait_moving()
-    r.stop_loop('odom')
-    r.start_odom(0.0)
-    r.wait_status(lambda s: s.state != STATE_SUPPRESSED, 5.0, 'clears once still')
+    stopped = time.monotonic()
+    r.stop_loop('drive')                                # twist_mux falls silent
+    r.wait_status(lambda s: s.state != STATE_SUPPRESSED, 5.0, 'clears once silent')
+    assert time.monotonic() - stopped >= 0.5 + 1.0 - 0.2      # silence, then after_still_s
 
 
 # --- (d) the arbiter dies mid-move: the converter stops the dome --------------------------------
@@ -410,7 +454,87 @@ def test_d_killing_the_arbiter_mid_move_stops_the_controller_within_the_timeout(
     wait_until(lambda: r.sources and r.sources[-1][1] == 'idle', 3.0, 'converter idle',
                r.output)
     r.arbiter.close()
-    r.arbiter = None
+    # Item 12's second half: restarted, it comes up IDLE and starts no move of its own.
+    wait_until(lambda: r.arbiter_name not in r.node.get_node_names(), 10.0,
+               'the killed arbiter to leave the graph', r.output)
+    with r.lock:
+        r.status = None
+    restarted = time.monotonic()
+    r.start_arbiter()
+    r.wait_status(lambda s: True, STARTUP_S, 'the restarted arbiter')
+    r.wait_status(lambda s: s.state == STATE_IDLE, 5.0, 'idle within 5 s of coming up')
+    time.sleep(5.0)
+    assert not any(v for _, v in r.sent_since(restarted)), r.sent_since(restarted)
+
+
+# --- (d2) item 3 and rule 4 at the controller --------------------------------------------------
+
+def test_d2_a_smooth_look_at_is_never_capped_and_every_command_is_0_or_at_the_floor(rig):
+    r = rig(mock_args=('-p', 'initial_rad:=0.3'))
+    r.start_mood('calm')
+    start = time.monotonic()
+    r.intent('manual', 199, 'look_at', {'bearing': -2.0, 'profile': 'smooth'})
+    r.wait_moving()
+    r.wait_status(lambda s: s.state != STATE_RUNNING, 20.0, 'the move over')
+    r.wait_quiet(1.0)
+    with r.lock:
+        commands = [v for t, v in r.commands if t >= start]
+        capped = [c for t, c in r.capped if t >= start]
+    assert any(commands) and capped
+    assert not any(capped), 'capped during a smooth look_at'
+    assert all(v == 0.0 or MIN_SPEED - 1e-9 <= abs(v) <= 1.0 + 1e-9 for v in commands), \
+        commands
+    assert commands[-1] == 0.0
+
+
+# --- (d3) item 6: a claim refuses a manual move, --override passes ------------------------------
+
+def test_d3_a_claim_refuses_a_manual_look_and_an_override_runs(rig):
+    r = rig()
+    r.start_mood('calm')
+    reply = r.claim('console', 200, 30.0)                  # express claim dome --override
+    assert reply.accepted, reply.reason
+    r.wait_status(lambda s: s.state == STATE_CLAIMED and s.owner == 'console', 3.0, 'claimed')
+    dropped = r.status.dropped
+    since = time.monotonic()
+    r.intent('manual', 199, 'look_at', {'bearing': 1.0}, intent_id='refused-d3')
+    r.wait_status(lambda s: s.dropped == dropped + 1, 3.0, 'manual 199 refused')
+    time.sleep(0.5)
+    assert not any(v for _, v in r.sent_since(since))
+    r.intent('manual', 200, 'look_at', {'bearing': 1.0}, intent_id='override-d3')
+    running = r.wait_status(lambda s: s.active_intent_id == 'override-d3', 3.0, 'override')
+    assert running.active_source == 'manual'
+    r.wait_moving()
+    assert r.claim('console', 200, 0.0).accepted           # release
+    r.wait_status(lambda s: s.state == STATE_IDLE, 20.0, 'idle after the release')
+
+
+# --- (d4) item 15: dome_stimulus sees no push in a personality move ------------------------------
+
+def test_d4_dome_stimulus_reports_no_push_during_a_look_at(rig):
+    require('r2_stimulus', 'dome_stimulus')
+    r = rig(mock_args=('-p', 'initial_rad:=0.3'))
+    stimulus = Proc([
+        'ros2', 'run', 'r2_stimulus', 'dome_stimulus', '--ros-args',
+        '-r', '__node:=dome_stimulus_t%s' % r.tag,
+        '-r', '/dome_state_broadcaster/joint_states:=%s' % r.names['joint_states'],
+        '-r', '/dome_controller/commands:=%s' % r.names['commands'],
+        '-r', '/stimuli:=%s' % r.names['stimuli']])
+    r.extra.append(stimulus)
+    wait_until(lambda: r.node.get_publishers_info_by_topic(r.names['stimuli']), STARTUP_S,
+               'dome_stimulus on the graph', r.output)
+    r.start_mood('calm')
+    time.sleep(1.0)
+    start = time.monotonic()
+    for bearing in (-2.0, 1.0):
+        r.intent('manual', 199, 'look_at', {'bearing': bearing, 'profile': 'snappy'})
+        r.wait_moving()
+        r.wait_status(lambda s: s.state != STATE_RUNNING, 20.0, 'the move over')
+    r.wait_quiet(2.0)                                     # the settle_s after the last 0
+    with r.lock:
+        pushes = [(t, k) for t, k in r.stimuli if t >= start and k == 'dome_pushed']
+    assert not pushes, pushes
+    assert 'Traceback' not in stimulus.text(), stimulus.text()
 
 
 # --- (e) a stale mood stops an idle move; manual still works ------------------------------------
@@ -467,7 +591,7 @@ def test_g_only_the_converter_publishes_the_controller_and_only_the_arbiter_the_
                     '/parameter_events'}
     subs = {name for name, _ in
             r.node.get_subscriber_names_and_types_by_node(r.arbiter_name, '/')}
-    assert subs == {r.names['joint_states'], r.names['status'], r.names['odom'],
+    assert subs == {r.names['joint_states'], r.names['status'], r.names['cmd_vel'],
                     r.topics['/expression/intent'], r.topics['/mood/state']}
     assert not r.node.get_client_names_and_types_by_node(r.arbiter_name, '/')
     services = {name for name, _ in
@@ -549,10 +673,16 @@ def test_idle_cpu_is_logged(rig, capsys):
         with open('/proc/%d/stat' % pid) as f:
             fields = f.read().rsplit(')', 1)[1].split()
         return (int(fields[11]) + int(fields[12])) / ticks     # utime + stime
-    before, start = cpu_s(), time.monotonic()
+
+    def wakes():                  # the executor thread's sleeps: one per wake-up
+        with open('/proc/%d/task/%d/status' % (pid, pid)) as f:
+            line = next(x for x in f if x.startswith('voluntary_ctxt_switches'))
+        return int(line.split()[1])
+    before, woke, start = cpu_s(), wakes(), time.monotonic()
     time.sleep(20.0)
     used, wall = cpu_s() - before, time.monotonic() - start
+    rate = (wakes() - woke) / wall
     with capsys.disabled():
-        print('\ndome_arbiter idle CPU over %.0f s: %.2f %% of a core (pid %d)'
-              % (wall, 100.0 * used / wall, pid))
+        print('\ndome_arbiter idle CPU over %.0f s: %.2f %% of a core, executor thread '
+              '%.1f wake-ups/s (pid %d)' % (wall, 100.0 * used / wall, rate, pid))
     assert r.status.state == STATE_IDLE

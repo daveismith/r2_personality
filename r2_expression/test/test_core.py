@@ -19,8 +19,9 @@ import math
 
 import pytest
 
-from fixtures import base_data, cfg, dome_cfg, dome_data, FixedRng, held  # noqa: I100
-from fixtures import LED_CAT, led_snap, MAGIC_CAT, magic_snap, OWNER, PlantDouble, running
+from fixtures import base_data, cfg, dome_cfg, dome_data, FixedRng, held, running  # noqa: I100
+from fixtures import LED_CAT, led_snap, MAGIC_CAT, magic_snap, MIN_SPEED, OWNER, PlantDouble
+from r2_expression import motion
 from r2_expression.config import parse_config
 from r2_expression.core import (Action, APPLY_BRIGHTNESS, APPLY_DRIFT, APPLY_HUE, APPLY_MODE,
                                 Arbiter, CALL_CONFIGURE, CALL_MAGIC_BRIGHTNESS,
@@ -1268,9 +1269,9 @@ STILL = {'body_speed_m_s': 0.0, 'body_yaw_rad_s': 0.0}
 DRIVING = {'body_speed_m_s': 0.3, 'body_yaw_rad_s': 0.0}
 
 
-def dome(config=None, rng=None, mood='excited', position=0.0):
+def dome(config=None, rng=None, mood='excited', position=0.0, **kwargs):
     """Return a dome arbiter that has a status, a joint state and ``mood``; an ideal plant."""
-    a = Arbiter(config or dome_cfg(), DOME_CHANNELS, rng=rng or FixedRng(0.0))
+    a = Arbiter(config or dome_cfg(), DOME_CHANNELS, rng=rng or FixedRng(0.0), **kwargs)
     a.test_plant, a.test_t, a.test_cmd, a.test_log = PlantDouble(position, ideal=True), 0.0, \
         0.0, []
     DOME_ARBITERS.append(a)
@@ -1330,7 +1331,7 @@ def test_dome_look_at_sends_a_velocity_closes_on_the_joint_and_ends_with_a_0():
     a = dome()
     r = dome_intent(a, 'look_at', {'bearing': 1.0, 'profile': 'smooth'})
     assert r.accepted and calls(r.actions) == [(CALL_VELOCITY, 'dome')]
-    assert speeds(r.actions) == [-0.5]                  # bearing left: joint negative
+    assert speeds(r.actions) == [-MIN_SPEED]                  # bearing left: joint negative
     st = a.status('dome', 0.0)
     assert (st.state, st.active_action, st.active_source, st.active_remaining_ms) == (
         STATE_RUNNING, 'look_at', 'manual', 8000)
@@ -1435,7 +1436,7 @@ def test_dome_glances_resume_only_after_after_foreign_s():
     live(a, 9.5, source='foxglove', mood='calm')       # idle again at 9.6
     assert live(a, 12.55, mood='calm') == []           # due at 10, held to 9.6 + 3
     sent = live(a, 12.6, mood='calm')
-    assert speeds(sent) == [-0.5] and a.status('dome', 12.6).active_action == 'glance'
+    assert speeds(sent) == [-MIN_SPEED] and a.status('dome', 12.6).active_action == 'glance'
 
 
 def test_dome_suppressed_on_body_speed_stops_the_move_and_drops_idle_and_behaviour():
@@ -1463,7 +1464,7 @@ def test_dome_manual_still_runs_while_suppressed():
     a = dome()
     live(a, 0.2, body=DRIVING)
     r = dome_intent(a, 'look_at', {'bearing': 1.0})
-    assert r.accepted and speeds(r.actions) == [-0.5]
+    assert r.accepted and speeds(r.actions) == [-MIN_SPEED]
     sent = live(a, 1.0, body=DRIVING)
     assert a.moving and sent and all(x.why == 'move' for x in sent)
     st = a.status('dome', 1.0)
@@ -1484,6 +1485,21 @@ def test_dome_suppressed_clears_after_still_s_after_the_body_stops():
     assert a.status('dome', 1.9).state == STATE_SUPPRESSED
     live(a, 2.2, body=STILL)
     assert a.status('dome', 2.2).state == STATE_IDLE
+
+
+def test_dome_with_body_silence_s_a_silent_drive_command_counts_as_still():
+    a = dome(body_silence_s=0.5)                       # /diff_cont/cmd_vel: silent when idle
+    live(a, 0.2, body=DRIVING)                         # the last command at 0.2
+    live(a, 0.65)
+    assert a.status('dome', 0.65).state == STATE_SUPPRESSED
+    live(a, 1.65)                                      # still from 0.7, clear after_still_s on
+    assert a.status('dome', 1.65).state == STATE_SUPPRESSED
+    live(a, 1.8)
+    assert a.status('dome', 1.8).state == STATE_IDLE
+    b = dome()                                         # odometry: silence is not still
+    live(b, 0.2, body=DRIVING)
+    live(b, 5.0)
+    assert b.status('dome', 5.0).state == STATE_SUPPRESSED
 
 
 def test_dome_stale_mood_stops_a_personality_move_and_manual_still_runs():
@@ -1600,7 +1616,7 @@ def test_dome_idle_glance_fires_within_every_s_and_returns_to_where_it_started()
     a = dome(mood='calm', position=0.4)                       # every_s [10, 20], strength 1
     assert live(a, 9.9, mood='calm') == []
     sent = live(a, 10.0, mood='calm')
-    assert speeds(sent) == [-0.5]                             # rng 0: left, amplitude 0.3
+    assert speeds(sent) == [-MIN_SPEED]                             # rng 0: left, amplitude 0.3
     st = a.status('dome', 10.0)
     assert (st.active_source, st.active_action, st.priority) == ('idle', 'glance', 0)
     assert st.active_intent_id.startswith('glance-')
@@ -1641,7 +1657,7 @@ def test_dome_no_glances_while_stale():
 def test_dome_mood_rest_is_its_palette_on_a_label_change_and_after_foreign():
     a = dome(mood='sleepy')                                   # rest_rad 0.35: joint -0.35
     assert a.status('dome', 0.0).active_action == 'rest'
-    assert speeds(a.test_log) == [-0.5]
+    assert speeds(a.test_log) == [-MIN_SPEED]
     live(a, 8.0, mood='sleepy')
     assert not a.moving and a.test_plant.position == pytest.approx(-0.35, abs=0.09)
     live(a, 9.0, source='joystick', mood='sleepy')
@@ -1673,9 +1689,9 @@ def test_dome_rest_drift_is_corrected_at_min_speed_once_per_rest_recheck_s():
     a.test_plant.position = 0.0                                # pushed 0.35 away
     assert live(a, ended + 29.9, mood='sleepy') == []
     sent = live(a, ended + 30.0, mood='sleepy')
-    assert speeds(sent) == [-0.5] and a.status('dome', a.test_t).active_action == 'rest'
+    assert speeds(sent) == [-MIN_SPEED] and a.status('dome', a.test_t).active_action == 'rest'
     live(a, ended + 40.0, mood='sleepy')
-    assert all(abs(v) in (0.0, 0.5) for v in speeds(a.test_log[-200:]))
+    assert all(abs(v) in (0.0, MIN_SPEED) for v in speeds(a.test_log[-200:]))
     assert a.test_plant.position == pytest.approx(-0.35, abs=0.09)
 
 
@@ -1757,6 +1773,38 @@ def test_dome_a_move_stopped_before_it_learned_leaves_the_carried_coast_alone():
     assert not a.moving and a.coast_scale == pytest.approx(learned, abs=0.01)
 
 
+def test_dome_the_default_config_gives_the_motion_models_default_limits():
+    assert Arbiter._dome_limits(dome_cfg()) == motion.Limits()     # one set of defaults
+
+
+def test_dome_a_replacement_carries_its_predecessors_learned_coast_to_the_memory():
+    a = dome()
+    dome_intent(a, 'glance', {'amplitude': 1.0, 'dwell_s': 3.0, 'profile': 'smooth'})
+    move = a._ch['dome'].run.move
+    while not move.coast_learned:
+        live(a, a.test_t + 0.05)
+    learned = move.coast_scale
+    here = -a.test_plant.position                        # bearing of where it is: there already
+    dome_intent(a, 'look_at', {'bearing': here, 'profile': 'smooth'})
+    live(a, a.test_t + 2.0)
+    assert not a.moving and a.coast_scale == pytest.approx(learned, abs=0.05)
+
+
+@pytest.mark.parametrize('how', ['claim', 'stop'])
+def test_dome_a_move_interrupted_by_a_claim_or_a_stop_teaches_the_coast_nothing(how):
+    a = dome()                                           # an ideal plant: a fresh move learns
+    dome_intent(a, 'glance', {'amplitude': 1.0, 'dwell_s': 3.0, 'profile': 'smooth'})
+    move = a._ch['dome'].run.move
+    while not move.coast_learned:
+        live(a, a.test_t + 0.05)
+    assert a.moving and move.coast_scale < 0.5           # in its dwell, having learned
+    if how == 'claim':
+        feed(a, a.claim('dome', 'console', 250, 30.0, a.test_t).actions)
+    else:
+        feed(a, dome_intent(a, 'stop').actions)
+    assert not a.moving and a.coast_scale == 1.0
+
+
 def test_rule14_every_dome_move_ends_with_a_0_or_is_replaced():
     assert len(DOME_ARBITERS) > 20
     for a in DOME_ARBITERS:
@@ -1772,7 +1820,7 @@ def test_rule14_every_dome_move_ends_with_a_0_or_is_replaced():
 def test_rule4_every_dome_velocity_is_0_or_between_min_speed_and_the_cap():
     for a in DOME_ARBITERS:
         for x in a.test_log:
-            assert x.request['velocity_rad_s'] == 0.0 or 0.5 <= abs(
+            assert x.request['velocity_rad_s'] == 0.0 or MIN_SPEED <= abs(
                 x.request['velocity_rad_s']) <= 2.0
 
 

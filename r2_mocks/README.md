@@ -205,7 +205,8 @@ a test off a real graph.
 The plant (`DomePlant(ideal, firmware_quirks, initial_rad).step(command, dt)` returns the
 reported position; `position_rad`, `velocity_rad_s`, `wrapped_rad`, `reported_rad`, `coasting`):
 
-- dead band: `|v| < 0.44 rad/s` turns the motor off;
+- dead band, per direction as the droid's `velocity_map` has it: a positive command under
+  0.44 rad/s or a negative one under 0.567 rad/s turns the motor off;
 - lag: first order, 90 % of the commanded speed at 1.5 s (`tau` = 1.5 / ln 10);
 - coast: when the motor goes off, a further `0.37 s * v - 4 deg` (never negative), slowing at a
   constant rate over exactly that distance;
@@ -225,8 +226,9 @@ if `r2_bringup` is not installed, because `r2_bringup` exec_depends on this pack
 - No `DomeTelemetry` on `/roamadome/telemetry`; no velocity in the joint state.
 - The lag is first order, not the measured step response; the coast is the linear fit
   `0.37 v - 4 deg`, not the real curve (the fit is reliable from about 2 rad/s).
-- Positive and negative commands are symmetric (the real `velocity_map` differs per direction),
-  and the motor driver's `min_percent` steps are not modelled.
+- Above the floor, positive and negative commands are symmetric (the real `velocity_map`'s
+  speeds differ per direction a little), and the map's whole-percent steps are not modelled;
+  the two floors (0.44 and 0.567 rad/s) are.
 - The crossing artefact is the 355 to 4 deg model above, not the firmware's exact quantisation.
 - `~/joint_states` is stamped with the node clock, and nothing models a stalled or absent
   controller (the last command is held for ever).

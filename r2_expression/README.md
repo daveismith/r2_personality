@@ -292,14 +292,21 @@ position interface, `~/setup` and the bench services are never touched.
 | `config`, `use_sim_time`, `allow_duplicate` | as above | |
 | `command_topic` | `/dome/cmd/personality` | the converter's personality input (published, reliable, depth 1) |
 | `status_topic` | `/dome/cmd/status` | the converter's `DomeCommandStatus` (reliable, depth 1) |
-| `joint_states_topic` | `/dome_state_broadcaster/joint_states` | `sensor_msgs/JointState` (best effort, depth 1) |
-| `odom_topic` | `/diff_cont/odom` | `nav_msgs/Odometry` (best effort, depth 1, one message in 3 read) |
+| `joint_states_topic` | `/dome_state_broadcaster/joint_states` | `sensor_msgs/JointState` (best effort, depth 1); idle, each one ticks the core |
+| `cmd_vel_topic` | `/diff_cont/cmd_vel` | the drive's `geometry_msgs/TwistStamped` command, twist_mux's output (best effort, depth 1): the body's speed and yaw; `''` for none |
+| `odom_topic` | `''` (off) | `nav_msgs/Odometry` (best effort, depth 1, one message in 3 read); when set, used instead of `cmd_vel_topic` |
 | `joint_name` | `dome_joint` | whose `position` is the dome's |
 
 It also takes `/expression/intent`, `/mood/state`, serves **`/expression/claim/dome`** and
 publishes `/expression/status`, as the others. The verbs (`look_at`, `glance`, `turn`, `rest`,
 `stop`; `track` is refused `not in this phase`) and the motion settings are in
-`expression.yaml` (`defaults.dome`, `profiles`, each mood's `dome`).
+`expression.yaml` (`defaults.dome`, `profiles`, each mood's `dome`). `defaults.dome`'s
+`min_speed_rad_s` (0.6) sits above both floors of the droid's velocity map (a positive command
+under about 0.44 rad/s and a negative one under about 0.567 rad/s send 0 %); `retries` (1) and
+`feedback_timeout_s` (0.5) are the moves' retry budget and feedback timeout. Its
+`max_speed_rad_s` (2.0) and `max_accel_rad_s2` (6.0) are the renderer's own clamp on the
+profiles; the converter's `personality_max_speed_rad_s` and `personality_max_accel_rad_s2`
+(launch arguments of `r2_bringup`) are the authority, and the two should be kept equal.
 
 What the states mean here, beyond the phase 1 ones:
 
@@ -309,30 +316,39 @@ What the states mean here, beyond the phase 1 ones:
   `idle` or `personality`, the mood's rest (if any) is re-applied and glances wait
   `after_foreign_s`. There is no attribution on a Twist: the converter's status is the dome's
   `held_by`.
-- **`suppressed`** (`STATE_SUPPRESSED`, 7): the body drives faster than `body_speed_m_s` or
-  yaws faster than `body_yaw_rad_s`. The move in progress is stopped with a 0, `idle` and
-  `behavior` intents are dropped and counted, `manual` and `safety` still run; it clears
-  `after_still_s` after the odometry says the body is still.
+- **`suppressed`** (`STATE_SUPPRESSED`, 7): the drive is commanded faster than
+  `body_speed_m_s` (the linear speed) or `body_yaw_rad_s` (`|angular.z|`) on `cmd_vel_topic`.
+  The move in progress is stopped with a 0, `idle` and `behavior` intents are dropped and
+  counted, `manual` and `safety` still run; it clears `after_still_s` after a still command
+  or 0.5 s of silence (twist_mux publishes nothing while nobody drives). A base rolled by
+  hand, or driven by anything that bypasses twist_mux, is not seen by default; set
+  `odom_topic` to read odometry instead (silent odometry then keeps the dome suppressed).
 - **`offline`**: no joint state or no converter status for `device_stale_s` (or never).
   Nothing is sent; intents are dropped. At start the arbiter sends nothing until it has both.
 - **`stale`**: the mood went quiet; an `idle` or `behavior` move stops, no glances, `manual`
   still runs.
 
-**Threads, timers and CPU** (rule 11: 1.5 % of a Pi 5 core idle, 4 % in a move). One thread:
+**Threads, timers and CPU** (rule 11: 2 % of a Pi 5 core idle, 4 % in a move). One thread:
 every subscription, the claim service and both timers run on the executor, under the lock.
 Every velocity the core returns is published at once from the callback that produced it, so a
 stop (foreign, suppressed, a claim, a stop intent) leaves the node in the same callback. A
 move runs on a **20 Hz timer** (the converter's rate) that the first move action creates and
-the end of the move destroys; while it exists it ticks the core and the 4 Hz tick skips its
-turn. Idle, the node wakes for the joint state (10 Hz), the converter's status (2 Hz), the
-mood (5 Hz), the odometry (one in three read, all received) and the 4 Hz tick, nothing else.
+the end of the move destroys; while it exists it ticks the core. Idle, each joint state ticks
+the core (leases, glances, the rest check, staleness to 0.1 s), and so does a 1 Hz timer,
+which matters only when the joint states stop (OFFLINE is still detected and the status
+still goes out, at 1 Hz). **Idle wake-ups: about 18 a second**: the joint state (10),
+the mood (5), the converter's status (2) and the 1 Hz timer (1); the drive's command is
+silent unless someone drives. At about 0.1 % of a Pi 5 core per wake-up a second (phase 1),
+that is about 1.8 %, hence the 2 % idle budget. Odometry instead (`odom_topic`) adds about 30
+wake-ups a second (every message wakes the executor, even the ones not read).
 On SIGINT or SIGTERM a node in a move publishes one 0 before it exits and waits up to 0.2 s
 for it to be acknowledged (it installs its own signal handlers so the context is still up for
 it, and ignores a repeated signal while it closes); a SIGKILL is covered by the converter's
 timeout. Measured in the dev container (`test_dome_node.py`, logged not asserted): idle
-3.8 % of a container core, against 3.6 % for `led_arbiter` measured the same way (the two
-phase 1 arbiters together are 2.74 % on the Pi), so roughly 1.4 % on the Pi: inside the
-budget, but an estimate until step 8b measures it there.
+16.9 wake-ups a second of the executor thread (voluntary context switches) and 3.5 % of a
+container core (3.8 % with the odometry and the 4 Hz tick; the container's figure is mostly
+the middleware's own threads), against 3.6 % for `led_arbiter` measured the same way. The
+Pi figure is step 8b's to measure.
 
 **The coast is learned and carried.** Each stop shows how far the dome really ran on after
 its 0, and the move scales the coast fit by observed over predicted (motion rule 5). The
@@ -340,8 +356,8 @@ arbiter keeps that scale for the next move (`motion.CoastMemory`, `Arbiter.coast
 on Gazebo's ideal plant only the first move after a start stops short and creeps; on the real
 dome the scale stays near 1. The carried scale fades toward 1.0 with a 10-minute half-life
 (the coast drifts with the battery and the temperature, and one odd stop, a hand on the dome
-while it settled, should not outlive a quiet spell); a move that never stopped, or that was
-stopped (a person, a claim, suppression), teaches nothing. `dome: move over, coast scale X for the next` is logged at INFO after every move.
+while it settled, should not outlive a quiet spell); a move that never stopped, or that did
+not end by itself (a person, a claim, a stop intent, suppression), teaches nothing. `dome: move over, coast scale X for the next` is logged at INFO after every move.
 
 ```bash
 ros2 run r2_expression dome_arbiter                              # against the converter
@@ -368,8 +384,10 @@ for line in arb.take_warnings(): log.warn(line)
 ```
 
 The dome node does the same with `arb.dome_state({'position_rad': p}, now)` (each joint
-state), `{'source': status.source}` (each converter status) and `{'body_speed_m_s': v,
-'body_yaw_rad_s': w}` (odometry), and ticks at 20 Hz while `arb.moving`; its actions are all
+state, followed by `arb.tick(now)` while idle), `{'source': status.source}` (each converter
+status) and `{'body_speed_m_s': v, 'body_yaw_rad_s': w}` (the drive's command, with
+`Arbiter(..., body_silence_s=0.5)`, or odometry), and ticks at 20 Hz while `arb.moving`
+(and at 1 Hz when the joint states stop); its actions are all
 `CALL_VELOCITY` with `{velocity_rad_s}`, published at once (`dome_renderer.render`).
 
 `do(actions)` hands each `Action` to the single worker: `action.call` names the service

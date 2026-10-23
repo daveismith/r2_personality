@@ -15,13 +15,16 @@
 """
 ``DomePlant`` against the numbers of plan 2.1.
 
-Dead band 0.44 rad/s, 90 % of the commanded speed at 1.5 s, coast ``0.37 s * v - 4 deg``,
-the 355-to-4 deg step at each crossing of 0.
+Dead band 0.44 rad/s positive and 0.567 rad/s negative (the velocity map's two floors),
+90 % of the commanded speed at 1.5 s, coast ``0.37 s * v - 4 deg``, the 355-to-4 deg step
+at each crossing of 0.
 """
 
 import math
 
 import pytest
+from r2_mocks.dome_plant import DEAD_BAND_NEGATIVE_RAD_S
+from r2_mocks.dome_plant import DEAD_BAND_POSITIVE_RAD_S
 from r2_mocks.dome_plant import DomePlant
 from r2_mocks.dome_plant import wrap
 
@@ -39,17 +42,26 @@ def settle(plant, command=0.0, limit_s=30.0):
     assert plant.velocity_rad_s == 0.0
 
 
-@pytest.mark.parametrize('command', [0.0, 0.1, 0.43, -0.43, -0.2])
-def test_dead_band_below_0_44_rad_s_the_motor_is_off_and_the_dome_does_not_move(command):
+@pytest.mark.parametrize('command', [0.0, 0.1, 0.43, -0.43, -0.2, -0.5, -0.565])
+def test_dead_band_below_0_44_positive_and_0_567_negative_the_dome_does_not_move(command):
     plant = DomePlant(initial_rad=1.0)
     run(plant, command, 5.0)
     assert plant.position_rad == 1.0 and plant.velocity_rad_s == 0.0
 
 
-def test_dead_band_at_0_44_rad_s_the_dome_moves():
+@pytest.mark.parametrize('command', [0.44, 0.5, -0.567, -0.6])
+def test_dead_band_at_the_floor_of_each_direction_the_dome_moves(command):
     plant = DomePlant()
-    run(plant, 0.44, 5.0)
-    assert plant.velocity_rad_s > 0.4 and plant.position_rad > 1.0
+    run(plant, command, 5.0)
+    assert abs(plant.velocity_rad_s) > 0.4 and abs(plant.position_rad) > 1.0
+    assert math.copysign(1.0, plant.position_rad) == math.copysign(1.0, command)
+
+
+def test_dead_band_floors_are_the_velocity_maps():
+    # ros2_control.xacro: round(p0 + k * |v|) percent, 0 below min_percent.
+    for floor, (p0, k, min_percent) in ((DEAD_BAND_POSITIVE_RAD_S, (13.9, 12.75, 20)),
+                                        (DEAD_BAND_NEGATIVE_RAD_S, (14.5, 12.36, 22))):
+        assert floor == pytest.approx((min_percent - 0.5 - p0) / k, abs=1e-3)
 
 
 @pytest.mark.parametrize('dt', [DT, 0.01, 0.1])
@@ -114,7 +126,7 @@ def test_a_new_command_ends_the_coast():
     assert not plant.coasting
 
 
-def test_negative_commands_mirror_positive_ones():
+def test_negative_commands_above_both_floors_mirror_positive_ones():
     up, down = DomePlant(), DomePlant()
     for plant, sign in ((up, 1.0), (down, -1.0)):
         run(plant, sign * 1.0, 4.0)

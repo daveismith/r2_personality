@@ -22,14 +22,17 @@ schema (plan section 4.3):
 * ``defaults`` (optional): ``manual_hold_s`` (5.0), ``mood_stale_s`` (3.0),
   ``max_duration_ms`` (30000, an integer), ``status_hz`` (2.0),
   ``max_lease_s`` (60.0), ``device_stale_s`` (5.0). Each > 0. And ``dome``
-  (phase 2 plan 4.5, :class:`DomeDefaults`): ``min_speed_rad_s`` (0.5),
-  ``max_speed_rad_s`` (2.0) and ``max_accel_rad_s2`` (4.0), the converter's
-  personality caps repeated here; ``max_move_s`` (8.0), ``settle_s`` (0.8),
-  ``rest_recheck_s`` (30.0), ``coast: {c1_s: 0.37, c2_rad: 0.07}``,
-  ``heading: {sign: -1, offset_rad: 0.0}`` (sign -1 or 1, offset in (-pi, pi]),
-  ``body_speed_m_s`` (0.15), ``body_yaw_rad_s`` (0.3), ``after_foreign_s``
-  (3.0), ``after_still_s`` (1.0). ``c2_rad`` may be 0; ``min_speed_rad_s``
-  may not exceed ``max_speed_rad_s``.
+  (phase 2 plan 4.5, :class:`DomeDefaults`): ``min_speed_rad_s`` (0.6, above
+  both floors of the velocity map: 0.44 positive, 0.567 negative),
+  ``max_speed_rad_s`` (2.0) and ``max_accel_rad_s2`` (6.0), the renderer's own
+  clamps (the converter's personality caps are the authority; keep them
+  equal); ``max_move_s`` (8.0), ``settle_s`` (0.8), ``retries`` (1, an integer
+  >= 0), ``feedback_timeout_s`` (0.5, at least 0.2), ``rest_recheck_s`` (30.0),
+  ``coast: {c1_s: 0.37, c2_rad: 0.07}``, ``heading: {sign: -1, offset_rad:
+  0.0}`` (sign -1 or 1, offset in (-pi, pi]), ``body_speed_m_s`` (0.15),
+  ``body_yaw_rad_s`` (0.3), ``after_foreign_s`` (3.0), ``after_still_s``
+  (1.0). ``c2_rad`` may be 0; ``min_speed_rad_s`` may not exceed
+  ``max_speed_rad_s``.
 * ``profiles`` (optional): name -> dome motion profile ``{v_max, accel, k,
   settle_band_rad}``, all > 0, ``settle_band_rad`` at most pi, ``v_max`` at
   least ``min_speed_rad_s``. A ``v_max`` or ``accel`` above the cap is clamped
@@ -110,6 +113,7 @@ _PICK_KEYS = ('channel',) + PICK_KINDS + ('weight', 'rgb', 'speed', 'repeat', 'e
 _LED_ONLY_PICK_KEYS = ('rgb', 'speed')
 _MAGIC_ONLY_PICK_KEYS = ('repeat', 'end')
 MAX_UINT32 = 4294967295
+MIN_FEEDBACK_TIMEOUT_S = 0.2   # defaults.dome.feedback_timeout_s: two 10 Hz joint states
 
 
 class ExpressionConfigError(ValueError):
@@ -120,11 +124,13 @@ class ExpressionConfigError(ValueError):
 class DomeDefaults:
     """The dome arbiter's settings (``defaults.dome``)."""
 
-    min_speed_rad_s: float = 0.5
+    min_speed_rad_s: float = 0.6
     max_speed_rad_s: float = 2.0
-    max_accel_rad_s2: float = 4.0
+    max_accel_rad_s2: float = 6.0
     max_move_s: float = 8.0
     settle_s: float = 0.8
+    retries: int = 1
+    feedback_timeout_s: float = 0.5
     rest_recheck_s: float = 30.0
     coast: Coast = Coast()
     heading: Heading = Heading()
@@ -500,6 +506,14 @@ def _dome_defaults(value, path):
                 raise ExpressionConfigError('%s.sign: must be -1 or 1, got %r' % (here, sign))
             out[key] = Heading(sign=int(sign), offset_rad=_angle(
                 heading.get('offset_rad', 0.0), _join(here, 'offset_rad')))
+        elif key == 'retries':
+            out[key] = _integer(raw, here, 0, 10)
+        elif key == 'feedback_timeout_s':
+            out[key] = _positive(raw, here)
+            if out[key] < MIN_FEEDBACK_TIMEOUT_S:
+                raise ExpressionConfigError(
+                    '%s: %g is under %g s (two joint states at 10 Hz): every move would end '
+                    'no feedback' % (here, out[key], MIN_FEEDBACK_TIMEOUT_S))
         else:
             out[key] = _positive(raw, here)
     dome = DomeDefaults(**out)

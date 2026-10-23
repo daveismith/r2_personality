@@ -17,7 +17,10 @@
 
 The numbers are plan 2.1 (``ros2_roamadome``'s calibration findings and ``ros2_control.xacro``):
 
-* **Dead band**: a velocity command with ``|v| < 0.44 rad/s`` sends 0 % and the motor is off.
+* **Dead band**, per direction: ``velocity_map`` sends ``round(p0 + k * |v|)`` percent and
+  zeroes anything under ``min_percent``, so a positive command under about 0.44 rad/s (p0 13.9,
+  k 12.75, ``min_percent`` 20) and a negative one under about 0.567 rad/s (p0 14.5, k 12.36,
+  ``min_percent`` 22) sends 0 % and the motor is off.
 * **Lag**: the driver has no ramp; the step response is first order and reaches 90 % of the
   commanded speed at 1.5 s, so ``tau = 1.5 / ln(10)`` (about 0.65 s).
 * **Coast**: when the motor goes off (a command of 0, or one under the dead band) the dome
@@ -34,13 +37,15 @@ The numbers are plan 2.1 (``ros2_roamadome``'s calibration findings and ``ros2_c
 
 ``ideal=True`` is a pure integrator, like Gazebo's joint under a velocity controller: the
 velocity is the command at once (no dead band, lag or coast, and no quirks), and the position
-is still reported wrapped to [0, 2*pi). Positive and negative are symmetric (the real map's
-per-direction asymmetry is not modelled).
+is still reported wrapped to [0, 2*pi). Apart from the dead band, positive and negative are
+symmetric (the map's per-direction speeds above the floor are not modelled).
 """
 
 import math
 
-DEAD_BAND_RAD_S = 0.44
+# ros2_control.xacro velocity_map: the speed at which round(p0 + k * v) reaches min_percent.
+DEAD_BAND_POSITIVE_RAD_S = (20 - 0.5 - 13.9) / 12.75    # min_percent, p0, k: about 0.44
+DEAD_BAND_NEGATIVE_RAD_S = (22 - 0.5 - 14.5) / 12.36    # about 0.567 (0.5663)
 LAG_90_PERCENT_S = 1.5
 TAU_S = LAG_90_PERCENT_S / math.log(10.0)
 COAST_S = 0.37                  # the coast distance is COAST_S * v - COAST_OFFSET_RAD
@@ -107,7 +112,8 @@ class DomePlant:
             if self.ideal:
                 self._velocity = command_rad_s
                 self._position += command_rad_s * dt
-            elif abs(command_rad_s) < DEAD_BAND_RAD_S:
+            elif abs(command_rad_s) < (DEAD_BAND_NEGATIVE_RAD_S if command_rad_s < 0.0
+                                       else DEAD_BAND_POSITIVE_RAD_S):
                 self._coast(dt)
             else:
                 self._drive(command_rad_s, dt)

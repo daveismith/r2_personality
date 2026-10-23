@@ -32,12 +32,13 @@ def test_launch_description_has_the_arguments_and_the_three_nodes():
     entities = module.generate_launch_description().entities
     args = {e.name for e in entities if isinstance(e, DeclareLaunchArgument)}
     assert args == {'use_sim_time', 'config', 'device', 'dome', 'command_topic',
-                    'status_topic', 'joint_states_topic', 'odom_topic'}
+                    'status_topic', 'joint_states_topic', 'cmd_vel_topic', 'odom_topic'}
     defaults = {e.name: e.default_value[0].text for e in entities
                 if isinstance(e, DeclareLaunchArgument)}
     assert defaults['dome'] == 'true'
     assert defaults['command_topic'] == '/dome/cmd/personality'
     assert defaults['joint_states_topic'] == '/dome_state_broadcaster/joint_states'
+    assert (defaults['cmd_vel_topic'], defaults['odom_topic']) == ('/diff_cont/cmd_vel', '')
     nodes = [e for e in entities if isinstance(e, Node)]
     assert sorted(n.node_executable for n in nodes) == [
         'dome_arbiter', 'led_arbiter', 'magic_arbiter']

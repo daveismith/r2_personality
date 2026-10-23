@@ -115,8 +115,8 @@ are *moves* (:mod:`r2_expression.motion`), and its one call is
 :data:`CALL_VELOCITY`, ``{velocity_rad_s}`` for ``/dome/cmd/personality``,
 where 0 is the stop. The node feeds :meth:`Arbiter.dome_state` (the
 converter's source, the joint position, the body's speed and yaw), calls
-:meth:`Arbiter.tick` at 20 Hz while :attr:`Arbiter.moving` and at 4 Hz
-otherwise, and publishes every velocity returned. Rules 1-4, 6 and 8-10 apply
+:meth:`Arbiter.tick` at 20 Hz while :attr:`Arbiter.moving` and with each
+joint state (10 Hz) otherwise, and publishes every velocity returned. Rules 1-4, 6 and 8-10 apply
 as above, with these differences, each named by a test:
 
 13. **Vocabulary** (:data:`DOME_ACTIONS`): ``look_at`` ``{bearing, profile}``,
@@ -148,8 +148,11 @@ as above, with these differences, each named by a test:
     than ``body_yaw_rad_s``: SUPPRESSED until ``after_still_s`` after it is
     still. The onset stops the move in progress; while it lasts ``idle`` and
     ``behavior`` intents are dropped and counted, ``manual`` and ``safety``
-    ones still run. Only a still reading ends it: odometry that falls silent
-    while the body moves leaves the dome SUPPRESSED (the safe side).
+    ones still run. With ``body_silence_s`` (the drive's velocity command,
+    which falls silent when nobody drives) a silence that long is a still
+    reading; without it (odometry) only a still reading ends it, and
+    odometry that falls silent while the body moves leaves the dome
+    SUPPRESSED (the safe side).
 17. **Offline.** No joint position, or no converter status, for
     ``device_stale_s`` (or never): OFFLINE, the move ends with its 0, nothing
     else is sent.
@@ -526,7 +529,8 @@ def _effect_base(effect):
 class Arbiter:
     """The arbiter of one channel group (see the module docstring for the rules)."""
 
-    def __init__(self, config, channels, owner='r2_expression', rng=None):
+    def __init__(self, config, channels, owner='r2_expression', rng=None,
+                 body_silence_s=None):
         specs = []
         for name in channels:
             spec = CHANNELS.get(name)
@@ -580,6 +584,8 @@ class Arbiter:
         self._position = self._position_at = None
         self._body_speed = self._body_yaw = 0.0
         self._body_moving = False
+        self._body_at = None
+        self._body_silence_s = body_silence_s   # rule 16: silence this long is still
         self._still_since = None
         self._was_foreign = self._was_suppressed = False
         self._glance_wait_until = 0.0
@@ -931,6 +937,7 @@ class Arbiter:
         speed = _field(state, 'body_speed_m_s', None)
         yaw = _field(state, 'body_yaw_rad_s', None)
         if speed is not None or yaw is not None:
+            self._body_at = now
             if speed is not None:
                 self._body_speed = abs(speed)
             if yaw is not None:
@@ -1173,11 +1180,20 @@ class Arbiter:
             return STATE_SUPPRESSED
         return None
 
+    def _body(self, now):
+        """Rule 16: ``(moving, still_since)``, a silence of body_silence_s being still."""
+        silence = self._body_silence_s
+        if self._body_moving and silence is not None and now - self._body_at > silence:
+            return False, self._body_at + silence
+        return self._body_moving, self._still_since
+
     def _suppressed(self, now):
         """Rule 16: the body moves, or was moving less than after_still_s ago."""
-        return self.kind == 'dome' and (self._body_moving or (
-            self._still_since is not None and
-            now - self._still_since < self._config.defaults.dome.after_still_s))
+        if self.kind != 'dome':
+            return False
+        moving, still_since = self._body(now)
+        return moving or (still_since is not None and
+                          now - still_since < self._config.defaults.dome.after_still_s)
 
     def _state(self, cs, now):
         blocked = self._blocked(cs, now)
@@ -1393,7 +1409,8 @@ class Arbiter:
     def _dome_limits(config):
         dome = config.defaults.dome
         return motion.Limits(min_speed=dome.min_speed_rad_s, max_move_s=dome.max_move_s,
-                             settle_s=dome.settle_s, coast=dome.coast)
+                             settle_s=dome.settle_s, coast=dome.coast, retries=dome.retries,
+                             feedback_timeout_s=dome.feedback_timeout_s)
 
     def _mood_dome(self, now):
         return self._config.mood_dome(self._label, self._stale(now))
@@ -1497,6 +1514,10 @@ class Arbiter:
     def _dome_guard(self, now):
         """Rules 15-17: halt on foreign, offline and the onset of suppression."""
         cs = self._ch['dome']
+        moving, still_since = self._body(now)
+        if self._body_moving and not moving:          # rule 16: nobody drives any more
+            self._body_speed = self._body_yaw = 0.0
+            self._body_moving, self._still_since = moving, still_since
         state = self._blocked(cs, now)
         foreign = state == STATE_FOREIGN
         if self._was_foreign and not foreign:

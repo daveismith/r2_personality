@@ -23,7 +23,8 @@ from r2_expression import motion
 from r2_expression.motion import (Coast, CoastMemory, glance, Heading, Limits, look_at,
                                   MAX_TURN_RAD, Profile, RateLimiter, rest, RestHold, turn,
                                   wrap)
-from r2_mocks.dome_plant import GAP_HIGH_RAD, GAP_LOW_RAD
+from r2_mocks.dome_plant import (DEAD_BAND_NEGATIVE_RAD_S, DEAD_BAND_POSITIVE_RAD_S,
+                                 GAP_HIGH_RAD, GAP_LOW_RAD)
 
 PROFILES = {'snappy': Profile(v_max=2.0, accel=4.0, k=3.0, settle_band_rad=0.05),
             'smooth': Profile(v_max=1.0, accel=1.5, k=1.5, settle_band_rad=0.05),
@@ -80,7 +81,7 @@ def test_profile_is_capped_to_the_converters_limits():
 # --- look_at: the grid ---------------------------------------------------------------------
 
 @pytest.mark.parametrize('name', sorted(PROFILES))
-@pytest.mark.parametrize('plant_kind', ['ideal', 'real'])
+@pytest.mark.parametrize('plant_kind', ['ideal', 'asymmetric'])
 def test_look_at_reaches_within_the_band_from_every_5_degree_error_both_ways_across_the_wrap(
         name, plant_kind):
     profile = PROFILES[name]
@@ -96,6 +97,20 @@ def test_look_at_reaches_within_the_band_from_every_5_degree_error_both_ways_acr
             assert log[-1][0] <= LIMITS.max_move_s, case
 
 
+@pytest.mark.parametrize('sign', [1, -1])
+def test_the_floor_min_speed_is_above_the_dead_band_of_each_direction(sign):
+    # The droid's velocity_map: 0 % under 0.44 rad/s positive, under 0.567 negative. A
+    # floor of 0.5 (the first default) stalled every leftward (negative) creep.
+    assert LIMITS.min_speed > max(DEAD_BAND_POSITIVE_RAD_S, DEAD_BAND_NEGATIVE_RAD_S)
+    for profile in PROFILES.values():
+        plant = PlantDouble(0.0)
+        reason, log = run(look_at(sign * 0.3, profile, LIMITS, 0.0), plant)
+        assert reason == 'reached' and landed(plant, sign * 0.3) <= profile.settle_band_rad
+    stalled = PlantDouble(0.0)
+    reason, _ = simulate(look_at(-0.3, PROFILES['lazy'], Limits(min_speed=0.5), 0.0), stalled)
+    assert reason == 'timeout' and stalled.position == 0.0
+
+
 def in_gap(angle):
     """Return True near the firmware's gap at 0, where a reading is up to 4.5 degrees off."""
     angle %= 2 * math.pi
@@ -107,7 +122,10 @@ def test_look_at_across_0_with_the_firmwares_9_degree_step_lands_within_its_read
         name):
     # Plan risk "the 0 crossing reads 9 degrees long": a reading near 0 is up to 4.5 degrees
     # off, which no loop can see, and it can skew the coast the move learns. The retry
-    # corrects most of it; what is left is within the band plus that reading error.
+    # corrects most of it; what is left is within the band plus that reading error. The
+    # retry creeps at min_speed (0.6, above the negative dead band), which coasts about 9
+    # degrees on the real dome, so a small move whose first stop the step skewed may settle
+    # just outside the band: at least 9 in 10 are reached.
     profile, reached, cases = PROFILES[name], 0, 0
     for error in GRID:
         for distance in (0.2, 0.3):
@@ -122,7 +140,7 @@ def test_look_at_across_0_with_the_firmwares_9_degree_step_lands_within_its_read
             assert log[-1][1] == 0.0, case
             reached += reason == 'reached'
             cases += 1
-    assert reached >= 0.95 * cases, (reached, cases)
+    assert reached >= 0.9 * cases, (reached, cases)
 
 
 def test_look_at_turns_the_short_way():
@@ -374,8 +392,8 @@ def test_rule5_a_move_that_never_stopped_teaches_the_memory_nothing():
     assert memory.recall(620.0) == pytest.approx(1.0 - (1.0 - taught.coast_scale) / 2.0)
 
 
-def test_rule5_a_stopped_move_teaches_the_memory_nothing_even_if_a_stop_taught_it():
-    memory = CoastMemory()
+def glance_until_learned():
+    """Return a glance stepped on the ideal plant until a stop taught it, and the time."""
     move = glance(1.0, 2.0, PROFILES['smooth'], LIMITS, 0.0)
     plant = PlantDouble(0.0, ideal=True)
     t = 0.0
@@ -383,9 +401,23 @@ def test_rule5_a_stopped_move_teaches_the_memory_nothing_even_if_a_stop_taught_i
         move.step(plant.reading(), t)
         plant.step(move.velocity, 0.05)
         t += 0.05
+    return move, t
+
+
+def test_rule5_a_stopped_move_teaches_the_memory_nothing_even_if_a_stop_taught_it():
+    memory = CoastMemory()
+    move, t = glance_until_learned()
     assert move.coast_learned and not move.done           # now in its dwell
     move.stop()
     memory.learn(move, t)
+    assert memory.recall(t) == 1.0
+
+
+def test_rule5_a_move_cut_short_without_a_stop_teaches_the_memory_nothing():
+    memory = CoastMemory()
+    move, t = glance_until_learned()
+    assert move.coast_learned and (move.done, move.reason) == (False, '')
+    memory.learn(move, t)                                 # interrupted: never finished
     assert memory.recall(t) == 1.0
 
 
