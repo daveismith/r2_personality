@@ -47,6 +47,18 @@ covers there are rules (:func:`rule_bucket`), at confidence :data:`RULE_CONFIDEN
 
 ``calm``, ``scared`` and ``greeting`` have no rule; they come from the sheet only. All of
 this is a first pass to be confirmed by ear.
+
+Duplicates: :func:`fingerprint` reduces a clip (its first :data:`MAX_ANALYSIS_S` seconds,
+mono, resampled to :data:`FP_RATE`) to log band energies, :data:`FP_BANDS` log-spaced
+bands from 125 Hz to 4 kHz over 50 ms Hann frames every 25 ms, in dB floored 60 dB below
+the loudest band-frame. It keeps two parts: the band profile (the mean over time, centred)
+and the time pattern (each band minus its mean, which also removes any gain difference).
+:func:`duplicate_score` (0..1) is the lesser of the profiles' correlation and the best
+normalised cross-correlation of the time patterns over a lag of up to
+:data:`FP_MAX_LAG` frames (100 ms) either way; two steady sounds (no time pattern) score
+their profile correlation. Two clips of the same sample count and rate whose 8 kHz
+signals agree within :data:`EXACT_TOLERANCE` score 1.0. :func:`duplicate_pairs` scores
+only the pairs whose durations are within 3 % or 60 ms (:func:`durations_close`).
 """
 
 from dataclasses import dataclass
@@ -68,6 +80,22 @@ K = 3
 RULE_CONFIDENCE = 0.4
 RULE_YIELDS_TO = 0.6           # a neighbour match at least this confident beats a rule
 NO_MATCH_TAG = 'chatter'
+
+FP_RATE = 8000
+FP_FRAME = 400                 # 50 ms at FP_RATE
+FP_HOP = 200                   # 25 ms
+FP_BANDS = 16
+FP_LOW_HZ = 125.0
+FP_FLOOR_DB = 60.0             # band-frames are floored this far below the loudest
+FP_MAX_LAG = 4                 # frames either way (100 ms)
+FP_STEADY_DB = 0.5             # a time pattern with an RMS below this is a steady sound
+EXACT_TOLERANCE = 2e-3         # max |difference| of the 8 kHz signals for an exact match
+DURATION_REL = 0.03            # pairs are scored only when their durations are this close
+DURATION_ABS_S = 0.06          # ... or within this
+# A suggested duplicate scores at least this. On the two real sets (2026-10-24) the pairs
+# at 0.917 and above are the same recording (their aligned waveforms correlate at 0.35 to
+# 0.83); the next ones (0.818 to 0.891) correlate at 0.1 to 0.34: variants, not copies.
+DUPLICATE_THRESHOLD = 0.9
 
 FEATURE_KEYS = ('duration_s', 'attack_s', 'decay_frac', 'bursts', 'burst_rate', 'zcr_hz',
                 'zcr_slope', 'centroid_hz', 'centroid_slope')
@@ -267,3 +295,101 @@ def suggest(features: Features, references: References, k: int = K) -> Suggestio
     if rule is not None and knn.confidence < RULE_YIELDS_TO:
         return Suggestion(rule, RULE_CONFIDENCE, 'rule')
     return knn
+
+
+@dataclass(frozen=True)
+class Fingerprint:
+    """A clip reduced for duplicate detection; see the module docstring."""
+
+    profile: np.ndarray          # (bands,) mean log band energy, centred, dB
+    pattern: np.ndarray          # (frames, bands) each band minus its mean, dB
+    signal: np.ndarray           # the mono FP_RATE signal (float32), for the exact check
+    frames: int                  # sample count of the whole decoded clip
+    sample_rate: int
+    duration_s: float
+
+
+def _band_edges():
+    edges = np.geomspace(FP_LOW_HZ, FP_RATE / 2.0, FP_BANDS + 1)
+    bins = np.round(edges / (FP_RATE / FP_FRAME)).astype(int)
+    return np.maximum.accumulate(np.maximum(bins, 1))
+
+
+def fingerprint(samples, sample_rate) -> Fingerprint:
+    """Return the duplicate-detection fingerprint of one decoded clip."""
+    full = np.asarray(samples)
+    frames_total = int(full.shape[0])
+    head = to_mono(full[:int(MAX_ANALYSIS_S * sample_rate)])
+    signal = np.asarray(resample(head, sample_rate, FP_RATE), dtype=np.float32)
+    x = signal.astype(np.float64)
+    if len(x) < FP_FRAME:
+        x = np.pad(x, (0, FP_FRAME - len(x)))
+    windows = np.lib.stride_tricks.sliding_window_view(x, FP_FRAME)[::FP_HOP]
+    power = np.abs(np.fft.rfft(windows * np.hanning(FP_FRAME), axis=1)) ** 2
+    edges = _band_edges()
+    bands = np.stack([power[:, lo:max(hi, lo + 1)].sum(axis=1)
+                      for lo, hi in zip(edges[:-1], edges[1:])], axis=1)
+    db = 10.0 * np.log10(np.maximum(bands, 1e-20))
+    db = np.maximum(db, db.max() - FP_FLOOR_DB)
+    mean = db.mean(axis=0)
+    return Fingerprint(profile=mean - mean.mean(), pattern=db - mean,
+                       signal=signal,
+                       frames=frames_total, sample_rate=int(sample_rate),
+                       duration_s=frames_total / float(sample_rate))
+
+
+def _correlation(a, b):
+    na, nb = float(np.sqrt(np.sum(a * a))), float(np.sqrt(np.sum(b * b)))
+    if na < 1e-9 or nb < 1e-9:
+        return 1.0 if na < 1e-9 and nb < 1e-9 else 0.0
+    return float(np.sum(a * b)) / (na * nb)
+
+
+def _steady(pattern):
+    return float(np.sqrt(np.mean(pattern ** 2))) < FP_STEADY_DB
+
+
+def exact_match(a: Fingerprint, b: Fingerprint) -> bool:
+    """Return True when the two clips have the same samples, within the tolerance."""
+    if a.frames != b.frames or a.sample_rate != b.sample_rate or len(a.signal) != len(b.signal):
+        return False
+    return bool(np.max(np.abs(a.signal - b.signal), initial=0.0) <= EXACT_TOLERANCE)
+
+
+def duplicate_score(a: Fingerprint, b: Fingerprint) -> float:
+    """Return how alike two clips sound, 0..1; 1.0 for an exact match."""
+    if exact_match(a, b):
+        return 1.0
+    spectral = _correlation(a.profile, b.profile)
+    steady_a, steady_b = _steady(a.pattern), _steady(b.pattern)
+    if steady_a and steady_b:
+        temporal = 1.0
+    elif steady_a or steady_b:
+        temporal = 0.0
+    else:
+        temporal = -1.0
+        for lag in range(-FP_MAX_LAG, FP_MAX_LAG + 1):
+            pa = a.pattern[max(0, lag):]
+            pb = b.pattern[max(0, -lag):]
+            n = min(len(pa), len(pb))
+            if n >= 2:
+                temporal = max(temporal, _correlation(pa[:n], pb[:n]))
+    return float(min(max(min(spectral, temporal), 0.0), 1.0))
+
+
+def durations_close(a_s: float, b_s: float) -> bool:
+    """Return True when two durations are within 3 % (of the longer) or 60 ms."""
+    return abs(a_s - b_s) <= max(DURATION_REL * max(a_s, b_s), DURATION_ABS_S)
+
+
+def duplicate_pairs(prints: Sequence[Fingerprint]):
+    """Return ``[(score, i, j)]`` for every pair ``i < j`` of close duration, best first."""
+    order = sorted(range(len(prints)), key=lambda i: prints[i].duration_s)
+    pairs = []
+    for k, i in enumerate(order):
+        for j in order[k + 1:]:
+            if not durations_close(prints[i].duration_s, prints[j].duration_s):
+                break
+            a, b = (i, j) if i < j else (j, i)
+            pairs.append((round(duplicate_score(prints[a], prints[b]), 3), a, b))
+    return sorted(pairs, key=lambda p: (-p[0], p[1], p[2]))

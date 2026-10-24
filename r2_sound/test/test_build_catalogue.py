@@ -16,13 +16,17 @@
 
 import csv
 import os
+import types
 import wave
 
+import numpy as np
 import pytest
 import soundfile
+import yaml
 
-from fixtures import make_tree, RATE, tone, write_wav  # noqa: I100
-from r2_sound import gain
+from fixtures import (burst_train, chirp, make_duplicate_tree, make_tree,  # noqa: I100
+                      RATE, tone, write_wav)
+from r2_sound import analysis, gain
 from r2_sound.catalogue import CatalogueError, load_catalogue, pools
 from r2_sound.tools import build_catalogue as bc
 
@@ -178,7 +182,8 @@ def test_the_sheet_has_every_clip_and_the_plan_columns(tree, tmp_path):
     catalogue, _, _, sheet, _ = run(tree, tmp_path)
     with open(sheet) as f:
         assert f.readline().strip() == ('name,set,path,duration_s,rms_dbfs,suggested_tag,'
-                                        'confidence,tags,clip_override_db,status')
+                                        'confidence,tags,clip_override_db,duplicate_of,'
+                                        'suggested_duplicate_of,duplicate_score,status')
     rows = read_sheet_rows(sheet)
     assert [r['name'] for r in rows] == [c.name for c in catalogue.clips]
     assert all(r['status'] == '' for r in rows)
@@ -455,3 +460,186 @@ def test_main_runs_the_tool_and_prints_the_headline(tree, tmp_path, capsys):
 def test_wave_module_files_have_the_expected_rate(tree):
     with wave.open(os.path.join(tree, 'R2 Padawan', '32SENT1.wav')) as w:
         assert w.getframerate() == RATE
+
+
+# --- duplicates ----------------------------------------------------------------------------
+
+def test_duplicate_score_exact_near_and_different():
+    burst = burst_train(3000, 10, amp=0.5)
+    exact = analysis.fingerprint(burst[:, None], RATE)
+    assert analysis.duplicate_score(exact, analysis.fingerprint(burst.copy(), RATE)) == 1.0
+    sweep = chirp(1800, 400, 2.0, 0.5)
+    near = np.concatenate([np.zeros(int(0.03 * RATE)), 0.5 * sweep])     # -6 dB, 30 ms late
+    a, b = analysis.fingerprint(sweep, RATE), analysis.fingerprint(near, RATE)
+    assert not analysis.exact_match(a, b)
+    assert analysis.duplicate_score(a, b) >= analysis.DUPLICATE_THRESHOLD
+    other = analysis.fingerprint(burst_train(1200, 4, on=0.15, off=0.1, amp=0.5), RATE)
+    assert analysis.duplicate_score(exact, other) < 0.5
+    steady = [analysis.fingerprint(tone(f, 1.0, 0.3), RATE) for f in (300, 1000, 2500)]
+    assert analysis.duplicate_score(steady[0], steady[1]) < 0.5
+    assert analysis.duplicate_score(steady[1], steady[2]) < 0.5
+    assert analysis.duplicate_score(steady[0], exact) == 0.0          # steady vs not
+    assert analysis.durations_close(1.0, 1.029) and analysis.durations_close(0.5, 0.55)
+    assert not analysis.durations_close(1.0, 1.07)
+
+
+@pytest.fixture
+def dup_tree(tmp_path):
+    return make_duplicate_tree(tmp_path / 'sounds')
+
+
+def test_duplicates_are_suggested_and_the_kept_clip_follows_the_rule(dup_tree, tmp_path):
+    pairs = []
+    catalogue, warnings, _, sheet, _ = run(dup_tree, tmp_path, pairs_out=pairs)
+    assert warnings == [] and len(catalogue.clips) == 14          # nothing dropped yet
+    rows = {r['name']: r for r in read_sheet_rows(sheet)}
+    # the exact copy: same RMS, so the shorter name is kept
+    assert rows['music-10']['suggested_duplicate_of'] == 'music-3'
+    assert rows['music-10']['duplicate_score'] == '1.000'
+    assert rows['music-3']['suggested_duplicate_of'] == ''
+    # the near copy, across the sets: the clip nearer its set median wins over the shorter name
+    clips = by_name(catalogue)
+    sets = catalogue.sets
+    off = {n: abs(clips[n].rms_dbfs - sets[clips[n].set_name].median_rms_dbfs)
+           for n in ('music-2', 'padawan-sent09')}
+    assert off['padawan-sent09'] < off['music-2']
+    assert rows['music-2']['suggested_duplicate_of'] == 'padawan-sent09'
+    assert float(rows['music-2']['duplicate_score']) >= analysis.DUPLICATE_THRESHOLD
+    assert rows['padawan-sent09']['suggested_duplicate_of'] == ''
+    # the same length, another sound: scored, not suggested
+    assert rows['music-11']['suggested_duplicate_of'] == ''
+    assert rows['music-11']['duplicate_score'] == ''
+    score = {frozenset((a, b)): s for s, a, b in pairs}
+    assert score[frozenset(('music-3', 'music-11'))] < analysis.DUPLICATE_THRESHOLD
+    assert frozenset(('music-1', 'music-2')) not in score            # 1 s vs 2 s: not scored
+    assert all(r['duplicate_of'] == '' for r in rows.values())
+
+
+def test_the_kept_rule_tie_breaks():
+    class Item:
+        def __init__(self, name, rms, set_name='S', label=''):
+            self.name, self.set, self.label = name, set_name, label
+            self.measurement = types.SimpleNamespace(rms_dbfs=rms)
+
+    medians = {'S': -10.0}
+    items = [Item('b-long', -10.5), Item('a-long', -9.5), Item('zz', -11.0)]
+    assert min(items, key=lambda i: bc.keep_key(i, medians)).name == 'a-long'
+    items = [Item('b-long', -10.5), Item('a-long', -9.5), Item('zz', -10.5)]
+    assert min(items, key=lambda i: bc.keep_key(i, medians)).name == 'zz'
+    items = [Item('a-long', -10.0), Item('zz-far', -14.0, label='chatter')]   # a label wins
+    assert min(items, key=lambda i: bc.keep_key(i, medians)).name == 'zz-far'
+
+
+def old_format(sheet):
+    """Rewrite a sheet without the three duplicate columns (the format before them)."""
+    rows = read_sheet_rows(sheet)
+    for row in rows:
+        for column in ('duplicate_of', 'suggested_duplicate_of', 'duplicate_score'):
+            del row[column]
+    write_sheet_rows(sheet, rows)
+
+
+def test_an_old_format_sheet_reads_and_comes_out_with_the_columns(dup_tree, tmp_path):
+    _, _, _, sheet, _ = run(dup_tree, tmp_path)
+    edit_sheet(sheet, **{'music-4': {'tags': 'calm', 'clip_override_db': '2'}})
+    old_format(sheet)
+    with open(sheet) as f:
+        assert 'duplicate_of' not in f.readline()
+    catalogue, warnings, *_ = run(dup_tree, tmp_path)
+    assert warnings == [] and by_name(catalogue)['music-4'].tags == ('calm',)
+    with open(sheet) as f:
+        assert f.readline().strip().split(',') == list(bc.SHEET_COLUMNS)
+    rows = {r['name']: r for r in read_sheet_rows(sheet)}
+    assert (rows['music-4']['tags'], rows['music-4']['clip_override_db']) == ('calm', '2')
+    assert rows['music-10']['suggested_duplicate_of'] == 'music-3'
+    assert rows['music-4']['duplicate_of'] == ''
+
+
+def line_of(sheet, name):
+    return 2 + [r['name'] for r in read_sheet_rows(sheet)].index(name)
+
+
+@pytest.mark.parametrize('edits, message', [
+    ({'music-10': 'music-99'}, r"tags.csv:{music-10}: duplicate_of: 'music-99' is not a clip"),
+    ({'music-10': 'music-10'}, r"tags.csv:{music-10}: duplicate_of: 'music-10' is the clip "
+                               'itself'),
+    ({'music-10': 'music-3', 'music-3': 'music-4'},
+     r"tags.csv:{music-10}: duplicate_of: 'music-3' is itself marked duplicate_of "
+     r"'music-4' on line {music-3}"),
+])
+def test_bad_duplicate_of_is_refused_with_its_line(dup_tree, tmp_path, edits, message):
+    _, _, _, sheet, _ = run(dup_tree, tmp_path)
+    before = snapshot(tmp_path)
+    edit_sheet(sheet, **{n: {'duplicate_of': t} for n, t in edits.items()})
+    edited = snapshot(tmp_path)
+    lines = {n: line_of(sheet, n) for n in ('music-10', 'music-3')}
+    with pytest.raises(CatalogueError, match=message.format(**lines)):
+        run(dup_tree, tmp_path)
+    assert snapshot(tmp_path) == edited != before                 # nothing written
+
+
+def test_a_marked_duplicate_leaves_the_catalogue_and_moves_in_the_kit(dup_tree, tmp_path):
+    first, _, out, sheet, kit = run(dup_tree, tmp_path)
+    assert os.path.exists(os.path.join(kit, by_name(first)['music-10'].suggested_tag,
+                                       'music-10.wav'))
+    edit_sheet(sheet, **{'music-10': {'duplicate_of': 'music-3', 'tags': 'alarm'},
+                         'music-2': {'duplicate_of': 'padawan-sent09'}})
+    catalogue, warnings, *_ = run(dup_tree, tmp_path)
+    assert len(warnings) == 1 and 'music-10' in warnings[0] and 'tags' in warnings[0]
+    names = set(by_name(catalogue))
+    assert 'music-10' not in names and 'music-2' not in names and len(names) == 12
+    assert catalogue.sets['R2 sounds and music'].clips == 5       # 7 clips, 2 duplicates
+    assert catalogue.sets['R2 Padawan'].clips == 7
+    assert catalogue.sets['R2 sounds and music'].median_rms_dbfs == \
+        first.sets['R2 sounds and music'].median_rms_dbfs        # no other gain moves
+    with open(out) as f:
+        data = yaml.safe_load(f)
+    assert data['duplicates'] == [
+        {'name': 'music-10', 'path': 'R2 sounds and music/10.wav', 'duplicate_of': 'music-3'},
+        {'name': 'music-2', 'path': 'R2 sounds and music/2.wav',
+         'duplicate_of': 'padawan-sent09'}]
+    loaded, load_warnings = load_catalogue(out, dup_tree)
+    assert load_warnings == [] and set(by_name(loaded)) == names
+    assert all('music-10' != c.name for p in pools(loaded).values() for c in p)
+    dup_dir = os.path.join(kit, 'duplicates')
+    assert sorted(os.listdir(dup_dir)) == ['music-10__of__music-3.wav',
+                                           'music-2__of__padawan-sent09.wav']
+    for bucket in os.listdir(kit):
+        if bucket != 'duplicates' and os.path.isdir(os.path.join(kit, bucket)):
+            assert 'music-10.wav' not in os.listdir(os.path.join(kit, bucket))
+    rows = {r['name']: r for r in read_sheet_rows(sheet)}
+    assert (rows['music-10']['duplicate_of'], rows['music-10']['tags']) == ('music-3', 'alarm')
+    assert rows['music-10']['suggested_duplicate_of'] == 'music-3'  # still refreshed
+    before = snapshot(tmp_path)
+    run(dup_tree, tmp_path, today='2026-11-02')                    # idempotent
+    assert snapshot(tmp_path) == before
+    edit_sheet(sheet, **{'music-10': {'duplicate_of': ''}, 'music-2': {'duplicate_of': ''}})
+    catalogue, *_ = run(dup_tree, tmp_path)
+    assert 'music-10' in by_name(catalogue) and len(catalogue.clips) == 14
+    assert not os.path.exists(dup_dir)
+    with open(out) as f:
+        assert yaml.safe_load(f)['duplicates'] == []
+
+
+def test_a_duplicate_of_a_vanished_clip_stays_in_the_catalogue(dup_tree, tmp_path):
+    _, _, _, sheet, _ = run(dup_tree, tmp_path)
+    edit_sheet(sheet, **{'music-10': {'duplicate_of': 'music-3'}})
+    os.remove(os.path.join(dup_tree, 'R2 sounds and music', '3.wav'))
+    catalogue, warnings, *_ = run(dup_tree, tmp_path)
+    assert 'music-10' in by_name(catalogue)
+    assert any('music-10' in w and 'no clip on disk' in w for w in warnings)
+    rows = {r['name']: r for r in read_sheet_rows(sheet)}
+    assert rows['music-10']['duplicate_of'] == 'music-3'            # David's column is kept
+    assert rows['music-3']['status'] == 'missing'
+
+
+def test_the_loader_tolerates_the_duplicates_key_and_its_absence(dup_tree, tmp_path):
+    _, _, out, *_ = run(dup_tree, tmp_path)
+    with open(out) as f:
+        data = yaml.safe_load(f)
+    assert 'duplicates' in data
+    catalogue, _ = load_catalogue(out)
+    del data['duplicates']
+    with open(out, 'w') as f:
+        yaml.safe_dump(data, f)
+    assert load_catalogue(out)[0] == catalogue

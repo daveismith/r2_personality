@@ -38,6 +38,8 @@ dataclasses. The schema::
       confidence: 1.0              # of the suggestion, 0..1
       excluded: false              # music, speech, silence: manual play only
       label: chatter               # from the file name, or ''
+    duplicates:                    # optional, ignored: the clips left out as duplicates
+    - {name: music-64, path: R2 sounds and music/64.mp3, duplicate_of: padawan-sent10}
 
 Rejected: unknown keys, duplicate names, tags outside :data:`TAGS`, a ``gain_db`` outside
 -20..+12, a ``confidence`` outside 0..1. Every rejection raises :class:`CatalogueError`
@@ -68,6 +70,7 @@ EXCLUDED_REFUSAL = 'excluded: manual play only'   # the play's reason below it
 CLIPPED_FRACTION = 0.01          # a clip clipped more than this is picked at half weight
 
 _TOP_KEYS = ('house_level_dbfs', 'generated', 'sets', 'clips')
+_IGNORED_KEYS = ('duplicates',)  # build_catalogue's record of the left-out duplicates
 _SET_KEYS = ('clips', 'median_rms_dbfs', 'set_gain_db')
 _CLIP_KEYS = ('name', 'set', 'path', 'duration_ms', 'rms_dbfs', 'peak_dbfs', 'clip_fraction',
               'set_gain_db', 'gain_db', 'tags', 'suggested_tag', 'confidence', 'excluded',
@@ -272,7 +275,7 @@ def parse_catalogue(data, sounds_dir: Optional[str] = None):
     With ``sounds_dir``, clips whose file is missing there are dropped and each drop is a
     warning string; without it every file is assumed present.
     """
-    data = _mapping(data, '', _TOP_KEYS)
+    data = _mapping(data, '', _TOP_KEYS + _IGNORED_KEYS)
     for key in _TOP_KEYS:
         if key not in data:
             _fail(key, 'is required')

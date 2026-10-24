@@ -20,9 +20,11 @@ Standard library only, so it runs on the Mac with just the workspace checkout::
     python3 src/r2_personality/r2_sound/r2_sound/tools/tag_tool.py --workspace ~/r2_dev
 
 It serves one page on 127.0.0.1 that lists the clips of ``config/tags.csv`` by suggested
-bucket, plays the kit WAVs of ``<workspace>/.audio/tagging`` and writes the ``tags`` and
-``clip_override_db`` columns back into the sheet (atomically, keeping one ``.bak``).
-Afterwards run ``build_catalogue`` in the container to merge the sheet.
+bucket, plays the kit WAVs of ``<workspace>/.audio/tagging`` and writes David's three
+columns, ``tags``, ``clip_override_db`` and ``duplicate_of``, back into the sheet
+(atomically, keeping one ``.bak``). A save re-reads the sheet from disk and changes only
+those columns of the rows it names, so a ``build_catalogue`` run while the page was open
+is not undone. Afterwards run ``build_catalogue`` in the container to merge the sheet.
 """
 
 import argparse
@@ -47,6 +49,9 @@ except ImportError:
                   'misc', 'excluded')
 
 THRESHOLD = 0.6
+DUPLICATE_FIELDS = ('duplicate_of', 'suggested_duplicate_of', 'duplicate_score')
+DUPLICATES_DIR = 'duplicates'      # build_catalogue's kit folder: <name>__of__<kept>.wav
+DUPLICATE_SEPARATOR = '__of__'
 SHEET_REL = Path('src/r2_personality/r2_sound/config/tags.csv')
 KIT_REL = Path('.audio/tagging')
 
@@ -67,13 +72,20 @@ def read_rows(sheet):
 
 
 def index_kit(kit):
-    """Return ``{clip name: {bucket: path}}`` for every ``<kit>/<bucket>/<name>.wav``."""
+    """
+    Return ``{clip name: {bucket: path}}`` for every ``<kit>/<bucket>/<name>.wav``.
+
+    A marked duplicate's ``duplicates/<name>__of__<kept>.wav`` is indexed under ``name``.
+    """
     found = {}
     kit = Path(kit)
     if kit.is_dir():
         for bucket in sorted(p for p in kit.iterdir() if p.is_dir()):
             for wav in sorted(bucket.glob('*.wav')):
-                found.setdefault(wav.stem, {})[bucket.name] = wav
+                name = wav.stem
+                if bucket.name == DUPLICATES_DIR:
+                    name = name.split(DUPLICATE_SEPARATOR, 1)[0]
+                found.setdefault(name, {})[bucket.name] = wav
     return found
 
 
@@ -93,6 +105,8 @@ def clips_payload(sheet, index):
         if not (row.get('name') or '').strip():
             continue
         clip = {k: (v or '') for k, v in row.items() if k is not None}
+        for field in DUPLICATE_FIELDS:
+            clip.setdefault(field, '')
         clip['has_audio'] = kit_path(index, clip['name'], clip.get('suggested_tag', '')) \
             is not None
         clips.append(clip)
@@ -100,9 +114,15 @@ def clips_payload(sheet, index):
 
 
 def validate_changes(changes, known):
-    """Return ``{name: (tags list, override text)}`` or raise SheetError."""
+    """
+    Return ``{name: (tags list, override text, duplicate_of)}`` or raise SheetError.
+
+    ``duplicate_of`` is None when the change does not carry it (the column is left alone),
+    else the name of a known clip other than ``name``, or ``''``.
+    """
     if not isinstance(changes, dict):
-        raise SheetError('body must be an object {name: {tags, clip_override_db}}')
+        raise SheetError('body must be an object {name: {tags, clip_override_db, '
+                         'duplicate_of}}')
     out = {}
     for name, change in changes.items():
         if name not in known:
@@ -132,30 +152,60 @@ def validate_changes(changes, known):
                 raise SheetError(f'{name}: clip_override_db {override!r} is not a number') \
                     from None
             text = override.strip() if isinstance(override, str) else repr(override)
-        out[name] = (clean, text)
+        duplicate_of = change.get('duplicate_of')
+        if duplicate_of is not None:
+            if not isinstance(duplicate_of, str):
+                raise SheetError(f'{name}: duplicate_of must be a clip name')
+            duplicate_of = duplicate_of.strip()
+            if duplicate_of == name:
+                raise SheetError(f'{name}: duplicate_of names the clip itself')
+            if duplicate_of and duplicate_of not in known:
+                raise SheetError(f'{name}: duplicate_of {duplicate_of!r} is not a clip of '
+                                 'the sheet')
+        out[name] = (clean, text, duplicate_of)
     return out
+
+
+def check_chains(rows):
+    """Raise SheetError when a row's ``duplicate_of`` names a row that is a duplicate too."""
+    marked = {}
+    for row in rows:
+        name = (row.get('name') or '').strip()
+        marked.setdefault(name, (row.get('duplicate_of') or '').strip())
+    for name, kept in marked.items():
+        if kept and marked.get(kept):
+            raise SheetError(f'{name}: duplicate_of {kept!r}, which is itself a duplicate of '
+                             f'{marked[kept]!r}; name the clip to keep (no chains)')
 
 
 def save_changes(sheet, changes):
     """
-    Write the ``tags`` and ``clip_override_db`` of the named rows into the sheet.
+    Write ``tags``, ``clip_override_db`` and ``duplicate_of`` of the named rows into the sheet.
 
-    Every other column and row, and the row order, stay as they are; the previous sheet is
-    kept as ``<sheet>.bak`` and the new one replaces it atomically. Returns the row count
-    changed.
+    The sheet is read from disk now (not when the page loaded) and the changes are applied
+    by name onto those rows: every other column and row, and the row order, stay as the
+    file has them; a name not in the file is refused (nothing written). A sheet without a
+    ``duplicate_of`` column gets one after ``clip_override_db`` when a change sets one. The
+    previous sheet is kept as ``<sheet>.bak`` and the new one replaces it atomically.
+    Returns the row count changed.
     """
     sheet = Path(sheet)
     fields, rows = read_rows(sheet)
     known = {(r.get('name') or '').strip() for r in rows}
     valid = validate_changes(changes, known)
+    if 'duplicate_of' not in fields and any(v[2] for v in valid.values()):
+        fields.insert(fields.index('clip_override_db') + 1, 'duplicate_of')
     count = 0
     for row in rows:
         name = (row.get('name') or '').strip()
         if name in valid:
-            tags, override = valid[name]
+            tags, override, duplicate_of = valid[name]
             row['tags'] = ','.join(tags)
             row['clip_override_db'] = override
+            if duplicate_of is not None and 'duplicate_of' in fields:
+                row['duplicate_of'] = duplicate_of
             count += 1
+    check_chains(rows)
     fd, tmp = tempfile.mkstemp(dir=sheet.parent, prefix=sheet.name + '.', suffix='.tmp')
     try:
         with os.fdopen(fd, 'w', newline='', encoding='utf-8') as f:
@@ -296,6 +346,11 @@ body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.4 system-ui,
 .item.cur { background:var(--on); color:var(--onfg); }
 .item.done .n::before { content:"\2713 "; }
 .item.dirty .n::after { content:" *"; }
+.dupmark { font-size:11px; border:1px solid currentColor; border-radius:3px; padding:0 3px;
+  margin-left:4px; }
+#dup { margin-top:12px; padding-top:8px; border-top:1px solid var(--line); }
+input[type=text] { font:inherit; width:14em; padding:3px; background:var(--card);
+  color:var(--fg); border:1px solid var(--line); border-radius:4px; }
 #panel { flex:1; min-width:0; background:var(--card); border:1px solid var(--line);
   border-radius:6px; padding:12px; }
 #panel h2 { margin:0 0 4px; }
@@ -318,7 +373,7 @@ r2_sound README, &ldquo;Tagging and re-running&rdquo;) to merge the sheet into c
   <label>Filter <select id="filter"></select></label>
   <span id="progress"></span>
   <span class="mut">Keys: space replay, Enter confirm+next, arrows prev/next,
-    1-9,0 toggle tags</span>
+    1-9,0 toggle tags, d mark suggested duplicate+next, k play kept</span>
   <button id="save" class="primary">Save</button><span id="dirty" class="warn"></span>
   <span id="msg"></span>
 </div>
@@ -326,6 +381,7 @@ r2_sound README, &ldquo;Tagging and re-running&rdquo;) to merge the sheet into c
   <div id="list"></div>
   <div id="panel"><p class="mut">Loading&hellip;</p></div>
 </div>
+<datalist id="names"></datalist>
 <script>
 "use strict";
 let TAGS = [], THR = 0.6, clips = [], byName = {}, orig = {}, cur = null, filt = 'all';
@@ -333,17 +389,21 @@ const $ = id => document.getElementById(id);
 const el = (t, props, ...kids) => { const e = document.createElement(t);
   Object.assign(e, props || {}); kids.forEach(k => e.append(k)); return e; };
 const split = s => (s || '').toLowerCase().split(/[,;\s]+/).filter(Boolean);
-const state = c => ({tags: c.tags_list.slice(), ov: c.ov});
+const state = c => ({tags: c.tags_list.slice(), ov: c.ov, dup: c.dup});
 const dirty = c => { const o = orig[c.name];
-  return o.tags.join(',') !== c.tags_list.join(',') || o.ov !== c.ov; };
-const reviewed = c => c.tags_list.length > 0;
+  return o.tags.join(',') !== c.tags_list.join(',') || o.ov !== c.ov || o.dup !== c.dup; };
+const reviewed = c => c.tags_list.length > 0 || !!c.dup;
+const audioSrc = n => '/audio/' + encodeURIComponent(n) + '.wav';
 const dirtyCount = () => clips.filter(dirty).length;
 
 async function load() {
   const r = await fetch('/api/clips'); const d = await r.json();
   TAGS = d.tags; THR = d.threshold; clips = d.clips; byName = {}; orig = {};
   clips.forEach(c => { c.tags_list = split(c.tags); c.ov = (c.clip_override_db || '').trim();
+    c.dup = (c.duplicate_of || '').trim();
     byName[c.name] = c; orig[c.name] = state(c); });
+  const N = $('names'); N.innerHTML = '';
+  clips.forEach(c => N.append(el('option', {value: c.name})));
   const buckets = [...new Set(clips.map(c => c.suggested_tag || '(none)'))].sort();
   const f = $('filter'); f.innerHTML = '';
   ['all', 'unreviewed'].concat(buckets).forEach(
@@ -374,7 +434,9 @@ function renderList() {
     L.append(el('h3', {textContent: `${b}  ${nrev}/${all.length} reviewed`}));
     shown.forEach(c => { const d = el('div', {className: 'item' + (c.name === cur ? ' cur' : '') +
         (reviewed(c) ? ' done' : '') + (dirty(c) ? ' dirty' : '')},
-        el('span', {className: 'n', textContent: c.name}),
+        el('span', {}, el('span', {className: 'n', textContent: c.name}),
+          c.dup ? el('span', {className: 'dupmark', title: 'duplicate of ' + c.dup,
+                              textContent: 'dup'}) : ''),
         el('span', {className: 'mut', textContent: c.confidence || ''}));
       d.dataset.name = c.name; d.onclick = () => select(c.name); L.append(d); });
   });
@@ -409,8 +471,54 @@ function renderPanel(play) {
    ['Next', () => step(1)]].forEach(
     ([n, f]) => row.append(el('button', {textContent: n, onclick: f})));
   P.append(row);
+  renderDuplicate(P, c);
 }
-function select(name, play) { cur = name; renderList(); renderPanel(play !== false);
+function renderDuplicate(P, c) {
+  const D = el('div', {id: 'dup'});
+  const sug = c.suggested_duplicate_of;
+  if (c.dup) D.append(el('div', {className: 'warn', textContent:
+    `Marked duplicate of ${c.dup}: left out of clips.yaml (tags ignored)`}));
+  if (sug) D.append(el('div', {textContent:
+    `Suggested duplicate of ${sug} (score ${c.duplicate_score || '?'})`}));
+  const keptName = c.dup || sug;
+  if (keptName) {
+    const k = el('audio', {controls: true, src: audioSrc(keptName)}); k.id = 'kept';
+    const r = el('div', {className: 'row'});
+    r.append(el('button', {onclick: playKept}, el('kbd', {textContent: 'k'}),
+      `Play kept (${keptName})`));
+    if (sug && sug !== c.dup) r.append(el('button', {onclick: () => markDup(sug)},
+      el('kbd', {textContent: 'd'}), `Mark duplicate of ${sug}`));
+    D.append(r, k);
+  }
+  const inp = el('input', {type: 'text', value: c.dup, placeholder: 'clip to keep'});
+  inp.setAttribute('list', 'names');
+  inp.onkeydown = e => { e.stopPropagation(); if (e.key === 'Enter') markDup(inp.value.trim()); };
+  inp.onchange = () => markDup(inp.value.trim());
+  const r2 = el('div', {className: 'row'});
+  r2.append(el('label', {}, 'Duplicate of ', inp),
+    el('button', {textContent: 'Not a duplicate', onclick: () => markDup('')}));
+  D.append(r2);
+  P.append(D);
+}
+function markDup(target) {
+  const c = byName[cur]; if (!c) return false;
+  if (target) {
+    let why = '';
+    if (target === c.name) why = 'a clip cannot be a duplicate of itself';
+    else if (!byName[target]) why = `${target} is not a clip of the sheet`;
+    else if (byName[target].dup) why = `${target} is itself marked duplicate of ` +
+      `${byName[target].dup}; mark the clip to keep`;
+    else { const kids = clips.filter(o => o.dup === c.name).map(o => o.name);
+      if (kids.length) why = `${kids.join(', ')} already name ${c.name} as the clip to keep`; }
+    if (why) { $('msg').textContent = 'Not marked: ' + why; return false; }
+  }
+  c.dup = target; $('msg').textContent = '';
+  renderList(); renderPanel(false); renderStatus(); return true;
+}
+function playKept() { const k = $('kept'); if (!k) return;
+  const a = $('player'); if (a) a.pause(); k.currentTime = 0; k.play(); }
+function select(name, play) { const k = $('kept'); if (k) k.pause();
+  cur = name; renderList(); renderPanel(play !== false);
   const e = document.querySelector('.item.cur'); if (e) e.scrollIntoView({block: 'nearest'}); }
 function step(d) { const v = clips.filter(visible); if (!v.length) return;
   let i = v.findIndex(c => c.name === cur);
@@ -426,7 +534,7 @@ function clear() { const c = byName[cur]; c.tags_list = []; c.ov = '';
 async function save() {
   const ch = {};
   clips.filter(dirty).forEach(
-    c => ch[c.name] = {tags: c.tags_list, clip_override_db: c.ov});
+    c => ch[c.name] = {tags: c.tags_list, clip_override_db: c.ov, duplicate_of: c.dup});
   if (!Object.keys(ch).length) { $('msg').textContent = 'nothing to save'; return; }
   const r = await fetch('/api/save', {method: 'POST', body: JSON.stringify(ch)});
   const d = await r.json();
@@ -444,6 +552,9 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'Enter') { e.preventDefault(); confirmClip(); step(1); renderStatus(); }
   else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); step(1); }
   else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); step(-1); }
+  else if (e.key === 'd') { e.preventDefault(); const c = byName[cur];
+    if (c && c.suggested_duplicate_of && markDup(c.suggested_duplicate_of)) step(1); }
+  else if (e.key === 'k') { e.preventDefault(); playKept(); }
   else if (/^[0-9]$/.test(e.key)) { const i = (parseInt(e.key, 10) + 9) % 10;
     if (i < TAGS.length) toggle(TAGS[i]); }
 });

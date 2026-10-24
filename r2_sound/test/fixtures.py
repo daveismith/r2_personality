@@ -67,6 +67,24 @@ def make_tree(root):
     return str(root)
 
 
+def make_duplicate_tree(root):
+    """
+    Return :func:`make_tree`'s tree with duplicates added.
+
+    ``music-10`` is ``music-3``'s exact copy, ``padawan-sent09`` is ``music-2`` at 0.7 of
+    its level behind 10 ms of silence (a near copy, cross-set), and ``music-11`` is a
+    different burst train of ``music-3``'s length.
+    """
+    make_tree(root)
+    pad = os.path.join(str(root), 'R2 Padawan')
+    music = os.path.join(str(root), 'R2 sounds and music')
+    write_wav(os.path.join(music, '10.wav'), burst_train(3000, 10, amp=0.5))
+    near = np.concatenate([np.zeros(int(0.01 * RATE)), 0.7 * chirp(1800, 400, 2.0, 0.5)])
+    write_wav(os.path.join(pad, '40SENT9.wav'), near)
+    write_wav(os.path.join(music, '11.wav'), burst_train(1200, 4, on=0.15, off=0.1, amp=0.5))
+    return str(root)
+
+
 # --- a small catalogue for the player ------------------------------------------------------
 
 PLAYER_RATE = 44100

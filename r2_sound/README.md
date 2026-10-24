@@ -181,6 +181,8 @@ clips:                           # sorted by name
   confidence: 1.0
   excluded: false                # music, speech, silence: manual play only
   label: chatter                 # from the file name, or ''
+duplicates:                      # the clips left out as duplicates (the loader ignores it)
+- {name: music-64, path: R2 sounds and music/64.mp3, duplicate_of: padawan-sent10}
 ```
 
 The fixed tag list: `chatter, excited, sad, question, ooh, hum, alarm, scream, laugh,
@@ -210,11 +212,35 @@ has any; otherwise `[suggested_tag]` if its `confidence` is at or above the thre
 `chatter` in `sound_arbiter`'s palette (rule 8), so an untouched sheet still gives R2 a
 voice; the player itself refuses a play of an empty pool with `empty pool`.
 
+**Duplicates.** Some sounds are in both sets (and a few twice in one). `build_catalogue`
+fingerprints each clip (log energies in 16 bands, 125 Hz to 4 kHz, over 50 ms frames of the
+8 kHz mono signal, each band's mean removed, so a level difference does not count) and scores
+every pair whose durations are within 3 % or 60 ms, across the sets too: the lesser of the
+band profiles' correlation and the time patterns' best cross-correlation within 100 ms of
+lag, 0..1; the same samples score 1.0. Pairs at 0.9 or above (`--duplicate-threshold`) are
+suggested. On the two sets the copies score 0.917 to 0.998 and the next pairs, variants
+rather than copies, 0.818 to 0.891 (`--pairs 30` prints the best pairs). Linked pairs form
+a group; the group keeps a labelled clip over an unlabelled one, then the clip whose RMS is nearest its set's median, then the shorter
+name, then the first alphabetically, and every other member gets `suggested_duplicate_of`
+(the kept clip) and `duplicate_score` in the sheet. Those two columns are refreshed every
+run and do nothing; only David's `duplicate_of` acts. A clip whose `duplicate_of` names
+another clip is left out of `clips` (the player never lists or picks it), listed under
+`duplicates:` (name, path, duplicate_of) and not counted in its set's `clips:`; the set
+medians still count it, so marking one moves no other gain. Its tags are ignored (with a
+WARN). In the kit its WAV is `duplicates/<name>__of__<kept>.wav` instead of its bucket's,
+so it can still be heard. A `duplicate_of` whose clip is not on disk (a `missing` row) keeps
+the duplicate in the catalogue with a WARN, so the sound is not lost.
+
+The sheet's columns: `name, set, path, duration_s, rms_dbfs, suggested_tag, confidence,
+tags, clip_override_db, duplicate_of, suggested_duplicate_of, duplicate_score, status`.
+David's are `tags`, `clip_override_db` and `duplicate_of`; a sheet from before the
+duplicate columns reads fine and is written with them.
+
 **Tagging and re-running.**
 
 ```sh
 build_catalogue --sounds-dir /sounds --out config/clips.yaml --sheet config/tags.csv \
-    --kit /ws/.audio/tagging [--threshold 0.6]
+    --kit /ws/.audio/tagging [--threshold 0.6] [--duplicate-threshold 0.9] [--pairs 30]
 ```
 
 1. Listen a bucket at a time on the Mac: `/ws/.audio/tagging/play_bucket.sh chatter` plays
@@ -226,17 +252,27 @@ build_catalogue --sounds-dir /sounds --out config/clips.yaml --sheet config/tags
    (`--sheet`, `--kit`, `--port 8765`, `--no-browser` as options); in the container,
    `tag_tool --workspace /ws --no-browser` and open the printed URL. Clips are listed by
    suggested bucket with the kit WAV playing; keys: space replays, Enter = Confirm and next,
-   arrows = previous/next, 1-9 and 0 toggle the first ten tags. **Confirm** writes the
-   suggested tag into `tags` (so the merge no longer depends on the confidence), **Clear**
-   empties it again. **Save** rewrites `config/tags.csv` in place (only `tags` and
-   `clip_override_db` change; atomic, previous sheet kept as `tags.csv.bak`). Then go to
-   step 3. Alternative, by hand: in `config/tags.csv` (columns `name, set, path, duration_s, rms_dbfs, suggested_tag,
-   confidence, tags, clip_override_db, status`) write pool names into `tags` only where the
-   suggestion is wrong or missing (comma-separated, from the fixed list), and a number of dB
-   in `clip_override_db` for a clip that sits wrong in its set. A clip of the exclusion list
-   given any other tag here becomes playable; `excluded` here excludes any clip.
-3. Run `build_catalogue` again. It reads those two columns by name and keeps them, refreshes
-   every other column, rewrites `clips.yaml` and the kit (a clip whose suggestion changed
+   arrows = previous/next, 1-9 and 0 toggle the first ten tags, `d` = mark the suggested
+   duplicate and next, `k` = play the kept clip. **Confirm** writes the suggested tag into
+   `tags` (so the merge no longer depends on the confidence), **Clear** empties it again.
+   **Duplicates:** a clip with a suggestion shows "Suggested duplicate of <name> (score
+   0.97)" with **Play kept** (that clip's kit WAV) and **Mark duplicate of <name>**. The
+   suggestion is only a suggestion: listen to both first. Any clip can be marked by hand in
+   the "Duplicate of" field (a list of the clip names) and **Not a duplicate** clears it; a
+   marked clip shows `dup` in the list and counts as reviewed. The tool refuses a clip as
+   its own duplicate, a name not in the sheet, and chains (the kept clip must not itself be
+   a duplicate). **Save** re-reads `config/tags.csv` from disk and rewrites in place only
+   `tags`, `clip_override_db` and `duplicate_of` of the changed rows (so a `build_catalogue`
+   run while the page was open is kept; a row gone from the file is refused; atomic,
+   previous sheet kept as `tags.csv.bak`). Then go to step 3. Alternative, by hand: in
+   `config/tags.csv` write pool names into `tags` only where the suggestion is wrong or
+   missing (comma-separated, from the fixed list), a number of dB in `clip_override_db` for
+   a clip that sits wrong in its set, and the name of the clip to keep in `duplicate_of` for
+   a clip that is a duplicate (usually the `suggested_duplicate_of`, once heard). A clip of
+   the exclusion list given any other tag here becomes playable; `excluded` here excludes
+   any clip.
+3. Run `build_catalogue` again. It reads those three columns by name and keeps them,
+   refreshes every other column (the duplicate suggestions included), rewrites `clips.yaml` and the kit (a clip whose suggestion changed
    moves folder). A row belongs to the clip at its `path`, else (a file moved within its
    set, or a row with no path) to the clip of its `name`. A row whose file is gone is never
    deleted: it stays as it was with `status` `missing` (and a WARN) and finds its clip
@@ -245,7 +281,8 @@ build_catalogue --sounds-dir /sounds --out config/clips.yaml --sheet config/tags
    tags must be copied to the new rows by hand. A run with nothing changed rewrites
    identical files. A bad tag or override stops the run with the sheet's line number; so do
    two rows with the same `path`, or the same `name` (unless one is `missing`), naming both
-   lines.
+   lines; and a `duplicate_of` that is not a clip of the sheet, is the clip itself, or names
+   a clip that is itself marked a duplicate (no chains: name the clip to keep).
 
 Run the tool from the container (`colcon build --symlink-install` first so the defaults for
 `--out` and `--sheet` point into `src/`). With `--kit` left out no WAVs are written.

@@ -16,7 +16,7 @@
 Build ``config/clips.yaml``, ``config/tags.csv`` and the tagging kit from the sound sets.
 
     build_catalogue --sounds-dir /sounds --out config/clips.yaml --sheet config/tags.csv \
-        --kit /ws/.audio/tagging [--threshold 0.6]
+        --kit /ws/.audio/tagging [--threshold 0.6] [--duplicate-threshold 0.9]
 
 Walks the set directories under ``--sounds-dir`` (one level of sets, any depth of files),
 decodes each file with ``soundfile``, measures it (:mod:`r2_sound.gain`), names it, labels
@@ -32,18 +32,30 @@ suggestions are a first pass to be confirmed by ear.
 * Label: from the file name (:data:`LABELS`); ``SENT`` is ``chatter`` and so on. Music,
   speech and silence (:data:`EXCLUSIONS`) are ``excluded``. A labelled clip is its own
   suggestion at confidence 1.0 and is a reference for the others.
-* Sheet (``tags.csv``): the tool fills every column but ``tags`` and ``clip_override_db``,
-  which are David's and are read back by column name and kept. A row belongs to the clip at
+* Duplicates: every pair of clips of close duration (either set) is scored
+  (:func:`r2_sound.analysis.duplicate_pairs`); the pairs at or above
+  ``--duplicate-threshold`` join groups (connected components), and each group keeps one
+  clip: a labelled one over an unlabelled one (the label is the reference that makes its
+  suggestion confident), then the one whose RMS is nearest its set's median, then the shorter
+  name, then the first alphabetically. Every other member is suggested
+  ``suggested_duplicate_of`` the kept one, with ``duplicate_score`` its score against it. Only
+  the sheet's ``duplicate_of`` acts.
+* Sheet (``tags.csv``): the tool fills every column but ``tags``, ``clip_override_db`` and
+  ``duplicate_of``, which are David's and are read back by column name and kept (a sheet
+  without ``duplicate_of`` reads as all empty and is written with it). A row belongs to the clip at
   its ``path`` (relative to ``--sounds-dir``), else to the clip of its ``name`` (a file moved
   inside its set). A row whose clip is not on disk is never deleted: it stays, as read, with
   ``status`` ``missing`` (and a warning), and gets its clip back when the file returns.
   Rows are sorted by name.
 * ``clips.yaml``: ``tags`` are the merged ones (:func:`r2_sound.catalogue.effective_tags`);
-  ``excluded`` is true when they hold ``excluded``. The sheet wins over the exclusion list:
-  a listed clip is suggested ``excluded`` at confidence 1.0, but other tags in the sheet
-  make it playable.
+  ``excluded`` is true when they hold ``excluded``. A clip whose ``duplicate_of`` is set is
+  left out of ``clips`` and of its set's count and listed under ``duplicates`` (name, path,
+  duplicate_of); the set medians still count it, so marking one moves no other gain. The
+  sheet wins over the exclusion list: a listed clip is suggested ``excluded`` at confidence
+  1.0, but other tags in the sheet make it playable.
 * Kit: ``<kit>/<suggested bucket>/<name>.wav`` (16-bit mono 22.05 kHz, at the clip's
-  catalogue gain, cut to 10 s), ``play_bucket.sh`` and ``README.md``.
+  catalogue gain, cut to 10 s), a marked duplicate as
+  ``<kit>/duplicates/<name>__of__<kept>.wav``, ``play_bucket.sh`` and ``README.md``.
 
 Re-running with nothing changed rewrites identical files (``generated`` keeps its date
 while the content is the same).
@@ -76,8 +88,11 @@ LABELS = (('sent', 'chatter'), ('ooh', 'ooh'), ('hum', 'hum'), ('alarm', 'alarm'
 EXCLUSIONS = ('theme', 'chorus', 'emperor', 'cantina', 'march', 'disco', 'starwars', 'leia',
               'silence')
 SHEET_COLUMNS = ('name', 'set', 'path', 'duration_s', 'rms_dbfs', 'suggested_tag',
-                 'confidence', 'tags', 'clip_override_db', 'status')
+                 'confidence', 'tags', 'clip_override_db', 'duplicate_of',
+                 'suggested_duplicate_of', 'duplicate_score', 'status')
 MISSING = 'missing'              # the status of a sheet row whose clip is not on disk
+DUPLICATES_DIR = 'duplicates'    # the kit folder of the marked duplicates
+DUPLICATE_SEPARATOR = '__of__'   # <name>__of__<kept>.wav
 KIT_SAMPLE_RATE = 22050
 KIT_MAX_S = 10.0
 _INDEX = re.compile(r'^\d+(?=[^\W\d_])')
@@ -123,11 +138,13 @@ def read_sheet(path):
     Return the rows of an existing sheet, in file order, each a dict.
 
     ``name``, ``path``, ``tags`` (a tuple, validated), ``override`` (the
-    ``clip_override_db`` text, validated) and ``fields`` (the row as read, for a row kept
-    as ``missing``). Two rows with the same ``path`` (when not empty), or two rows with
-    the same ``name`` neither of which is ``missing``, are refused with both line numbers,
-    like a bad tag. A ``missing`` row may share its name: the tool writes one when a repeat
-    suffix moves (``-2`` becomes the name of a clip whose sibling is gone).
+    ``clip_override_db`` text, validated), ``duplicate_of`` (validated: the name of another
+    row of the sheet whose own ``duplicate_of`` is empty, so no chains; the column may be
+    absent), ``line`` and ``fields`` (the row as read, for a row kept as ``missing``).
+    Two rows with the same ``path`` (when not empty), or two rows with the same ``name``
+    neither of which is ``missing``, are refused with both line numbers, like a bad tag. A
+    ``missing`` row may share its name: the tool writes one when a repeat suffix moves
+    (``-2`` becomes the name of a clip whose sibling is gone).
     """
     if not path or not os.path.isfile(path):
         return []
@@ -166,8 +183,32 @@ def read_sheet(path):
                     raise CatalogueError(f'{path}:{number}: {column}: {value!r} is also on '
                                          f'line {first}')
             rows.append({'name': name, 'path': clip_path, 'tags': tags,
-                         'override': override, 'fields': row})
+                         'override': override,
+                         'duplicate_of': (row.get('duplicate_of') or '').strip(),
+                         'line': number, 'fields': row})
+    _check_duplicates(path, rows)
     return rows
+
+
+def _check_duplicates(path, rows):
+    """Refuse a ``duplicate_of`` that names no row, its own row, or another duplicate."""
+    lines = {}
+    for row in rows:
+        lines.setdefault(row['name'], row)
+    for row in rows:
+        target = row['duplicate_of']
+        if not target:
+            continue
+        where = f'{path}:{row["line"]}: duplicate_of: {target!r}'
+        if target == row['name']:
+            raise CatalogueError(f'{where} is the clip itself')
+        kept = lines.get(target)
+        if kept is None:
+            raise CatalogueError(f'{where} is not a clip of the sheet')
+        if kept['duplicate_of']:
+            raise CatalogueError(f'{where} is itself marked duplicate_of '
+                                 f'{kept["duplicate_of"]!r} on line {kept["line"]}; name the '
+                                 'clip to keep (no chains)')
 
 
 def match_sheet(items, rows):
@@ -198,8 +239,8 @@ def match_sheet(items, rows):
 
 
 def _sheet_fields(row):
-    """Return ``(tags, override)`` of a sheet row, or none of either without a row."""
-    return (row['tags'], row['override']) if row else ((), '')
+    """Return ``(tags, override, duplicate_of)`` of a sheet row, or empty ones without one."""
+    return (row['tags'], row['override'], row['duplicate_of']) if row else ((), '', '')
 
 
 def _scan(sounds_dir):
@@ -236,6 +277,8 @@ class _Item:
         self.path = _rel_path(set_name, rel)
         self.listed = label == EXCLUDED_TAG
         self.measurement = self.features = self.kit_audio = self.suggestion = None
+        self.fingerprint = None
+        self.duplicate = ('', None)     # (suggested_duplicate_of, duplicate_score)
 
 
 def _unique_names(found):
@@ -269,6 +312,7 @@ def _analyse(items, want_kit):
             item.kit_audio = analysis.resample(
                 analysis.to_mono(samples[:int(KIT_MAX_S * rate)]), rate, KIT_SAMPLE_RATE)
         item.features = analysis.extract_features(samples, rate)
+        item.fingerprint = analysis.fingerprint(samples, rate)
         good.append(item)
     return good
 
@@ -288,17 +332,66 @@ def _suggest(items):
             item.suggestion = (s.tag, s.confidence)
 
 
-def _clips(items, sheet, threshold, house_level):
+def _medians(items):
+    """Return set name -> median RMS over its clips not on the exclusion list."""
     medians = {}
     for set_name in sorted({i.set for i in items}):
         rms = [i.measurement.rms_dbfs for i in items if i.set == set_name and not i.listed]
         medians[set_name] = gain.median(rms or [i.measurement.rms_dbfs for i in items
                                                 if i.set == set_name])
+    return medians
+
+
+def keep_key(item, medians):
+    """Return the sort key of the clip a duplicate group keeps (the smallest wins)."""
+    return (not item.label, abs(item.measurement.rms_dbfs - medians[item.set]),
+            len(item.name), item.name)
+
+
+def _suggest_duplicates(items, threshold):
+    """Fill ``duplicate`` on every item; return the scored pairs ``[(score, a, b)]``."""
+    pairs = analysis.duplicate_pairs([i.fingerprint for i in items])
+    parent = list(range(len(items)))
+
+    def root(i):
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    scores = {}
+    for score, a, b in pairs:
+        scores[(a, b)] = score
+        if score >= threshold:
+            parent[root(a)] = root(b)
+    groups = {}
+    for i in range(len(items)):
+        groups.setdefault(root(i), []).append(i)
+    medians = _medians(items)
+    for members in groups.values():
+        if len(members) < 2:
+            continue
+        kept = min(members, key=lambda i: keep_key(items[i], medians))
+        for i in members:
+            if i != kept:
+                key = (min(i, kept), max(i, kept))
+                score = scores.get(key)
+                if score is None:
+                    score = round(analysis.duplicate_score(items[i].fingerprint,
+                                                           items[kept].fingerprint), 3)
+                items[i].duplicate = (items[kept].name, score)
+    return [(score, items[a], items[b]) for score, a, b in pairs]
+
+
+def _clips(items, sheet, threshold, house_level, duplicate_of=None):
+    """Return ``(every clip, sets)``; the set counts leave out ``duplicate_of``'s keys."""
+    duplicate_of = duplicate_of or {}
+    medians = _medians(items)
     clips = []
     for item in sorted(items, key=lambda i: i.name):
         m, median = item.measurement, medians[item.set]
         set_gain = gain.set_gain_db(median, house_level)
-        tags, override = _sheet_fields(sheet.get(item.name))
+        tags, override, _ = _sheet_fields(sheet.get(item.name))
         total = gain.clip_gain_db(set_gain, gain.outlier_trim_db(m.rms_dbfs, median),
                                   float(override or 0.0), m.peak_dbfs)
         suggested, confidence = item.suggestion
@@ -312,7 +405,8 @@ def _clips(items, sheet, threshold, house_level):
             excluded=EXCLUDED_TAG in merged, label=item.label))
     sets = {}
     for set_name, median in medians.items():
-        sets[set_name] = SetInfo(sum(1 for c in clips if c.set_name == set_name), _round(median),
+        count = sum(1 for c in clips if c.set_name == set_name and c.name not in duplicate_of)
+        sets[set_name] = SetInfo(count, _round(median),
                                  _round(gain.set_gain_db(median, house_level)))
     return clips, sets
 
@@ -337,36 +431,43 @@ def _write_bytes(path, data):
         f.write(data)
 
 
-def _dump_yaml(catalogue):
-    return yaml.safe_dump(catalogue.to_dict(), sort_keys=False, allow_unicode=True,
+def _dump_yaml(catalogue, duplicates=()):
+    data = catalogue.to_dict()
+    data['duplicates'] = list(duplicates)
+    return yaml.safe_dump(data, sort_keys=False, allow_unicode=True,
                           default_flow_style=None, width=100)
 
 
-def _keep_generated(path, catalogue):
+def _keep_generated(path, catalogue, duplicates=()):
     """Reuse the existing file's ``generated`` date when nothing else changed."""
     try:
         with open(path) as f:
             old = yaml.safe_load(f)
         before, _ = parse_catalogue(old)
-    except (OSError, yaml.YAMLError, CatalogueError, TypeError):
+        old_duplicates = old.get('duplicates') or []
+    except (OSError, yaml.YAMLError, CatalogueError, TypeError, AttributeError):
         return catalogue
-    if before.to_dict() | {'generated': ''} == catalogue.to_dict() | {'generated': ''}:
+    if (old_duplicates == list(duplicates) and before.to_dict() | {'generated': ''}
+            == catalogue.to_dict() | {'generated': ''}):
         return Catalogue(catalogue.house_level_dbfs, before.generated, catalogue.sets,
                          catalogue.clips)
     return catalogue
 
 
-def _sheet_text(clips, matched, orphans):
+def _sheet_text(clips, matched, orphans, suggested_duplicates):
     lines = []
     for clip in clips:
-        tags, override = _sheet_fields(matched.get(clip.name))
+        tags, override, duplicate_of = _sheet_fields(matched.get(clip.name))
+        partner, score = suggested_duplicates.get(clip.name, ('', None))
         lines.append([clip.name, clip.set_name, clip.path, f'{clip.duration_ms / 1000:.2f}',
                       f'{clip.rms_dbfs:.2f}', clip.suggested_tag, f'{clip.confidence:.3f}',
-                      ','.join(tags), override, ''])
+                      ','.join(tags), override, duplicate_of, partner,
+                      '' if score is None else f'{score:.3f}', ''])
     for row in orphans:
         fields = row['fields']
         lines.append([row['name']] + [(fields.get(c) or '') for c in SHEET_COLUMNS[1:7]]
-                     + [','.join(row['tags']), row['override'], MISSING])
+                     + [','.join(row['tags']), row['override'], row['duplicate_of']]
+                     + [(fields.get(c) or '') for c in SHEET_COLUMNS[10:12]] + [MISSING])
     buffer = io.StringIO()
     writer = csv.writer(buffer, lineterminator='\n')
     writer.writerow(SHEET_COLUMNS)
@@ -414,19 +515,34 @@ otherwise the clip goes in `chatter`. `clip_override_db` (a number) raises or lo
 clip that sits wrong in its set; the catalogue still keeps the peak at -1 dBFS.
 `excluded` keeps a clip out of every pool (manual play only); any other tag on a clip of
 the exclusion list makes it playable. Re-run `build_catalogue` to merge the sheet into
-`clips.yaml`; it never touches your two columns, and a row whose file is gone stays, marked
+`clips.yaml`; it never touches your three columns (`tags`, `clip_override_db`,
+`duplicate_of`), and a row whose file is gone stays, marked
 `missing` in `status`, until the file is back.
+
+Duplicates: `suggested_duplicate_of` names the clip that sounds the same (score
+`duplicate_score`, 1.0 for the same samples) and is the one to keep; it is only a
+suggestion. Listen to both, and to mark a duplicate write the kept clip's name in
+`duplicate_of` (or press `d` in the tag tool). A marked duplicate leaves `clips.yaml` (the
+player never lists or picks it; it is listed under `duplicates:`) and its WAV moves here to
+`duplicates/<name>__of__<kept>.wav`, so it can still be heard. `duplicate_of` must name
+another clip of the sheet that is not itself marked a duplicate.
 """
 
 
-def _write_kit(kit, items, clips, threshold):
+def _write_kit(kit, items, clips, threshold, duplicate_of=None):
     by_name = {i.name: i for i in items}
+    duplicate_of = duplicate_of or {}
     wanted = {}
     for clip in clips:
-        wanted[os.path.join(clip.suggested_tag, f'{clip.name}.wav')] = clip
+        kept = duplicate_of.get(clip.name)
+        if kept:
+            rel = os.path.join(DUPLICATES_DIR, f'{clip.name}{DUPLICATE_SEPARATOR}{kept}.wav')
+        else:
+            rel = os.path.join(clip.suggested_tag, f'{clip.name}.wav')
+        wanted[rel] = clip
     for bucket in os.listdir(kit) if os.path.isdir(kit) else ():
         folder = os.path.join(kit, bucket)
-        if bucket in TAGS and os.path.isdir(folder):
+        if (bucket in TAGS or bucket == DUPLICATES_DIR) and os.path.isdir(folder):
             for file in os.listdir(folder):
                 if file.endswith('.wav') and os.path.join(bucket, file) not in wanted:
                     os.remove(os.path.join(folder, file))
@@ -447,12 +563,40 @@ def _write_kit(kit, items, clips, threshold):
                 KIT_README.format(tags=', '.join(TAGS), threshold=threshold))
 
 
+def _active_duplicates(sheet, items, matched, warnings):
+    """
+    Return ``{name: kept}`` for the clips on disk whose ``duplicate_of`` acts.
+
+    A duplicate of a clip that is not on disk stays in the catalogue (with a warning), so
+    the sound is not lost; its ``duplicate_of`` stays in the sheet. Tags on a duplicate are
+    ignored with a warning.
+    """
+    on_disk = {i.name for i in items}
+    active = {}
+    for name in sorted(matched):
+        row = matched[name]
+        kept = row['duplicate_of']
+        if not kept:
+            continue
+        if kept not in on_disk:
+            warnings.append(f'{sheet}:{row["line"]}: {name} is duplicate_of {kept!r}, which '
+                            f'has no clip on disk; {name} stays in the catalogue')
+            continue
+        if row['tags']:
+            warnings.append(f'{sheet}:{row["line"]}: {name} has tags and duplicate_of; the '
+                            'tags are ignored while it is a duplicate')
+        active[name] = kept
+    return active
+
+
 def build(sounds_dir, out, sheet=None, kit=None, threshold=DEFAULT_THRESHOLD,
-          house_level=gain.HOUSE_LEVEL_DBFS, today=None):
+          house_level=gain.HOUSE_LEVEL_DBFS, today=None,
+          duplicate_threshold=analysis.DUPLICATE_THRESHOLD, pairs_out=None):
     """
     Build the catalogue, the sheet and the kit; return ``(catalogue, warnings)``.
 
-    ``sheet`` is read if it exists and always (re)written; ``kit`` is optional.
+    ``sheet`` is read if it exists and always (re)written; ``kit`` is optional. A list
+    given as ``pairs_out`` receives the scored pairs ``(score, clip a, clip b)``, best first.
     """
     warnings = []
     found = _scan(sounds_dir)
@@ -464,15 +608,24 @@ def build(sounds_dir, out, sheet=None, kit=None, threshold=DEFAULT_THRESHOLD,
     for row in orphans:
         warnings.append(f'{sheet}: row {row["name"]!r} ({row["path"] or "no path"}) has no '
                         f'clip on disk; kept as {MISSING}')
+    duplicate_of = _active_duplicates(sheet, items, matched, warnings)
     _suggest(items)
-    clips, sets = _clips(items, matched, threshold, house_level)
+    scored = _suggest_duplicates(items, duplicate_threshold)
+    if pairs_out is not None:
+        pairs_out.extend((score, a.name, b.name) for score, a, b in scored)
+    every, sets = _clips(items, matched, threshold, house_level, duplicate_of)
+    clips = [c for c in every if c.name not in duplicate_of]
+    duplicates = [{'name': c.name, 'path': c.path, 'duplicate_of': duplicate_of[c.name]}
+                  for c in every if c.name in duplicate_of]
     today = today or datetime.date.today().isoformat()
-    catalogue = _keep_generated(out, Catalogue(house_level, today, sets, tuple(clips)))
-    _write_text(out, _dump_yaml(catalogue))
+    catalogue = _keep_generated(out, Catalogue(house_level, today, sets, tuple(clips)),
+                                duplicates)
+    _write_text(out, _dump_yaml(catalogue, duplicates))
     if sheet:
-        _write_text(sheet, _sheet_text(clips, matched, orphans))
+        suggested = {i.name: i.duplicate for i in items if i.duplicate[0]}
+        _write_text(sheet, _sheet_text(every, matched, orphans, suggested))
     if kit:
-        _write_kit(kit, items, clips, threshold)
+        _write_kit(kit, items, every, threshold, duplicate_of)
     return catalogue, warnings
 
 
@@ -503,18 +656,37 @@ def main(args=None):
     parser.add_argument('--sheet', default=os.path.join(here, 'tags.csv'))
     parser.add_argument('--kit', default=None, help='tagging kit directory (omit for none)')
     parser.add_argument('--threshold', type=float, default=DEFAULT_THRESHOLD)
+    parser.add_argument('--duplicate-threshold', type=float,
+                        default=analysis.DUPLICATE_THRESHOLD,
+                        help='score (0..1) at which a pair is suggested as duplicates')
+    parser.add_argument('--pairs', type=int, default=0, metavar='N',
+                        help='print the N best-scoring duplicate pairs')
     parser.add_argument('--house-level', type=float, default=gain.HOUSE_LEVEL_DBFS)
     options = parser.parse_args(args)
+    pairs = []
     try:
         catalogue, warnings = build(options.sounds_dir, options.out, options.sheet,
-                                    options.kit, options.threshold, options.house_level)
+                                    options.kit, options.threshold, options.house_level,
+                                    duplicate_threshold=options.duplicate_threshold,
+                                    pairs_out=pairs)
     except CatalogueError as error:
         print(f'build_catalogue: {error}', file=sys.stderr)
         return 1
     for warning in warnings:
         print(f'WARN {warning}', file=sys.stderr)
     print('\n'.join(summary(catalogue)))
+    print(f'duplicates: {len(catalogue_duplicates(options.out))} marked; '
+          f'{sum(p[0] >= options.duplicate_threshold for p in pairs)} pairs at score >= '
+          f'{options.duplicate_threshold}')
+    for score, a, b in pairs[:options.pairs]:
+        print(f'  {score:.3f}  {a}  {b}')
     return 0
+
+
+def catalogue_duplicates(path):
+    """Return the ``duplicates`` list of a written ``clips.yaml`` (``[]`` if none)."""
+    with open(path) as f:
+        return (yaml.safe_load(f) or {}).get('duplicates') or []
 
 
 if __name__ == '__main__':

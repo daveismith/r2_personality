@@ -1889,7 +1889,7 @@ clips:
   clip_fraction: 0.002019
   set_gain_db: -6.59
   gain_db: -6.59
-  tags: [chatter]
+  tags: [sad]
   suggested_tag: sad
   confidence: 0.4
   excluded: false
@@ -3126,3 +3126,4 @@ clips:
   confidence: 1.0
   excluded: false
   label: whistle
+duplicates: []
