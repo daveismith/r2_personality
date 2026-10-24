@@ -25,10 +25,10 @@ setup(
     data_files=[
         ('share/ament_index/resource_index/packages', [f'resource/{package_name}']),
         (f'share/{package_name}', ['package.xml', 'README.md']),
-        (f'share/{package_name}/config', glob('config/*.yaml')),
+        (f'share/{package_name}/config', glob('config/*.yaml') + glob('config/*.csv')),
         (f'share/{package_name}/launch', glob('launch/*.launch.py')),
     ],
-    install_requires=['setuptools', 'PyYAML', 'numpy'],
+    install_requires=['setuptools', 'PyYAML', 'numpy', 'soundfile'],
     zip_safe=True,
     maintainer='David Smith',
     maintainer_email='1734595+daveismith@users.noreply.github.com',
