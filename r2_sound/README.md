@@ -220,7 +220,17 @@ build_catalogue --sounds-dir /sounds --out config/clips.yaml --sheet config/tags
 1. Listen a bucket at a time on the Mac: `/ws/.audio/tagging/play_bucket.sh chatter` plays
    each WAV of the kit (16-bit mono 22.05 kHz, at catalogue loudness, cut to 10 s) and
    prints its name. `README.md` in the kit repeats this.
-2. In `config/tags.csv` (columns `name, set, path, duration_s, rms_dbfs, suggested_tag,
+2. Recommended: the tag tool, a local web page (standard library only, 127.0.0.1 only).
+   From the Mac, outside the container:
+   `python3 src/r2_personality/r2_sound/r2_sound/tools/tag_tool.py --workspace ~/path/to/r2_dev`
+   (`--sheet`, `--kit`, `--port 8765`, `--no-browser` as options); in the container,
+   `tag_tool --workspace /ws --no-browser` and open the printed URL. Clips are listed by
+   suggested bucket with the kit WAV playing; keys: space replays, Enter = Confirm and next,
+   arrows = previous/next, 1-9 and 0 toggle the first ten tags. **Confirm** writes the
+   suggested tag into `tags` (so the merge no longer depends on the confidence), **Clear**
+   empties it again. **Save** rewrites `config/tags.csv` in place (only `tags` and
+   `clip_override_db` change; atomic, previous sheet kept as `tags.csv.bak`). Then go to
+   step 3. Alternative, by hand: in `config/tags.csv` (columns `name, set, path, duration_s, rms_dbfs, suggested_tag,
    confidence, tags, clip_override_db, status`) write pool names into `tags` only where the
    suggestion is wrong or missing (comma-separated, from the fixed list), and a number of dB
    in `clip_override_db` for a clip that sits wrong in its set. A clip of the exclusion list

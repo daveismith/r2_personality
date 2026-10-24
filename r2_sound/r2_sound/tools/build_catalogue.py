@@ -401,7 +401,9 @@ confirmed by ear.
 
     ./play_bucket.sh chatter        # plays each clip, printing its name first
 
-Then open `config/tags.csv` in the `r2_sound` package and, only where the suggestion is
+The easiest way is the `tag_tool` web page (`tag_tool.py --workspace <r2_dev>`, see the
+r2_sound README). Or open `config/tags.csv` in the `r2_sound` package and,
+only where the suggestion is
 wrong or missing, write the correct pools in the `tags` column (several allowed,
 comma-separated) from this fixed list:
 

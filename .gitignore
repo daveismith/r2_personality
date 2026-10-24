@@ -4,3 +4,5 @@ __pycache__/
 .pytest_cache/
 *.swp
 .DS_Store
+# the tag tool keeps one backup of the sheet beside it
+r2_sound/config/tags.csv.bak
