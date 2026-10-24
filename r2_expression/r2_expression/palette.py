@@ -42,7 +42,8 @@ Pure helpers used by :mod:`r2_expression.core`; no ROS imports.
 * :class:`SoundCatalogue`, :func:`sound_catalogue`: what ``ListSounds`` says the player
   has, as the clips by name and the playable pools by tag. :func:`validate_voices`
   resolves each mood's chatter pools against it (phase 3 rule 8: a pool with no playable
-  clip is dropped with a warning; a mood with none left falls back to ``chatter``).
+  clip is dropped with a warning, as is ``voice`` while the player has no synthesiser; a
+  mood with none left falls back to ``chatter``).
   :class:`ChatterScheduler` is the flourish scheduler for the voice: ``mood_strength``
   pulls the window's top toward its bottom like the glances', and a due pick is a pool,
   from which :func:`choose_clip` draws a clip (clips with ``clip_fraction`` over
@@ -55,7 +56,7 @@ from types import MappingProxyType
 from typing import Any, FrozenSet, Mapping, Optional, Tuple
 
 from r2_expression.config import (EXCLUDED_TAG, FALLBACK_TAG, LED_PICK_CHANNELS,
-                                  STYLE_CHANNELS)
+                                  STYLE_CHANNELS, VOICE_POOL)
 
 
 # MagicPanelSequence.FLAG_LOOPS: runs until stopped. FLAG_RANDOM alone is not unbounded (Fade
@@ -293,11 +294,14 @@ def validate_voices(config, catalogue):
             continue
         kept = []
         for tag, weight in chatter.pools:
-            if catalogue.pools.get(tag):
+            voice = tag == VOICE_POOL
+            if catalogue.synth if voice else catalogue.pools.get(tag):
                 kept.append(PoolPick(tag, weight))
             else:
-                warnings.append(((name, tag), 'moods.%s.sound.chatter.pools: the catalogue has '
-                                 'no playable clip tagged %r; pool dropped' % (name, tag)))
+                why = ('the player has no synthesiser' if voice else
+                       'the catalogue has no playable clip tagged %r' % tag)
+                warnings.append(((name, tag), 'moods.%s.sound.chatter.pools: %s; pool '
+                                 'dropped' % (name, why)))
         if not kept and catalogue.pools.get(FALLBACK_TAG):
             kept.append(PoolPick(FALLBACK_TAG))
             warnings.append(((name, None), 'moods.%s.sound.chatter: no pool resolves to a '

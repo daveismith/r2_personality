@@ -66,7 +66,9 @@ interruptible: false, level: {floor_dbfs: -40, ceiling_dbfs: -6}}`` (:class:`Sou
 ``interruptible`` is the default for a sound intent that does not say). A mood, and ``neutral``,
 may have ``sound: {gain_db, chatter}``: ``gain_db`` within :data:`GAIN_RANGE_DB` (default 0) and,
 for a mood only, ``chatter: {every_s: [min, max], pools: {tag: weight}}`` where every tag is one of
-:data:`SOUND_TAGS` (never ``excluded``) and each weight > 0. A mood without ``sound`` takes
+:data:`SOUND_TAGS` (never ``excluded``) or :data:`VOICE_POOL` and each weight > 0. ``voice`` is
+not a catalogue tag: its picks are phrases the synthesiser renders from the mood's arousal and
+valence (plan 4.4, step 7). A mood without ``sound`` takes
 neutral's gain and has no chatter, with one warning (:attr:`ExpressionConfig.sound_warnings`).
 
 A style channel is one of :data:`STYLE_CHANNELS`:
@@ -135,6 +137,9 @@ SOUND_TAGS = ('chatter', 'excited', 'sad', 'question', 'ooh', 'hum', 'alarm', 's
               'excluded')
 EXCLUDED_TAG = 'excluded'      # music, speech, silence: manual play only, never in a pool
 FALLBACK_TAG = 'chatter'       # a mood whose pools all resolve to nothing falls back to it
+VOICE_POOL = 'voice'           # a chatter pool of synthesised phrases, not a catalogue tag
+# What a mood's chatter may name: the playable tags and the synthesiser's voice.
+CHATTER_POOLS = tuple(t for t in SOUND_TAGS if t != EXCLUDED_TAG) + (VOICE_POOL,)
 GAIN_RANGE_DB = (-20.0, 6.0)   # a mood's sound gain
 MAX_FADE_MS = 1000
 MIN_FEEDBACK_TIMEOUT_S = 0.2   # defaults.dome.feedback_timeout_s: two 10 Hz joint states
@@ -804,10 +809,9 @@ def _mood_sound(value, path, neutral):
         table = []
         for tag, weight in pools.items():
             here = '%s.pools.%s' % (cpath, tag)
-            if tag == EXCLUDED_TAG or tag not in SOUND_TAGS:
-                raise ExpressionConfigError(
-                    '%s: unknown pool (expected one of: %s)' % (
-                        here, ', '.join(t for t in SOUND_TAGS if t != EXCLUDED_TAG)))
+            if tag not in CHATTER_POOLS:
+                raise ExpressionConfigError('%s: unknown pool (expected one of: %s)' % (
+                    here, ', '.join(CHATTER_POOLS)))
             table.append((tag, _positive(weight, here)))
         chatter = Chatter(every_s=_range(cmap['every_s'], _join(cpath, 'every_s')),
                           pools=tuple(table))

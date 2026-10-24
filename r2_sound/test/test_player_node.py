@@ -253,7 +253,7 @@ def test_list_matches_the_catalogue(player):
         ['chatter'], 500, -6.0, False)
     assert {c.name: c for c in response.clips}['music'].excluded
     assert response.catalogue == player.catalogue and response.sample_rate == 44100
-    assert not response.synth
+    assert response.synth
 
 
 def test_startup_is_idle_with_zeros(player):
@@ -359,8 +359,11 @@ def test_refusals(player):
                            ({'name': 'music', 'priority': 100}, 'excluded')):
         response = player.play(**fields)
         assert (response.accepted, response.reason) == (False, reason), fields
-    response = player.call('vocalize', seed=5)
-    assert (response.accepted, response.reason) == (False, 'no synth')
+    for fields, reason in (({'arousal': 1.5}, 'bad arousal: must be 0..1'),
+                           ({'valence': float('nan')}, 'bad valence: must be 0..1'),
+                           ({'length_s': -1.0}, 'bad length_s: must be >= 0')):
+        response = player.call('vocalize', seed=5, priority=100, **fields)
+        assert (response.accepted, response.reason, response.seed) == (False, reason, 5)
 
 
 def test_an_excluded_clip_plays_at_manual_priority(player):
@@ -372,6 +375,56 @@ def test_parameters_are_read_at_startup(player):
     result = subprocess.run(['ros2', 'param', 'set', '/%s' % player.name, 'fade_ms', '50.0'],
                             capture_output=True, text=True, timeout=30)
     assert 'read at startup' in result.stdout + result.stderr
+
+
+# --- vocalize ----------------------------------------------------------------------------
+
+def vocalize_and_wait(player, **fields):
+    fields.setdefault('priority', 100)
+    fields.setdefault('arousal', 0.6)
+    fields.setdefault('valence', 0.7)
+    mark = player.mark()
+    before = set(player.wavs())
+    response = player.call('vocalize', **fields)
+    assert response.accepted, response.reason
+    end = player.wait_idle(mark)
+    new = wait_until(lambda: sorted(set(player.wavs()) - before), 5.0, 'the WAV')
+    return response, end, mark, new
+
+
+def test_vocalize_plays_a_phrase_as_voice_seed(player):
+    response, end, mark, new = vocalize_and_wait(player, seed=42, length_s=1.0, owner='me',
+                                                 intent_id='v1')
+    assert response.seed == 42 and response.duration_ms == 1000
+    assert end.last_end == ENDED
+    playing = [s for _, s in player.since(mark, 'states') if s.state == PLAYING]
+    assert playing and all((s.name, s.owner, s.priority, s.intent_id) == (
+        'voice:42', 'me', 100, 'v1') for s in playing)
+    assert all(s.elapsed_ms + s.remaining_ms == 1000 for s in playing)
+    assert [m.data for _, m in player.since(mark, 'playing')] == [True, False]
+    loud = [m.data for _, m in player.since(mark, 'levels') if m.data > 0]
+    assert 15 <= len(loud) <= 40
+    assert player.since(mark, 'levels')[-1][1].data == 0.0
+    data, rate = read_wav(new[0])
+    assert new[0].endswith('-voice-42.wav') and rate == 44100 and len(data) == 44100
+    assert 20 * np.log10(np.max(np.abs(data))) <= -1.0 + 0.01
+
+
+def test_vocalize_seed_0_draws_a_seed_and_a_seed_replays(player):
+    response, _, _, _ = vocalize_and_wait(player, seed=0)
+    assert response.seed != 0
+    assert 600 <= response.duration_ms <= 2500        # the synth's own length
+    first = vocalize_and_wait(player, seed=response.seed)[3][0]
+    second = vocalize_and_wait(player, seed=response.seed)[3][0]
+    with open(first, 'rb') as a, open(second, 'rb') as b:
+        assert a.read() == b.read()
+
+
+def test_vocalize_is_cut_at_the_requested_length(player):
+    response, end, _, new = vocalize_and_wait(player, seed=3, length_s=0.2)
+    assert response.duration_ms == 200 and end.last_end == DURATION
+    data, _ = read_wav(new[0])
+    assert len(data) == 8820 and abs(data[-1]) < 0.01
 
 
 # --- the catalogue on disk -----------------------------------------------------------------

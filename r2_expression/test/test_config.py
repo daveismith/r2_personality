@@ -25,9 +25,9 @@ import yaml
 
 from fixtures import AFFECT_YAML, base_data, cfg, dome_data, LEDS_LIST, SHIPPED  # noqa: I100
 from fixtures import capture_names, MAGIC_LIST, sound_data
-from r2_expression.config import (DEFAULT_PROFILE, DomeDefaults, ExpressionConfigError,
-                                  load_config, load_config_string, missing_moods, parse_config,
-                                  SOUND_TAGS)
+from r2_expression.config import (CHATTER_POOLS, DEFAULT_PROFILE, DomeDefaults,
+                                  ExpressionConfigError, load_config, load_config_string,
+                                  missing_moods, parse_config, SOUND_TAGS, VOICE_POOL)
 from r2_expression.motion import Coast, Floor, Heading, Profile
 from r2_expression.palette import LedCatalogue, MagicCatalogue, validate_picks
 
@@ -584,11 +584,11 @@ def test_error_type_is_a_value_error():
 
 # --- sound (phase 3 plan 4.4) -----------------------------------------------------------------
 
-PLAN_VOICES = {          # plan 4.4, for all eight moods: gain, every_s, pools
+PLAN_VOICES = {          # plan 4.4 (and step 7's voice), for all eight moods: gain, every_s, pools
     'calm': (-3, (45, 120), {'chatter': 3, 'hum': 1}),
-    'curious': (0, (15, 40), {'question': 3, 'ooh': 2, 'chatter': 1}),
-    'excited': (2, (6, 15), {'excited': 4, 'laugh': 1, 'chatter': 1}),
-    'playful': (0, (10, 30), {'laugh': 2, 'whistle': 1, 'ooh': 1, 'chatter': 1}),
+    'curious': (0, (15, 40), {'question': 3, 'ooh': 2, 'chatter': 1, 'voice': 1}),
+    'excited': (2, (6, 15), {'excited': 4, 'laugh': 1, 'chatter': 1, 'voice': 1}),
+    'playful': (0, (10, 30), {'laugh': 2, 'whistle': 1, 'ooh': 1, 'chatter': 1, 'voice': 1}),
     'annoyed': (0, (20, 60), {'annoyed': 3, 'alarm': 1}),
     'scared': (1, (8, 20), {'scared': 3, 'scream': 1, 'alarm': 1}),
     'sleepy': (-8, (90, 240), {'sleepy': 3, 'hum': 1}),
@@ -624,7 +624,7 @@ def test_shipped_voices_are_plan_4_4_for_all_eight_moods():
 def test_shipped_pools_are_tags_of_the_fixed_list_and_never_excluded():
     for mood in load_config(SHIPPED).moods.values():
         for tag, weight in mood.sound.chatter.pools:
-            assert tag in SOUND_TAGS and tag != 'excluded' and weight > 0
+            assert tag in CHATTER_POOLS and tag != 'excluded' and weight > 0
 
 
 def test_sound_defaults_may_be_left_out_or_partial():
@@ -701,6 +701,22 @@ def test_sound_chatter_pools_must_be_tags_of_the_fixed_list():
             data = sound_data()
             data['moods']['calm']['sound']['chatter']['pools'] = {tag: 1}
             assert parse_config(data)
+
+
+def test_the_voice_pool_is_a_pool_name_not_a_tag():
+    assert VOICE_POOL == 'voice' and VOICE_POOL not in SOUND_TAGS
+    data = sound_data()
+    data['moods']['calm']['sound']['chatter']['pools'] = {'chatter': 2, 'voice': 1.5}
+    assert dict(parse_config(data).moods['calm'].sound.chatter.pools) == {
+        'chatter': 2.0, 'voice': 1.5}
+    for tag in ('Voice', 'voices'):
+        def change(data, tag=tag):
+            data['moods']['calm']['sound']['chatter']['pools'] = {tag: 1}
+        sound_rejects(change, 'moods.calm.sound.chatter.pools.%s: unknown pool' % tag)
+
+    def zero(data):
+        data['moods']['calm']['sound']['chatter']['pools'] = {'voice': 0}
+    sound_rejects(zero, 'moods.calm.sound.chatter.pools.voice')
 
 
 @pytest.mark.parametrize('weight', [0, -1, 'heavy', None, math.inf])

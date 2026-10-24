@@ -3,8 +3,9 @@
 R2's sound device: clip player, synth, level feed. Design and steps:
 `docs/personality-phase3-plan.md` in the r2_dev workspace.
 
-**Status: step 4 done (the player).** `build_catalogue` and `sound_player` are real;
-`vocalize` answers `no synth` until step 7.
+**Status: steps 4 (the player) and 7 (synth v1) built.** `build_catalogue`, `sound_player`
+and the synthesiser (`r2_sound/synth.py`, `vocalize`) are real; the synth awaits David's
+notes on the review grid (`synth_grid`).
 
 ## Running the player
 
@@ -14,6 +15,8 @@ ros2 launch r2_sound sound_player.launch.py backend:=sounddevice device:=USB   #
 ros2 service call /sound_player/play astromech_msgs/srv/PlaySound \
     "{name: padawan-sent01, priority: 199, owner: me}"
 ros2 service call /sound_player/play astromech_msgs/srv/PlaySound "{pool: ooh, priority: 199}"
+ros2 service call /sound_player/vocalize astromech_msgs/srv/Vocalize \
+    "{arousal: 0.8, valence: 0.7, seed: 42, priority: 199, owner: me}"   # length_s 0: its own
 ros2 service call /sound_player/stop astromech_msgs/srv/StopSound "{}"
 ros2 service call /sound_player/reload std_srvs/srv/Trigger "{}"   # after build_catalogue
 ```
@@ -89,9 +92,9 @@ robot (plan step 8b).
 
 | name | type | |
 | --- | --- | --- |
-| `~/list` | `astromech_msgs/srv/ListSounds` | the catalogue as loaded; `synth` false until step 7 |
+| `~/list` | `astromech_msgs/srv/ListSounds` | the catalogue as loaded; `synth` true |
 | `~/play` | `astromech_msgs/srv/PlaySound` | see "Plays" above |
-| `~/vocalize` | `astromech_msgs/srv/Vocalize` | refused `no synth` until step 7 |
+| `~/vocalize` | `astromech_msgs/srv/Vocalize` | renders a phrase on the worker and plays it as `voice:<seed>` (see "The synth") |
 | `~/stop` | `astromech_msgs/srv/StopSound` | fades; `stopped` false when nothing played |
 | `~/reload` | `std_srvs/srv/Trigger` | reads the catalogue and the sounds again; a bad file keeps the old catalogue |
 | `~/state` | `astromech_msgs/msg/SoundState` | at `state_hz` while playing and on every change, 1 Hz idle; `elapsed_ms`/`remaining_ms` from the backend's frame count |
@@ -201,7 +204,20 @@ build_catalogue --sounds-dir /sounds --out config/clips.yaml --sheet config/tags
 Run the tool from the container (`colcon build --symlink-install` first so the defaults for
 `--out` and `--sheet` point into `src/`). With `--kit` left out no WAVs are written.
 
-## Not implemented yet
+## The synth
 
-- The sound channel in `r2_expression` and the bringup (steps 5, 6)
-- The synth, `vocalize` (step 7)
+`r2_sound/synth.py` (pure numpy; the model, its ranges and how to add a syllable are in its
+docstring) composes a phrase of 2-8 syllables (beep, chirp up/down, warble, trill, whistle,
+buzz, purr) from `(arousal, valence)` in 0..1 and a seed, and renders it at the house level
+(-16 dBFS RMS, peak at most -1 dBFS). `vocalize` renders on the player's worker, never on a
+callback, and plays the phrase like a clip named `voice:<seed>`: the same state, level
+topics, fade and `last_end`; the `wav` backend writes it like any play. `seed` 0 draws one and
+the response returns it, so a phrase can be replayed; `length_s` 0 lets the synth choose from
+the arousal (0.6-2.5 s), otherwise the phrase is that long (0.4-8 s) and is cut at the request
+with the fade when asked for less than 0.4 s. `duration_ms` in the response is the play's
+length. A gain over the phrase's headroom is clamped with a warning (rule 4). About 10 ms
+for a 2 s phrase in the dev container.
+
+The review grid for David: `synth_grid` renders 25 phrases (arousal and valence each 0.1 ..
+0.9, seed 1) to `/ws/.audio/synth/a<A>_v<V>.wav` at 22.05 kHz with an `index.md` and a
+`play_grid.sh` (afplay, in order, printing the coordinates).

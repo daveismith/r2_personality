@@ -17,7 +17,8 @@
 
 import copy
 
-from fixtures import BASE, dome_cfg, LED_CAT, MAGIC_CAT, sound_cfg, sound_list
+from fixtures import BASE, dome_cfg, FixedRng, LED_CAT, MAGIC_CAT, sound_cfg, sound_data
+from fixtures import sound_list
 import pytest
 from r2_expression import core
 from r2_expression import dome_renderer
@@ -398,3 +399,20 @@ def test_sound_core_actions_render():
     for act in actions:
         msg = sound_renderer.render(act)
         assert getattr(msg, 'priority', 1) != 0 and msg.owner == OWNER
+
+
+def test_a_voice_pick_renders_a_vocalize_of_the_moods_vector():
+    data = sound_data()
+    data['moods']['calm']['sound']['chatter']['pools'] = {'voice': 1}
+    arb = core.Arbiter(parse_config(data), core.SOUND_CHANNELS, rng=FixedRng(0.0))
+    arb.set_catalogue(sound_catalogue(sound_list(synth=True)), 0.0)
+    arb.sound_state({'state': 0}, 0.0)
+    actions = []
+    for now in [k * 0.5 for k in range(22)]:          # the node's feeds, to 10.5 s
+        arb.sound_state({'state': 0}, now)
+        actions += arb.mood('calm', 0.0, now, -0.4, 0.6) + arb.tick(now)
+    (act,) = [a for a in actions if a.call == core.CALL_VOCALIZE]
+    msg = sound_renderer.render(act)
+    assert type(msg).__name__ == 'Vocalize_Request'
+    assert (msg.arousal, msg.valence, msg.length_s, msg.seed, msg.gain_db, msg.priority,
+            msg.owner) == (pytest.approx(0.3), pytest.approx(0.8), 0.0, 0, -3.0, 10, OWNER)

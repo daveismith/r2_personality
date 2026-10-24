@@ -43,6 +43,7 @@ setup(
         'console_scripts': [
             'sound_player = r2_sound.player_node:main',
             'build_catalogue = r2_sound.tools.build_catalogue:main',
+            'synth_grid = r2_sound.tools.synth_grid:main',
         ],
     },
 )

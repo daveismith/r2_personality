@@ -18,21 +18,23 @@ The player's worker (plan 4.3): one thread that owns the backend. No ROS imports
 The node's service callbacks hand requests over with :meth:`Player.play`, :meth:`Player.stop`
 and :meth:`Player.close` and wait for the worker's answer; the backend's thread reports each
 block's RMS and the end of a play by storing a value and queueing a message. The worker does
-everything else: decoding (through the cache), the gain and the duration cut, replacing a
-play with a fade, and all the publishing through a ``sink`` (``state(PlayerState)``,
-``level(rms)``, ``playing(bool)``, ``warn(text)``): the level at ``level_hz`` and the state
-at ``state_hz`` while playing, and while idle only the state once a second. A play's end
-publishes a 0 level, ``playing`` false and the IDLE state at once.
+everything else: decoding (through the cache) or rendering a phrase (a job with a
+:class:`Voice`, through the ``synth`` given, :func:`r2_sound.synth.render`), the gain and the
+duration cut, replacing a play with a fade, and all the publishing through a ``sink``
+(``state(PlayerState)``, ``level(rms)``, ``playing(bool)``, ``warn(text)``): the level at
+``level_hz`` and the state at ``state_hz`` while playing, and while idle only the state once
+a second. A play's end publishes a 0 level, ``playing`` false and the IDLE state at once.
 """
 
 from dataclasses import dataclass
 import queue
 import threading
 import time
+from typing import Optional
 
 import numpy as np
 from r2_sound.backends import fade_frames
-from r2_sound.gain import db_to_linear, fade_out
+from r2_sound.gain import db_to_linear, fade_out, play_gain_db
 
 IDLE, PLAYING, FADING = 0, 1, 2
 END_NONE, END_ENDED, END_DURATION, END_STOPPED, END_REPLACED = range(5)
@@ -44,8 +46,24 @@ WARN_S = 60.0            # a failing worker step is reported at most this often
 
 
 @dataclass(frozen=True)
+class Voice:
+    """A phrase to render instead of a file (``vocalize``): the synth's arguments."""
+
+    arousal: float
+    valence: float
+    length_s: float
+    seed: int
+
+
+@dataclass(frozen=True)
 class PlayJob:
-    """One accepted play request, resolved to a file and a gain by the node."""
+    """
+    One accepted play request, resolved to a file and a gain by the node.
+
+    With ``voice`` the worker renders that phrase instead of decoding ``path``; the phrase
+    is at the house level with its peak at most -1 dBFS, so ``gain_db`` is the request's
+    gain alone, clamped by the worker against the rendered peak (rule 4).
+    """
 
     name: str
     path: str
@@ -55,6 +73,7 @@ class PlayJob:
     priority: int = 0
     owner: str = ''
     intent_id: str = ''
+    voice: Optional[Voice] = None
 
 
 @dataclass(frozen=True)
@@ -132,9 +151,10 @@ class Player:
     """The worker: see the module docstring. ``start()`` runs it, ``close()`` ends it."""
 
     def __init__(self, backend, cache, sink, rate, fade_ms=20.0, state_hz=5.0, level_hz=30.0,
-                 clock=time.monotonic):
+                 clock=time.monotonic, synth=None):
         self.backend = backend
         self.cache = cache
+        self.synth = synth           # render(arousal, valence, length_s, seed, rate), or None
         self.sink = sink
         self.rate = int(rate)
         self.fade_ms = float(fade_ms)
@@ -287,10 +307,22 @@ class Player:
             self._finish(current.reason)
         return False
 
+    def _source(self, job):
+        """Return ``(buffer, extra_db)``: the decoded clip or the rendered phrase, and the gain."""
+        if job.voice is None:
+            return self.cache.get(job.path, job.catalogue_gain_db), \
+                job.gain_db - job.catalogue_gain_db
+        v = job.voice
+        buffer, info = self.synth(v.arousal, v.valence, v.length_s, v.seed, self.rate)
+        gain_db, clamped = play_gain_db(0.0, job.gain_db, info.peak_dbfs)
+        if clamped:
+            self.sink.warn('vocalize %s: gain %+.1f dB clamped to %+.1f dB (peak ceiling)' % (
+                job.name, job.gain_db, gain_db))
+        return buffer, gain_db
+
     def _buffer(self, job):
-        """Return ``(buffer, cut)``: decoded, gained, and cut with a fade at the duration."""
-        buffer = self.cache.get(job.path, job.catalogue_gain_db)
-        extra_db = job.gain_db - job.catalogue_gain_db
+        """Return ``(buffer, cut)``: decoded or rendered, gained, and cut with a fade."""
+        buffer, extra_db = self._source(job)
         frames = len(buffer)
         wanted = int(round(job.duration_ms * self.rate / 1000.0)) if job.duration_ms else frames
         cut = wanted < frames
@@ -307,7 +339,8 @@ class Player:
         try:
             buffer, cut = self._buffer(job)
         except Exception as exc:
-            return False, 'decode failed: %s' % str(exc)[:120], 0
+            what = 'decode' if job.voice is None else 'synth'
+            return False, '%s failed: %s' % (what, str(exc)[:120]), 0
         if len(buffer) == 0:
             return False, 'empty clip', 0
         previous = self._fade_current(END_REPLACED)

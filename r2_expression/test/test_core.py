@@ -1893,10 +1893,39 @@ def test_rule20_vocalize_is_refused_without_a_synth_and_built_with_one():
 
 def test_rule21_a_phrase_of_the_personality_is_capped_at_max_duration():
     a = sound(catalogue=sound_catalogue(sound_list(synth=True)))
-    for params, length in (({}, 30.0), ({'length_s': 99}, 30.0), ({'length_s': 1.5}, 1.5)):
+    for params, duration, length in (({}, 0, 0.0), ({'length_s': 99}, 0, 30.0),
+                                     ({'length_s': 1.5}, 0, 1.5), ({}, 800, 0.8),
+                                     ({'length_s': 1.5}, 800, 0.8), ({}, 99000, 30.0)):
         (x,) = sintent(a, 1.0, 'behavior', 100, action='vocalize', params=params,
-                       interruptible=True).actions
-        assert x.request['length_s'] == length
+                       duration_ms=duration, interruptible=True).actions
+        assert x.request['length_s'] == length, (params, duration)
+
+
+def test_rule20_a_phrase_takes_the_moods_vector_unless_the_intent_gives_one():
+    a = sound(catalogue=sound_catalogue(sound_list(synth=True)))
+    collect(a.mood('calm', 1.0, 1.0, 0.6, -0.2))          # -1..1 -> 0..1
+    (x,) = sintent(a, 1.0, 'manual', 199, action='vocalize', interruptible=True).actions
+    assert (x.request['arousal'], x.request['valence']) == pytest.approx((0.8, 0.4))
+    (x,) = sintent(a, 2.0, 'manual', 199, action='vocalize', params={'valence': 1.0},
+                   interruptible=True).actions
+    assert (x.request['arousal'], x.request['valence']) == pytest.approx((0.8, 1.0))
+    collect(a.mood('calm', 1.0, 3.0, float('nan'), 0.0))   # a broken axis keeps its last
+    collect(a.mood('calm', 1.0, 3.0, 5.0, None))
+    (x,) = sintent(a, 3.0, 'manual', 199, action='vocalize', interruptible=True).actions
+    assert (x.request['arousal'], x.request['valence']) == pytest.approx((1.0, 0.5))
+    a.sound_state(sound_snap(), 10.0)                       # stale: the middle voice
+    (x,) = sintent(a, 10.0, 'manual', 199, action='vocalize', interruptible=True).actions
+    assert (x.request['arousal'], x.request['valence']) == (0.5, 0.5)
+
+
+def test_rule21_a_phrase_of_its_own_length_is_capped_by_a_short_max_duration():
+    data = sound_data()
+    data['defaults']['max_duration_ms'] = 1000
+    a = sound(config=parse_config(data), catalogue=sound_catalogue(sound_list(synth=True)))
+    (x,) = sintent(a, 1.0, 'behavior', 100, action='vocalize', interruptible=True).actions
+    assert x.request['length_s'] == 1.0
+    (x,) = sintent(a, 2.0, 'manual', 199, action='vocalize', interruptible=True).actions
+    assert x.request['length_s'] == 0.0
 
 
 def test_rule21_equal_priority_waits_for_a_run_that_did_not_say_interruptible():
@@ -2061,6 +2090,22 @@ def test_rule22_no_chatter_while_offline():
     for t in range(1, 30):                                      # moods and ticks, no state
         actions += a.mood('calm', 1.0, float(t)) + a.tick(float(t))
     assert plays(actions) == [] and a.status('sound', 29.0).state == STATE_OFFLINE
+
+
+def test_rule22_a_voice_pick_vocalizes_the_moods_arousal_and_valence():
+    data = sound_data()
+    data['moods']['calm']['sound']['chatter']['pools'] = {'voice': 1}
+    a = sound(config=parse_config(data), rng=FixedRng(0.0), strength=0.0,
+              catalogue=sound_catalogue(sound_list(synth=True)))
+    collect(a.mood('calm', 0.0, 0.0, 0.5, 0.8))
+    out = sstep(a, 10.5, strength=0.0)
+    assert plays(out) == []
+    (x,) = [x for x in out if x.call == CALL_VOCALIZE]
+    assert (x.priority, x.why, x.request['gain_db'], x.request['length_s'],
+            x.request['seed']) == (10, 'intent', -3.0, 0.0, 0)           # calm's gain
+    assert (x.request['arousal'], x.request['valence']) == pytest.approx((0.75, 0.9))
+    assert x.intent_id.startswith('chatter-')
+    assert a.status('sound', 10.5).active_source == 'idle'
 
 
 def test_rule22_a_mood_without_a_voice_has_no_chatter():

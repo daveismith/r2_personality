@@ -174,20 +174,26 @@ as above, with these differences, each named by a test:
 
 20. **Vocabulary** (:data:`SOUND_ACTIONS`): ``play`` ``{name}`` or ``{pool}`` with an optional
     ``gain_db``, ``vocalize`` ``{arousal, valence, length_s, seed}`` (refused ``synth not
-    available`` while the player has no synthesiser), ``stop``; ``clip`` is refused ``use
-    play``. A name or pool the catalogue lacks is refused ``unknown name`` / ``unknown pool``.
-    A personality play carries the mood's ``gain_db`` added to the intent's; a manual one
-    its own alone.
+    available`` while the player has no synthesiser; ``arousal`` and ``valence`` default to
+    the mood's, from ``/mood/state``'s -1..1 mapped to 0..1, each axis keeping its last
+    finite value; 0.5 before one and while stale), ``stop``; ``clip``
+    is refused ``use play``. A name or pool the catalogue lacks is refused ``unknown name``
+    / ``unknown pool``. A personality play carries the mood's ``gain_db`` added to the
+    intent's; a manual one its own alone.
 21. **Interruptibility and duration.** A run at the same priority is replaced only if its
     intent said ``interruptible: true``; an intent that does not say takes
     ``defaults.sound.interruptible`` (false: a cut phrase sounds like a fault). A higher
     priority always pre-empts, the player fading the old sound out. ``idle`` and ``behavior``
     plays carry ``duration_ms`` = min(clip length, ``max_duration_ms``), a pool play (clip not
     known yet) ``max_duration_ms``; ``manual`` plays are uncapped and 0 is the clip's length.
+    A phrase's ``length_s`` is capped the same way; 0 (the synth's own, at most
+    :data:`PHRASE_OWN_MAX_S`) stays 0 unless the intent's ``duration_ms`` sets it or the cap
+    is shorter.
 22. **Chatter.** The mood's ``chatter`` is the flourish scheduler: due within ``every_s``
     (``mood_strength`` pulling the window's top down), it draws a pool by weight, then a clip
-    uniformly from it, and plays it as an idle intent. A slot that falls while the channel
-    is claimed, stale, offline or playing is skipped.
+    uniformly from it, and plays it as an idle intent; a ``voice`` pick is a ``vocalize``
+    of the mood's arousal and valence instead. A slot that falls while the channel is
+    claimed, stale, offline or playing is skipped.
 23. **Stale.** The mood going stale stops a running ``idle`` play (with the player's fade)
     and silences the chatter; ``behavior`` and ``manual`` plays go on.
 24. **State evidence.** A run of ours the player shows playing (owner and intent id) ends
@@ -207,7 +213,7 @@ from typing import Any, Mapping, Optional, Tuple
 
 from r2_expression import motion
 from r2_expression.config import (BRIGHTNESS_RANGE, DRIFT_PRESETS, HUE_KEY,
-                                  LED_STYLE_CHANNELS, MOOD_PROFILE)
+                                  LED_STYLE_CHANNELS, MOOD_PROFILE, VOICE_POOL)
 from r2_expression.palette import (ChatterScheduler, choose_clip, field_of as _field,
                                    FlourishScheduler, glance_intent_fields, GlanceScheduler,
                                    LedCatalogue, MagicCatalogue, pick_intent_fields,
@@ -280,6 +286,8 @@ MAX_OWNER_BYTES = 31
 SOUND_PLAYING = 1              # SoundState.PLAYING (astromech_msgs 2.3.0)
 SOUND_FADING = 2
 SOUND_GAIN_RANGE_DB = (-60.0, 20.0)    # an intent's gain_db; the player clamps the sum
+PHRASE_OWN_MAX_S = 2.5         # Vocalize length_s 0: the synth's own length is at most this
+MID_VECTOR = (0.5, 0.5)        # a phrase's (arousal, valence) with no mood, or a stale one
 MAX_INT32 = 2147483647
 # DomeCommandStatus.source values (astromech_msgs 2.2.0) of a person driving the dome; the
 # others, idle and personality, leave the channel to us.
@@ -554,10 +562,17 @@ def _least(a, b):
     return min(a, b) if a and b else a or b
 
 
-def _unit_param(params, key):
-    """Return ``params[key]`` as a number in [0, 1], 0.5 when absent."""
+def _signed_to_unit(value):
+    """Return a -1..1 mood axis as 0..1 (clamped); None for a missing or non-finite one."""
+    if value is None or not math.isfinite(value):
+        return None
+    return min(1.0, max(0.0, (value + 1.0) / 2.0))
+
+
+def _unit_param(params, key, default=0.5):
+    """Return ``params[key]`` as a number in [0, 1], ``default`` when absent."""
     if key not in params:
-        return 0.5
+        return default
     value = _number_param(params, key)
     if not 0.0 <= value <= 1.0:
         raise _Refuse('out of range')
@@ -628,6 +643,7 @@ class Arbiter:
         # Mood.
         self._label = ''
         self._strength = 0.0
+        self._vector = MID_VECTOR     # (arousal, valence) in 0..1; the middle before a vector
         self._mood_at = None
         self._t0 = None
         self._last_now = 0.0
@@ -748,13 +764,20 @@ class Arbiter:
             self._restart_flourish(now)
         return self._settle(now)
 
-    def mood(self, label, strength, now):
-        """Take one ``/mood/state``; return the actions (a new label re-styles)."""
+    def mood(self, label, strength, now, arousal=None, valence=None):
+        """
+        Take one ``/mood/state``; return the actions (a new label re-styles).
+
+        ``arousal`` and ``valence`` are the state's -1..1 vector; the sound channel's phrases
+        follow it (rules 20, 22). A missing or non-finite axis keeps its last value.
+        """
         now = self._clock(now)
         if not label:
             return []
         self._mood_at = now
         self._strength = strength
+        self._vector = tuple(old if new is None else new for old, new in zip(
+            self._vector, (_signed_to_unit(arousal), _signed_to_unit(valence))))
         if label != self._label:
             self._label = label
             if label not in self._config.moods:
@@ -1567,11 +1590,15 @@ class Arbiter:
         if pick is None or cs.run is not None or self._state(cs, now) != STATE_IDLE or \
                 self._sound['state'] != 0:
             return []
-        name = choose_clip(self._catalogue, pick.tag, self._rng)
-        if name is None:
-            return []
+        if pick.tag == VOICE_POOL:
+            action, params = 'vocalize', {}           # rule 20: the mood's vector
+        else:
+            name = choose_clip(self._catalogue, pick.tag, self._rng)
+            if name is None:
+                return []
+            action, params = 'play', {'name': name}
         fields = {'channel': 'sound', 'source': 'idle', 'priority': PRIORITY_IDLE,
-                  'action': 'play', 'params': json.dumps({'name': name}),
+                  'action': action, 'params': json.dumps(params),
                   'intent_id': self._new_id('chatter')}
         return list(self.intent(Intent(**fields), now).actions)
 
@@ -1633,8 +1660,9 @@ class Arbiter:
         else:
             if not catalogue.synth:
                 raise _Refuse('synth not available')
-            request = dict(common, arousal=_unit_param(params, 'arousal'),
-                           valence=_unit_param(params, 'valence'),
+            arousal, valence = MID_VECTOR if self._stale(now) else self._vector
+            request = dict(common, arousal=_unit_param(params, 'arousal', arousal),
+                           valence=_unit_param(params, 'valence', valence),
                            length_s=self._phrase_length_s(f, params),
                            seed=_int_param(params, 'seed', 0, -MAX_INT32, MAX_INT32))
             call, effect = CALL_VOCALIZE, 'voice'
@@ -1648,9 +1676,14 @@ class Arbiter:
         length = _number_param(params, 'length_s') if 'length_s' in params else 0.0
         if not 0.0 <= length <= MAX_UINT32 / 1000.0:
             raise _Refuse('out of range')
+        length = length or f.duration_ms / 1000.0
+        cap = self._config.defaults.max_duration_ms / 1000.0
+        if not length:                # the synth's own length, unless the cap is shorter
+            if f.source not in CAPPED_SOURCES or cap >= PHRASE_OWN_MAX_S:
+                return 0.0
+            length = cap
         ceiling = f.duration_ms / 1000.0
         if f.source in CAPPED_SOURCES:
-            cap = self._config.defaults.max_duration_ms / 1000.0
             ceiling = min(ceiling, cap) if ceiling else cap
         return _least(length, ceiling)
 

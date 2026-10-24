@@ -20,7 +20,7 @@ import math
 import pytest
 
 from fixtures import base_data, cfg, dome_cfg, FixedRng, LED_CAT, MAGIC_CAT  # noqa: I100
-from fixtures import SOUND_CAT, sound_cfg, SOUND_CLIPS, sound_list
+from fixtures import SOUND_CAT, sound_cfg, SOUND_CLIPS, sound_data, sound_list
 from r2_expression.config import Chatter, parse_config
 from r2_expression.palette import (ChatterScheduler, choose, choose_clip, FlourishScheduler,
                                    glance_intent_fields, GlancePick, GlanceScheduler,
@@ -257,6 +257,21 @@ def test_validate_voices_judges_nothing_without_a_catalogue_or_a_chatter():
     assert all(picks == () for picks in voices.values()) and warnings == []
     voices, warnings = validate_voices(cfg(), SOUND_CAT)          # no voices at all
     assert voices['calm'] == () and warnings == []
+
+
+def test_validate_voices_keeps_the_voice_pool_only_with_a_synth():
+    data = sound_data()
+    data['moods']['calm']['sound']['chatter']['pools'] = {'chatter': 3, 'voice': 1}
+    data['moods']['excited']['sound']['chatter']['pools'] = {'voice': 2}
+    config = parse_config(data)
+    voices, warnings = validate_voices(config, sound_catalogue(sound_list(synth=True)))
+    assert voices['calm'] == (PoolPick('chatter', 3.0), PoolPick('voice', 1.0))
+    assert voices['excited'] == (PoolPick('voice', 2.0),)
+    assert not [w for w in warnings if w[0][0] in ('calm', 'excited')]
+    voices, warnings = validate_voices(config, SOUND_CAT)               # no synth
+    assert voices['calm'] == (PoolPick('chatter', 3.0),)
+    assert voices['excited'] == (PoolPick('chatter', 1.0),)            # rule 8's fallback
+    assert 'no synthesiser' in dict(warnings)[('calm', 'voice')]
 
 
 def test_excluded_clips_are_in_no_pool_so_in_no_voice():

@@ -453,7 +453,8 @@ class ArbiterNode(Node):
                 self.get_logger().info('mood: %s -> %s' % (self._last_mood or '-', msg.mood))
                 self._last_mood = msg.mood
             now = self._now()
-            actions = self._core.mood(msg.mood, msg.mood_strength, now)
+            actions = self._core.mood(msg.mood, msg.mood_strength, now, msg.arousal,
+                                      msg.valence)
             self._settle(now, actions)
 
     @guarded(_internal_error)

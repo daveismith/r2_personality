@@ -16,20 +16,24 @@
 ``sound_player``: R2's sound device (plan 4.3, 5.3).
 
 Services (under the node name, ``/sound_player`` by default): ``~/list`` (ListSounds),
-``~/play`` (PlaySound), ``~/vocalize`` (Vocalize; refused ``no synth`` until step 7),
-``~/stop`` (StopSound), ``~/reload`` (Trigger: the catalogue again). Topics: ``~/state``
-(SoundState), ``/sound/level`` (Float32 RMS), ``/sound/playing`` (Bool, on change) and the
-dome's level on ``dome_level_topic`` (UInt8).
+``~/play`` (PlaySound), ``~/vocalize`` (Vocalize: a phrase of :mod:`r2_sound.synth`, played
+as the clip ``voice:<seed>``), ``~/stop`` (StopSound), ``~/reload`` (Trigger: the catalogue
+again). Topics: ``~/state`` (SoundState), ``/sound/level`` (Float32 RMS),
+``/sound/playing`` (Bool, on change) and the dome's level on ``dome_level_topic`` (UInt8).
 
 The executor runs the service callbacks only: the node has no timer. A play request is
-resolved here (name or pool, exclusion, gain clamp) and handed to the worker
-(:class:`r2_sound.player.Player`), which decodes, owns the backend and publishes. The node
+resolved here (name or pool, exclusion, gain clamp), a vocalize request checked and given a
+seed (0 asks for a random one), and handed to the worker (:class:`r2_sound.player.Player`),
+which decodes or renders, owns the backend and publishes. A phrase is cut at the request's
+``length_s`` (rule 3); the synth renders that length, or its shortest phrase when asked for
+less. The node
 has its own SIGINT/SIGTERM handlers, so the context is still up when it closes: the play is
 stopped and the zeros and the IDLE state go out before rclpy shuts down.
 """
 
 import dataclasses
 import functools
+import math
 import os
 import random
 import signal
@@ -47,7 +51,8 @@ from r2_sound.backends import check_backend, make_backend
 from r2_sound.catalogue import CatalogueError, load_catalogue, pools, resolve_play
 from r2_sound.decode import DecodeCache
 from r2_sound.gain import level_to_byte, play_gain_db, to_dbfs
-from r2_sound.player import Player, PlayJob
+from r2_sound.player import Player, PlayJob, Voice
+from r2_sound.synth import LENGTH_RANGE_S, render as render_phrase
 from rcl_interfaces.msg import ParameterDescriptor
 from rcl_interfaces.msg import SetParametersResult
 import rclpy
@@ -73,6 +78,8 @@ DUPLICATE_WAIT_S = 1.0       # discovery time before the graph is asked for a no
 CLOSE_ACK_S = 0.2            # how long the last zeros may take to be acknowledged
 OWNER_BYTES = 31
 GUARD_LOG_S = 60.0           # a failing callback is logged at most this often
+MAX_SEED = 2 ** 31 - 1       # a random seed is drawn from 1..MAX_SEED
+VOICE_PREFIX = 'voice:'
 
 
 def default_catalogue_path():
@@ -161,6 +168,22 @@ def _unchanged(response):
     return response
 
 
+def _owner(request):
+    """Return the request's owner cut to :data:`OWNER_BYTES` (SoundState's field)."""
+    return request.owner.encode()[:OWNER_BYTES].decode(errors='ignore')
+
+
+def _vocalize_refusal(request):
+    """Return why a Vocalize request cannot be rendered, or ''."""
+    for field in ('arousal', 'valence'):
+        value = getattr(request, field)
+        if not 0.0 <= value <= 1.0:              # NaN fails it too
+            return 'bad %s: must be 0..1' % field
+    if not (math.isfinite(request.length_s) and request.length_s >= 0.0):
+        return 'bad length_s: must be >= 0'
+    return ''
+
+
 class _Sink:
     """The worker's publishing, as messages (called from the worker thread)."""
 
@@ -211,7 +234,7 @@ class SoundPlayerNode(Node):
                                p['wav_dir'], self._sink.warn)
         self._player = Player(backend, DecodeCache(p['cache_mb'] * 2 ** 20, rate),
                               self._sink, rate, p['fade_ms'], p['state_hz'],
-                              p['level_hz'])
+                              p['level_hz'], synth=render_phrase)
         for name, srv, callback in (('list', ListSounds, self._on_list),
                                     ('play', PlaySound, self._on_play),
                                     ('vocalize', Vocalize, self._on_vocalize),
@@ -281,7 +304,7 @@ class SoundPlayerNode(Node):
                                        excluded=c.excluded) for c in catalogue.clips]
         response.catalogue = self.params['catalogue']
         response.sample_rate = self.params['sample_rate']
-        response.synth = False
+        response.synth = True
         return response
 
     @guarded(_refused)
@@ -304,10 +327,9 @@ class SoundPlayerNode(Node):
                 'play %s: gain %+.1f dB clamped to %+.1f dB (peak ceiling; %d so far)' % (
                     clip.name, clip.gain_db + request.gain_db, gain_db, self._clamped))
         path = os.path.join(self.params['sounds_dir'], clip.path)
-        owner = request.owner.encode()[:OWNER_BYTES].decode(errors='ignore')
         accepted, reason, duration_ms = self._player.play(PlayJob(
             clip.name, path, clip.gain_db, gain_db, request.duration_ms, request.priority,
-            owner, request.intent_id))
+            _owner(request), request.intent_id))
         response.accepted, response.reason = accepted, reason
         response.name, response.duration_ms = clip.name, duration_ms
         if not accepted:
@@ -316,10 +338,27 @@ class SoundPlayerNode(Node):
 
     @guarded(_refused)
     def _on_vocalize(self, request, response):
-        # Step 7: render the phrase on the worker and play it as "voice:<seed>".
-        response.accepted = False
-        response.reason = 'closed' if self._player.closed else 'no synth'
-        response.seed = request.seed
+        response.seed = request.seed or self._rng.randint(1, MAX_SEED)
+        reason = _vocalize_refusal(request)
+        if self._player.closed:
+            reason = 'closed'
+        if reason:
+            response.accepted, response.reason = False, reason
+            self.get_logger().info('vocalize refused: %s' % reason)
+            return response
+        name = '%s%d' % (VOICE_PREFIX, response.seed)
+        # The synth renders a requested length to the frame; only one under its shortest
+        # phrase needs the cut (rule 3). 0: the phrase's own length.
+        cut_ms = 0
+        if 0.0 < request.length_s < LENGTH_RANGE_S[0]:
+            cut_ms = max(1, int(round(request.length_s * 1000.0)))
+        accepted, reason, duration_ms = self._player.play(PlayJob(
+            name, '', 0.0, request.gain_db, cut_ms, request.priority, _owner(request),
+            request.intent_id,
+            voice=Voice(request.arousal, request.valence, request.length_s, response.seed)))
+        response.accepted, response.reason, response.duration_ms = accepted, reason, duration_ms
+        if not accepted:
+            self.get_logger().warning('vocalize %s failed: %s' % (name, reason))
         return response
 
     @guarded(_unchanged)
