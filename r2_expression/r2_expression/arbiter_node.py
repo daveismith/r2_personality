@@ -16,11 +16,13 @@
 """
 The arbiter nodes: ROS 2 around :class:`r2_expression.core.Arbiter`.
 
-Three kinds on one base, :class:`ArbiterNode` (the core, intents, mood, the claim service,
+Four kinds on one base, :class:`ArbiterNode` (the core, intents, mood, the claim service,
 status, the tick timer, the namesake refusal). :class:`DeviceArbiterNode`: ``led_arbiter``
 serves ``fld``, ``tfld``, ``bfld``, ``rld`` and ``psi`` against ``<device>/leds/*``;
-``magic_arbiter`` serves ``magic`` against ``<device>/magic/*`` (plan 5.3). Each is the only
-ROS client of its device services. :class:`DomeArbiterNode`: ``dome_arbiter`` serves
+``magic_arbiter`` serves ``magic`` against ``<device>/magic/*`` (plan 5.3); ``sound_arbiter``
+serves ``sound`` against ``<device>/{list,play,vocalize,stop}`` and ``<device>/state`` (phase 3
+plan 5.4; device ``/sound_player``). Each is the only ROS client of its device services.
+:class:`DomeArbiterNode`: ``dome_arbiter`` serves
 ``dome`` (phase 2 plan 5.4); its "device" is ``dome_twist_converter``, which it reaches by
 publishing on ``command_topic`` alone (no services, no catalogue, no worker).
 
@@ -60,16 +62,19 @@ from astromech_msgs.msg import ExpressionIntent
 from astromech_msgs.msg import LedStateArray
 from astromech_msgs.msg import MagicPanelState
 from astromech_msgs.msg import MoodState
+from astromech_msgs.msg import SoundState
 from astromech_msgs.srv import ClaimChannel
 from geometry_msgs.msg import TwistStamped
 from nav_msgs.msg import Odometry
 from r2_expression import dome_renderer
 from r2_expression import led_renderer
 from r2_expression import magic_renderer
+from r2_expression import sound_renderer
 from r2_expression.config import ExpressionConfigError
 from r2_expression.config import load_config
 from r2_expression.core import Arbiter
 from r2_expression.core import CALL_MAGIC_STOP
+from r2_expression.core import CALL_SOUND_STOP
 from r2_expression.core import CALL_STOP
 from r2_expression.core import DOME_CHANNELS
 from r2_expression.core import held_by
@@ -77,11 +82,13 @@ from r2_expression.core import LED_CHANNELS
 from r2_expression.core import MAGIC_CHANNELS
 from r2_expression.core import PRIORITY_BEHAVIOR
 from r2_expression.core import RUN_CALLS
+from r2_expression.core import SOUND_CHANNELS
 from r2_expression.core import STATE_FOREIGN
 from r2_expression.core import STATE_IDLE
 from r2_expression.core import STATE_NAMES
 from r2_expression.palette import led_catalogue
 from r2_expression.palette import magic_catalogue
+from r2_expression.palette import sound_catalogue
 from r2_expression.render_common import RenderRefusal
 from rcl_interfaces.msg import SetParametersResult
 import rclpy
@@ -131,7 +138,8 @@ INTENT_TOPIC = '/expression/intent'
 MOOD_TOPIC = '/mood/state'
 STATUS_TOPIC = '/expression/status'
 CLAIM_SERVICES = {'led': '/expression/claim/led', 'magic': '/expression/claim/magic',
-                  'dome': '/expression/claim/dome'}
+                  'dome': '/expression/claim/dome', 'sound': '/expression/claim/sound'}
+DEFAULT_DEVICES = {'led': '/r2_dome', 'magic': '/r2_dome', 'sound': '/sound_player'}
 # tfld and bfld are reported only while they are doing something.
 QUIET_WHEN_IDLE = ('tfld', 'bfld')
 
@@ -154,6 +162,8 @@ KINDS = {
     'magic': Kind(MAGIC_CHANNELS, magic_renderer, 'magic/states', MagicPanelState,
                   'magic_state', magic_catalogue),
     'dome': Kind(DOME_CHANNELS, dome_renderer),
+    'sound': Kind(SOUND_CHANNELS, sound_renderer, 'state', SoundState, 'sound_state',
+                  sound_catalogue),
 }
 
 
@@ -473,12 +483,12 @@ class ArbiterNode(Node):
 
 
 class DeviceArbiterNode(ArbiterNode):
-    """The LED or the Magic Panel arbiter: service calls from one worker thread."""
+    """The LED, Magic Panel or sound arbiter: service calls from one worker thread."""
 
     startup_parameters = STARTUP_PARAMETERS + ('device',)
 
     def _declare_device(self):
-        self.declare_parameter('device', '/r2_dome')
+        self.declare_parameter('device', DEFAULT_DEVICES[self._kind_name])
         device = str(self.get_parameter('device').value).rstrip('/')
         if not device.startswith('/') or len(device) < 2:
             raise ValueError('device must be an absolute node name like /r2_dome, got %r'
@@ -492,6 +502,7 @@ class DeviceArbiterNode(ArbiterNode):
         self._stop = threading.Event()
         self._catalogue_ready = False
         self._panel = None                 # magic: (interrogations, link) of the last state
+        self._state_at = None              # sound: time.monotonic() of the last state
         device = self._device
         self._device_clients = {}
         renderer = self._kind.renderer
@@ -519,10 +530,21 @@ class DeviceArbiterNode(ArbiterNode):
             return                     # the catalogue first, then the first state (plan 5.3)
         if self._kind_name == 'magic':
             self._watch_panel(msg)
+        elif self._kind_name == 'sound':
+            self._watch_player()
         with self._lock:
             now = self._now()
             actions = getattr(self._core, self._kind.on_state)(msg, now)
             self._settle(now, actions)
+
+    def _watch_player(self):
+        """Ask for the catalogue again when the state topic comes back after a silence."""
+        seen, previous = time.monotonic(), self._state_at
+        self._state_at = seen
+        if previous is not None and seen - previous > self._max_age_s:
+            self.get_logger().info('%s is back after %.0f s: listing again'
+                                   % (self._device, seen - previous))
+            self._queue.put_replacing((seen, None))
 
     def _watch_panel(self, msg):
         """Ask for the catalogue again when the panel re-reads itself or comes back."""
@@ -577,7 +599,8 @@ class DeviceArbiterNode(ArbiterNode):
             try:
                 if item is None:
                     self._end_stale_burst()
-                    self._load_catalogue()
+                    if not self._load_catalogue() and not self._stop.wait(LIST_RETRY_S):
+                        self._queue.put_replacing((time.monotonic(), None))   # try again
                 elif self._is_stale(queued_at, item):
                     self._drop_stale(item)
                 else:
@@ -591,7 +614,7 @@ class DeviceArbiterNode(ArbiterNode):
     def _is_stale(self, queued_at, action):
         """Return True for a start or palette call that waited over ``device_stale_s``."""
         return (action.priority <= PRIORITY_BEHAVIOR and
-                action.call not in (CALL_STOP, CALL_MAGIC_STOP) and
+                action.call not in (CALL_STOP, CALL_MAGIC_STOP, CALL_SOUND_STOP) and
                 time.monotonic() - queued_at > self._max_age_s)
 
     def _drop_stale(self, action):
@@ -687,10 +710,11 @@ class DeviceArbiterNode(ArbiterNode):
                             % (action.channel, action.call, action.target, REQUEST_TIMEOUT_S))
                 self._reply(action, False, 'timeout', quiet=True)
             return
-        reason = response.reason
-        if response.accepted and getattr(response, 'confirmed', True) is False:
+        # StopSound answers `stopped` only (false: nothing was playing, which is no failure)
+        accepted, reason = getattr(response, 'accepted', True), getattr(response, 'reason', '')
+        if accepted and getattr(response, 'confirmed', True) is False:
             reason = reason or 'not confirmed'
-        self._reply(action, response.accepted, reason)
+        self._reply(action, accepted, reason)
 
     def _reply(self, action, accepted, reason, quiet=False):
         """Report the device's answer to the core and log what it says about it."""
@@ -866,7 +890,8 @@ class DomeArbiterNode(ArbiterNode):
             pass
 
 
-NODES = {'led': DeviceArbiterNode, 'magic': DeviceArbiterNode, 'dome': DomeArbiterNode}
+NODES = {'led': DeviceArbiterNode, 'magic': DeviceArbiterNode, 'dome': DomeArbiterNode,
+         'sound': DeviceArbiterNode}
 
 
 def _interrupt(signum, frame):
@@ -935,6 +960,11 @@ def main_magic(args=None):
 def main_dome(args=None):
     """Entry point of ``dome_arbiter``."""
     return main('dome', args)
+
+
+def main_sound(args=None):
+    """Entry point of ``sound_arbiter``."""
+    return main('sound', args)
 
 
 if __name__ == '__main__':

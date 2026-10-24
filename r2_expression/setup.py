@@ -48,6 +48,7 @@ setup(
             'led_arbiter = r2_expression.arbiter_node:main_led',
             'magic_arbiter = r2_expression.arbiter_node:main_magic',
             'dome_arbiter = r2_expression.arbiter_node:main_dome',
+            'sound_arbiter = r2_expression.arbiter_node:main_sound',
         ],
     },
 )

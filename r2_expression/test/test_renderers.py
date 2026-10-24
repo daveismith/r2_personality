@@ -17,13 +17,15 @@
 
 import copy
 
-from fixtures import BASE, dome_cfg, LED_CAT, MAGIC_CAT
+from fixtures import BASE, dome_cfg, LED_CAT, MAGIC_CAT, sound_cfg, sound_list
 import pytest
 from r2_expression import core
 from r2_expression import dome_renderer
 from r2_expression import led_renderer
 from r2_expression import magic_renderer
+from r2_expression import sound_renderer
 from r2_expression.config import parse_config
+from r2_expression.palette import sound_catalogue
 from r2_expression.render_common import RenderRefusal
 
 OWNER = 'r2_expression'
@@ -295,3 +297,104 @@ def test_dome_core_actions_render():
     assert [a.call for a in actions] == [core.CALL_VELOCITY] * 2
     for act in actions:
         dome_renderer.render(act, 0.5, 2.0)
+
+
+# --- sound -------------------------------------------------------------------------------------
+
+def play_request(**changes):
+    request = {'name': 'sent1', 'pool': '', 'gain_db': -2.5, 'duration_ms': 1500,
+               'priority': 100, 'owner': OWNER, 'intent_id': 'id1'}
+    request.update(changes)
+    return request
+
+
+def sound_action(call, request, priority=100):
+    return action(call, request, 'sound', 'sound', priority)
+
+
+def test_sound_services_and_list_are_the_players_names():
+    assert sound_renderer.LIST[0] == 'list' and sound_renderer.LIST[1].__name__ == 'ListSounds'
+    assert {call: (suffix, srv.__name__)
+            for call, (suffix, srv) in sound_renderer.SERVICES.items()} == {
+        core.CALL_PLAY: ('play', 'PlaySound'), core.CALL_VOCALIZE: ('vocalize', 'Vocalize'),
+        core.CALL_SOUND_STOP: ('stop', 'StopSound')}
+
+
+def test_sound_play_by_name_is_built_exactly():
+    msg = sound_renderer.render(sound_action(core.CALL_PLAY, play_request()))
+    assert type(msg).__name__ == 'PlaySound_Request'
+    assert (msg.name, msg.pool, msg.gain_db, msg.duration_ms, msg.priority, msg.owner,
+            msg.intent_id) == ('sent1', '', -2.5, 1500, 100, OWNER, 'id1')
+
+
+def test_sound_play_by_pool_is_built_exactly():
+    msg = sound_renderer.render(sound_action(core.CALL_PLAY, play_request(name='', pool='hum')))
+    assert (msg.name, msg.pool) == ('', 'hum')
+
+
+def test_sound_vocalize_is_built_exactly():
+    request = {'arousal': 0.8, 'valence': 0.25, 'length_s': 1.5, 'seed': -7, 'gain_db': 1.0,
+               'priority': 199, 'owner': OWNER, 'intent_id': 'v1'}
+    msg = sound_renderer.render(sound_action(core.CALL_VOCALIZE, request, 199))
+    assert type(msg).__name__ == 'Vocalize_Request'
+    assert (msg.arousal, msg.valence, msg.length_s, msg.seed, msg.gain_db, msg.priority,
+            msg.owner, msg.intent_id) == (pytest.approx(0.8), 0.25, 1.5, -7, 1.0, 199, OWNER,
+                                          'v1')
+
+
+def test_sound_stop_carries_the_owner_and_no_priority():
+    msg = sound_renderer.render(sound_action(core.CALL_SOUND_STOP, {'owner': OWNER}))
+    assert type(msg).__name__ == 'StopSound_Request' and msg.owner == OWNER
+    assert 'priority' not in msg.get_fields_and_field_types()
+
+
+@pytest.mark.parametrize('changes, reason', [
+    ({'name': '', 'pool': ''}, 'unknown name'),
+    ({'name': 'sent1', 'pool': 'hum'}, 'unknown name'),
+    ({'name': 'x' * 64}, 'name too long'),
+    ({'name': '', 'pool': 'p' * 64}, 'name too long'),
+    ({'owner': 'o' * 32}, 'owner too long'),
+])
+def test_sound_play_refusals_are_the_players_own_strings(changes, reason):
+    with pytest.raises(RenderRefusal) as info:
+        sound_renderer.render(sound_action(core.CALL_PLAY, play_request(**changes)))
+    assert info.value.reason == reason
+
+
+def test_sound_a_stop_with_a_long_owner_is_refused_and_an_unknown_call_too():
+    with pytest.raises(RenderRefusal) as info:
+        sound_renderer.render(sound_action(core.CALL_SOUND_STOP, {'owner': 'o' * 32}))
+    assert info.value.reason == 'owner too long'
+    with pytest.raises(RenderRefusal) as info:
+        sound_renderer.render(sound_action(core.CALL_RUN, run_request(priority=100)))
+    assert info.value.reason == 'unknown action'
+
+
+@pytest.mark.parametrize('call, request_', [
+    (core.CALL_PLAY, play_request(owner='')),
+    (core.CALL_PLAY, play_request(priority=0)),
+    (core.CALL_SOUND_STOP, {'owner': ''}),
+    (core.CALL_PLAY, dict(play_request(), volume=3)),
+])
+def test_sound_a_request_without_owner_or_priority_or_a_stray_field_is_a_bug(call, request_):
+    with pytest.raises(ValueError):
+        sound_renderer.render(raw_action(call, request_, 'sound', 'sound'))
+
+
+def test_sound_core_actions_render():
+    arb = core.Arbiter(sound_cfg(), core.SOUND_CHANNELS)
+    arb.set_catalogue(sound_catalogue(sound_list(synth=True)), 0.0)
+    arb.sound_state({'state': 0}, 0.0)
+    arb.mood('calm', 1.0, 0.0)
+    actions = []
+    for source, priority, action_, params in (
+            ('manual', 199, 'play', {'name': 'sent1'}), ('manual', 199, 'play', {'pool': 'hum'}),
+            ('manual', 199, 'vocalize', {'seed': 3}), ('manual', 199, 'stop', {})):
+        actions += arb.intent(core.Intent('sound', source, priority, action_, params,
+                                          interruptible=True), 0.1).actions
+    actions += arb.claim('sound', 'op', 250, 10.0, 0.2).actions
+    assert [a.call for a in actions] == [core.CALL_PLAY, core.CALL_PLAY, core.CALL_VOCALIZE,
+                                         core.CALL_SOUND_STOP]
+    for act in actions:
+        msg = sound_renderer.render(act)
+        assert getattr(msg, 'priority', 1) != 0 and msg.owner == OWNER

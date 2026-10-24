@@ -138,3 +138,48 @@ def test_dome_state_plot_and_source_panels(dome):
         ['/dome_state_broadcaster/joint_states.position[0]']
     (raw,) = panels(dome, 'RawMessages').values()
     assert raw['topicPath'] == '/dome/cmd/status.source'
+
+
+SOUND_LAYOUT = os.path.join(os.path.dirname(LAYOUT), 'sound-panels.json')
+
+
+@pytest.fixture(scope='module')
+def sound():
+    with open(SOUND_LAYOUT) as f:
+        return strict_json(f.read())
+
+
+def test_sound_every_panel_is_placed_once(sound):
+    assert sorted(leaves(sound['layout'])) == sorted(sound['configById'])
+
+
+def test_sound_publish_panels_send_complete_manual_sound_intents(sound):
+    seen = {}
+    for cfg in panels(sound, 'Publish').values():
+        assert cfg['topicName'] == '/expression/intent'
+        assert cfg['datatype'] == 'astromech_msgs/msg/ExpressionIntent'
+        body = strict_json(cfg['value'])
+        assert set(body) == INTENT_FIELDS
+        assert (body['channel'], body['source'], body['priority']) == ('sound', 'manual', 199)
+        seen[body['action']] = strict_json(body['params']) if body['params'] else {}
+    assert seen == {'play': {'pool': 'excited'}, 'stop': {}}
+
+
+def test_sound_claim_and_release_panels(sound):
+    calls = panels(sound, 'CallService').values()
+    assert {c['serviceName'] for c in calls} == {'/expression/claim/sound'}
+    bodies = [strict_json(c['requestPayload']) for c in calls]
+    assert all(set(b) == CLAIM_FIELDS for b in bodies)
+    assert sorted(b['lease_s'] for b in bodies) == [0, 30]
+    assert all((b['channel'], b['owner'], b['priority']) == ('sound', 'foxglove', 199)
+               for b in bodies)
+
+
+def test_sound_state_level_and_player_panels(sound):
+    (st,) = panels(sound, 'StateTransitions').values()
+    assert [p['value'] for p in st['paths']] == ['/expression/status{channel=="sound"}.state']
+    (plot,) = panels(sound, 'Plot').values()
+    assert [p['value'] for p in plot['paths']] == ['/sound/level.data',
+                                                   '/dome/audio/level.data']
+    (raw,) = panels(sound, 'RawMessages').values()
+    assert raw['topicPath'] == '/sound/state'

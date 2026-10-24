@@ -20,11 +20,14 @@ import math
 import pytest
 
 from fixtures import base_data, cfg, dome_cfg, FixedRng, LED_CAT, MAGIC_CAT  # noqa: I100
-from r2_expression.config import parse_config
-from r2_expression.palette import (choose, FlourishScheduler, glance_intent_fields,
-                                   GlancePick, GlanceScheduler, led_catalogue,
-                                   magic_catalogue, pick_intent_fields, resolve_styles,
-                                   scale_brightness, unit_strength, validate_picks)
+from fixtures import SOUND_CAT, sound_cfg, SOUND_CLIPS, sound_list
+from r2_expression.config import Chatter, parse_config
+from r2_expression.palette import (ChatterScheduler, choose, choose_clip, FlourishScheduler,
+                                   glance_intent_fields, GlancePick, GlanceScheduler,
+                                   led_catalogue, magic_catalogue, pick_intent_fields,
+                                   PoolPick, resolve_styles, scale_brightness,
+                                   sound_catalogue, unit_strength, validate_picks,
+                                   validate_voices)
 
 
 @pytest.mark.parametrize('strength, expected', [(0.0, 50), (1.0, 60), (0.5, 55), (0.26, 53),
@@ -169,3 +172,134 @@ def test_glance_becomes_an_idle_dome_intent():
         'dome', 'idle', 10, 'glance')
     assert json.loads(fields['params']) == {'amplitude': 0.4, 'dwell_s': 1.5, 'side': 'left'}
     assert fields['intent_id'] == 'glance-3' and fields['interruptible']
+
+
+# --- sound (phase 3 plan 4.4) -----------------------------------------------------------------
+
+def test_sound_catalogue_turns_list_sounds_into_clips_and_playable_pools():
+    cat = SOUND_CAT
+    assert list(cat.clips) == ['sent1', 'sent2', 'yay', 'scream', 'hum1', 'cantina', 'long1']
+    assert cat.pools == {'chatter': ('sent1', 'sent2'), 'excited': ('yay',),
+                         'scream': ('scream',), 'alarm': ('scream',), 'hum': ('hum1',),
+                         'misc': ('long1',)}
+    assert cat.clips['scream'].tags == ('scream', 'alarm') and cat.clips['cantina'].excluded
+    assert (cat.duration_ms('sent2'), cat.duration_ms('nope')) == (2500, 0)
+    assert (cat.synth, cat.sample_rate, cat.catalogue) == (False, 44100, 'test')
+    assert sound_catalogue(sound_list(synth=True)).synth
+
+
+def test_sound_catalogue_takes_a_message_and_survives_an_empty_list():
+    from astromech_msgs.msg import SoundClip
+    from astromech_msgs.srv import ListSounds
+    response = ListSounds.Response()
+    response.clips = [SoundClip(name='a', tags=['hum', 'hum'], duration_ms=900, gain_db=-1.5),
+                      SoundClip(name='b', tags=['hum'], excluded=True)]
+    response.synth = True
+    cat = sound_catalogue(response)
+    assert cat.pools == {'hum': ('a',)} and cat.clips['a'].gain_db == -1.5 and cat.synth
+    assert cat.clips['a'].clip_fraction == 0.0           # the message does not carry it yet
+    empty = sound_catalogue({'clips': []})
+    assert empty.pools == {} and empty.clips == {}
+
+
+def test_sound_catalogue_is_immutable():
+    with pytest.raises(TypeError):
+        SOUND_CAT.pools['new'] = ()
+    with pytest.raises(TypeError):
+        SOUND_CAT.clips['new'] = None
+
+
+def test_a_clip_that_clips_has_half_the_weight_in_its_pool():
+    clips = [{'name': 'clean', 'tags': ['hum'], 'duration_ms': 1000},
+             {'name': 'hot', 'tags': ['hum'], 'duration_ms': 1000, 'clip_fraction': 0.05},
+             {'name': 'edge', 'tags': ['hum'], 'duration_ms': 1000, 'clip_fraction': 0.01}]
+    cat = sound_catalogue(sound_list(clips=clips))
+    assert [cat.clips[n].weight for n in ('clean', 'hot', 'edge')] == [1.0, 0.5, 1.0]
+    # total weight 2.5: clean covers [0, 1), hot [1, 1.5), edge [1.5, 2.5)
+    picks = {v: choose_clip(cat, 'hum', FixedRng(v)) for v in (0.0, 0.39, 0.41, 0.59, 0.61, 0.99)}
+    assert picks == {0.0: 'clean', 0.39: 'clean', 0.41: 'hot', 0.59: 'hot', 0.61: 'edge',
+                     0.99: 'edge'}
+
+
+def test_choose_clip_is_uniform_within_a_pool_and_none_for_a_missing_one():
+    assert [choose_clip(SOUND_CAT, 'chatter', FixedRng(v)) for v in (0.0, 0.49, 0.5, 0.99)] == \
+        ['sent1', 'sent1', 'sent2', 'sent2']
+    assert choose_clip(SOUND_CAT, 'laugh', FixedRng(0.0)) is None
+    assert choose_clip(SOUND_CAT, 'excluded', FixedRng(0.0)) is None
+
+
+def test_validate_voices_keeps_the_pools_the_catalogue_can_play_in_file_order():
+    voices, warnings = validate_voices(sound_cfg(), SOUND_CAT)
+    assert voices['calm'] == (PoolPick('chatter', 3.0), PoolPick('hum', 1.0))
+    assert voices['excited'] == (PoolPick('excited', 4.0), PoolPick('chatter', 1.0))
+    assert [w[1] for w in warnings if w[0] == ('excited', 'laugh')] == [
+        'moods.excited.sound.chatter.pools: the catalogue has no playable clip tagged '
+        "'laugh'; pool dropped"]
+
+
+def test_validate_voices_falls_back_to_chatter_when_no_pool_resolves():
+    voices, warnings = validate_voices(sound_cfg(), SOUND_CAT)
+    assert voices['scared'] == (PoolPick('chatter', 1.0),)
+    keys = [w[0] for w in warnings if w[0][0] == 'scared']
+    assert keys == [('scared', 'sad'), ('scared', 'ooh'), ('scared', None)]
+    assert 'falling back to' in dict(warnings)[('scared', None)]
+
+
+def test_validate_voices_leaves_a_mood_silent_when_even_chatter_is_missing():
+    cat = sound_catalogue(sound_list(clips=[c for c in SOUND_CLIPS if c['tags'] != ['chatter']]))
+    voices, warnings = validate_voices(sound_cfg(), cat)
+    assert voices['scared'] == ()
+    assert 'is silent' in dict(warnings)[('scared', None)]
+
+
+def test_validate_voices_judges_nothing_without_a_catalogue_or_a_chatter():
+    voices, warnings = validate_voices(sound_cfg(), None)
+    assert all(picks == () for picks in voices.values()) and warnings == []
+    voices, warnings = validate_voices(cfg(), SOUND_CAT)          # no voices at all
+    assert voices['calm'] == () and warnings == []
+
+
+def test_excluded_clips_are_in_no_pool_so_in_no_voice():
+    voices, _ = validate_voices(sound_cfg(), SOUND_CAT)
+    for picks in voices.values():
+        assert all(choose_clip(SOUND_CAT, p.tag, FixedRng(v)) != 'cantina'
+                   for p in picks for v in (0.0, 0.5, 0.99))
+
+
+def test_chatter_scheduler_is_due_within_every_s():
+    chatter = Chatter(every_s=(10.0, 20.0), pools=(('hum', 1.0),))
+    picks = (PoolPick('hum'),)
+    sched = ChatterScheduler(FixedRng(0.5))
+    sched.restart(chatter, 100.0)
+    assert sched.next_due == 115.0
+    assert sched.poll(picks, 114.9) is None and sched.poll(picks, 115.0) == picks[0]
+    assert sched.next_due == 130.0                                # the next, 15 s on
+    sched.stop()
+    assert sched.poll(picks, 500.0) is None
+
+
+def test_chatter_scheduler_strength_pulls_the_window_top_toward_its_bottom():
+    chatter = Chatter(every_s=(10.0, 20.0), pools=(('hum', 1.0),))
+    for strength, due in ((0.0, 119.999), (0.5, 114.9995), (1.0, 110.0), (2.0, 110.0),
+                          (float('nan'), 119.999)):
+        sched = ChatterScheduler(FixedRng(0.9999))
+        sched.restart(chatter, 100.0, strength)
+        assert sched.next_due == pytest.approx(due, abs=0.01), strength
+    sched = ChatterScheduler(FixedRng(0.9999))
+    sched.restart(chatter, 100.0, 0.0)
+    sched.poll((PoolPick('hum'),), 130.0, 1.0)                     # a poll may update strength
+    assert sched.next_due == pytest.approx(140.0, abs=0.01)
+
+
+def test_chatter_scheduler_with_no_chatter_never_fires_and_draws_by_weight():
+    sched = ChatterScheduler(FixedRng(0.0))
+    sched.restart(None, 0.0)
+    assert sched.poll((PoolPick('hum'),), 1e6) is None
+    chatter = Chatter(every_s=(1.0, 1.0), pools=())
+    picks = (PoolPick('a', 3.0), PoolPick('b', 1.0))
+    seen = []
+    for value in (0.0, 0.74, 0.76, 0.99):
+        sched = ChatterScheduler(FixedRng(value))
+        sched.restart(chatter, 0.0)
+        seen.append(sched.poll(picks, 1.0).tag)
+    assert seen == ['a', 'a', 'b', 'b']

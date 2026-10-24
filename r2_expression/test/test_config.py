@@ -24,9 +24,10 @@ import pytest
 import yaml
 
 from fixtures import AFFECT_YAML, base_data, cfg, dome_data, LEDS_LIST, SHIPPED  # noqa: I100
-from fixtures import capture_names, MAGIC_LIST
+from fixtures import capture_names, MAGIC_LIST, sound_data
 from r2_expression.config import (DEFAULT_PROFILE, DomeDefaults, ExpressionConfigError,
-                                  load_config, load_config_string, missing_moods, parse_config)
+                                  load_config, load_config_string, missing_moods, parse_config,
+                                  SOUND_TAGS)
 from r2_expression.motion import Coast, Floor, Heading, Profile
 from r2_expression.palette import LedCatalogue, MagicCatalogue, validate_picks
 
@@ -579,3 +580,164 @@ def test_rejects_unreadable_file(tmp_path):
 
 def test_error_type_is_a_value_error():
     assert issubclass(ExpressionConfigError, ValueError)
+
+
+# --- sound (phase 3 plan 4.4) -----------------------------------------------------------------
+
+PLAN_VOICES = {          # plan 4.4, for all eight moods: gain, every_s, pools
+    'calm': (-3, (45, 120), {'chatter': 3, 'hum': 1}),
+    'curious': (0, (15, 40), {'question': 3, 'ooh': 2, 'chatter': 1}),
+    'excited': (2, (6, 15), {'excited': 4, 'laugh': 1, 'chatter': 1}),
+    'playful': (0, (10, 30), {'laugh': 2, 'whistle': 1, 'ooh': 1, 'chatter': 1}),
+    'annoyed': (0, (20, 60), {'annoyed': 3, 'alarm': 1}),
+    'scared': (1, (8, 20), {'scared': 3, 'scream': 1, 'alarm': 1}),
+    'sleepy': (-8, (90, 240), {'sleepy': 3, 'hum': 1}),
+    'sulking': (-4, (60, 180), {'sad': 3, 'chatter': 1}),
+}
+
+
+def sound_rejects(change, fragment):
+    data = sound_data()
+    change(data)
+    return rejects(data, fragment)
+
+
+def test_shipped_sound_defaults_are_the_plan_values():
+    sound = load_config(SHIPPED).defaults.sound
+    assert (sound.house_level_dbfs, sound.fade_ms, sound.interruptible) == (-16.0, 20, False)
+    assert (sound.level.floor_dbfs, sound.level.ceiling_dbfs) == (-40.0, -6.0)
+    assert load_config(SHIPPED).neutral.sound.gain_db == -6.0
+    assert load_config(SHIPPED).neutral.sound.chatter is None
+
+
+def test_shipped_voices_are_plan_4_4_for_all_eight_moods():
+    config = load_config(SHIPPED)
+    assert set(PLAN_VOICES) <= set(config.moods)
+    for name, (gain, every, pools) in PLAN_VOICES.items():
+        sound = config.moods[name].sound
+        assert sound.gain_db == gain, name
+        assert sound.chatter.every_s == every, name
+        assert dict(sound.chatter.pools) == pools, name
+    assert config.sound_warnings == ()
+
+
+def test_shipped_pools_are_tags_of_the_fixed_list_and_never_excluded():
+    for mood in load_config(SHIPPED).moods.values():
+        for tag, weight in mood.sound.chatter.pools:
+            assert tag in SOUND_TAGS and tag != 'excluded' and weight > 0
+
+
+def test_sound_defaults_may_be_left_out_or_partial():
+    config = cfg()
+    assert config.defaults.sound.house_level_dbfs == -16.0
+    assert not config.defaults.sound.interruptible
+    data = base_data()
+    data['defaults']['sound'] = {'interruptible': True, 'level': {'floor_dbfs': -50}}
+    sound = parse_config(data).defaults.sound
+    assert sound.interruptible and sound.level.floor_dbfs == -50.0 and sound.fade_ms == 20
+
+
+@pytest.mark.parametrize('sound, fragment', [
+    ({'house_level_dbfs': 3}, 'above 0 dBFS'),
+    ({'house_level_dbfs': 'loud'}, 'must be a number'),
+    ({'fade_ms': -1}, 'out of range'),
+    ({'fade_ms': 20.5}, 'must be an integer'),
+    ({'fade_ms': 100000}, 'out of range'),
+    ({'interruptible': 'yes'}, 'true or false'),
+    ({'level': {'floor_dbfs': -6, 'ceiling_dbfs': -40}}, 'must be below'),
+    ({'level': {'floor_dbfs': -40, 'ceiling_dbfs': 1}}, 'above 0 dBFS'),
+    ({'level': {'peak': -1}}, 'unknown key'),
+    ({'level': -6}, 'must be a mapping'),
+    ({'volume': 1}, 'unknown key'),
+])
+def test_sound_defaults_are_validated(sound, fragment):
+    data = base_data()
+    data['defaults']['sound'] = sound
+    assert rejects(data, fragment).startswith('defaults.sound')
+
+
+def test_sound_voices_load_and_round_trip():
+    config = parse_config(sound_data())
+    assert parse_config(config.to_dict()) == config
+    assert config.moods['calm'].sound.gain_db == -3.0
+    assert config.moods['calm'].sound.chatter.pools == (('chatter', 3.0), ('hum', 1.0))
+    assert config.mood_sound('calm').gain_db == -3.0
+    assert config.mood_sound('calm', stale=True) == config.neutral.sound
+    assert config.mood_sound('unknown') == config.neutral.sound
+    assert config.mood_sound('calm', stale=True).gain_db == -6.0
+
+
+def test_a_mood_without_a_voice_takes_the_neutral_gain_with_one_warning():
+    config = cfg()
+    assert config.moods['calm'].sound is None
+    assert config.mood_sound('calm').gain_db == 0.0 and config.mood_sound('calm').chatter is None
+    assert config.sound_warnings == (
+        "moods.calm: no sound entry; its voice is neutral's gain with no chatter",
+        "moods.excited: no sound entry; its voice is neutral's gain with no chatter")
+    assert parse_config(config.to_dict()) == config
+
+
+@pytest.mark.parametrize('gain', [-20.1, 6.1, 'loud', None, True])
+def test_sound_gain_stays_within_minus_20_and_plus_6(gain):
+    data = sound_data()
+    data['moods']['calm']['sound']['gain_db'] = gain
+    rejects(data, 'moods.calm.sound.gain_db')
+
+
+@pytest.mark.parametrize('gain', [-20, 6, 0, -8.5])
+def test_sound_gain_edges_are_accepted(gain):
+    data = sound_data()
+    data['moods']['calm']['sound']['gain_db'] = gain
+    assert parse_config(data).moods['calm'].sound.gain_db == gain
+
+
+def test_sound_chatter_pools_must_be_tags_of_the_fixed_list():
+    for tag in ('moo', 'excluded', 'Chatter'):
+        def change(data, tag=tag):
+            data['moods']['calm']['sound']['chatter']['pools'] = {tag: 1}
+        sound_rejects(change, 'moods.calm.sound.chatter.pools.%s: unknown pool' % tag)
+    for tag in SOUND_TAGS:
+        if tag != 'excluded':
+            data = sound_data()
+            data['moods']['calm']['sound']['chatter']['pools'] = {tag: 1}
+            assert parse_config(data)
+
+
+@pytest.mark.parametrize('weight', [0, -1, 'heavy', None, math.inf])
+def test_sound_pool_weights_are_positive_numbers(weight):
+    def change(data):
+        data['moods']['calm']['sound']['chatter']['pools'] = {'hum': weight}
+    sound_rejects(change, 'moods.calm.sound.chatter.pools.hum')
+
+
+@pytest.mark.parametrize('every', [[20, 10], [0, 10], [-1, 5], [10], 10, 'often', [10, 'x']])
+def test_sound_chatter_every_s_is_an_ascending_pair_of_positive_numbers(every):
+    def change(data):
+        data['moods']['calm']['sound']['chatter']['every_s'] = every
+    sound_rejects(change, 'moods.calm.sound.chatter.every_s')
+
+
+def test_sound_chatter_needs_every_s_and_pools_and_knows_no_other_keys():
+    sound_rejects(lambda d: d['moods']['calm']['sound']['chatter'].pop('every_s'),
+                  'every_s: required key missing')
+    sound_rejects(lambda d: d['moods']['calm']['sound']['chatter'].pop('pools'),
+                  'pools: required key missing')
+    sound_rejects(lambda d: d['moods']['calm']['sound']['chatter'].update(volume=1),
+                  'unknown key')
+    sound_rejects(lambda d: d['moods']['calm']['sound']['chatter'].update(pools={}),
+                  'at least one pool')
+    sound_rejects(lambda d: d['moods']['calm']['sound'].update(loud=1), 'unknown key')
+    sound_rejects(lambda d: d['moods']['calm'].update(sound=3), 'must be a mapping')
+
+
+def test_neutral_has_a_gain_and_no_chatter():
+    sound_rejects(lambda d: d['neutral']['sound'].update(
+        chatter={'every_s': [1, 2], 'pools': {'hum': 1}}), 'neutral has no chatter')
+    sound_rejects(lambda d: d['neutral'].update(sound={'gain_db': 9}), 'neutral.sound.gain_db')
+    data = sound_data()
+    data['neutral'].pop('sound')
+    assert parse_config(data).mood_sound('calm', stale=True).gain_db == 0.0
+
+
+def test_a_hue_key_is_still_rejected_in_a_voice():
+    sound_rejects(lambda d: d['moods']['calm']['sound'].update(hue=3), 'hue')

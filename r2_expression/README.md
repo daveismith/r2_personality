@@ -18,8 +18,9 @@ steps 6-7.
 | `r2_expression/config.py` | `load_config()`: reads and validates `expression.yaml` into frozen dataclasses; every rejection raises `ExpressionConfigError` naming the dotted key. |
 | `r2_expression/led_renderer.py`, `magic_renderer.py` | a core `Action` to the exact service request, or a local refusal with the device's own string. Pure (message types only). `render_common.py` holds what they share. |
 | `r2_expression/motion.py`, `dome_renderer.py` | the dome's motion model (moves, profiles, the coast stop, `CoastMemory`; pure), and a `CALL_VELOCITY` action to the `TwistStamped` for the converter. |
-| `r2_expression/arbiter_node.py` | the nodes: a shared base, `DeviceArbiterNode` (entry points `led_arbiter`, `magic_arbiter`) and `DomeArbiterNode` (`dome_arbiter`). |
-| `launch/expression.launch.py` | `use_sim_time`, `config`, `device`, `dome` (true) and the dome's four topics; starts the three nodes. |
+| `r2_expression/sound_renderer.py` | a sound `Action` to `PlaySound`, `Vocalize` or `StopSound`, or a local refusal. Pure (message types only). |
+| `r2_expression/arbiter_node.py` | the nodes: a shared base, `DeviceArbiterNode` (entry points `led_arbiter`, `magic_arbiter`, `sound_arbiter`) and `DomeArbiterNode` (`dome_arbiter`). |
+| `launch/expression.launch.py` | `use_sim_time`, `config`, `device`, `dome` (true), the dome's four topics, `sound` (true) and `sound_device`; starts the four nodes. |
 | `config/expression.yaml` | the shipped settings and a palette for every mood of `r2_affect`'s `affect.yaml`. |
 
 ## The rules in a page
@@ -412,6 +413,71 @@ leaves the other's run in place. Snapshots and intents may be ROS messages or di
 their fields. `arb.reload(config, now)` keeps claims, runs, holds and counts and returns
 the re-styling actions.
 
+## The sound channel
+
+Phase 3 plan 4.2 and 5.4. `sound` is one channel on `sound_player` (the `r2_sound` package),
+the way `fld` is a channel on the dome device: the player answers `list`, runs one sound at a
+time and reports it, with its `owner` and `priority`, on `<device>/state` (`SoundState`). It
+has no holds and no console, so the channel is never `foreign`. `sound_arbiter` is the third
+`DeviceArbiterNode` kind (the LED and Magic Panel machinery unchanged: one worker thread, the
+catalogue from `list`, the claim, the watchdog, the status) and the only ROS client of the
+player's `play`, `vocalize` and `stop` services; `express` publishes intents and only reads
+`list`. Claim service `/expression/claim/sound`; parameter `device` defaults to `/sound_player`.
+
+| | `sound_arbiter` |
+|---|---|
+| subscribes | `/expression/intent`, `/mood/state`, `<device>/state` (reliable, depth 10) |
+| serves | `/expression/claim/sound` |
+| clients | `<device>/list`, `play`, `vocalize`, `stop` |
+| publishes | `/expression/status` |
+
+**Intents.** `play` `{"name": "scream"}` or `{"pool": "excited", "gain_db": -3}`; `vocalize`
+`{"arousal", "valence", "length_s", "seed"}`, all optional (refused `synth not available` until
+the player has a synthesiser, and `arousal`/`valence` default to 0.5 until the mood vector
+feeds them in step 7); `stop`. `clip` is the LED vocabulary and is refused `use play`. A name
+or pool the catalogue lacks is refused `unknown name` / `unknown pool` and counted in
+`dropped`; `excluded` clips (music, speech) are in no pool and play by name from a manual
+intent only.
+
+**Interruptibility.** A running play of equal priority is replaced only if its intent said
+`interruptible: true`; an intent that does not say takes `defaults.sound.interruptible` (false;
+a message always has the field, so false is explicit and the other channels' default does not
+apply). A higher priority always pre-empts, the player fading the old sound out over
+`fade_ms`; a lower one is dropped. So an idle chatter is cut by a behaviour or manual play, a
+behaviour play at the same priority waits for it, and two manual plays at 199 do not cut one
+another unless the first was sent interruptible (`express` sends `interruptible: true`; add
+`--hold` for a phrase that must finish).
+
+**Durations.** An `idle` or `behavior` play carries `duration_ms` = min(the clip's length from
+the catalogue, `max_duration_ms`), a play by pool (clip not known yet) the cap; the player cuts
+there with its fade and says `last_end` 2 (duration). A manual play is uncapped, 0 being the
+clip's length. `active_remaining_ms` in the status is the player's own `remaining_ms`.
+
+**Gain.** The request's `gain_db` is the intent's plus, for a personality play (idle or
+behaviour), the mood's `sound.gain_db` (neutral's while stale); a manual play carries its own
+alone. The player adds the catalogue gain and clamps the sum.
+
+**The voice** is `sound: {gain_db, chatter: {every_s: [min, max], pools: {tag: weight}}}` per
+mood in `expression.yaml` (`neutral` has only `gain_db`; `defaults.sound` holds
+`house_level_dbfs`, `fade_ms`, `interruptible` and the `level` range for the player's feed).
+Tags are the fixed list of the plan's step 0, never `excluded`; weights > 0; gain within -20
+to +6 dB; `every_s` ascending. The chatter is the flourish scheduler: a due slot draws a pool by
+weight, then a clip uniformly from it (a clip with `clip_fraction` over 0.01 at half weight; the
+`SoundClip` message does not carry it yet, so it counts as 0), and plays it as an idle intent;
+`mood_strength` pulls the top of `every_s` toward its bottom like the dome's glances. A slot
+that falls while the channel is claimed, stale, offline or playing is skipped. At catalogue
+time a pool with no playable clip is dropped with one WARN, and a mood with none left falls
+back to the `chatter` pool with one WARN (to silence, with a WARN, if that is empty too); a
+mood with no `sound` entry has neutral's gain and no chatter, with one WARN. The catalogue is
+listed again when the state topic returns after `device_stale_s` of silence.
+
+**Stale and offline.** When `/mood/state` goes stale a running `idle` play is stopped (a
+`StopSound`) and the chatter stops; `behavior` and `manual` plays go on and manual still
+works. With no catalogue, or no `/sound/state` for `device_stale_s`, the channel is `offline`:
+nothing is sent, personality intents are dropped and counted, and a run ends. A play of the
+arbiter's own owner found on the first state is adopted at idle priority. The Foxglove tab is
+`foxglove/sound-panels.json`.
+
 ## Driving the lights by hand
 
 Two ways, same messages: the `express` CLI and the Foxglove tab
@@ -429,6 +495,10 @@ Two ways, same messages: the `express` CLI and the Foxglove tab
 | turn the dome | `express look 0.8 [--profile snappy]`, `express turn -1.57`, `express rest [0.35]` | Publish "look_at 0.8 rad" (edit the bearing) |
 | glance | `express glance [--amplitude 0.5] [--dwell 1.0] [--side left]` | |
 | stop the dome | `express stop dome` | Publish "stop dome"; Call Service `/expression/claim/dome` |
+| play a sound | `express play scream [--gain -3] [--duration 2]`, `express play --pool excited` | Publish "sound play excited" (edit the params) |
+| speak (step 7) | `express vocalize [--arousal 0.8] [--valence 0.6] [--length 1.5] [--seed 42]` | |
+| the catalogue | `express sounds [--pool hum] [--device /sound_player]` (reads the player's `list`; plays nothing) | Raw Messages `/sound/state` |
+| stop / hold the sound | `express stop sound`, `express claim sound` / `release sound` | Publish "stop sound"; Call Service `/expression/claim/sound`; Plot `/sound/level`, `/dome/audio/level` |
 
 `configure --drift` works on `fld`, `tfld`, `bfld` and `rld` (the PSIs have no drift).
 Also `clip`, `text "line1" "line2" [--motion loop] [--on-black]`, `configure --brightness N`

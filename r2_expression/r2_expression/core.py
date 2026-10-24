@@ -20,7 +20,7 @@ the :class:`Action` values it returns into service calls. Every call takes
 ``now`` (seconds, any monotonic clock); the first call sets the time base.
 One :class:`Arbiter` serves one channel group: the LED node passes
 ``fld, tfld, bfld, rld, psi``, the Magic Panel node passes ``magic``, the dome
-node passes ``dome``.
+node passes ``dome``, the sound node passes ``sound``.
 
 Channels (plan 4.1). ``fld`` runs on surface ``fld`` (displays ``tfld`` and
 ``bfld``); ``tfld`` and ``bfld`` are its sub-channels, one board each; ``rld``
@@ -166,6 +166,35 @@ as above, with these differences, each named by a test:
     ends. A resting dome that drifts beyond the profile's band is corrected
     at ``min_speed``, at most once per ``rest_recheck_s``.
 
+Sound (phase 3 plan 4.2). ``sound`` is a channel on ``sound_player``, a device with
+services (:data:`CALL_PLAY`, :data:`CALL_VOCALIZE`, :data:`CALL_SOUND_STOP`) and a state topic,
+fed to :meth:`Arbiter.sound_state`. It has no holds, no console and no foreign state: the
+player does one thing at a time and replaces what plays when asked. Rules 1-4, 6, 10 and 11 apply
+as above, with these differences, each named by a test:
+
+20. **Vocabulary** (:data:`SOUND_ACTIONS`): ``play`` ``{name}`` or ``{pool}`` with an optional
+    ``gain_db``, ``vocalize`` ``{arousal, valence, length_s, seed}`` (refused ``synth not
+    available`` while the player has no synthesiser), ``stop``; ``clip`` is refused ``use
+    play``. A name or pool the catalogue lacks is refused ``unknown name`` / ``unknown pool``.
+    A personality play carries the mood's ``gain_db`` added to the intent's; a manual one
+    its own alone.
+21. **Interruptibility and duration.** A run at the same priority is replaced only if its
+    intent said ``interruptible: true``; an intent that does not say takes
+    ``defaults.sound.interruptible`` (false: a cut phrase sounds like a fault). A higher
+    priority always pre-empts, the player fading the old sound out. ``idle`` and ``behavior``
+    plays carry ``duration_ms`` = min(clip length, ``max_duration_ms``), a pool play (clip not
+    known yet) ``max_duration_ms``; ``manual`` plays are uncapped and 0 is the clip's length.
+22. **Chatter.** The mood's ``chatter`` is the flourish scheduler: due within ``every_s``
+    (``mood_strength`` pulling the window's top down), it draws a pool by weight, then a clip
+    uniformly from it, and plays it as an idle intent. A slot that falls while the channel
+    is claimed, stale, offline or playing is skipped.
+23. **Stale.** The mood going stale stops a running ``idle`` play (with the player's fade)
+    and silences the chatter; ``behavior`` and ``manual`` plays go on.
+24. **State evidence.** A run of ours the player shows playing (owner and intent id) ends
+    where ``remaining_ms`` says, ``active_remaining_ms`` counts it down, and one it no longer
+    shows ends. A play of our owner found on the first state is adopted (rule 11). The
+    channel is OFFLINE with no catalogue or no state for ``device_stale_s``; a run ends then.
+
 Status precedence: OFFLINE, DARK, FOREIGN, SUPPRESSED, RUNNING, CLAIMED, STALE, IDLE.
 """
 
@@ -179,10 +208,11 @@ from typing import Any, Mapping, Optional, Tuple
 from r2_expression import motion
 from r2_expression.config import (BRIGHTNESS_RANGE, DRIFT_PRESETS, HUE_KEY,
                                   LED_STYLE_CHANNELS, MOOD_PROFILE)
-from r2_expression.palette import (field_of as _field, FlourishScheduler, glance_intent_fields,
-                                   GlanceScheduler, LedCatalogue, MagicCatalogue,
-                                   pick_intent_fields, random_side, resolve_styles, uniform,
-                                   validate_picks)
+from r2_expression.palette import (ChatterScheduler, choose_clip, field_of as _field,
+                                   FlourishScheduler, glance_intent_fields, GlanceScheduler,
+                                   LedCatalogue, MagicCatalogue, pick_intent_fields,
+                                   random_side, resolve_styles, SoundCatalogue, uniform,
+                                   validate_picks, validate_voices)
 
 # ChannelStatus.STATE_*
 STATE_IDLE = 0
@@ -215,17 +245,21 @@ CALL_START = 'start'                        # StartMagicSequence
 CALL_MAGIC_STOP = 'magic_stop'              # StopMagicSequence
 CALL_MAGIC_BRIGHTNESS = 'magic_brightness'  # ConfigureMagicPanel (takes no priority)
 CALL_VELOCITY = 'velocity'                  # /dome/cmd/personality; 0 is the stop
+CALL_PLAY = 'play'                          # PlaySound
+CALL_VOCALIZE = 'vocalize'                  # Vocalize
+CALL_SOUND_STOP = 'sound_stop'              # StopSound (takes an owner, no priority)
 CALLS = (CALL_RUN, CALL_SAY, CALL_STOP, CALL_CONFIGURE, CALL_START, CALL_MAGIC_STOP,
-         CALL_MAGIC_BRIGHTNESS, CALL_VELOCITY)
-RUN_CALLS = (CALL_RUN, CALL_SAY, CALL_START)
+         CALL_MAGIC_BRIGHTNESS, CALL_VELOCITY, CALL_PLAY, CALL_VOCALIZE, CALL_SOUND_STOP)
+RUN_CALLS = (CALL_RUN, CALL_SAY, CALL_START, CALL_PLAY, CALL_VOCALIZE)
 
 LED_ACTIONS = ('effect', 'clip', 'text', 'configure', 'stop')
 MAGIC_ACTIONS = ('sequence', 'brightness', 'stop')
 DOME_ACTIONS = ('look_at', 'glance', 'turn', 'rest', 'stop', 'track')
+SOUND_ACTIONS = ('play', 'vocalize', 'stop', 'clip')     # clip: refused, `use play`
 _MOVE_ACTIONS = ('look_at', 'glance', 'turn', 'rest')
-_RUN_ACTIONS = ('effect', 'clip', 'text', 'sequence') + _MOVE_ACTIONS
+_RUN_ACTIONS = ('effect', 'clip', 'text', 'sequence', 'play', 'vocalize') + _MOVE_ACTIONS
 _ACTIONS = MappingProxyType({'led': LED_ACTIONS, 'magic': MAGIC_ACTIONS,
-                             'dome': DOME_ACTIONS})
+                             'dome': DOME_ACTIONS, 'sound': SOUND_ACTIONS})
 
 # Device constants (astromech_msgs 2.0.0), repeated so this module needs no ROS.
 APPLY_MODE = 1                 # ConfigureLedDisplay
@@ -243,6 +277,10 @@ HOLD_FOREVER = MAX_UINT32
 LINK_PRESENT = 1
 MAGIC_RUNNING = 1              # MagicPanelState.STATE_RUNNING
 MAX_OWNER_BYTES = 31
+SOUND_PLAYING = 1              # SoundState.PLAYING (astromech_msgs 2.3.0)
+SOUND_FADING = 2
+SOUND_GAIN_RANGE_DB = (-60.0, 20.0)    # an intent's gain_db; the player clamps the sum
+MAX_INT32 = 2147483647
 # DomeCommandStatus.source values (astromech_msgs 2.2.0) of a person driving the dome; the
 # others, idle and personality, leave the channel to us.
 FOREIGN_SOURCES = ('joystick', 'foxglove')
@@ -267,7 +305,7 @@ class Channel:
     """A channel: its device surfaces, the displays they cover, its palette channel."""
 
     name: str
-    kind: str                     # led | magic | dome
+    kind: str                     # led | magic | dome | sound
     surfaces: Tuple[str, ...]     # where its runs go
     displays: Tuple[str, ...]     # what they cover
     parent: str = ''              # fld for tfld and bfld
@@ -293,10 +331,12 @@ CHANNELS = MappingProxyType({
     'psi': Channel('psi', 'led', ('fpsi', 'rpsi'), ('fpsi', 'rpsi')),
     'magic': Channel('magic', 'magic', ('magic',), ('magic',)),
     'dome': Channel('dome', 'dome', ('dome',), ('dome',)),
+    'sound': Channel('sound', 'sound', ('sound',), ('sound',)),
 })
 LED_CHANNELS = ('fld', 'tfld', 'bfld', 'rld', 'psi')
 MAGIC_CHANNELS = ('magic',)
 DOME_CHANNELS = ('dome',)
+SOUND_CHANNELS = ('sound',)
 _SURFACE_CHANNEL = MappingProxyType({'fpsi': 'psi', 'rpsi': 'psi'})
 # The displays of every device surface (2.2), for runs reported on the state topic.
 SURFACE_DISPLAYS = MappingProxyType({
@@ -335,7 +375,7 @@ class Intent:
     action: str
     params: Any = ''              # JSON text, or a mapping
     duration_ms: int = 0
-    interruptible: bool = True
+    interruptible: Optional[bool] = None    # None: the channel's default (sound: the config's)
     intent_id: str = ''
 
 
@@ -454,6 +494,10 @@ class _Refuse(Exception):
     """An intent the arbiter cannot turn into a request; the message is the reason."""
 
 
+def _interruptible_of(value):
+    return None if value is None else bool(value)
+
+
 def _as_intent(obj):
     if isinstance(obj, Intent):
         return obj
@@ -463,7 +507,7 @@ def _as_intent(obj):
                   action=_field(obj, 'action', '') or '',
                   params=_field(obj, 'params', '') or '',
                   duration_ms=int(_field(obj, 'duration_ms', 0) or 0),
-                  interruptible=bool(_field(obj, 'interruptible', True)),
+                  interruptible=_interruptible_of(_field(obj, 'interruptible', None)),
                   intent_id=_field(obj, 'intent_id', '') or '')
 
 
@@ -505,6 +549,21 @@ def _rgb_param(params):
     return value
 
 
+def _least(a, b):
+    """Return the smaller of two limits where 0 means none."""
+    return min(a, b) if a and b else a or b
+
+
+def _unit_param(params, key):
+    """Return ``params[key]`` as a number in [0, 1], 0.5 when absent."""
+    if key not in params:
+        return 0.5
+    value = _number_param(params, key)
+    if not 0.0 <= value <= 1.0:
+        raise _Refuse('out of range')
+    return value
+
+
 def _number_param(params, key):
     """Return ``params[key]`` as a finite float, else refuse it (rule 13)."""
     value = params.get(key)
@@ -539,8 +598,8 @@ class Arbiter:
             specs.append(spec)
         kinds = {spec.kind for spec in specs}
         if len(kinds) != 1:
-            raise ValueError('an arbiter serves one channel group (the LEDs, the Magic Panel '
-                             'or the dome)')
+            raise ValueError('an arbiter serves one channel group (the LEDs, the Magic Panel, '
+                             'the dome or the sound)')
         if not _valid_owner(owner):
             raise ValueError('owner must be 1-%d bytes' % MAX_OWNER_BYTES)
         self.kind = kinds.pop()
@@ -551,7 +610,7 @@ class Arbiter:
         self._overlap = {name: tuple(o for o in self._ch.values() if o.spec.overlaps(cs.spec))
                          for name, cs in self._ch.items()}
         styled = {'led': LED_STYLE_CHANNELS, 'magic': MAGIC_CHANNELS,
-                  'dome': DOME_CHANNELS}[self.kind]
+                  'dome': DOME_CHANNELS, 'sound': ()}[self.kind]
         self._palette_channels = tuple(ch for ch in styled if ch in self._ch)
         self._catalogue = None
         self._picks = MappingProxyType({})
@@ -577,8 +636,10 @@ class Arbiter:
         self._palette_retry_at = {}      # channel -> earliest re-send of a failed palette
         self._eligible = {}
         # The flourishes, or for the dome its idle glances (rule 19).
-        self._flourish = (GlanceScheduler if self.kind == 'dome' else FlourishScheduler)(
-            self._rng)
+        self._flourish = {'dome': GlanceScheduler, 'sound': ChatterScheduler}.get(
+            self.kind, FlourishScheduler)(self._rng)
+        # The sound player: what its last state said (phase 3 plan 5.1), or None before one.
+        self._sound = None
         # The dome: what the converter, the joint state and the odometry last said.
         self._source = self._source_at = None
         self._position = self._position_at = None
@@ -663,11 +724,12 @@ class Arbiter:
     # --- inputs ----------------------------------------------------------------------------
 
     def set_catalogue(self, catalogue, now):
-        """Take the device's catalogue (``ListLeds``/``ListMagicPanel``); return actions."""
+        """Take the catalogue (``ListLeds``/``ListMagicPanel``/``ListSounds``); return actions."""
         now = self._clock(now)
         if self.kind == 'dome':
             raise TypeError('the dome has no catalogue')
-        wanted = LedCatalogue if self.kind == 'led' else MagicCatalogue
+        wanted = {'led': LedCatalogue, 'magic': MagicCatalogue,
+                  'sound': SoundCatalogue}[self.kind]
         if not isinstance(catalogue, wanted):
             raise TypeError('a %s arbiter needs a %s' % (self.kind, wanted.__name__))
         self._catalogue = catalogue
@@ -751,6 +813,9 @@ class Arbiter:
         """Arbitrate one :class:`Intent` (or a mapping, or an ``ExpressionIntent``)."""
         now = self._clock(now)
         f = _as_intent(intent)
+        if f.interruptible is None:
+            f = replace(f, interruptible=self._config.defaults.sound.interruptible
+                        if self.kind == 'sound' else True)
         cs = self._ch.get(f.channel)
         intent_id = f.intent_id or self._new_id('r2e')
         if cs is None:
@@ -971,6 +1036,39 @@ class Arbiter:
             self._end_run(cs, now)
         return self._settle(now)
 
+    def sound_state(self, snapshot, now):
+        """
+        Take one ``SoundState`` (a message or a dict of its fields); return actions.
+
+        Its ``state`` (0 idle, 1 playing, 2 fading), ``name``, ``owner``, ``priority``,
+        ``intent_id``, ``elapsed_ms``, ``remaining_ms`` and ``last_end`` (0 none, 1 ended, 2
+        duration, 3 stopped, 4 replaced). A run of ours that the player shows playing takes its
+        end from ``remaining_ms`` (the stream's own clock, rule 13); one it no longer shows,
+        :data:`SNAPSHOT_GRACE_S` after its confirmation, has ended on the device.
+        """
+        now = self._clock(now)
+        self._require('sound')
+        self._sound = {
+            'state': int(_field(snapshot, 'state', 0) or 0),
+            'name': _field(snapshot, 'name', '') or '',
+            'owner': _field(snapshot, 'owner', '') or '',
+            'priority': int(_field(snapshot, 'priority', 0) or 0),
+            'intent_id': _field(snapshot, 'intent_id', '') or '',
+            'elapsed_ms': int(_field(snapshot, 'elapsed_ms', 0) or 0),
+            'remaining_ms': int(_field(snapshot, 'remaining_ms', 0) or 0),
+            'last_end': int(_field(snapshot, 'last_end', 0) or 0)}
+        self._took_snapshot(now)
+        cs = self._ch['sound']
+        run = cs.run
+        if run is not None:
+            if self._shows(run):
+                if self._sound['remaining_ms'] > 0:      # 0: unknown, or the last block
+                    run.until = now + self._sound['remaining_ms'] / 1000.0
+                    self._size_auto_claim(cs)
+            elif self._evidence(run, now):
+                self._end_run(cs, now)
+        return self._settle(now)
+
     def tick(self, now):
         """Advance timers to ``now``: leases, holds, durations, staleness, flourishes."""
         now = self._clock(now)
@@ -998,6 +1096,8 @@ class Arbiter:
         actions += self._settle(now)
         if self.kind == 'dome':
             actions += self._idle_dome(now)
+        elif self.kind == 'sound':
+            actions += self._chatter(now)
         elif not self._was_stale and self._label in self._config.moods:
             pick = self._flourish.poll(self._picks.get(self._label, ()), now)
             if pick is not None and pick.channel in self._ch:
@@ -1030,6 +1130,13 @@ class Arbiter:
             self._warnings.append(text)
 
     def _validate_picks(self):
+        if self.kind == 'sound':
+            self._picks, warnings = validate_voices(self._config, self._catalogue)
+            for key, text in warnings:
+                self._warn(key, text)
+            for text in self._config.sound_warnings:
+                self._warn(('sound', text), text)
+            return
         led = self._catalogue if self.kind == 'led' else None
         magic = self._catalogue if self.kind == 'magic' else None
         self._picks, warnings = validate_picks(self._config, led=led, magic=magic)
@@ -1045,6 +1152,11 @@ class Arbiter:
             self._flourish.restart(glance, now, self._strength)
             return
         mood = self._config.moods.get(self._label)
+        if self.kind == 'sound':
+            sound = mood.sound if mood is not None else None
+            self._flourish.restart(sound.chatter if sound is not None else None, now,
+                                   self._strength)
+            return
         self._flourish.restart(mood.flourish if mood is not None else None, now)
 
     def _overlapping(self, cs):
@@ -1074,6 +1186,9 @@ class Arbiter:
 
     def _adopt(self, now):
         """Rule 11: take over the runs a previous arbiter with our owner left running."""
+        if self.kind == 'sound':
+            self._adopt_sound(now)
+            return
         until = now + self._config.defaults.max_duration_ms / 1000.0
         for cs in self._ch.values():
             if cs.run is not None:
@@ -1091,6 +1206,25 @@ class Arbiter:
                       else 'text' if effect == 'text' else 'effect')
             cs.run = _Run(ADOPTED, ADOPTED, action, PRIORITY_IDLE, True, effect, set(ours),
                           until, device_ends=False, confirmed_at=now - SNAPSHOT_GRACE_S)
+
+    def _adopt_sound(self, now):
+        """Rule 11 for the player: a play of our owner is ours, at idle priority, to its end."""
+        cs, snap = self._ch['sound'], self._sound
+        if cs.run is not None or snap['owner'] != self.owner or \
+                snap['state'] not in (SOUND_PLAYING, SOUND_FADING):
+            return
+        cs.run = _Run(ADOPTED, ADOPTED, 'play', PRIORITY_IDLE, True, snap['name'], {'sound'},
+                      now + snap['remaining_ms'] / 1000.0, confirmed_at=now - SNAPSHOT_GRACE_S)
+
+    def _shows(self, run):
+        """Return True when the player's last state shows ``run`` (sound only)."""
+        snap = self._sound
+        if snap is None or snap['state'] not in (SOUND_PLAYING, SOUND_FADING) or \
+                snap['owner'] != self.owner:
+            return False
+        if run.source == ADOPTED:
+            return snap['name'] == run.effect
+        return snap['intent_id'] == run.intent_id
 
     def _offline(self, now):
         if self.kind == 'dome':
@@ -1114,8 +1248,9 @@ class Arbiter:
         The snapshot's holds win; without one, a recent refusal's. A hold ends
         when its time runs out, before the next snapshot confirms it.
         """
-        if self.kind == 'dome':
-            return None                   # the converter has no hold timer (rule 15)
+        if self.kind in ('dome', 'sound'):
+            return None                   # the converter has no hold timer (rule 15); nor has
+        #                                   the player (phase 3 plan 4.1)
         if self.kind == 'magic':
             snapped = [self._magic['hold']] if self._magic else []
         elif self._manual:
@@ -1136,6 +1271,8 @@ class Arbiter:
 
     def _foreign_run_owner(self, cs):
         """Who runs something on the channel's displays that we did not start, or ''."""
+        if self.kind == 'sound':
+            return ''                     # nobody else plays sound on the robot (plan 4.1)
         if self.kind == 'dome':
             return self._source if self._source in FOREIGN_SOURCES else ''
         if self.kind == 'magic':
@@ -1250,6 +1387,9 @@ class Arbiter:
         """
         if self.kind == 'dome':               # a 0 overrides nobody (rule 14)
             return [self._velocity(0.0, priority, intent_id, why)]
+        if self.kind == 'sound':              # one sound at a time: one stop, with the fade
+            return [Action(CALL_SOUND_STOP, 'sound', 'sound', {'owner': self.owner},
+                           self.owner, priority, intent_id, why)]
         actions = []
         for surface in sorted(surfaces):
             if self.kind == 'magic':
@@ -1301,8 +1441,10 @@ class Arbiter:
         def new_run(effect, surfaces, duration):
             return _Run(intent_id, f.source, f.action, pr, f.interruptible, effect,
                         set(surfaces), None if not duration else now + duration / 1000.0,
-                        device_ends=spec.kind == 'led')
+                        device_ends=spec.kind in ('led', 'sound'))
 
+        if spec.kind == 'sound' and f.action != 'stop':
+            return self._render_sound(cs, f, params, intent_id, now)
         if f.action == 'track':
             raise _Refuse('not in this phase')
         if f.action in _MOVE_ACTIONS:
@@ -1398,6 +1540,119 @@ class Arbiter:
             actions += self._stops(other, other.run.surfaces, pr, intent_id, 'intent', mode)
             self._end_run(other, now)
         return actions, None
+
+    # --- sound -----------------------------------------------------------------------------
+
+    def _silence_idle(self, now):
+        """Rule 23: the mood went stale; stop an idle play with the fade."""
+        cs = self._ch['sound']
+        run = cs.run
+        if run is None or run.source != 'idle':
+            return []
+        stops = self._stops(cs, run.surfaces, run.priority, run.intent_id, 'stale')
+        self._end_run(cs, now)
+        return stops
+
+    def _chatter(self, now):
+        """
+        Rule 22: the mood's chatter, when it is due and the voice is free.
+
+        A due slot that falls while the channel is claimed, offline, stale or playing is
+        skipped, not kept for later. The pick goes through rule 4 as an idle intent.
+        """
+        if self._was_stale or self._label not in self._config.moods:
+            return []
+        pick = self._flourish.poll(self._picks.get(self._label, ()), now, self._strength)
+        cs = self._ch['sound']
+        if pick is None or cs.run is not None or self._state(cs, now) != STATE_IDLE or \
+                self._sound['state'] != 0:
+            return []
+        name = choose_clip(self._catalogue, pick.tag, self._rng)
+        if name is None:
+            return []
+        fields = {'channel': 'sound', 'source': 'idle', 'priority': PRIORITY_IDLE,
+                  'action': 'play', 'params': json.dumps({'name': name}),
+                  'intent_id': self._new_id('chatter')}
+        return list(self.intent(Intent(**fields), now).actions)
+
+    def _sound_gain(self, f, params, now):
+        """Return the request's gain: the intent's, plus the mood's for the personality."""
+        gain = params.get('gain_db', 0.0)
+        lo, hi = SOUND_GAIN_RANGE_DB
+        if isinstance(gain, bool) or not isinstance(gain, (int, float)) or \
+                not lo <= gain <= hi:         # NaN fails the comparison
+            raise _Refuse('bad params: gain_db must be a number from %g to %g' % (lo, hi))
+        if f.source in CAPPED_SOURCES:
+            gain += self._config.mood_sound(self._label, self._stale(now)).gain_db
+        return float(gain)
+
+    def _sound_duration(self, f, params, clip_ms):
+        """
+        Return ``(duration_ms, length_ms)`` of a play.
+
+        The first is what the request carries, the second how long the play will run (0:
+        unknown). The personality's is capped by ``max_duration_ms`` and by the clip's length
+        (rule 21); a manual play is not, and 0 means the clip's length.
+        """
+        requested = f.duration_ms or params.get('duration_ms', 0)
+        if isinstance(requested, bool) or not isinstance(requested, int) or \
+                not 0 <= requested <= MAX_UINT32:
+            raise _Refuse('out of range')
+        limit = 0
+        if f.source in CAPPED_SOURCES:
+            limit = self._config.defaults.max_duration_ms
+            if clip_ms:
+                limit = min(limit, clip_ms)
+        duration = _least(requested, limit)
+        return duration, _least(duration, clip_ms)
+
+    def _render_sound(self, cs, f, params, intent_id, now):
+        """Return ``(actions, run)`` for a ``play`` or ``vocalize`` (rules 20, 21); else refuse."""
+        if f.action == 'clip':
+            raise _Refuse('use play')         # `clip` is the LED vocabulary
+        catalogue = self._catalogue
+        if catalogue is None:
+            raise _Refuse('channel is offline')
+        gain = self._sound_gain(f, params, now)
+        pr, owner = f.priority, self.owner
+        common = {'gain_db': gain, 'priority': pr, 'owner': owner, 'intent_id': intent_id}
+        if f.action == 'play':
+            name, pool = params.get('name'), params.get('pool')
+            if (name is None) == (pool is None):
+                raise _Refuse('bad params: give a name or a pool, not both')
+            if name is not None and name not in catalogue.clips:
+                raise _Refuse('unknown name')
+            if name is not None and catalogue.clips[name].excluded and \
+                    f.source in CAPPED_SOURCES:
+                raise _Refuse('excluded: manual play only')
+            if pool is not None and pool not in catalogue.pools:
+                raise _Refuse('unknown pool')
+            duration, length = self._sound_duration(f, params, catalogue.duration_ms(name))
+            request = dict(common, name=name or '', pool=pool or '', duration_ms=duration)
+            call, effect = CALL_PLAY, name or pool
+        else:
+            if not catalogue.synth:
+                raise _Refuse('synth not available')
+            request = dict(common, arousal=_unit_param(params, 'arousal'),
+                           valence=_unit_param(params, 'valence'),
+                           length_s=self._phrase_length_s(f, params),
+                           seed=_int_param(params, 'seed', 0, -MAX_INT32, MAX_INT32))
+            call, effect = CALL_VOCALIZE, 'voice'
+            length = int(round(request['length_s'] * 1000))
+        run = _Run(intent_id, f.source, f.action, pr, f.interruptible, effect, {'sound'},
+                   now + length / 1000.0 if length else None)
+        return [Action(call, 'sound', 'sound', request, owner, pr, intent_id, 'intent')], run
+
+    def _phrase_length_s(self, f, params):
+        """Return a phrase's ``length_s``: asked for, cut by the intent's duration and the cap."""
+        length = _number_param(params, 'length_s') if 'length_s' in params else 0.0
+        if not 0.0 <= length <= MAX_UINT32 / 1000.0:
+            raise _Refuse('out of range')
+        ceiling = f.duration_ms / 1000.0
+        if f.source in CAPPED_SOURCES:
+            cap = self._config.defaults.max_duration_ms / 1000.0
+            ceiling = min(ceiling, cap) if ceiling else cap
+        return _least(length, ceiling)
 
     # --- the dome --------------------------------------------------------------------------
 
@@ -1574,10 +1829,14 @@ class Arbiter:
                 self._flourish.stop()
                 if self.kind == 'dome':       # rule 18
                     actions += self._halt(self._ch['dome'], 'stale', now, CAPPED_SOURCES)
+                elif self.kind == 'sound':    # rule 23
+                    actions += self._silence_idle(now)
             else:
                 self._restart_flourish(now)
         if self.kind == 'dome':
             actions += self._dome_guard(now)
+        elif self.kind == 'sound' and self._ch['sound'].run is not None and self._offline(now):
+            self._end_run(self._ch['sound'], now)     # rule 24: a gone player plays nothing
         for name in self._palette_channels:
             cs = self._ch[name]
             eligible = self._palette_eligible(cs, now)

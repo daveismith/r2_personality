@@ -14,12 +14,17 @@
 
 
 """
-Launch the arbiters: LED and Magic Panel (the only clients of the dome's light services), dome.
+Launch the arbiters: LED, Magic Panel, dome and sound.
+
+The LED and Magic Panel arbiters are the only clients of the dome's light services.
 
 ``dome`` (true) adds ``dome_arbiter``, which drives the dome through ``dome_twist_converter``
 (phase 2 plan 5.7); the topic arguments are its parameters. The body's motion comes from
 ``cmd_vel_topic`` (the drive's command, silent unless someone drives); set ``odom_topic`` to
 read odometry instead (it also sees a base rolled by hand, at about 3 % of a Pi core).
+
+``sound`` (true) adds ``sound_arbiter``, the only client of ``sound_player``'s play, vocalize and
+stop services (phase 3 plan 5.4); ``sound_device`` is the player's node name.
 """
 
 import os
@@ -61,6 +66,11 @@ def generate_launch_description():
         parameters=[{**common, **{
             name: ParameterValue(LaunchConfiguration(name), value_type=str)
             for name, _ in DOME_TOPICS}}]))
+    nodes.append(Node(
+        package='r2_expression', executable='sound_arbiter', name='sound_arbiter',
+        output='screen', condition=IfCondition(LaunchConfiguration('sound')),
+        parameters=[{**common, 'device': ParameterValue(
+            LaunchConfiguration('sound_device'), value_type=str)}]))
     dome_args = [DeclareLaunchArgument(name, default_value=DOME_PARAMETERS[name],
                                        description=text)
                  for name, text in DOME_TOPICS]
@@ -83,6 +93,15 @@ def generate_launch_description():
             'dome',
             default_value='true',
             description='Start dome_arbiter (the dome motion channel)'),
+        DeclareLaunchArgument(
+            'sound',
+            default_value='true',
+            description='Start sound_arbiter (the sound channel)'),
+        DeclareLaunchArgument(
+            'sound_device',
+            default_value='/sound_player',
+            description='The sound player node whose list, play, vocalize and stop services '
+                        'and state topic are used'),
         *dome_args,
         *nodes,
     ])

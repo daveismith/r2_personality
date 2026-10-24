@@ -21,17 +21,20 @@ import pytest
 
 from fixtures import base_data, cfg, dome_cfg, dome_data, FixedRng, held, running  # noqa: I100
 from fixtures import LED_CAT, led_snap, MAGIC_CAT, magic_snap, MIN_SPEED, OWNER, PlantDouble
+from fixtures import playing, SOUND_CAT, sound_cfg, SOUND_CLIPS, sound_data, sound_list
+from fixtures import sound_snap
 from r2_expression import motion
 from r2_expression.config import parse_config
 from r2_expression.core import (Action, APPLY_BRIGHTNESS, APPLY_DRIFT, APPLY_HUE, APPLY_MODE,
                                 Arbiter, CALL_CONFIGURE, CALL_MAGIC_BRIGHTNESS,
-                                CALL_MAGIC_STOP, CALL_RUN, CALL_SAY, CALL_START, CALL_STOP,
-                                CALL_VELOCITY,
-                                channel_of, DOME_CHANNELS, held_by, Intent, LED_CHANNELS,
-                                Status)
+                                CALL_MAGIC_STOP, CALL_PLAY, CALL_RUN, CALL_SAY,
+                                CALL_SOUND_STOP, CALL_START, CALL_STOP, CALL_VELOCITY,
+                                CALL_VOCALIZE, channel_of, DOME_CHANNELS, held_by, Intent,
+                                LED_CHANNELS, SOUND_CHANNELS, Status)
 from r2_expression.core import (STATE_CLAIMED, STATE_DARK, STATE_FOREIGN, STATE_IDLE,
                                 STATE_NAMES, STATE_OFFLINE, STATE_RUNNING, STATE_STALE,
                                 STATE_SUPPRESSED)
+from r2_expression.palette import sound_catalogue
 
 ALL_ACTIONS = []
 
@@ -1747,6 +1750,515 @@ def test_dome_status_suppressed_is_state_7():
     assert len(STATE_NAMES) == 8
 
 
+# --- sound (phase 3 plan 4.2, rules 20-24) -------------------------------------------------
+
+def sound(config=None, rng=None, mood='calm', strength=1.0, snap=None, catalogue=SOUND_CAT):
+    a = Arbiter(config or sound_cfg(), SOUND_CHANNELS, rng=rng or FixedRng(0.0))
+    collect(a.set_catalogue(catalogue, 0.0))
+    collect(a.sound_state(snap or sound_snap(), 0.0))
+    if mood:
+        collect(a.mood(mood, strength, 0.0))
+    return a
+
+
+def sstep(a, t, snap=None, mood='calm', strength=1.0):
+    """Live up to ``t`` as the sound node would: a state, a mood (unless None) and a tick."""
+    start = getattr(a, 'test_t', 0.0)
+    times = [start + k for k in range(1, int(t - start) + 1) if start + k < t] + [t]
+    out = []
+    for now in times:
+        out += a.sound_state(snap or sound_snap(), now)
+        if mood:
+            out += a.mood(mood, strength, now)
+        out += a.tick(now)
+    a.test_t = t
+    return collect(out)
+
+
+def sintent(a, t, source='idle', priority=10, action='play', params=None, duration_ms=0,
+            interruptible=None, intent_id=''):
+    if params is None:
+        params = {'name': 'sent2'} if action == 'play' else {}
+    result = a.intent(Intent('sound', source, priority, action, params, duration_ms,
+                             interruptible, intent_id), t)
+    collect(result.actions)
+    return result
+
+
+def plays(actions):
+    return [x for x in actions if x.call == CALL_PLAY]
+
+
+def stops(actions):
+    return [x for x in actions if x.call == CALL_SOUND_STOP]
+
+
+def sound_channel_cfg(**defaults):
+    data = sound_data()
+    data['defaults'].update(defaults)
+    return parse_config(data)
+
+
+def test_sound_is_a_channel_of_its_own_group():
+    assert channel_of('sound').kind == 'sound' and channel_of('sound').surfaces == ('sound',)
+    assert not channel_of('sound').overlaps(channel_of('fld'))
+    assert Arbiter(sound_cfg(), SOUND_CHANNELS).channels == ('sound',)
+    with pytest.raises(ValueError):
+        Arbiter(cfg(), ('sound', 'dome'))
+    with pytest.raises(TypeError):
+        Arbiter(sound_cfg(), SOUND_CHANNELS).set_catalogue(LED_CAT, 0.0)
+    with pytest.raises(TypeError):
+        Arbiter(cfg(), LED_CHANNELS).sound_state(sound_snap(), 0.0)
+
+
+def test_rule20_a_play_by_name_carries_the_owner_the_priority_and_the_intent_id():
+    a = sound()
+    (x,) = sintent(a, 1.0, 'manual', 199, params={'name': 'sent1'}, intent_id='m1').actions
+    assert (x.call, x.channel, x.target, x.priority, x.owner, x.why) == (
+        CALL_PLAY, 'sound', 'sound', 199, OWNER, 'intent')
+    assert dict(x.request) == {'name': 'sent1', 'pool': '', 'gain_db': 0.0, 'duration_ms': 0,
+                               'priority': 199, 'owner': OWNER, 'intent_id': 'm1'}
+
+
+def test_rule20_a_play_by_pool_names_the_pool_and_not_a_clip():
+    a = sound()
+    (x,) = sintent(a, 1.0, 'manual', 199, params={'pool': 'hum', 'gain_db': -3}).actions
+    assert (x.request['name'], x.request['pool'], x.request['gain_db']) == ('', 'hum', -3.0)
+
+
+def test_rule20_a_name_or_pool_the_catalogue_lacks_is_refused_and_counted():
+    a = sound()
+    for params, reason in [({'name': 'nope'}, 'unknown name'), ({'pool': 'nope'}, 'unknown pool'),
+                           ({'pool': 'excluded'}, 'unknown pool'),
+                           ({'pool': 'laugh'}, 'unknown pool')]:
+        r = sintent(a, 1.0, 'manual', 199, params=params)
+        assert (r.accepted, r.reason, r.actions) == (False, reason, ()), params
+    assert a.status('sound', 1.0).dropped == 4
+
+
+def test_rule20_a_clip_intent_is_refused_use_play():
+    a = sound()
+    r = sintent(a, 1.0, 'manual', 199, action='clip', params={'name': 'sent1'})
+    assert (r.accepted, r.reason) == (False, 'use play')
+    assert a.status('sound', 1.0).dropped == 1
+    assert not sintent(a, 1.0, action='effect').accepted      # an LED verb: unknown action
+
+
+@pytest.mark.parametrize('params', [{}, {'name': 'sent1', 'pool': 'hum'}, {'name': ''},
+                                    {'name': 'sent1', 'gain_db': 'loud'},
+                                    {'name': 'sent1', 'gain_db': 100},
+                                    {'name': 'sent1', 'gain_db': float('nan')},
+                                    {'name': 'sent1', 'gain_db': True}])
+def test_rule20_bad_play_params_are_refused(params):
+    r = sintent(sound(), 1.0, 'manual', 199, params=params)
+    assert not r.accepted and r.actions == ()
+
+
+def test_rule20_the_mood_gain_is_added_for_the_personality_and_not_for_a_person():
+    a = sound()
+    assert plays(sintent(a, 1.0, 'idle', 10, params={'name': 'sent1'}).actions)[
+        0].request['gain_db'] == -3.0                       # calm
+    a = sound()
+    assert plays(sintent(a, 1.0, 'idle', 10, params={'name': 'sent1', 'gain_db': 1}).actions)[
+        0].request['gain_db'] == -2.0
+    a = sound()
+    assert plays(sintent(a, 1.0, 'manual', 199, params={'name': 'sent1'}).actions)[
+        0].request['gain_db'] == 0.0
+    a = sound()                       # stale: neutral's gain (a behaviour play still runs)
+    a.sound_state(sound_snap(), 10.0)
+    r = sintent(a, 10.0, 'behavior', 100, params={'name': 'sent1'})
+    assert plays(r.actions)[0].request['gain_db'] == -6.0
+
+
+def test_rule20_vocalize_is_refused_without_a_synth_and_built_with_one():
+    a = sound()
+    r = sintent(a, 1.0, 'manual', 199, action='vocalize', params={'arousal': 0.8})
+    assert (r.accepted, r.reason) == (False, 'synth not available')
+    a = sound(catalogue=sound_catalogue(sound_list(synth=True)))
+    (x,) = sintent(a, 1.0, 'manual', 199, action='vocalize',
+                   params={'arousal': 0.8, 'valence': 0.6, 'length_s': 1.5, 'seed': 42},
+                   intent_id='v1', interruptible=True).actions
+    assert x.call == CALL_VOCALIZE
+    assert dict(x.request) == {'arousal': 0.8, 'valence': 0.6, 'length_s': 1.5, 'seed': 42,
+                               'gain_db': 0.0, 'priority': 199, 'owner': OWNER,
+                               'intent_id': 'v1'}
+    (x,) = sintent(a, 2.0, 'manual', 199, action='vocalize', params={},
+                   interruptible=True).actions
+    assert (x.request['arousal'], x.request['valence'], x.request['length_s'],
+            x.request['seed']) == (0.5, 0.5, 0.0, 0)
+    for params in ({'arousal': 1.5}, {'seed': 2 ** 40}, {'length_s': -1}):
+        assert not sintent(a, 3.0, 'manual', 199, action='vocalize', params=params,
+                           interruptible=True).accepted
+
+
+def test_rule21_a_phrase_of_the_personality_is_capped_at_max_duration():
+    a = sound(catalogue=sound_catalogue(sound_list(synth=True)))
+    for params, length in (({}, 30.0), ({'length_s': 99}, 30.0), ({'length_s': 1.5}, 1.5)):
+        (x,) = sintent(a, 1.0, 'behavior', 100, action='vocalize', params=params,
+                       interruptible=True).actions
+        assert x.request['length_s'] == length
+
+
+def test_rule21_equal_priority_waits_for_a_run_that_did_not_say_interruptible():
+    a = sound()
+    first = sintent(a, 1.0, 'idle', 10, intent_id='i1')                  # silent: the default
+    accept_all(a, first.actions, 1.0)
+    r = sintent(a, 1.5, 'behavior', 10, params={'name': 'yay'}, intent_id='b1')
+    assert not r.accepted and 'non-interruptible' in r.reason and r.actions == ()
+    assert a.status('sound', 1.5).dropped == 1
+    assert a.status('sound', 1.5).active_intent_id == 'i1'
+    r = sintent(a, 1.6, 'manual', 199, params={'name': 'yay'}, intent_id='m1')   # higher
+    assert r.accepted and [x.call for x in r.actions] == [CALL_PLAY]    # the player fades i1
+    assert a.status('sound', 1.6).active_intent_id == 'm1'
+
+
+def test_rule21_a_lower_priority_never_replaces_a_run():
+    a = sound()
+    sintent(a, 1.0, 'behavior', 100, intent_id='b1', interruptible=True)
+    r = sintent(a, 1.5, 'idle', 10, intent_id='i1', interruptible=True)
+    assert not r.accepted and 'running at priority 100' in r.reason
+
+
+def test_rule21_a_run_that_said_interruptible_is_replaced_by_the_newer_at_equal_priority():
+    a = sound()
+    sintent(a, 1.0, 'idle', 10, intent_id='i1', interruptible=True)
+    r = sintent(a, 1.5, 'behavior', 10, params={'name': 'yay'}, intent_id='b1')
+    assert r.accepted and plays(r.actions)[0].request['name'] == 'yay'
+    assert a.status('sound', 1.5).active_intent_id == 'b1'
+
+
+def test_rule21_the_default_for_an_intent_without_the_field_is_the_configs():
+    a = sound(sound_channel_cfg(sound={'interruptible': True}))
+    sintent(a, 1.0, 'idle', 10, intent_id='i1')
+    assert sintent(a, 1.5, 'behavior', 10, intent_id='b1').accepted
+    a = sound()
+    assert sintent(a, 1.0, 'idle', 10, intent_id='i1').accepted
+    assert not sintent(a, 1.5, 'behavior', 10, intent_id='b1').accepted
+    # a message always has the field: false is explicit, and the other channels default true
+    msg = type('Msg', (), {'channel': 'sound', 'source': 'idle', 'priority': 10,
+                           'action': 'play', 'params': '{"name": "sent1"}', 'duration_ms': 0,
+                           'interruptible': False, 'intent_id': 'm'})()
+    assert a.intent(msg, 3.0).accepted is False                     # i1 plays on: it waits
+
+
+def test_rule21_idle_and_behavior_plays_carry_min_of_clip_length_and_the_cap():
+    for source, priority in (('idle', 10), ('behavior', 100)):
+        for params, want in [({'name': 'sent1'}, 1500), ({'name': 'long1'}, 30000),
+                             ({'pool': 'hum'}, 30000)]:
+            a = sound()
+            (x,) = sintent(a, 1.0, source, priority, params=params).actions
+            assert x.request['duration_ms'] == want, (source, params)
+    a = sound()
+    (x,) = sintent(a, 1.0, 'idle', 10, params={'name': 'sent2'}, duration_ms=1000).actions
+    assert x.request['duration_ms'] == 1000
+    a = sound()
+    (x,) = sintent(a, 1.0, 'idle', 10, params={'name': 'sent2'}, duration_ms=9000).actions
+    assert x.request['duration_ms'] == 2500              # not past the clip
+    a = sound(sound_channel_cfg(max_duration_ms=1000))
+    (x,) = sintent(a, 1.0, 'idle', 10, params={'name': 'sent2'}).actions
+    assert x.request['duration_ms'] == 1000
+    assert a.status('sound', 1.0).active_remaining_ms == 1000
+
+
+def test_rule21_a_manual_play_is_not_capped_and_zero_is_the_clips_length():
+    a = sound()
+    (x,) = sintent(a, 1.0, 'manual', 199, params={'name': 'long1'}).actions
+    assert x.request['duration_ms'] == 0
+    assert a.status('sound', 1.0).active_remaining_ms == 120000      # the clip's length
+    a = sound()
+    (x,) = sintent(a, 1.0, 'manual', 199, params={'name': 'long1'}, duration_ms=60000).actions
+    assert x.request['duration_ms'] == 60000
+    assert a.status('sound', 1.0).active_remaining_ms == 60000
+    a = sound()
+    (x,) = sintent(a, 1.0, 'manual', 199, params={'pool': 'hum'}).actions
+    assert x.request['duration_ms'] == 0 and a.status('sound', 1.0).active_remaining_ms == 0
+
+
+def test_rule21_the_personality_never_plays_an_excluded_clip_by_name():
+    a = sound()
+    r = sintent(a, 1.0, 'behavior', 100, params={'name': 'cantina'})
+    assert not r.accepted and 'manual play only' in r.reason
+
+
+def test_rule24_a_remaining_ms_of_zero_does_not_end_a_run_early():
+    a = sound()
+    r = sintent(a, 1.0, 'manual', 199, params={'name': 'long1'}, intent_id='m1')
+    accept_all(a, r.actions, 1.0)
+    a.sound_state(playing('long1', 'm1', 0, 199), 1.5)
+    a.tick(1.6)
+    assert a.status('sound', 1.6).state == STATE_RUNNING
+
+
+def test_rule21_the_cantina_is_in_no_pool_and_plays_by_name_only():
+    assert all('cantina' not in names for names in SOUND_CAT.pools.values())
+    assert 'excluded' not in SOUND_CAT.pools
+
+
+def test_rule22_chatter_is_due_within_every_s_and_draws_from_the_moods_pools():
+    a = sound(rng=FixedRng(0.0), strength=0.0)                 # calm: every 10 to 20 s
+    assert plays(sstep(a, 9.5, strength=0.0)) == []
+    (x,) = plays(sstep(a, 10.5, strength=0.0))
+    assert (x.priority, x.why, x.request['name'], x.request['gain_db']) == (
+        10, 'intent', 'sent1', -3.0)
+    assert x.request['duration_ms'] == 1500 and x.intent_id.startswith('chatter-')
+    a = sound(rng=FixedRng(0.999), strength=0.0)               # the last of the window
+    assert plays(sstep(a, 19.5, strength=0.0)) == []
+    (x,) = plays(sstep(a, 20.5, strength=0.0))
+    assert x.request['name'] == 'hum1'                         # the last pool, by weight
+
+
+def test_rule22_mood_strength_pulls_the_window_toward_its_lower_bound():
+    a = sound(rng=FixedRng(0.999), strength=1.0)
+    assert plays(sstep(a, 9.5)) == [] and len(plays(sstep(a, 10.5))) == 1
+    a = sound(rng=FixedRng(0.999), strength=0.5)
+    assert plays(sstep(a, 14.5, strength=0.5)) == [] and len(
+        plays(sstep(a, 15.5, strength=0.5))) == 1
+
+
+def test_rule22_chatter_is_an_idle_intent_through_rule_4():
+    a = sound(rng=FixedRng(0.0))
+    chatter = plays(sstep(a, 10.5))
+    assert chatter
+    assert a.status('sound', 10.5).active_source == 'idle'
+    assert plays(sstep(a, 10.9)) == []                      # nothing while it plays
+
+
+def test_rule22_no_chatter_while_a_play_runs_and_the_slot_is_not_kept():
+    a = sound(rng=FixedRng(0.0))
+    sintent(a, 1.0, 'behavior', 100, params={'name': 'long1'}, intent_id='b1')
+    snap = playing('long1', 'b1', 100000, 100)
+    assert plays(sstep(a, 12.5, snap=snap)) == []          # the slot at 10 passed under a play
+    sintent(a, 12.6, 'behavior', 100, action='stop', params={})
+    assert plays(sstep(a, 19.5)) == []                      # not made up afterwards
+    assert len(plays(sstep(a, 20.5))) == 1                  # the next slot, 10 s on
+
+
+def test_rule22_no_chatter_while_the_player_plays_something_else():
+    a = sound(rng=FixedRng(0.0))
+    assert plays(sstep(a, 10.5, snap=sound_snap(1, 'x', 'someone', 50, 'y', 5, 900))) == []
+
+
+def test_rule22_no_chatter_while_claimed_and_none_after_the_release():
+    a = sound(rng=FixedRng(0.0))
+    assert a.claim('sound', 'op', 150, 30.0, 1.0).accepted
+    assert plays(sstep(a, 12.5)) == []
+    assert a.status('sound', 12.5).state == STATE_CLAIMED
+    a.claim('sound', 'op', 150, 0.0, 12.6)
+    assert plays(sstep(a, 15.0)) == []
+
+
+def test_rule22_no_chatter_while_stale_and_it_resumes_with_the_mood():
+    a = sound(rng=FixedRng(0.0))
+    assert plays(sstep(a, 30.0, mood=None)) == []
+    assert a.status('sound', 30.0).state == STATE_STALE
+    sstep(a, 31.0)
+    assert len(plays(sstep(a, 41.5))) >= 1                     # a fresh window from the mood
+
+
+def test_rule22_no_chatter_while_offline():
+    a = sound(rng=FixedRng(0.0))
+    actions = []
+    for t in range(1, 30):                                      # moods and ticks, no state
+        actions += a.mood('calm', 1.0, float(t)) + a.tick(float(t))
+    assert plays(actions) == [] and a.status('sound', 29.0).state == STATE_OFFLINE
+
+
+def test_rule22_a_mood_without_a_voice_has_no_chatter():
+    data = sound_data()
+    del data['moods']['calm']['sound']
+    a = sound(parse_config(data), rng=FixedRng(0.0))
+    assert plays(sstep(a, 60.0)) == []
+
+
+def test_rule8_a_pool_with_no_playable_clip_is_dropped_with_one_warning():
+    a = sound()
+    warnings = a.take_warnings()
+    assert sum("tagged 'laugh'" in w for w in warnings) == 1
+    assert not any('moods.calm' in w for w in warnings)
+    a.set_catalogue(SOUND_CAT, 1.0)                              # listed again: not repeated
+    assert a.take_warnings() == []
+    a = sound(rng=FixedRng(0.0), mood='excited')                # excited: excited 4, chatter 1
+    (x,) = plays(sstep(a, 5.5, mood='excited'))
+    assert x.request['name'] == 'yay'
+
+
+def test_rule8_a_mood_with_no_pool_left_falls_back_to_chatter_with_one_warning():
+    a = sound(rng=FixedRng(0.0), mood='scared')
+    warnings = a.take_warnings()
+    assert sum("falling back to 'chatter'" in w for w in warnings) == 1
+    assert sum('moods.scared' in w for w in warnings) == 3         # sad, ooh, the fallback
+    (x,) = plays(sstep(a, 8.5, mood='scared'))
+    assert x.request['name'] in ('sent1', 'sent2')
+
+
+def test_rule8_a_catalogue_without_the_fallback_pool_leaves_the_mood_silent_with_a_warning():
+    clips = [c for c in SOUND_CLIPS if 'chatter' not in c['tags']]
+    a = sound(rng=FixedRng(0.0), mood='scared', catalogue=sound_catalogue(sound_list(
+        clips=clips)))
+    assert any('is silent' in w for w in a.take_warnings())
+    assert plays(sstep(a, 60.0, mood='scared')) == []
+
+
+def test_rule23_stale_stops_an_idle_play_but_not_a_behavior_or_manual_one():
+    for source, priority, stopped in (('idle', 10, True), ('behavior', 100, False),
+                                      ('manual', 199, False)):
+        a = sound()
+        r = sintent(a, 1.0, source, priority, params={'name': 'long1'}, intent_id='p1')
+        accept_all(a, r.actions, 1.0)
+        snap = playing('long1', 'p1', 100000, priority)
+        out = sstep(a, 6.0, snap=snap, mood=None)
+        if stopped:
+            (x,) = stops(out)
+            assert (x.why, x.priority, dict(x.request)) == ('stale', 10, {'owner': OWNER})
+            assert a.status('sound', 6.0).active_action == ''
+        else:
+            assert stops(out) == [] and a.status('sound', 6.0).active_action == 'play'
+
+
+def test_rule23_manual_still_plays_while_stale():
+    a = sound()
+    sstep(a, 10.0, mood=None)
+    assert a.status('sound', 10.0).state == STATE_STALE
+    assert sintent(a, 10.0, 'manual', 199, params={'name': 'sent1'}).accepted
+    r = sintent(a, 10.0, 'idle', 10)
+    assert not r.accepted and 'stale' in r.reason
+
+
+def test_rule24_the_play_the_player_shows_is_counted_down_from_its_remaining_ms():
+    a = sound()
+    r = sintent(a, 1.0, 'manual', 199, params={'name': 'sent2'}, intent_id='m1')
+    accept_all(a, r.actions, 1.0)
+    a.sound_state(playing('sent2', 'm1', 2000, 199), 1.2)
+    assert a.status('sound', 1.2).active_remaining_ms == 2000
+    a.sound_state(playing('sent2', 'm1', 1500, 199), 1.7)
+    status = a.status('sound', 1.7)
+    assert (status.state, status.active_remaining_ms, status.owner, status.priority) == (
+        STATE_RUNNING, 1500, 'manual', 199)
+
+
+def test_rule24_a_play_that_ended_on_the_device_ends_the_run():
+    a = sound()
+    r = sintent(a, 1.0, 'manual', 199, params={'name': 'long1'}, intent_id='m1')
+    accept_all(a, r.actions, 1.0)
+    a.sound_state(sound_snap(0, last_end=1), 1.5)           # inside the grace: may predate it
+    assert a.status('sound', 1.5).active_action == 'play'
+    a.sound_state(sound_snap(0, last_end=1), 2.6)
+    assert a.status('sound', 2.6).active_action == '' and a.status('sound', 2.6).state in (
+        STATE_IDLE, STATE_CLAIMED)
+
+
+def test_rule24_a_state_naming_another_intent_does_not_keep_our_run_alive():
+    a = sound()
+    r = sintent(a, 1.0, 'manual', 199, params={'name': 'long1'}, intent_id='m1')
+    accept_all(a, r.actions, 1.0)
+    a.sound_state(playing('long1', 'other', 5000, 199), 2.6)
+    assert a.status('sound', 2.6).active_action == ''
+
+
+def test_rule24_a_play_of_our_owner_found_on_the_first_state_is_adopted():
+    a = Arbiter(sound_cfg(), SOUND_CHANNELS, rng=FixedRng(0.0))
+    a.set_catalogue(SOUND_CAT, 0.0)
+    a.sound_state(playing('sent2', 'old-id', 2000), 0.0)
+    a.mood('calm', 1.0, 0.0)
+    status = a.status('sound', 0.0)
+    assert (status.state, status.active_source, status.priority) == (STATE_RUNNING, 'adopted', 0)
+    assert status.active_remaining_ms == 2000
+    a.sound_state(playing('sent2', 'old-id', 800), 1.2)
+    assert a.status('sound', 1.2).active_remaining_ms == 800
+    a.sound_state(sound_snap(), 3.0)
+    assert a.status('sound', 3.0).state == STATE_IDLE
+
+
+def test_rule24_a_play_of_another_owner_is_not_adopted():
+    a = Arbiter(sound_cfg(), SOUND_CHANNELS, rng=FixedRng(0.0))
+    a.set_catalogue(SOUND_CAT, 0.0)
+    a.sound_state(playing('sent2', 'x', 2000, owner='someone'), 0.0)
+    a.mood('calm', 1.0, 0.0)
+    assert a.status('sound', 0.0).active_action == ''
+
+
+def test_rule24_no_catalogue_or_no_state_is_offline_and_a_run_ends():
+    a = Arbiter(sound_cfg(), SOUND_CHANNELS)
+    assert a.status('sound', 0.0).state == STATE_OFFLINE
+    a.set_catalogue(SOUND_CAT, 0.0)
+    assert a.status('sound', 0.0).state == STATE_OFFLINE           # no state yet
+    a.sound_state(sound_snap(), 0.0)
+    a.mood('calm', 1.0, 0.0)
+    assert a.status('sound', 0.0).state == STATE_IDLE
+    r = a.intent(Intent('sound', 'manual', 199, 'play', {'name': 'long1'}), 1.0)
+    assert r.accepted and a.status('sound', 1.0).state == STATE_RUNNING
+    a.mood('calm', 1.0, 7.0)
+    a.tick(7.0)                                                   # 6 s without a state
+    assert a.status('sound', 7.0).state == STATE_OFFLINE
+    r = a.intent(Intent('sound', 'behavior', 100, 'play', {'name': 'sent1'}), 7.0)
+    assert not r.accepted and r.reason == 'channel is offline'
+    assert a.status('sound', 7.0).dropped == 1
+    a.sound_state(sound_snap(), 8.0)                              # the player is back
+    status = a.status('sound', 8.0)
+    assert status.active_action == '' and status.state in (STATE_IDLE, STATE_CLAIMED)
+
+
+def test_claims_a_claim_stops_the_personalitys_play_and_refuses_an_idle_one():
+    a = sound()
+    r = sintent(a, 1.0, 'idle', 10, params={'name': 'long1'}, intent_id='i1')
+    accept_all(a, r.actions, 1.0)
+    result = a.claim('sound', 'op', 150, 30.0, 2.0)
+    assert result.accepted
+    (x,) = collect(result.actions)
+    assert (x.call, x.why, x.priority, x.intent_id, dict(x.request)) == (
+        CALL_SOUND_STOP, 'preempt', 10, 'i1', {'owner': OWNER})
+    assert a.status('sound', 2.0).active_action == ''
+    r = sintent(a, 2.5, 'idle', 10, intent_id='i2')
+    assert not r.accepted and 'claimed by' in r.reason
+    assert not sintent(a, 2.5, 'behavior', 100, intent_id='b2').accepted     # below 150
+    assert a.status('sound', 2.5).dropped == 2
+    assert sintent(a, 2.5, 'manual', 199, intent_id='m2').accepted
+
+
+def test_stop_a_manual_stop_stops_the_sound_and_an_idle_one_with_nothing_running_does_not():
+    a = sound()
+    r = sintent(a, 1.0, 'idle', 10, intent_id='i1')
+    accept_all(a, r.actions, 1.0)
+    (x,) = sintent(a, 2.0, 'manual', 199, action='stop').actions
+    assert (x.call, x.why, x.priority, dict(x.request)) == (
+        CALL_SOUND_STOP, 'intent', 199, {'owner': OWNER})
+    assert a.status('sound', 2.0).active_action == ''
+    assert len(sintent(a, 4.0, 'manual', 199, action='stop').actions) == 1   # a person: always
+    a = sound()
+    r = sintent(a, 3.0, 'idle', 10, action='stop')
+    assert r.accepted and r.actions == () and r.reason == 'nothing running'
+
+
+def test_a_play_the_player_refuses_ends_the_run_without_a_hold():
+    a = sound()
+    r = sintent(a, 1.0, 'manual', 199, params={'pool': 'hum'}, intent_id='m1')
+    (x,) = r.actions
+    assert a.device_reply(x, False, 'empty pool', 1.0).endswith('failed: empty pool')
+    status = a.status('sound', 1.0)
+    assert status.active_action == '' and status.refused == 0
+
+
+def test_a_player_never_holds_the_sound_channel():
+    a = sound()
+    (x,) = sintent(a, 1.0, 'manual', 199, params={'name': 'sent1'}).actions
+    a.device_reply(x, False, 'held by console', 1.0)
+    assert a.status('sound', 1.0).state != STATE_FOREIGN
+
+
+def test_reload_keeps_the_play_and_follows_the_new_voice():
+    a = sound()
+    r = sintent(a, 1.0, 'behavior', 100, params={'name': 'long1'}, intent_id='m1',
+                interruptible=True)
+    accept_all(a, r.actions, 1.0)
+    data = sound_data()
+    data['moods']['calm']['sound']['gain_db'] = -9
+    collect(a.reload(parse_config(data), 2.0))
+    assert a.status('sound', 2.0).active_intent_id == 'm1'
+    (x,) = plays(sintent(a, 2.0, 'behavior', 100, params={'name': 'sent1'},
+                         interruptible=True).actions)
+    assert x.request['gain_db'] == -9.0
+
+
 # --- the sweeps (keep last: they read what every test above produced) -----------------------
 
 def _approaches(sent):
@@ -1845,11 +2357,12 @@ def test_rule6_every_outgoing_request_carries_owner_and_a_nonzero_priority():
         assert x.owner == OWNER and 1 <= x.priority <= 255
         if 'owner' in x.request:
             assert x.request['owner'] == OWNER
-        if x.call not in (CALL_MAGIC_BRIGHTNESS, CALL_VELOCITY):   # no priority field
+        if x.call not in (CALL_MAGIC_BRIGHTNESS, CALL_VELOCITY, CALL_SOUND_STOP):   # none
             assert x.request['priority'] == x.priority
     assert {x.call for x in ALL_ACTIONS} >= {CALL_RUN, CALL_SAY, CALL_STOP, CALL_CONFIGURE,
                                              CALL_START, CALL_MAGIC_STOP,
-                                             CALL_MAGIC_BRIGHTNESS}
+                                             CALL_MAGIC_BRIGHTNESS, CALL_PLAY,
+                                             CALL_SOUND_STOP}
 
 
 def test_rule9_no_outgoing_request_sets_hue():
@@ -1862,5 +2375,5 @@ def test_rule9_no_outgoing_request_sets_hue():
 
 def test_rule3_no_personality_run_has_duration_zero():
     for x in ALL_ACTIONS:
-        if x.call in (CALL_RUN, CALL_SAY) and x.priority <= 100:
+        if x.call in (CALL_RUN, CALL_SAY, CALL_PLAY) and x.priority <= 100:
             assert x.request['duration_ms'] > 0

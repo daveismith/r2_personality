@@ -27,11 +27,17 @@ The ``express`` operator tool: drive R2's lights by hand through the arbiters.
     express glance  [--amplitude RAD] [--dwell S] [--side left|right]
     express turn    <delta_rad>
     express rest    [<bearing_rad>]
+    express play    <name> [--gain DB] [--duration S]      # sound: a catalogue clip
+    express play    --pool <tag> [--gain DB]               # sound: one clip of a pool
+    express vocalize [--arousal A] [--valence V] [--length S] [--seed N]   # sound: a phrase
+    express sounds  [--pool TAG] [--device /sound_player]   # lists the player's catalogue
     express status  [--watch]
     express dome    "<console line>" [--device /dome_mock]   # the sim mock's console only
 
-claim/release call /expression/claim/led, or .../magic for magic and .../dome for dome
-(--claim-service overrides).
+claim/release call /expression/claim/led, or .../magic for magic, .../dome for dome and
+.../sound for sound (--claim-service overrides); ``stop sound`` stops the sound.
+``sounds`` is the one verb that calls the player (its read-only ``list`` service); every
+other verb publishes an intent or calls a claim service.
 Intents go out as ``source: manual`` at priority 199, which a person at the dome still
 beats; ``--override`` sends 200.  Exit codes: 0 done (claim accepted), 1 refused or
 unavailable, 2 bad arguments.  The argument handling (:func:`parse_args`,
@@ -48,13 +54,15 @@ import time
 import uuid
 
 from r2_expression.config import (
-    BRIGHTNESS_RANGE, CLIPLESS_CHANNELS, DRIFT_PRESETS, PICK_CHANNELS)
-from r2_expression.core import END_VALUES, LADDER, STATE_NAMES, STOP_MODES, TEXT_MOTIONS
+    BRIGHTNESS_RANGE, CLIPLESS_CHANNELS, DRIFT_PRESETS, EXCLUDED_TAG, PICK_CHANNELS, SOUND_TAGS)
+from r2_expression.core import (
+    END_VALUES, LADDER, SOUND_GAIN_RANGE_DB, STATE_NAMES, STOP_MODES, TEXT_MOTIONS)
 from r2_expression.render_common import MAX_LINE_BYTES, too_long
 
 CHANNELS = PICK_CHANNELS
 DOME = 'dome'
-STOPPABLE = CHANNELS + (DOME,)      # stop and claim reach the dome channel as well
+SOUND = 'sound'
+STOPPABLE = CHANNELS + (DOME, SOUND)   # stop and claim reach the dome and sound channels too
 DOME_VERBS = {'look': 'look_at', 'glance': 'glance', 'turn': 'turn', 'rest': 'rest'}
 # the params key each verb sends, and the argparse dest it comes from
 DOME_PARAMS = {'look': {'bearing': 'bearing', 'profile': 'profile'},
@@ -77,6 +85,8 @@ STATUS_TOPIC = '/expression/status'
 CLAIM_SERVICE_LED = '/expression/claim/led'       # the LED arbiter's (fld tfld bfld rld psi)
 CLAIM_SERVICE_MAGIC = '/expression/claim/magic'
 CLAIM_SERVICE_DOME = '/expression/claim/dome'
+CLAIM_SERVICE_SOUND = '/expression/claim/sound'
+DEFAULT_PLAYER = '/sound_player'       # the sound player whose `list` the `sounds` verb reads
 DRIFT_CHANNELS = ('fld', 'tfld', 'bfld', 'rld')
 DEFAULT_DEVICE = '/dome_mock'          # the sim's mock; never the real /r2_dome
 
@@ -188,6 +198,35 @@ def _profile(value):
     return value
 
 
+def _gain(value):
+    number = _finite(value)
+    low, high = SOUND_GAIN_RANGE_DB
+    if not low <= number <= high:
+        raise argparse.ArgumentTypeError('%s is outside %g to %g dB' % (value, low, high))
+    return number
+
+
+def _unit(value):
+    number = _finite(value)
+    if not 0.0 <= number <= 1.0:
+        raise argparse.ArgumentTypeError('%s is outside 0 to 1' % value)
+    return number
+
+
+def _tag(value):
+    if value not in SOUND_TAGS:
+        raise argparse.ArgumentTypeError(
+            'unknown tag %r (one of %s)' % (value, ', '.join(SOUND_TAGS)))
+    return value
+
+
+def _node_name(value):
+    if not value.startswith('/') or len(value) < 2 or value.endswith('/'):
+        raise argparse.ArgumentTypeError('%r is not an absolute node name like /sound_player'
+                                         % value)
+    return value
+
+
 def _line(value):
     if too_long(value, MAX_LINE_BYTES):                    # the device counts bytes
         raise argparse.ArgumentTypeError('a text line must be under 64 bytes in UTF-8')
@@ -199,11 +238,11 @@ def build_parser():
     parser = argparse.ArgumentParser(prog='express', description="Drive R2's lights by hand.")
     sub = parser.add_subparsers(dest='command', required=True)
 
-    def sender(p, channel=_channel, duration=True):
+    def sender(p, channel=_channel, duration=True, fixed=DOME):
         if channel:
             p.add_argument('channel', type=channel)
         else:
-            p.set_defaults(channel=DOME)
+            p.set_defaults(channel=fixed)
         p.add_argument('--override', action='store_true',
                        help='send at 200 (OVERRIDE_PRIORITY): beats a person at the dome')
         p.add_argument('--source', choices=sorted(SOURCE_PRIORITY),
@@ -274,12 +313,33 @@ def build_parser():
     p.add_argument('bearing', type=_bearing, metavar='bearing_rad', nargs='?',
                    help=bearing_help + " (default: the mood's)")
 
+    p = sub.add_parser('play', help='sound: play a catalogue clip, or one clip of a pool')
+    sender(p, None, fixed=SOUND)
+    p.add_argument('name', nargs='?', type=_name, help='a clip of the catalogue (see sounds)')
+    p.add_argument('--pool', type=_tag, metavar='TAG', help='play one clip of this pool instead')
+    p.add_argument('--gain', type=_gain, metavar='DB', help='added to the clip and mood gain')
+    p = sub.add_parser('vocalize', help='sound: speak a synthesised phrase (needs the synth)')
+    sender(p, None, False, SOUND)
+    p.add_argument('--arousal', type=_unit, metavar='A', help='0 to 1 (default 0.5)')
+    p.add_argument('--valence', type=_unit, metavar='V', help='0 to 1 (default 0.5)')
+    p.add_argument('--length', type=_seconds, metavar='S', help='seconds (default: its own)')
+    p.add_argument('--seed', type=_ranged_int(-2147483647, 2147483647), metavar='N',
+                   help='replay a phrase (default: random)')
+    p.add_argument('--gain', type=_gain, metavar='DB')
+    p = sub.add_parser(
+        'sounds', help="list the player's catalogue (read-only: calls its list service)",
+        description="List the sound player's catalogue. This is the one verb that calls the "
+                    'player, and only its read-only `list` service; nothing is played.')
+    p.add_argument('--pool', type=_tag, metavar='TAG', help='only the clips with this tag')
+    p.add_argument('--device', default=DEFAULT_PLAYER, type=_node_name, metavar='NODE')
+
     for verb, text in (('claim', 'hold a channel'), ('release', 'release a claim')):
         p = sub.add_parser(verb, help=text)
         p.add_argument('channel', type=_any_channel)
         p.add_argument('--owner', default='express', type=_name)
         p.add_argument('--claim-service', metavar='NAME',
-                       help='override: /expression/claim/led, or .../magic, .../dome')
+                       help='override: /expression/claim/led, or .../magic, .../dome, '
+                            '.../sound')
         if verb == 'claim':
             p.add_argument('--priority', type=_ranged_int(0, 255), default=DEFAULT_PRIORITY)
             p.add_argument('--override', action='store_true', help='claim at 200')
@@ -299,11 +359,12 @@ def parse_args(argv):
     ns = parser.parse_args(argv)
     cmd = ns.command
     if cmd in ('claim', 'release') and ns.claim_service is None:
-        ns.claim_service = {'magic': CLAIM_SERVICE_MAGIC, DOME: CLAIM_SERVICE_DOME}.get(
-            ns.channel, CLAIM_SERVICE_LED)
+        ns.claim_service = {'magic': CLAIM_SERVICE_MAGIC, DOME: CLAIM_SERVICE_DOME,
+                            SOUND: CLAIM_SERVICE_SOUND}.get(ns.channel, CLAIM_SERVICE_LED)
     if cmd == 'claim' and ns.override:
         ns.priority = OVERRIDE_PRIORITY
-    if cmd not in ('effect', 'clip', 'text', 'configure', 'sequence', 'stop', *DOME_VERBS):
+    if cmd not in ('effect', 'clip', 'text', 'configure', 'sequence', 'stop', 'play',
+                   'vocalize', *DOME_VERBS):
         return ns
     if ns.priority is not None and ns.source is None:
         parser.error('--priority needs --source idle or behavior')
@@ -321,6 +382,11 @@ def parse_args(argv):
             ns.channel, MAX_LINES.get(ns.channel, 1)))
     if cmd == 'clip' and ns.channel in CLIPLESS_CHANNELS:
         parser.error('%s has no clips' % ns.channel)
+    if cmd == 'play':
+        if (ns.name is None) == (ns.pool is None):
+            parser.error('play needs a clip name or --pool TAG, not both')
+        if ns.pool == EXCLUDED_TAG:
+            parser.error('excluded is not a pool: music and speech play by name only')
     if cmd == 'configure':
         if ns.drift is None and ns.brightness is None:
             parser.error('configure needs --drift and/or --brightness')
@@ -341,6 +407,18 @@ def _dome_params(ns):
     """Return the params of a dome verb: only what was given, under the core's keys."""
     given = {key: getattr(ns, dest) for key, dest in DOME_PARAMS[ns.command].items()}
     return {key: value for key, value in given.items() if value is not None}
+
+
+def _sound_params(ns):
+    """Return the params of a sound verb: only what was given, under the core's keys."""
+    if ns.command == 'play':
+        params = {'name': ns.name} if ns.name is not None else {'pool': ns.pool}
+        given = {'gain_db': ns.gain}
+    else:
+        params = {}
+        given = {'arousal': ns.arousal, 'valence': ns.valence, 'length_s': ns.length,
+                 'seed': ns.seed, 'gain_db': ns.gain}
+    return {**params, **{key: value for key, value in given.items() if value is not None}}
 
 
 def build_intent(ns):
@@ -383,6 +461,8 @@ def build_intent(ns):
     elif action in DOME_VERBS:
         action = DOME_VERBS[action]
         params = _dome_params(ns)
+    elif action in ('play', 'vocalize'):
+        params = _sound_params(ns)
     if ns.source:
         source = ns.source
         priority = SOURCE_PRIORITY[source] if ns.priority is None else ns.priority
@@ -410,6 +490,18 @@ def format_status(msg):
         msg.channel, state, msg.owner or '-', msg.priority,
         'forever' if msg.lease_remaining_s < 0 else '%.1fs' % msg.lease_remaining_s, active,
         msg.mood or '-', msg.dropped, msg.refused))
+
+
+def format_clip(clip):
+    """Return the one-line text for a ``SoundClip``."""
+    return '%-24s %6.1fs %+6.1f dB  %s%s' % (
+        clip.name, clip.duration_ms / 1000.0, clip.gain_db, ','.join(clip.tags) or '-',
+        '  (manual only)' if clip.excluded else '')
+
+
+def pool_clips(clips, pool=None):
+    """Return the clips tagged ``pool`` (all of them without one), in catalogue order."""
+    return [clip for clip in clips if pool is None or pool in clip.tags]
 
 
 def _wait_for_listener(publisher):
@@ -508,6 +600,30 @@ def run_claim(node, executor, ns):
     return 0 if response.accepted else 1
 
 
+def run_sounds(node, executor, ns):
+    """Print the player's catalogue (its read-only ``list`` service); return the exit code."""
+    from astromech_msgs.srv import ListSounds
+    service = '%s/list' % ns.device.rstrip('/')
+    client = node.create_client(ListSounds, service)
+    if not client.wait_for_service(timeout_sec=SERVICE_WAIT_S):
+        print('express: %s not available after %.0f s (is the sound player running?)'
+              % (service, SERVICE_WAIT_S), file=sys.stderr)
+        return 1
+    future = client.call_async(ListSounds.Request())
+    executor.spin_until_future_complete(future, timeout_sec=SERVICE_REPLY_S)
+    if not future.done() or future.result() is None:
+        print('express: no reply from %s' % service, file=sys.stderr)
+        return 1
+    response = future.result()
+    clips = pool_clips(response.clips, ns.pool)
+    for clip in clips:
+        print(format_clip(clip))
+    print('%d of %d clips%s; catalogue %s, %d Hz, synth %s' % (
+        len(clips), len(response.clips), ' tagged %s' % ns.pool if ns.pool else '',
+        response.catalogue or '-', response.sample_rate, 'yes' if response.synth else 'no'))
+    return 0
+
+
 def run_status(node, executor, ns):
     """Print channel status lines; return the exit code."""
     import rclpy
@@ -564,6 +680,8 @@ def main(args=None):
                 return run_status(node, executor, ns)
             if ns.command == 'dome':
                 return run_dome(node, executor, ns)
+            if ns.command == 'sounds':
+                return run_sounds(node, executor, ns)
             return run_intent(node, executor, ns)
         except (KeyboardInterrupt, ExternalShutdownException):
             return 0

@@ -39,20 +39,31 @@ Pure helpers used by :mod:`r2_expression.core`; no ROS imports.
   dwell uniformly from their ranges and its side at random. The arbiter
   decides when it may poll (never while claimed, foreign, suppressed,
   offline, stale or during a move: plan 4.5).
+* :class:`SoundCatalogue`, :func:`sound_catalogue`: what ``ListSounds`` says the player
+  has, as the clips by name and the playable pools by tag. :func:`validate_voices`
+  resolves each mood's chatter pools against it (phase 3 rule 8: a pool with no playable
+  clip is dropped with a warning; a mood with none left falls back to ``chatter``).
+  :class:`ChatterScheduler` is the flourish scheduler for the voice: ``mood_strength``
+  pulls the window's top toward its bottom like the glances', and a due pick is a pool,
+  from which :func:`choose_clip` draws a clip (clips with ``clip_fraction`` over
+  :data:`CLIPPED_FRACTION` at half weight).
 """
 
 from dataclasses import dataclass
 import json
 from types import MappingProxyType
-from typing import Any, FrozenSet, Mapping, Optional
+from typing import Any, FrozenSet, Mapping, Optional, Tuple
 
-from r2_expression.config import LED_PICK_CHANNELS, STYLE_CHANNELS
+from r2_expression.config import (EXCLUDED_TAG, FALLBACK_TAG, LED_PICK_CHANNELS,
+                                  STYLE_CHANNELS)
 
 
 # MagicPanelSequence.FLAG_LOOPS: runs until stopped. FLAG_RANDOM alone is not unbounded (Fade
 # out and Flicker carry it and end by their length), so only LOOPS counts; the random shows
 # have both.
 UNBOUNDED_FLAGS = 1
+CLIPPED_FRACTION = 0.01         # a clip with more clipped samples than this is drawn less
+CLIPPED_WEIGHT = 0.5
 
 
 @dataclass(frozen=True)
@@ -95,6 +106,47 @@ class MagicCatalogue:
         return ref if ref in self.sequences else None
 
 
+@dataclass(frozen=True)
+class SoundClipInfo:
+    """One catalogue entry (``SoundClip``); ``clip_fraction`` is 0 when the player omits it."""
+
+    name: str
+    duration_ms: int
+    tags: Tuple[str, ...]
+    gain_db: float = 0.0
+    excluded: bool = False
+    clip_fraction: float = 0.0
+
+    @property
+    def weight(self):
+        """Return the clip's weight within a pool: half for a clip that clips."""
+        return CLIPPED_WEIGHT if self.clip_fraction > CLIPPED_FRACTION else 1.0
+
+
+@dataclass(frozen=True)
+class SoundCatalogue:
+    """What ``ListSounds`` says the player can play."""
+
+    clips: Mapping[str, SoundClipInfo]
+    pools: Mapping[str, Tuple[str, ...]]     # tag -> names of its playable (not excluded) clips
+    synth: bool = False                      # vocalize is available
+    sample_rate: int = 0
+    catalogue: str = ''
+
+    def duration_ms(self, name):
+        """Return the clip's length in ms, 0 when the name is unknown."""
+        clip = self.clips.get(name)
+        return clip.duration_ms if clip is not None else 0
+
+
+@dataclass(frozen=True)
+class PoolPick:
+    """One weighted pool of a mood's voice, after resolution against the catalogue."""
+
+    tag: str
+    weight: float = 1.0
+
+
 def field_of(obj, name, default=None):
     """Return ``obj[name]`` for a mapping, else ``obj.name``; ``default`` when absent."""
     if isinstance(obj, Mapping):
@@ -120,6 +172,31 @@ def magic_catalogue(response):
         if int(field_of(seq, 'flags', 0) or 0) & UNBOUNDED_FLAGS:
             unbounded.add(seq_id)
     return MagicCatalogue(sequences=MappingProxyType(names), unbounded=frozenset(unbounded))
+
+
+def sound_catalogue(response):
+    """Build a :class:`SoundCatalogue` from a ``ListSounds`` response (message or dict)."""
+    clips, pools = {}, {}
+    for clip in field_of(response, 'clips', ()) or ():
+        name = field_of(clip, 'name')
+        tags = tuple(field_of(clip, 'tags', ()) or ())
+        info = SoundClipInfo(
+            name=name, duration_ms=int(field_of(clip, 'duration_ms', 0) or 0), tags=tags,
+            gain_db=float(field_of(clip, 'gain_db', 0.0) or 0.0),
+            excluded=bool(field_of(clip, 'excluded', False)),
+            clip_fraction=float(field_of(clip, 'clip_fraction', 0.0) or 0.0))
+        clips[name] = info
+        if info.excluded:
+            continue
+        for tag in dict.fromkeys(tags):
+            if tag != EXCLUDED_TAG:
+                pools.setdefault(tag, []).append(name)
+    return SoundCatalogue(
+        clips=MappingProxyType(clips),
+        pools=MappingProxyType({tag: tuple(names) for tag, names in pools.items()}),
+        synth=bool(field_of(response, 'synth', False)),
+        sample_rate=int(field_of(response, 'sample_rate', 0) or 0),
+        catalogue=str(field_of(response, 'catalogue', '') or ''))
 
 
 def unit_strength(strength):
@@ -199,6 +276,46 @@ def validate_picks(config, led=None, magic=None):
     return MappingProxyType(out), warnings
 
 
+def validate_voices(config, catalogue):
+    """
+    Return ``({mood: (PoolPick, ...)}, [(key, warning)])`` for the sound arbiter.
+
+    A pool with no playable clip in ``catalogue`` is dropped with one warning; a mood whose
+    pools all drop falls back to the ``chatter`` pool (rule 8), and to silence, with a
+    warning, when that has no clip either. A mood without chatter has no picks. With no
+    catalogue yet nothing is judged and every mood has no picks.
+    """
+    out, warnings = {}, []
+    for name, mood in config.moods.items():
+        chatter = mood.sound.chatter if mood.sound is not None else None
+        if chatter is None or catalogue is None:
+            out[name] = ()
+            continue
+        kept = []
+        for tag, weight in chatter.pools:
+            if catalogue.pools.get(tag):
+                kept.append(PoolPick(tag, weight))
+            else:
+                warnings.append(((name, tag), 'moods.%s.sound.chatter.pools: the catalogue has '
+                                 'no playable clip tagged %r; pool dropped' % (name, tag)))
+        if not kept and catalogue.pools.get(FALLBACK_TAG):
+            kept.append(PoolPick(FALLBACK_TAG))
+            warnings.append(((name, None), 'moods.%s.sound.chatter: no pool resolves to a '
+                             'clip; falling back to %r' % (name, FALLBACK_TAG)))
+        elif not kept:
+            warnings.append(((name, None), 'moods.%s.sound.chatter: no pool resolves to a '
+                             'clip and %r has none either; the mood is silent'
+                             % (name, FALLBACK_TAG)))
+        out[name] = tuple(kept)
+    return MappingProxyType(out), warnings
+
+
+def choose_clip(catalogue, tag, rng):
+    """Draw a clip name uniformly from the pool ``tag`` (a clipped one at half weight)."""
+    clip = choose([catalogue.clips[name] for name in catalogue.pools.get(tag, ())], rng)
+    return clip.name if clip is not None else None
+
+
 def pick_intent_fields(pick, intent_id):
     """Return the ``ExpressionIntent`` fields of an idle intent playing ``pick``."""
     if pick.kind == 'sequence':
@@ -252,6 +369,12 @@ class FlourishScheduler:
         return uniform(self._every, self._rng)
 
 
+def _scaled_draw(every, strength, rng):
+    """Draw from ``every`` with ``strength`` pulling the top of the window toward the bottom."""
+    lo, hi = every
+    return uniform((lo, hi - (hi - lo) * strength), rng)
+
+
 def uniform(bounds, rng):
     """Return a uniform draw from ``(min, max)``."""
     lo, hi = bounds
@@ -296,8 +419,29 @@ class GlanceScheduler(FlourishScheduler):
                           side=random_side(self._rng))
 
     def _draw(self):
-        lo, hi = self._every
-        return uniform((lo, hi - (hi - lo) * self._strength), self._rng)
+        return _scaled_draw(self._every, self._strength, self._rng)
+
+
+class ChatterScheduler(FlourishScheduler):
+    """When the next chatter is due, and which pool it comes from (module docstring)."""
+
+    def __init__(self, rng):
+        super().__init__(rng)
+        self._strength = 0.0
+
+    def restart(self, chatter, now, strength=0.0):
+        """Follow ``chatter`` (a :class:`~r2_expression.config.Chatter` or None) from ``now``."""
+        self._strength = unit_strength(strength)
+        super().restart(chatter, now)
+
+    def poll(self, picks, now, strength=None):
+        """Return a :class:`PoolPick` when one is due (rescheduling the next), else None."""
+        if strength is not None:
+            self._strength = unit_strength(strength)
+        return super().poll(picks, now)
+
+    def _draw(self):
+        return _scaled_draw(self._every, self._strength, self._rng)
 
 
 def glance_intent_fields(pick, intent_id):
@@ -321,8 +465,9 @@ def choose(picks, rng) -> Any:
     return picks[-1]
 
 
-__all__ = ['FlourishScheduler', 'GlancePick', 'GlanceScheduler', 'LedCatalogue',
-           'MagicCatalogue', 'ResolvedStyle', 'choose', 'field_of', 'glance_intent_fields',
+__all__ = ['ChatterScheduler', 'FlourishScheduler', 'GlancePick', 'GlanceScheduler',
+           'LedCatalogue', 'MagicCatalogue', 'PoolPick', 'ResolvedStyle', 'SoundCatalogue',
+           'SoundClipInfo', 'choose', 'choose_clip', 'field_of', 'glance_intent_fields',
            'is_led_pick', 'led_catalogue', 'magic_catalogue', 'pick_intent_fields',
-           'random_side', 'resolve_styles', 'scale_brightness', 'uniform', 'unit_strength',
-           'validate_picks']
+           'random_side', 'resolve_styles', 'scale_brightness', 'sound_catalogue', 'uniform',
+           'unit_strength', 'validate_picks', 'validate_voices']

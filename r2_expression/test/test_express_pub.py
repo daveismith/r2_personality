@@ -19,8 +19,8 @@ import subprocess
 import time
 import uuid
 
-from astromech_msgs.msg import ChannelStatus, ExpressionIntent
-from astromech_msgs.srv import ClaimChannel
+from astromech_msgs.msg import ChannelStatus, ExpressionIntent, SoundClip
+from astromech_msgs.srv import ClaimChannel, ListSounds
 from fixtures import shutdown_rclpy
 import pytest
 import rclpy
@@ -45,8 +45,11 @@ def harness():
     h.status_topic = '/test_express_%s/status' % tag
     h.claim_service = '/test_express_%s/claim_led' % tag
     h.claim_service_magic = '/test_express_%s/claim_magic' % tag
+    h.claim_service_sound = '/test_express_%s/claim_sound' % tag
+    h.player = '/test_express_%s_player' % tag
     h.console_topic = '/test_express_%s/mock/console' % tag
-    h.calls, h.magic_calls, h.intents, h.consoles = [], [], [], []
+    h.calls, h.magic_calls, h.sound_calls, h.intents, h.consoles = [], [], [], [], []
+    h.listed = 0
     h.accept, h.reason = True, 'held by someone'
     qos = QoSProfile(depth=10, reliability=ReliabilityPolicy.RELIABLE)
     node.create_subscription(ExpressionIntent, h.intent_topic, h.intents.append, qos)
@@ -63,6 +66,18 @@ def harness():
     node.create_service(ClaimChannel, h.claim_service, claim)
     node.create_service(ClaimChannel, h.claim_service_magic,
                         lambda q, r: claim(q, r, h.magic_calls))
+    node.create_service(ClaimChannel, h.claim_service_sound,
+                        lambda q, r: claim(q, r, h.sound_calls))
+
+    def list_sounds(request, response):
+        h.listed += 1
+        response.clips = [
+            SoundClip(name='sent1', tags=['chatter'], duration_ms=1500, gain_db=-2.0),
+            SoundClip(name='hum1', tags=['hum', 'calm'], duration_ms=4000),
+            SoundClip(name='cantina', tags=[], duration_ms=120000, excluded=True)]
+        response.catalogue, response.sample_rate, response.synth = 'fake', 44100, False
+        return response
+    node.create_service(ListSounds, h.player + '/list', list_sounds)
     yield h
     node.destroy_node()
 
@@ -72,7 +87,8 @@ def run(h, *argv, until=lambda: False, timeout=20.0):
            '-r', '/expression/intent:=' + h.intent_topic,
            '-r', '/expression/status:=' + h.status_topic,
            '-r', '/expression/claim/led:=' + h.claim_service,
-           '-r', '/expression/claim/magic:=' + h.claim_service_magic]
+           '-r', '/expression/claim/magic:=' + h.claim_service_magic,
+           '-r', '/expression/claim/sound:=' + h.claim_service_sound]
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     end = time.monotonic() + timeout
     try:
@@ -181,3 +197,49 @@ def test_no_listener_exits_1(harness):
     code, _, err = run(harness, 'stop', 'fld', '--ros-args', '-r',
                        '/expression/intent:=/test_express_nobody_%s' % harness.tag)
     assert code == 1 and 'nobody is listening' in err
+
+
+def test_play_publishes_a_manual_199_sound_play(harness):
+    code, out, err = run(harness, 'play', 'scream', '--gain', '-3', '--duration', '2',
+                         '--id', 'pl')
+    assert code == 0, err
+    (m,) = harness.intents
+    assert (m.channel, m.source, m.priority, m.action) == ('sound', 'manual', 199, 'play')
+    assert json.loads(m.params) == {'name': 'scream', 'gain_db': -3.0}
+    assert (m.duration_ms, m.interruptible, m.intent_id) == (2000, True, 'pl')
+
+
+def test_play_pool_vocalize_and_stop_sound(harness):
+    assert run(harness, 'play', '--pool', 'excited')[0] == 0
+    assert run(harness, 'vocalize', '--seed', '7', '--length', '1.5')[0] == 0
+    assert run(harness, 'stop', 'sound', '--override')[0] == 0
+    pool, voice, stop = harness.intents
+    assert (pool.action, json.loads(pool.params)) == ('play', {'pool': 'excited'})
+    assert voice.action == 'vocalize'
+    assert json.loads(voice.params) == {'length_s': 1.5, 'seed': 7}
+    assert (stop.channel, stop.action, stop.priority) == ('sound', 'stop', 200)
+
+
+def test_sound_claim_and_release_use_the_sound_service_only(harness):
+    code, out, _ = run(harness, 'claim', 'sound', '--owner', 'me')
+    assert code == 0 and accepted(out)
+    assert run(harness, 'release', 'sound', '--owner', 'me')[0] == 0
+    assert [(r.channel, r.owner, r.lease_s) for r in harness.sound_calls] == [
+        ('sound', 'me', 30.0), ('sound', 'me', 0.0)]
+    assert harness.calls == [] and harness.magic_calls == []
+
+
+def test_sounds_lists_the_catalogue_through_the_players_list_service_and_plays_nothing(harness):
+    code, out, err = run(harness, 'sounds', '--device', harness.player)
+    assert code == 0, err
+    lines = [ln for ln in out.splitlines() if ln.startswith(('sent1', 'hum1', 'cantina', '3 of'))]
+    assert len(lines) == 4 and 'manual only' in lines[2]
+    assert '3 of 3 clips; catalogue fake, 44100 Hz, synth no' in lines[3]
+    code, out, _ = run(harness, 'sounds', '--device', harness.player, '--pool', 'hum')
+    assert code == 0 and '1 of 3 clips tagged hum' in out and 'sent1' not in out
+    assert harness.listed == 2 and harness.intents == []
+
+
+def test_sounds_without_a_player_exits_1(harness):
+    code, _, err = run(harness, 'sounds', '--device', harness.player + '_gone', timeout=30)
+    assert code == 1 and 'not available' in err

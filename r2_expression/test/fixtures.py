@@ -24,7 +24,7 @@ if PKG_ROOT not in sys.path:
     sys.path.insert(0, PKG_ROOT)
 
 from r2_expression.config import DomeDefaults, parse_config  # noqa: E402
-from r2_expression.palette import LedCatalogue, MagicCatalogue  # noqa: E402
+from r2_expression.palette import LedCatalogue, MagicCatalogue, sound_catalogue  # noqa: E402
 from r2_mocks.dome_plant import DomePlant  # noqa: E402
 
 SHIPPED = os.path.join(PKG_ROOT, 'config', 'expression.yaml')
@@ -89,6 +89,60 @@ def dome_data():
     data['moods']['excited']['dome'] = {'profile': 'snappy'}
     data['moods']['sleepy'] = {'dome': {'profile': 'lazy', 'rest_rad': 0.35}}
     return data
+
+
+# --- sound (phase 3) -----------------------------------------------------------------------
+
+SOUND_CLIPS = [      # seven entries: the player's `list`, as dicts of SoundClip's fields
+    {'name': 'sent1', 'tags': ['chatter'], 'duration_ms': 1500, 'gain_db': -2.0},
+    {'name': 'sent2', 'tags': ['chatter'], 'duration_ms': 2500, 'gain_db': 0.0},
+    {'name': 'yay', 'tags': ['excited'], 'duration_ms': 1200, 'gain_db': 1.0},
+    {'name': 'scream', 'tags': ['scream', 'alarm'], 'duration_ms': 3000, 'gain_db': -4.0,
+     'clip_fraction': 0.2},
+    {'name': 'hum1', 'tags': ['hum'], 'duration_ms': 4000, 'gain_db': 0.0},
+    {'name': 'cantina', 'tags': ['excluded'], 'duration_ms': 120000, 'gain_db': 0.0,
+     'excluded': True},
+    {'name': 'long1', 'tags': ['misc'], 'duration_ms': 120000, 'gain_db': 0.0},
+]
+
+
+def sound_list(synth=False, clips=None):
+    """Return a ListSounds response as a dict."""
+    return {'clips': SOUND_CLIPS if clips is None else clips, 'catalogue': 'test',
+            'sample_rate': 44100, 'synth': synth}
+
+
+SOUND_CAT = sound_catalogue(sound_list())
+
+
+def sound_data(**changes):
+    """Return BASE with a voice: calm chatters and hums, excited laughs, scared is lost."""
+    data = base_data(**changes)
+    data['neutral']['sound'] = {'gain_db': -6}
+    data['moods']['calm']['sound'] = {
+        'gain_db': -3, 'chatter': {'every_s': [10, 20], 'pools': {'chatter': 3, 'hum': 1}}}
+    data['moods']['excited']['sound'] = {
+        'gain_db': 2, 'chatter': {'every_s': [5, 5],
+                                  'pools': {'excited': 4, 'laugh': 1, 'chatter': 1}}}
+    data['moods']['scared'] = {      # every pool is missing from the catalogue: the fallback
+        'sound': {'gain_db': 1, 'chatter': {'every_s': [8, 20], 'pools': {'sad': 3, 'ooh': 1}}}}
+    return data
+
+
+def sound_cfg(**changes):
+    return parse_config(sound_data(**changes))
+
+
+def sound_snap(state=0, name='', owner='', priority=0, intent_id='', elapsed_ms=0,
+               remaining_ms=0, last_end=0):
+    """Return a SoundState as a dict: the player idle."""
+    return {'state': state, 'name': name, 'owner': owner, 'priority': priority,
+            'intent_id': intent_id, 'elapsed_ms': elapsed_ms, 'remaining_ms': remaining_ms,
+            'last_end': last_end}
+
+
+def playing(name, intent_id, remaining_ms=1000, priority=10, owner=OWNER):
+    return sound_snap(1, name, owner, priority, intent_id, 500, remaining_ms)
 
 
 def base_data(**changes):

@@ -61,6 +61,14 @@ schema (plan section 4.3):
   (optional) is the bearing the dome rests at (+ve left), in (-pi, pi]. A mood
   without ``dome`` moves as neutral, with one warning.
 
+Sound (phase 3 plan 4.4). ``defaults.sound`` is ``{house_level_dbfs: -16, fade_ms: 20,
+interruptible: false, level: {floor_dbfs: -40, ceiling_dbfs: -6}}`` (:class:`SoundDefaults`;
+``interruptible`` is the default for a sound intent that does not say). A mood, and ``neutral``,
+may have ``sound: {gain_db, chatter}``: ``gain_db`` within :data:`GAIN_RANGE_DB` (default 0) and,
+for a mood only, ``chatter: {every_s: [min, max], pools: {tag: weight}}`` where every tag is one of
+:data:`SOUND_TAGS` (never ``excluded``) and each weight > 0. A mood without ``sound`` takes
+neutral's gain and has no chatter, with one warning (:attr:`ExpressionConfig.sound_warnings`).
+
 A style channel is one of :data:`STYLE_CHANNELS`:
 
 * ``fld``, ``rld``: ``drift`` (``calm`` or ``lively``) and ``brightness``
@@ -121,6 +129,14 @@ _PICK_KEYS = ('channel',) + PICK_KINDS + ('weight', 'rgb', 'speed', 'repeat', 'e
 _LED_ONLY_PICK_KEYS = ('rgb', 'speed')
 _MAGIC_ONLY_PICK_KEYS = ('repeat', 'end')
 MAX_UINT32 = 4294967295
+# The pool vocabulary (phase 3 plan step 0, decision 11.13): new tags need a plan change.
+SOUND_TAGS = ('chatter', 'excited', 'sad', 'question', 'ooh', 'hum', 'alarm', 'scream',
+              'laugh', 'annoyed', 'whistle', 'calm', 'scared', 'sleepy', 'greeting', 'misc',
+              'excluded')
+EXCLUDED_TAG = 'excluded'      # music, speech, silence: manual play only, never in a pool
+FALLBACK_TAG = 'chatter'       # a mood whose pools all resolve to nothing falls back to it
+GAIN_RANGE_DB = (-20.0, 6.0)   # a mood's sound gain
+MAX_FADE_MS = 1000
 MIN_FEEDBACK_TIMEOUT_S = 0.2   # defaults.dome.feedback_timeout_s: two 10 Hz joint states
 
 
@@ -152,6 +168,24 @@ class DomeDefaults:
 
 
 @dataclass(frozen=True)
+class SoundLevel:
+    """The range ``/sound/level`` maps onto 0-255 for the dome (``defaults.sound.level``)."""
+
+    floor_dbfs: float = -40.0
+    ceiling_dbfs: float = -6.0
+
+
+@dataclass(frozen=True)
+class SoundDefaults:
+    """The sound channel's settings (``defaults.sound``)."""
+
+    house_level_dbfs: float = -16.0   # what the catalogue's gain_db targets
+    fade_ms: int = 20
+    interruptible: bool = False       # for a sound intent that does not say
+    level: SoundLevel = SoundLevel()
+
+
+@dataclass(frozen=True)
 class Defaults:
     """The arbiters' timing settings."""
 
@@ -162,11 +196,13 @@ class Defaults:
     max_lease_s: float = 60.0
     device_stale_s: float = 5.0
     dome: DomeDefaults = DomeDefaults()
+    sound: SoundDefaults = SoundDefaults()
 
 
 _DEFAULT_FIELDS = tuple(f.name for f in fields(Defaults))
 _DOME_FIELDS = tuple(f.name for f in fields(DomeDefaults))
 _PROFILE_FIELDS = tuple(f.name for f in fields(Profile))
+_SOUND_FIELDS = tuple(f.name for f in fields(SoundDefaults))
 _GLANCE_KEYS = ('every_s', 'amplitude_rad', 'dwell_s')
 
 
@@ -248,12 +284,37 @@ class MoodDome:
 
 
 @dataclass(frozen=True)
+class Chatter:
+    """A mood's chatter: how often, and the weighted tag pools a clip is drawn from."""
+
+    every_s: Tuple[float, float]
+    pools: Tuple[Tuple[str, float], ...]      # (tag, weight), in file order
+
+
+@dataclass(frozen=True)
+class MoodSound:
+    """A mood's voice: its gain and its chatter (neutral has none)."""
+
+    gain_db: float = 0.0
+    chatter: Optional[Chatter] = None
+
+    def to_dict(self):
+        """Return the YAML form."""
+        out = {'gain_db': self.gain_db}
+        if self.chatter is not None:
+            out['chatter'] = {'every_s': list(self.chatter.every_s),
+                              'pools': dict(self.chatter.pools)}
+        return out
+
+
+@dataclass(frozen=True)
 class Mood:
-    """A palette: a style per channel (only those given), a flourish and a dome, optional."""
+    """A palette: a style per channel (only those given), a flourish, a dome and a voice."""
 
     styles: Mapping[str, Style]
     flourish: Optional[Flourish] = None
     dome: Optional[MoodDome] = None      # None: the neutral dome
+    sound: Optional[MoodSound] = None    # None: the neutral gain and no chatter
 
     def to_dict(self):
         """Return the YAML form."""
@@ -263,6 +324,8 @@ class Mood:
                                'picks': [p.to_dict() for p in self.flourish.picks]}
         if self.dome is not None and self.dome.profile:
             out['dome'] = self.dome.to_dict()
+        if self.sound is not None:
+            out['sound'] = self.sound.to_dict()
         return out
 
 
@@ -277,6 +340,7 @@ class ExpressionConfig:
     default_profile: Profile = DEFAULT_PROFILE    # within the caps and the floor
     # What loading clamped or defaulted for the dome; the dome arbiter logs each once.
     dome_warnings: Tuple[str, ...] = field(default=(), compare=False)
+    sound_warnings: Tuple[str, ...] = field(default=(), compare=False)
 
     def to_dict(self):
         """Return the plain-data form, which :func:`parse_config` accepts back."""
@@ -297,6 +361,13 @@ class ExpressionConfig:
         if mood is not None and mood.dome is not None:
             return mood.dome
         return self.neutral.dome
+
+    def mood_sound(self, label, stale=False):
+        """Return the :class:`MoodSound` for ``label`` (neutral's when stale or absent)."""
+        mood = None if stale else self.moods.get(label)
+        if mood is not None and mood.sound is not None:
+            return mood.sound
+        return self.neutral.sound or MoodSound()
 
 
 class _UniqueKeyLoader(yaml.SafeLoader):
@@ -370,13 +441,16 @@ def parse_config(data):
         if moods[name].dome is None:
             warnings.append('moods.%s: no dome entry; the dome moves as neutral, with no '
                             'glances' % name)
+    sound_warnings = tuple("moods.%s: no sound entry; its voice is neutral's gain with no "
+                           'chatter' % name for name, mood in moods.items()
+                           if mood.sound is None)
     dome = defaults.dome
     default = DEFAULT_PROFILE.capped(dome.max_speed_rad_s, dome.max_accel_rad_s2)
     default = replace(default, v_max=max(default.v_max, dome.min_speed_rad_s))
     return ExpressionConfig(defaults=defaults, neutral=neutral,
                             moods=MappingProxyType(moods),
                             profiles=MappingProxyType(profiles), default_profile=default,
-                            dome_warnings=tuple(warnings))
+                            dome_warnings=tuple(warnings), sound_warnings=sound_warnings)
 
 
 def missing_moods(config, labels):
@@ -490,9 +564,47 @@ def _defaults(value):
             out[key] = _integer(raw, path, 1, MAX_UINT32)
         elif key == 'dome':
             out[key] = _dome_defaults(raw, path)
+        elif key == 'sound':
+            out[key] = _sound_defaults(raw, path)
         else:
             out[key] = _positive(raw, path)
     return Defaults(**out)
+
+
+def _dbfs(value, path):
+    """Return a level in dBFS: finite and at most 0."""
+    number = _number(value, path)
+    if number > 0.0:
+        raise ExpressionConfigError('%s: %g is above 0 dBFS' % (path, number))
+    return number
+
+
+def _sound_defaults(value, path):
+    mapping = _mapping(value, path)
+    _known_keys(mapping, _SOUND_FIELDS, path)
+    out = {}
+    for key, raw in mapping.items():
+        here = _join(path, key)
+        if key == 'house_level_dbfs':
+            out[key] = _dbfs(raw, here)
+        elif key == 'fade_ms':
+            out[key] = _integer(raw, here, 0, MAX_FADE_MS)
+        elif key == 'interruptible':
+            if not isinstance(raw, bool):
+                raise ExpressionConfigError('%s: must be true or false, got %r' % (here, raw))
+            out[key] = raw
+        else:
+            level = _mapping(raw, here)
+            _known_keys(level, ('floor_dbfs', 'ceiling_dbfs'), here)
+            floor = _dbfs(level.get('floor_dbfs', SoundLevel.floor_dbfs),
+                          _join(here, 'floor_dbfs'))
+            ceiling = _dbfs(level.get('ceiling_dbfs', SoundLevel.ceiling_dbfs),
+                            _join(here, 'ceiling_dbfs'))
+            if floor >= ceiling:
+                raise ExpressionConfigError('%s: floor_dbfs %g must be below ceiling_dbfs %g'
+                                            % (here, floor, ceiling))
+            out[key] = SoundLevel(floor_dbfs=floor, ceiling_dbfs=ceiling)
+    return SoundDefaults(**out)
 
 
 _COAST_KEYS = ('c1_s', 'c2_rad', 'learn', 'scale_limits', 'learn_rate')
@@ -669,9 +781,42 @@ def _style(channel, value, path, neutral):
     return Style(drift=drift, brightness=brightness)
 
 
+def _mood_sound(value, path, neutral):
+    mapping = _mapping(value, path)
+    if neutral and 'chatter' in mapping:
+        raise ExpressionConfigError('%s.chatter: neutral has no chatter (it stops while the '
+                                    'mood is stale)' % path)
+    _known_keys(mapping, ('gain_db', 'chatter'), path)
+    gain = _number(mapping.get('gain_db', 0.0), _join(path, 'gain_db'))
+    lo, hi = GAIN_RANGE_DB
+    if not lo <= gain <= hi:
+        raise ExpressionConfigError('%s.gain_db: %g is outside %g to %g dB'
+                                    % (path, gain, lo, hi))
+    chatter = None
+    if 'chatter' in mapping:
+        cpath = _join(path, 'chatter')
+        cmap = _mapping(mapping['chatter'], cpath)
+        _known_keys(cmap, ('every_s', 'pools'), cpath)
+        _required(cmap, ('every_s', 'pools'), cpath)
+        pools = _mapping(cmap['pools'], _join(cpath, 'pools'))
+        if not pools:
+            raise ExpressionConfigError('%s.pools: must name at least one pool' % cpath)
+        table = []
+        for tag, weight in pools.items():
+            here = '%s.pools.%s' % (cpath, tag)
+            if tag == EXCLUDED_TAG or tag not in SOUND_TAGS:
+                raise ExpressionConfigError(
+                    '%s: unknown pool (expected one of: %s)' % (
+                        here, ', '.join(t for t in SOUND_TAGS if t != EXCLUDED_TAG)))
+            table.append((tag, _positive(weight, here)))
+        chatter = Chatter(every_s=_range(cmap['every_s'], _join(cpath, 'every_s')),
+                          pools=tuple(table))
+    return MoodSound(gain_db=gain, chatter=chatter)
+
+
 def _mood(value, path, defaults, profiles, neutral):
     mapping = _mapping(value, path)
-    allowed = STYLE_CHANNELS + (('dome',) if neutral else ('flourish', 'dome'))
+    allowed = STYLE_CHANNELS + (('dome', 'sound') if neutral else ('flourish', 'dome', 'sound'))
     for key in mapping:
         if key not in allowed:
             if key == 'flourish':
@@ -690,7 +835,9 @@ def _mood(value, path, defaults, profiles, neutral):
     if 'dome' in mapping:
         dome = _mood_dome(mapping['dome'], '%s.dome' % path, profiles, neutral,
                           defaults.dome.max_move_s)
-    return Mood(styles=MappingProxyType(styles), flourish=flourish, dome=dome)
+    sound = _mood_sound(mapping['sound'], _join(path, 'sound'), neutral) \
+        if 'sound' in mapping else None
+    return Mood(styles=MappingProxyType(styles), flourish=flourish, dome=dome, sound=sound)
 
 
 def _flourish(value, path, defaults):

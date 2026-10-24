@@ -26,9 +26,9 @@ PKG_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PKG_ROOT not in sys.path:
     sys.path.insert(0, PKG_ROOT)
 
-from r2_expression.core import DOME_ACTIONS  # noqa: E402
+from r2_expression.core import DOME_ACTIONS, SOUND_ACTIONS  # noqa: E402
 from r2_expression.express_cli import (  # noqa: E402
-    build_intent, DOME_VERBS, format_status, parse_args)
+    build_intent, DOME_VERBS, format_clip, format_status, parse_args, pool_clips)
 
 
 def intent(*argv):
@@ -175,6 +175,111 @@ def test_status_names_the_suppressed_state():
                           lease_remaining_s=-1.0, active_action='', mood='', dropped=0,
                           refused=0)
     assert format_status(msg).startswith('dome  suppressed')
+
+
+# --- sound (phase 3 plan 5.5) -----------------------------------------------------------------
+
+def test_play_by_name_builds_a_sound_play_at_manual_199():
+    f = intent('play', 'scream')
+    assert (f['channel'], f['source'], f['priority'], f['action']) == (
+        'sound', 'manual', 199, 'play')
+    assert json.loads(f['params']) == {'name': 'scream'}
+    assert (f['duration_ms'], f['interruptible']) == (0, True)       # a person's newest wins
+    assert f['action'] in SOUND_ACTIONS
+
+
+def test_play_gain_duration_pool_hold_override_and_source():
+    f = intent('play', 'scream', '--gain', '-3.5', '--duration', '2', '--hold', '--id', 'p1')
+    assert json.loads(f['params']) == {'name': 'scream', 'gain_db': -3.5}
+    assert (f['duration_ms'], f['interruptible'], f['intent_id']) == (2000, False, 'p1')
+    f = intent('play', '--pool', 'excited', '--gain', '0')
+    assert json.loads(f['params']) == {'pool': 'excited', 'gain_db': 0.0}
+    assert intent('play', 'x', '--override')['priority'] == 200
+    f = intent('play', '--pool', 'hum', '--source', 'behavior')
+    assert (f['source'], f['priority'], f['channel']) == ('behavior', 100, 'sound')
+    assert intent('play', 'x', '--source', 'idle')['priority'] == 10
+
+
+def test_vocalize_sends_only_what_was_given():
+    f = intent('vocalize')
+    assert (f['channel'], f['action'], f['params']) == ('sound', 'vocalize', '')
+    assert params('vocalize', '--arousal', '0.8', '--valence', '0', '--length', '1.5',
+                  '--seed', '-42', '--gain', '2') == {
+        'arousal': 0.8, 'valence': 0.0, 'length_s': 1.5, 'seed': -42, 'gain_db': 2.0}
+    assert params('vocalize', '--seed', '0') == {'seed': 0}
+
+
+def test_stop_sound_and_the_sound_claim_service():
+    f = intent('stop', 'sound')
+    assert (f['channel'], f['action'], f['params'], f['priority']) == ('sound', 'stop', '', 199)
+    for verb in ('claim', 'release'):
+        assert parse_args([verb, 'sound']).claim_service == '/expression/claim/sound'
+    assert parse_args(['claim', 'sound', '--claim-service', '/x']).claim_service == '/x'
+
+
+def test_sounds_defaults_to_the_sound_player_and_reads_only():
+    ns = parse_args(['sounds'])
+    assert (ns.device, ns.pool) == ('/sound_player', None)
+    ns = parse_args(['sounds', '--pool', 'hum', '--device', '/sound_player_t1'])
+    assert (ns.device, ns.pool) == ('/sound_player_t1', 'hum')
+
+
+def test_sounds_help_says_it_is_read_only(capsys):
+    with pytest.raises(SystemExit):
+        parse_args(['sounds', '--help'])
+    out = ' '.join(capsys.readouterr().out.split())
+    assert 'read-only' in out and 'nothing is played' in out
+
+
+def test_the_catalogue_listing_filters_by_tag_and_formats_a_line():
+    clips = [SimpleNamespace(name='a', tags=['hum', 'calm'], duration_ms=1500, gain_db=-2.0,
+                             excluded=False),
+             SimpleNamespace(name='cantina', tags=[], duration_ms=120000, gain_db=0.0,
+                             excluded=True)]
+    assert [c.name for c in pool_clips(clips)] == ['a', 'cantina']
+    assert [c.name for c in pool_clips(clips, 'hum')] == ['a']
+    assert pool_clips(clips, 'scream') == []
+    line = format_clip(clips[0])
+    assert line.startswith('a ') and '1.5s' in line and '-2.0 dB' in line
+    assert line.endswith('hum,calm')
+    assert format_clip(clips[1]).endswith('-  (manual only)')
+
+
+def test_sound_status_line_shows_the_play_and_its_remaining_time():
+    msg = SimpleNamespace(channel='sound', state=1, owner='manual', priority=199,
+                          lease_remaining_s=4.5, active_source='manual', active_action='play',
+                          active_remaining_ms=1800, mood='calm', dropped=1, refused=0)
+    assert format_status(msg) == ('sound running  owner=manual prio=199 lease=4.5s '
+                                  'active=manual/play 1800ms mood=calm dropped=1 refused=0')
+
+
+@pytest.mark.parametrize('argv', [
+    ['play'],
+    ['play', 'scream', '--pool', 'hum'],
+    ['play', '--pool', 'moo'],
+    ['play', '--pool', 'excluded'],
+    ['play', 'x' * 64],
+    ['play', 'x', '--gain', '99'],
+    ['play', 'x', '--gain', 'nan'],
+    ['play', 'x', '--gain', 'loud'],
+    ['play', 'x', '--duration', '-1'],
+    ['play', 'x', '--priority', '50'],
+    ['play', 'x', '--override', '--source', 'idle'],
+    ['vocalize', '--arousal', '1.5'],
+    ['vocalize', '--valence', '-0.1'],
+    ['vocalize', '--length', '-1'],
+    ['vocalize', '--seed', '1.5'],
+    ['vocalize', '--seed', '9999999999'],
+    ['vocalize', '--duration', '3'],
+    ['sounds', '--pool', 'excluded-ish'],
+    ['sounds', '--device', 'sound_player'],
+    ['sounds', '--device', '/'],
+    ['stop', 'sound', '--mode', 'freeze'],
+    ['effect', 'sound', 'fire'],
+    ['claim', 'sound', '--lease', 'abc'],
+])
+def test_sound_exit_2_validations(capsys, argv):
+    assert bad(capsys, *argv)
 
 
 @pytest.mark.parametrize('argv', [
