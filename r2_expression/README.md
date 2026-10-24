@@ -176,7 +176,9 @@ ros2 topic echo /expression/status                 # the running flourish, per c
 ```
 
 A stale mood returns fld, rld and psi to neutral; the Magic Panel (no `magic` in neutral) keeps
-the last mood's brightness. `redalert` follows the audio level, so check it on the lights. Sequence
+the last mood's brightness. `redalert` follows the audio level, which `sound_player` feeds on
+`/dome/audio/level` while a sound plays (0 otherwise, since phase 3), so check it on the lights
+while something plays. Sequence
 durations are the catalogue's lengths (a panel run is blanked at `duration_ms`).
 
 Without `r2_affect` running you are the only `/mood/state` publisher; with it running, remap
