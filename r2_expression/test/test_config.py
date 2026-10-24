@@ -138,9 +138,9 @@ def test_shipped_dome_defaults_are_the_plan_4_5_values():
 def test_shipped_every_mood_has_a_dome_entry_and_profiles_within_the_caps():
     config = load_config(SHIPPED)
     assert config.dome_warnings == ()
-    assert config.profiles['snappy'] == Profile(2.0, 4.0, 3.0, 0.10)
-    assert config.profiles['smooth'] == Profile(1.0, 1.5, 1.5, 0.10)
-    assert config.profiles['lazy'] == Profile(0.6, 0.8, 1.0, 0.10)
+    assert config.profiles['snappy'] == Profile(2.0, 4.0, 3.0, 0.15)
+    assert config.profiles['smooth'] == Profile(1.0, 1.5, 1.5, 0.15)
+    assert config.profiles['lazy'] == Profile(0.6, 0.8, 1.0, 0.15)
     assert config.neutral.dome.profile == 'smooth'
     assert config.neutral.dome.glance is None and config.neutral.dome.rest_rad is None
     for name, mood in config.moods.items():
