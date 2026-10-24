@@ -15,8 +15,8 @@
 
   <exec_depend>python3-numpy</exec_depend>
   <!-- sounddevice has no Ubuntu 24.04 package and no rosdep key: the image installs it with
-       pip (docker/Dockerfile) against apt libportaudio2; on the Pi, sudo pip install
-       --break-system-packages sounddevice==0.4.7 after sudo apt install libportaudio2. -->
+       pip (docker/Dockerfile) against apt libportaudio2; on the Pi, install libportaudio2
+       with apt and sounddevice 0.4.7 with pip (system-wide, see the plan's step 8b). -->
   <exec_depend>python3-soundfile</exec_depend>
 
   <exec_depend>python3-yaml</exec_depend>
