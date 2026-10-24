@@ -311,8 +311,6 @@ input[type=number] { font:inherit; width:6em; padding:3px; background:var(--card
 audio { width:100%; margin:8px 0; }
 .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:10px; }
 #msg { min-height:1.3em; }
-.item.done .n::after { content: " \\2713"; opacity: .7; }
-.item.dirty { border-left: 3px solid #e0a020; }
 </style></head><body>
 <div id="note">After saving, run <code>build_catalogue</code> in the container (command in the
 r2_sound README, &ldquo;Tagging and re-running&rdquo;) to merge the sheet into clips.yaml.</div>
