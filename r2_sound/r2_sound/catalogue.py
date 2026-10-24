@@ -61,6 +61,8 @@ TAGS = ('chatter', 'excited', 'sad', 'question', 'ooh', 'hum', 'alarm', 'scream'
 EXCLUDED_TAG = 'excluded'
 FALLBACK_TAG = 'chatter'
 DEFAULT_THRESHOLD = 0.6
+MANUAL_PRIORITY = 199            # an excluded clip plays only at this priority or above
+CLIPPED_FRACTION = 0.01          # a clip clipped more than this is picked at half weight
 
 _TOP_KEYS = ('house_level_dbfs', 'generated', 'sets', 'clips')
 _SET_KEYS = ('clips', 'median_rms_dbfs', 'set_gain_db')
@@ -156,6 +158,38 @@ def pools(catalogue: Catalogue) -> Mapping[str, Tuple[SoundClip, ...]]:
             for tag in clip.tags:
                 out[tag].append(clip)
     return MappingProxyType({tag: tuple(clips) for tag, clips in out.items()})
+
+
+def pick_weights(clips: Sequence[SoundClip]):
+    """Return each clip's pick weight: 1, or 0.5 when ``clip_fraction`` is over 0.01."""
+    return [0.5 if c.clip_fraction > CLIPPED_FRACTION else 1.0 for c in clips]
+
+
+def pick(clips: Sequence[SoundClip], rng):
+    """Return one of ``clips`` (non-empty), uniformly but for the clipped ones' half weight."""
+    return rng.choices(clips, weights=pick_weights(clips))[0]
+
+
+def resolve_play(by_name, pool_map, name, pool, priority, rng):
+    """
+    Return ``(clip, '')`` for a play request, or ``(None, reason)``.
+
+    ``name`` wins over ``pool``. The reasons are the player's refusals: ``unknown name``,
+    ``excluded`` (an excluded clip below :data:`MANUAL_PRIORITY`), ``unknown pool`` (not in
+    :data:`TAGS`), ``empty pool`` (no playable clip carries the tag).
+    """
+    if name:
+        clip = by_name.get(name)
+        if clip is None:
+            return None, 'unknown name'
+        if clip.excluded and priority < MANUAL_PRIORITY:
+            return None, 'excluded'
+        return clip, ''
+    if pool not in pool_map:
+        return None, 'unknown pool'
+    if not pool_map[pool]:
+        return None, 'empty pool'
+    return pick(pool_map[pool], rng), ''
 
 
 def _fail(path, message):

@@ -26,7 +26,10 @@ Pure numpy, no ROS imports. Levels are dBFS on float samples in -1..1.
   scream, a hum stays a hum, only the extremes are tamed); :func:`clip_gain_db` adds the
   sheet's override and limits the result to the peak ceiling and to the catalogue's range.
 * :func:`level_to_byte` maps a dBFS level to the dome's 0..255 audio-level input (floor
-  -40, ceiling -6), the mapping the player uses.
+  -40, ceiling -6), the mapping the player uses; :func:`block_rms` is what it is fed.
+* :func:`play_gain_db` is rule 4: the catalogue gain plus a request's, clamped so the peak
+  stays at or below :data:`PEAK_CEILING_DBFS`.
+* :func:`fade_out` is the player's fade shape (a half cosine from 1 to 0).
 """
 
 from dataclasses import dataclass
@@ -134,3 +137,46 @@ def level_to_byte(dbfs, floor_dbfs=LEVEL_FLOOR_DBFS, ceiling_dbfs=LEVEL_CEILING_
     """Map a level in dBFS to 0..255: ``floor`` and below is 0, ``ceiling`` and above 255."""
     fraction = (dbfs - floor_dbfs) / (ceiling_dbfs - floor_dbfs)
     return int(round(255 * min(1.0, max(0.0, fraction))))
+
+
+def db_to_linear(db):
+    """Return the linear amplitude factor of a gain in dB."""
+    return 10.0 ** (db / 20.0)
+
+
+def block_rms(samples):
+    """Return the RMS (linear, 0..1 for float audio) of one output block; 0.0 when empty."""
+    x = np.asarray(samples, dtype=np.float32)
+    if x.size == 0:
+        return 0.0
+    return math.sqrt(float(np.dot(x, x)) / x.size)     # no temporary: the audio callback
+
+
+def play_gain_db(catalogue_gain_db, request_gain_db, peak_dbfs):
+    """
+    Return ``(gain_db, clamped)`` for one play (rule 4).
+
+    The sum of the clip's catalogue gain and the request's gain, limited so that the clip's
+    measured peak plus the gain stays at or below :data:`PEAK_CEILING_DBFS`; ``clamped`` says
+    the request asked for more. A NaN request counts as 0 dB, clamped.
+    """
+    if math.isnan(request_gain_db):
+        return min(catalogue_gain_db, PEAK_CEILING_DBFS - peak_dbfs), True
+    wanted = catalogue_gain_db + request_gain_db
+    ceiling = PEAK_CEILING_DBFS - peak_dbfs
+    if wanted > ceiling:
+        return ceiling, True
+    return wanted, False
+
+
+def fade_out(frames):
+    """
+    Return the fade-out gain curve over ``frames`` samples (float32, 1 down to 0).
+
+    A half cosine: ``0.5 * (1 + cos(pi * i / (frames - 1)))``, so the first sample is
+    untouched and the last is silent. ``frames`` <= 1 gives ``[0.]`` or nothing.
+    """
+    if frames <= 1:
+        return np.zeros(max(frames, 0), dtype=np.float32)
+    i = np.arange(frames, dtype=np.float64)
+    return (0.5 * (1.0 + np.cos(np.pi * i / (frames - 1)))).astype(np.float32)
