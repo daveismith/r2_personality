@@ -1,0 +1,169 @@
+transcript.txt: per-item numbers of the 2026-10-23/24 robot acceptance run (phase 2, dome).
+Times UTC, bag arrival time unless "stamp" is said (the link stalled for 2-3 s at a few points: item 12). Joint angle
+in radians, clockwise from above, 0 = radar eye forward; bearing = -joint (heading.sign -1). Sections marked "run log"
+hold figures from the live run that the bags do not (the bags begin 2026-10-23 23:10:46; bag2 ends 01:46:20).
+
+=== Item 1: express turn 0.3 (fresh start) ===
+run log: radar eye to the droid's left (joint angle decreasing), floor 0.6 rad/s throughout, 2.2 s of motion, stopped
+with a 0, final error 1.8 deg. An 8 deg spring-back after the stop was seen once, not again in five later stops.
+bag: a repeat at 00:08:12.870 (arbiter restarted 23:58:08, band 0.10), joint 1.065, target 0.765:
+  command -0.60 from 00:08:13.066 to 00:08:14.158 ; +0.60 pulse 00:08:14.665 to 00:08:15.415
+  joint low point 0.593 (overshoot 0.17 rad, 9.7 deg past the target), rest 0.873 (6.2 deg short on the other side)
+  dome status running 00:08:13.035, claimed 00:08:16.860, idle 00:08:21.282; motion 2.3 s
+
+=== Coast re-fit (plan 8b), run log ===
+arbiter down; Foxglove input runs of 3 s through the converter (x1.5), joint states at 10 Hz, from the converter's 0:
+  commanded   achieved   t90    coast
+  +0.6        +0.35      0.60 s 7.0 deg
+  +1.0        +1.29      0.96 s 35.0 deg
+  +1.5        +1.33      0.55 s 43.0 deg
+  +2.0        +1.80      0.41 s 51.0 deg
+  -1.0        -0.76      0.50 s -26.0 deg
+fit coast = 0.516 v - 0.006 rad on the achieved speed -> expression.yaml c1_s 0.52, c2_rad 0.0 (0b43b3f). Total turned 13.9 rad.
+
+=== Ring misread, run log ===
+turning clockwise at 1.0 rad/s, each pass through 313-331 deg reads one sample at about 279 deg: deltas -0.59 then +0.91 rad;
+-0.58 then +0.80 on the next turn, same place. Anticlockwise and at rest clean. Gate max_plausible_rad_s 4.0 (4c9e490).
+
+=== Coast learning, run log ===
+learned scale 0.19-1.25 between moves (rosout.txt, "move over, coast scale", 23:10-23:19 UTC, before it was turned off:
+  0.30 0.53 0.19 0.47 0.23 1.19 0.23 0.72 1.25 1.08 0.88 0.00 0.64 0.86 0.76 0.69 0.89 0.86 0.64 0.50 0.52 0.86 0.87 0.35 1.15 0.79 0.48 1.92 0.95 0.58 ...)
+low lessons: 53 deg overshoot on a look across the wrap, 48 deg on a glance's outbound leg. 8c0c70d: learn off, floor pulse,
+retries 2, band 0.10; f4f8e11: band 0.15 rad, loaded when the arbiter restarted at 01:33:53. The set below (01:31) ran under 8c0c70d (band 0.10); items 7 and 8 ran under f4f8e11.
+
+=== Items 2, 3 (first half), 4: after tuning, calm locked, hands off, one rclpy node (probe-*), 01:31:05 to 01:32:11 ===
+error = joint at the move's end (status running -> claimed) minus the target, deg; peak/min = |/dome_controller/commands| non-zero;
+in band = first time the joint is within 0.15 rad of the target and stays; idle = dome status idle after the move.
+  01:31:05.231  look 1.0 smooth                    start joint 4.381  error -5.7 deg  motion 3.0 s  in band +2.5 s  peak 1.00  min 0.60  capped False  idle 5.0 s after the move
+  01:31:15.202  look -1.0 smooth                   start joint 5.184  error -7.3 deg  motion 4.4 s  in band +3.0 s  peak 1.00  min 0.60  capped False  idle 5.0 s after the move
+  01:31:26.650  look 3.0 smooth (across the wrap)  start joint 0.873  error +3.9 deg  motion 5.1 s  in band +4.5 s  peak 1.00  min 0.60  capped False  idle 5.0 s after the move
+  01:31:38.876  look 0 snappy                      start joint 3.351  error -7.0 deg  motion 3.9 s  in band +4.3 s  peak 2.00  min 0.60  capped False  idle 5.0 s after the move
+  01:32:02.056  look 1.0 lazy                      start joint 6.091  error -7.7 deg  motion 2.9 s  in band +1.2 s  peak 0.60  min 0.60  capped False  idle 5.1 s after the move
+  01:31:49.822  glance 0.6 dwell 1 (manual)           start joint 6.161  out +28 deg (asked 34)  return offset -4.0 deg  motion 5.2 s  running -> claimed 6.1 s; idle 5.1 s after
+errors of the five looks/glance: -5.7 -7.3 +3.9 -7.0 -4.0 (and lazy -7.7): mean about -5 deg, spread about 4 deg.
+item 3: snappy command max 2.00 (the cap), every non-zero value >= 0.60 over the whole bag; /dome/cmd/status.capped true: 0 messages in either bag.
+item 3 second half (cap 1.0): not run on the robot (it needs a converter restart); done in the sim.
+
+=== Earlier manual moves (same intents, other code and settings; raw; the container's node tests were on the graph until 01:28:26) ===
+  23:10:52.490 manual look_at {"bearing": 1.0, "profile": "smooth"} j0=5.952 run 3.2s->claimed motion 2.3s peak 1.00 err/ret_deg=-8.7 capped False idle +8.0s after move
+  23:11:06.310 manual look_at {"bearing": -1.0, "profile": "smooth"} j0=5.882 run 4.5s->claimed motion 3.6s peak 1.00 err/ret_deg=-7.3 capped False idle +9.4s after move
+  23:11:22.749 manual look_at {"bearing": 3.0, "profile": "smooth"} j0=5.794 run 4.5s->claimed motion 3.6s peak 1.00 err/ret_deg=8.9 capped False idle +11.7s after move
+  23:11:41.684 manual look_at {"bearing": 0.0, "profile": "snappy"} j0=5.986 run 2.9s->claimed motion 2.1s peak 0.89 err/ret_deg=-13.0 capped False idle +8.3s after move
+  23:11:55.461 manual glance {"amplitude": 0.6, "dwell_s": 1.0} j0=5.969 run 6.4s->claimed motion 5.6s peak 0.60 err/ret_deg=-1.0 amp_deg=43 capped False idle +5.0s after move
+  23:13:05.432 manual look_at {"bearing": 1.0, "profile": "smooth"} j0=5.952 run 1.5s->claimed motion 0.6s peak 1.00 err/ret_deg=-2.7 capped False idle +8.8s after move
+  23:49:59.011 manual look_at {"bearing": 1.0, "profile": "smooth"} j0=5.411 run 9.1s->claimed motion 2.4s peak 0.65 err/ret_deg=-2.7 capped False idle +0.0s after move
+  23:50:24.386 manual look_at {"bearing": -1.0, "profile": "smooth"} j0=4.677 run 10.6s->claimed motion 8.6s peak 0.98 err/ret_deg=-149.3 capped False idle +0.0s after move
+  23:50:39.618 manual look_at {"bearing": 3.0, "profile": "smooth"} j0=0.541 run 6.0s->claimed motion 5.1s peak 1.00 err/ret_deg=28.9 capped False idle +5.0s after move
+  23:50:54.939 manual look_at {"bearing": 0.0, "profile": "snappy"} j0=3.787 run 4.1s->claimed motion 3.1s peak 2.00 err/ret_deg=-5.0 capped False idle +5.1s after move
+  23:51:08.585 manual glance {"amplitude": 0.6, "dwell_s": 1.0} j0=6.196 run 7.6s->claimed motion 6.7s peak 0.90 err/ret_deg=-12.0 amp_deg=30 capped False idle +5.0s after move
+  23:53:21.398 manual look_at {"bearing": 1.0, "profile": "smooth"} j0=5.794 run 3.3s->claimed motion 2.4s peak 0.77 err/ret_deg=0.3 capped False idle +5.1s after move
+  23:53:33.893 manual look_at {"bearing": -1.0, "profile": "smooth"} j0=5.288 run 4.3s->claimed motion 3.4s peak 1.00 err/ret_deg=-7.3 capped False idle +5.1s after move
+  23:53:47.525 manual look_at {"bearing": 3.0, "profile": "smooth"} j0=0.873 run 5.6s->claimed motion 4.7s peak 1.00 err/ret_deg=17.9 capped False idle +5.1s after move
+  23:54:02.346 manual look_at {"bearing": 0.0, "profile": "snappy"} j0=3.543 run 3.8s->claimed motion 2.9s peak 2.00 err/ret_deg=-1.0 capped False idle +5.1s after move
+  23:54:15.428 manual glance {"amplitude": 0.6, "dwell_s": 1.0} j0=6.266 run 6.7s->claimed motion 5.8s peak 1.00 err/ret_deg=1.0 amp_deg=-82 capped False idle +5.0s after move
+  23:56:15.718 manual look_at {"bearing": -2.5, "profile": "lazy"} j0=6.213 run 14.9s->claimed motion 3.8s peak 0.60 err/ret_deg=-103.2 capped False idle +0.0s after move
+  00:08:12.870 manual turn {"delta": 0.3} j0=1.065 run 3.2s->claimed motion 2.3s peak 0.60 err/ret_deg=-11.0 capped False idle +5.0s after move
+  01:19:43.406 manual look_at {"bearing": 1.0, "profile": "smooth"} j0=3.508 run 9.6s->claimed motion 9.4s peak 0.95 err/ret_deg=-121.7 capped False idle +0.2s after move
+  01:20:10.642 nomove
+  01:20:37.652 manual look_at {"bearing": 3.0, "profile": "smooth"} j0=3.700 run 6.0s->claimed motion 4.1s peak 0.60 err/ret_deg=23.9 capped False idle +0.8s after move
+  01:21:04.882 nomove
+  01:21:31.957 nomove
+  01:21:41.286 manual look_at {"bearing": 1.0, "profile": "lazy"} j0=3.927 run 19.2s->claimed motion 18.9s peak 0.60 err/ret_deg=-73.7 capped False idle +0.0s after move
+
+=== Item 5: Foxglove mid-move (from the bag) ===
+  00:17:55.474 CS foxglove 1.50; dome status foreign owner=foxglove 00:17:55.568 (+0.094 s); /dome/cmd/personality 0.00 at 00:17:55.476
+  (the arbiter's 0 in the same tick); the move was a behaviour turn; release: converter source idle 00:17:56.174, dome idle with it.
+  00:02:27.268 the same during a glance: foreign +0.008 s, personality 0 at 00:02:27.276, idle 00:02:28.470.
+  Foxglove with nothing running: 01:41:34.326 foxglove -> 01:41:35.942 idle.
+  Joystick variant: not run (no joystick to hand).
+
+=== Item 6: not run on the robot (sim, same code path) ===
+
+=== Item 7: idle glances by mood (locked, strength 1.00) ===
+  == curious
+  01:34:11.066 dur 6.8s gap - amp -57 deg ret -6 deg
+  01:34:25.949 dur 7.0s gap 8.0s amp 68 deg ret 1 deg
+  01:34:41.053 dur 7.1s gap 8.1s amp 38 deg ret -6 deg
+  01:34:56.160 dur 9.7s gap 8.1s amp 59 deg ret -8 deg
+  == excited
+  01:35:18.764 dur 1.2s gap - amp 9 deg ret 9 deg
+  01:35:24.136 dur 5.8s gap 4.2s amp -41 deg ret 4 deg
+  01:35:34.095 dur 4.1s gap 4.1s amp -46 deg ret -6 deg
+  01:35:42.295 dur 3.3s gap 4.1s amp -50 deg ret -3 deg
+  01:35:49.647 dur 3.2s gap 4.0s amp -35 deg ret 1 deg
+  01:35:56.881 dur 4.8s gap 4.1s amp -31 deg ret 5 deg
+  01:36:05.720 dur 3.1s gap 4.0s amp -21 deg ret 6 deg
+  01:36:12.842 dur 3.3s gap 4.0s amp -24 deg ret 2 deg
+  01:36:20.223 dur 6.3s gap 4.1s amp 47 deg ret -5 deg
+  == calm
+  01:36:55.050 dur 4.2s gap - amp 11 deg ret -5 deg
+  01:37:19.153 dur 19.9s gap 20.0s amp -19 deg ret -1 deg
+  01:37:43.051 dur 5.2s gap 4.0s amp 14 deg ret -2 deg
+curious set 01:34:02.837 (accept), glances 8.0 s apart (every_s 8-20 at its lower bound), amplitudes 57/68/38/59 deg (palette 29-80), returns -6/1/-6/-8 deg;
+excited set 01:35:18.784, every 4.0-4.2 s (4-10), 9/41/46/50/35/31/21/24/47 deg (palette 17-52; the 9 deg one is short), returns within +-9 deg;
+calm set 01:36:34.936, first glance 01:36:55.050 (20.1 s), 3 glances in 75 s (palette 20-60), 11/19/14 deg (15-40), returns -5/-1/-2 deg.
+
+=== Item 8: sleepy rest, return ===
+  01:42:05.537 r2_affect: mood forced and locked sleepy by mood_cli
+  01:42:05.695 dome_arbiter: mood: calm -> sleepy
+  01:42:05.904 dome status running act=rest (command +0.60)
+  01:42:10.2 idle at joint 5.777 (rest_rad 0.35 -> joint 5.933: -0.156 rad, -8.9 deg from the heading)
+  01:42:18.657 intent turn 0.35 (behavior); dome running act=turn, command -0.60 until 01:42:19.66
+  01:42:19.59 joint 5.428, 20.0: 5.358 (moved 0.419 rad = 24 deg from 5.777); 01:42:20.077 running act=rest (the rest re-applied as the turn ended, 1.4 s)
+  01:42:24.084 idle at joint 5.777 again
+  01:42:54.134 running act=rest (recheck; 35.5 s after the turn began, 34.1 s after its rest began): 5.777 -> 5.864 (-3.9 deg from the heading), 1.6 s
+  a hand push was not available; no push was made. The turn moved the dome (24 deg) and the rest undid it at once: see README finding 6.
+
+=== Item 9: body moving: NOT RUN (the base could not be driven) ===
+
+=== Item 10: lock calm, two bumps ===
+  /stimuli: 23:17:14.092 and 23:17:17.101, kind bump source accept intensity 1.0; r2_affect 23:17:15.132 and 23:17:19.090 (node stamps):
+  "stimulus bump from accept i=1.00: no change -> aro=0.00 val=0.20 cur=0.40 con=0.60 (locked, not applied)"; mood calm and locked throughout.
+
+=== Item 11: kill r2_affect ===
+  SIGKILL about 23:17:20.7; last /mood/state stamp 23:17:20.644; dome status stale (mood neutral) stamp 23:17:23.676: +3.03 s (run: 2.95 s).
+  restart: r2_affect up 23:17:36.486, first /mood/state 23:17:36.487, dome idle mood=calm the same moment; first glance (converter source personality) 23:17:56.580.
+
+=== Item 12: kill dome_arbiter mid-move ===
+  look -2.5 lazy 23:56:15.718; last /dome/cmd/personality stamp 23:56:17.407 (0.60); /dome/cmd/status stamp 23:56:17.928 source idle 0.00
+  (+0.52 s by stamps; run: converter 0 at 0.62 s after the arbiter's last message = 0.5 s timeout + one tick). Bag arrival shows the
+  link stalled 23:56:17.3 to 23:56:19.7 (all topics from the Pi), so arrival times of those messages are not usable.
+  after: no non-zero personality message, no non-zero /dome_controller/commands after the converter's 0; the LED channels (fld, rld, psi, magic)
+  kept publishing status; restart: dome_arbiter up 23:56:30.236, offline 23:56:30.238 then idle 23:56:30.794, no move.
+
+=== Item 13: deactivate dome_state_broadcaster ===
+  last joint state 23:16:17.311; dome offline 23:16:22.358 (+5.05 s, device_stale_s 5); first joint state after 23:16:28.011; dome idle 23:16:28.012
+  (run: idle 1.5 s after the first joint state; the bag has it on the first state's tick). Nothing sent while offline.
+
+=== Item 14: graph check, run log ===
+  over 30 nodes: /dome_controller/commands published by /dome_twist_converter only; /dome/cmd/personality by /dome_arbiter only;
+  /dome/joint_command by nothing; no personality node on /cmd_vel* or /diff_cont/*.
+
+=== Item 15: dome_pushed on /stimuli ===
+  bag: 2 messages (bump 23:17:14.092 and 23:17:17.101 only); bag2: 0 messages; no dome_pushed in either.
+  dome runs seen in the two bags (status running -> not running, repeats counted once): {'look_at': 16, 'rest': 7, 'glance': 278, 'turn': 66} ; no positive control (no push dome_stimulus could see was made).
+
+=== Item 16: CPU, run log ===
+  /dome_state_broadcaster/joint_states 10.0 Hz with and without the arbiter (PASS).
+  10 min idle (calm glances only, router 1.6 %): dome_arbiter 3.64 %, converter 2.69 %, stimulus_adapters 2.62 %, led_arbiter 1.67 %, magic_arbiter 1.40 %, r2_affect 0.73 %: FAIL against 2 %.
+  near-continuous motion (the bag holds a run of behaviour turns of +-1.8 rad every 6-8 s, 00:08:51 to 00:19:03): dome_arbiter 5.01 %, converter 4.06 %.
+  cProfile: our Python about 10 us per joint state; the cost is rclpy's executor, about 1.7 ms per wake-up on the Pi (wait-set rebuild over ~32 waitables).
+  a trim of the settle passes saved nothing (branch phase2-cpu-trim).
+
+=== Bag joint-state rate (arrival, 10-minute buckets; a thinned stream is the link, not the robot) ===
+  23:1x msgs 5430 gaps>1.5s 1 rate/s 9.1
+  23:2x msgs 5983 gaps>1.5s 19 rate/s 10.0
+  23:3x msgs 1693 gaps>1.5s 14 rate/s 2.8
+  23:4x msgs 1611 gaps>1.5s 2 rate/s 2.7
+  23:5x msgs 6004 gaps>1.5s 24 rate/s 10.0
+  00:0x msgs 5990 gaps>1.5s 19 rate/s 10.0
+  00:1x msgs 5734 gaps>1.5s 5 rate/s 9.6
+  00:2x msgs 6000 gaps>1.5s 0 rate/s 10.0
+  00:3x msgs 6000 gaps>1.5s 0 rate/s 10.0
+  00:4x msgs 6000 gaps>1.5s 0 rate/s 10.0
+  00:5x msgs 5918 gaps>1.5s 54 rate/s 9.9
+  01:0x msgs 6041 gaps>1.5s 45 rate/s 10.1
+  01:1x msgs 5948 gaps>1.5s 46 rate/s 9.9
+  01:2x msgs 4934 gaps>1.5s 34 rate/s 8.2
+  01:3x msgs 4200 gaps>1.5s 2 rate/s 7.0
+  01:4x msgs 3599 gaps>1.5s 2 rate/s 6.0

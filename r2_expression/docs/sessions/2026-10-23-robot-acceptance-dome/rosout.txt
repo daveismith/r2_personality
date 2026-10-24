@@ -1,0 +1,1837 @@
+10-23 23:01:48.938 [INFO] [r2_affect]: r2_affect up: config /home/pi/r2_ws/install/r2_affect/share/r2_affect/config/affect.yaml, 5.0 Hz, mood calm (aro=0.00 val=0.20 cur=0.40 con=0.60)
+10-23 23:01:49.593 [INFO] [dome_twist_converter]: Dome command arbiter: joystick cmd_vel_dome (linear.x) has precedence, Foxglove cmd_vel_dome_foxglove (angular.z x 1.50), hold 0.50 s, timeouts 0.50 / 0.50 s, personality dome/cmd/personality (angular.z, timeout 0.50 s, 0.60 <= |v| <= 2.00 rad/s, |a| <= 6.00 rad/s2), output dome_controller/commands
+10-23 23:02:10.522 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:02:16.772 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:02:36.322 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:02:43.172 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:03:02.722 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:03:11.222 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:03:30.822 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:03:37.372 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:03:56.922 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:03:58.022 [INFO] [dome_twist_converter]: Dome command source: foxglove
+10-23 23:03:58.922 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:03:59.622 [INFO] [dome_twist_converter]: Dome command source: foxglove
+10-23 23:04:00.672 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:04:01.172 [INFO] [dome_twist_converter]: Dome command source: foxglove
+10-23 23:04:02.222 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:04:03.672 [INFO] [dome_twist_converter]: Dome command source: foxglove
+10-23 23:04:06.922 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:04:08.172 [INFO] [dome_twist_converter]: Dome command source: foxglove
+10-23 23:04:10.272 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:04:11.322 [INFO] [dome_twist_converter]: Dome command source: foxglove
+10-23 23:04:12.722 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:04:12.922 [INFO] [dome_twist_converter]: Dome command source: foxglove
+10-23 23:04:13.972 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:04:14.922 [INFO] [dome_twist_converter]: Dome command source: foxglove
+10-23 23:04:15.672 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:04:18.722 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:04:24.373 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:04:43.922 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:04:52.122 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:04:54.623 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:04:58.172 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:05:17.922 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:05:26.372 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:05:48.222 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:05:54.872 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:06:18.922 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:06:20.872 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:06:23.422 [INFO] [dome_twist_converter]: Dome command source: foxglove
+10-23 23:06:26.822 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:06:30.972 [INFO] [dome_twist_converter]: Dome command source: foxglove
+10-23 23:06:34.422 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:06:38.522 [INFO] [dome_twist_converter]: Dome command source: foxglove
+10-23 23:06:42.023 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:06:46.023 [INFO] [dome_twist_converter]: Dome command source: foxglove
+10-23 23:06:49.472 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:06:53.623 [INFO] [dome_twist_converter]: Dome command source: foxglove
+10-23 23:06:57.022 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:08:23.845 [INFO] [r2_affect]: mood: calm -> sleepy (d=0.35)
+10-23 23:08:30.731 [INFO] [dome_arbiter]: dome_arbiter up: config /home/pi/r2_ws/install/r2_expression/share/r2_expression/config/expression.yaml, device dome_twist_converter via /dome/cmd/personality, channels dome
+10-23 23:08:30.776 [INFO] [dome_arbiter]: dome: offline
+10-23 23:08:30.846 [INFO] [dome_arbiter]: mood: - -> sleepy
+10-23 23:08:31.024 [INFO] [dome_arbiter]: dome: running
+10-23 23:08:31.073 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:08:34.575 [INFO] [dome_arbiter]: dome: move over, coast scale 0.30 for the next
+10-23 23:08:34.576 [INFO] [dome_arbiter]: dome: idle
+10-23 23:08:35.123 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:10:52.668 [INFO] [dome_arbiter]: dome: running (manual)
+10-23 23:10:52.669 [INFO] [dome_arbiter]: intent express-b7b26d49 accepted: dome look_at  from manual
+10-23 23:10:52.672 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:10:55.870 [INFO] [dome_arbiter]: dome: move over, coast scale 0.53 for the next
+10-23 23:10:55.871 [INFO] [dome_arbiter]: dome: claimed (manual)
+10-23 23:10:56.372 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:11:00.878 [INFO] [dome_arbiter]: dome: running
+10-23 23:11:00.922 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:11:03.879 [INFO] [dome_arbiter]: dome: move over, coast scale 0.19 for the next
+10-23 23:11:03.880 [INFO] [dome_arbiter]: dome: idle
+10-23 23:11:04.422 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:11:06.492 [INFO] [dome_arbiter]: dome: running (manual)
+10-23 23:11:06.493 [INFO] [dome_arbiter]: intent express-f27564f4 accepted: dome look_at  from manual
+10-23 23:11:06.522 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:11:10.992 [INFO] [dome_arbiter]: dome: move over, coast scale 0.47 for the next
+10-23 23:11:10.992 [INFO] [dome_arbiter]: dome: claimed (manual)
+10-23 23:11:11.522 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:11:16.024 [INFO] [dome_arbiter]: dome: running
+10-23 23:11:16.073 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:11:20.275 [INFO] [dome_arbiter]: dome: move over, coast scale 0.23 for the next
+10-23 23:11:20.276 [INFO] [dome_arbiter]: dome: idle
+10-23 23:11:20.822 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:11:22.990 [INFO] [dome_arbiter]: dome: running (manual)
+10-23 23:11:22.991 [INFO] [dome_arbiter]: intent express-72fc6a9d accepted: dome look_at  from manual
+10-23 23:11:23.022 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:11:27.490 [INFO] [dome_arbiter]: dome: move over, coast scale 1.19 for the next
+10-23 23:11:27.491 [INFO] [dome_arbiter]: dome: claimed (manual)
+10-23 23:11:28.022 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:11:32.526 [INFO] [dome_arbiter]: dome: running
+10-23 23:11:32.572 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:11:39.177 [INFO] [dome_arbiter]: dome: move over, coast scale 0.23 for the next
+10-23 23:11:39.179 [INFO] [dome_arbiter]: dome: idle
+10-23 23:11:39.722 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:11:41.862 [INFO] [dome_arbiter]: dome: running (manual)
+10-23 23:11:41.863 [INFO] [dome_arbiter]: intent express-3a8a7694 accepted: dome look_at  from manual
+10-23 23:11:41.872 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:11:44.762 [INFO] [dome_arbiter]: dome: move over, coast scale 0.72 for the next
+10-23 23:11:44.762 [INFO] [dome_arbiter]: dome: claimed (manual)
+10-23 23:11:45.272 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:11:49.778 [INFO] [dome_arbiter]: dome: running
+10-23 23:11:49.822 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:11:53.079 [INFO] [dome_arbiter]: dome: move over, coast scale 1.25 for the next
+10-23 23:11:53.080 [INFO] [dome_arbiter]: dome: idle
+10-23 23:11:53.622 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:11:55.647 [INFO] [dome_arbiter]: dome: running (manual)
+10-23 23:11:55.649 [INFO] [dome_arbiter]: intent express-f738520f accepted: dome glance  from manual
+10-23 23:11:55.672 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:12:02.047 [INFO] [dome_arbiter]: dome: move over, coast scale 1.08 for the next
+10-23 23:12:02.048 [INFO] [dome_arbiter]: dome: claimed (manual)
+10-23 23:12:02.573 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:12:07.078 [INFO] [dome_arbiter]: dome: idle
+10-23 23:12:07.122 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:12:07.622 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:13:05.609 [INFO] [dome_arbiter]: dome: running (manual)
+10-23 23:13:05.610 [INFO] [dome_arbiter]: intent express-099f27dd accepted: dome look_at  from manual
+10-23 23:13:05.622 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:13:07.059 [INFO] [dome_arbiter]: dome: move over, coast scale 0.88 for the next
+10-23 23:13:07.060 [INFO] [dome_arbiter]: dome: claimed (manual)
+10-23 23:13:07.572 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:13:12.077 [INFO] [dome_arbiter]: dome: running
+10-23 23:13:12.123 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:13:15.827 [INFO] [dome_arbiter]: dome: move over, coast scale 0.00 for the next
+10-23 23:13:15.828 [INFO] [dome_arbiter]: dome: idle
+10-23 23:13:16.372 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:14:15.619 [INFO] [r2_affect]: mood forced and locked calm by mood_cli
+10-23 23:14:15.648 [INFO] [dome_arbiter]: mood: sleepy -> calm
+10-23 23:14:25.622 [INFO] [dome_twist_converter]: Dome command source: foxglove
+10-23 23:14:25.624 [INFO] [dome_arbiter]: dome: foreign (foxglove)
+10-23 23:14:33.272 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:14:33.279 [INFO] [dome_arbiter]: dome: idle
+10-23 23:14:33.373 [INFO] [dome_twist_converter]: Dome command source: foxglove
+10-23 23:14:33.382 [INFO] [dome_arbiter]: dome: foreign (foxglove)
+10-23 23:14:33.872 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:14:33.877 [INFO] [dome_arbiter]: dome: idle
+10-23 23:14:33.972 [INFO] [dome_twist_converter]: Dome command source: foxglove
+10-23 23:14:33.976 [INFO] [dome_arbiter]: dome: foreign (foxglove)
+10-23 23:14:41.172 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:14:41.174 [INFO] [dome_arbiter]: dome: idle
+10-23 23:14:43.822 [INFO] [dome_twist_converter]: Dome command source: foxglove
+10-23 23:14:43.826 [INFO] [dome_arbiter]: dome: foreign (foxglove)
+10-23 23:14:46.122 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:14:46.125 [INFO] [dome_arbiter]: dome: idle
+10-23 23:14:46.222 [INFO] [dome_twist_converter]: Dome command source: foxglove
+10-23 23:14:46.226 [INFO] [dome_arbiter]: dome: foreign (foxglove)
+10-23 23:14:58.623 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:14:58.626 [INFO] [dome_arbiter]: dome: idle
+10-23 23:14:58.672 [INFO] [dome_twist_converter]: Dome command source: foxglove
+10-23 23:14:58.676 [INFO] [dome_arbiter]: dome: foreign (foxglove)
+10-23 23:14:59.737 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:14:59.743 [INFO] [dome_arbiter]: dome: idle
+10-23 23:15:16.880 [INFO] [dome_arbiter]: dome: running
+10-23 23:15:16.922 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:15:24.030 [INFO] [dome_arbiter]: dome: move over, coast scale 0.64 for the next
+10-23 23:15:24.031 [INFO] [dome_arbiter]: dome: idle
+10-23 23:15:24.572 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:15:44.078 [INFO] [dome_arbiter]: dome: running
+10-23 23:15:44.122 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:15:49.479 [INFO] [dome_arbiter]: dome: move over, coast scale 0.86 for the next
+10-23 23:15:49.484 [INFO] [dome_arbiter]: dome: idle
+10-23 23:15:50.022 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:16:09.580 [INFO] [dome_arbiter]: dome: running
+10-23 23:16:09.622 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:16:14.830 [INFO] [dome_arbiter]: dome: move over, coast scale 0.76 for the next
+10-23 23:16:14.830 [INFO] [dome_arbiter]: dome: idle
+10-23 23:16:15.372 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:16:22.524 [INFO] [dome_arbiter]: dome: offline
+10-23 23:16:28.176 [INFO] [dome_arbiter]: dome: idle
+10-23 23:16:34.876 [INFO] [dome_arbiter]: dome: running
+10-23 23:16:34.922 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:16:41.779 [INFO] [dome_arbiter]: dome: move over, coast scale 0.69 for the next
+10-23 23:16:41.780 [INFO] [dome_arbiter]: dome: idle
+10-23 23:16:42.322 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:17:01.877 [INFO] [dome_arbiter]: dome: running
+10-23 23:17:01.922 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:17:07.577 [INFO] [dome_arbiter]: dome: move over, coast scale 0.89 for the next
+10-23 23:17:07.578 [INFO] [dome_arbiter]: dome: idle
+10-23 23:17:08.123 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:17:15.296 [INFO] [r2_affect]: stimulus bump from accept i=1.00: no change -> aro=0.00 val=0.20 cur=0.40 con=0.60 (locked, not applied)
+10-23 23:17:19.254 [INFO] [r2_affect]: stimulus bump from accept i=1.00: no change -> aro=0.00 val=0.20 cur=0.40 con=0.60 (locked, not applied)
+10-23 23:17:23.676 [INFO] [dome_arbiter]: dome: stale
+10-23 23:17:36.426 [INFO] [r2_affect]: r2_affect up: config /home/pi/r2_ws/install/r2_affect/share/r2_affect/config/affect.yaml, 5.0 Hz, mood calm (aro=0.00 val=0.20 cur=0.40 con=0.60)
+10-23 23:17:36.601 [INFO] [dome_arbiter]: dome: idle
+10-23 23:17:56.679 [INFO] [dome_arbiter]: dome: running
+10-23 23:17:56.726 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:18:00.880 [INFO] [dome_arbiter]: dome: move over, coast scale 0.86 for the next
+10-23 23:18:00.880 [INFO] [dome_arbiter]: dome: idle
+10-23 23:18:01.424 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:18:20.985 [INFO] [dome_arbiter]: dome: running
+10-23 23:18:21.022 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:18:26.285 [INFO] [dome_arbiter]: dome: move over, coast scale 0.64 for the next
+10-23 23:18:26.286 [INFO] [dome_arbiter]: dome: idle
+10-23 23:18:26.823 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:18:45.922 [INFO] [r2_affect]: mood forced and locked calm by mood_cli
+10-23 23:18:46.377 [INFO] [dome_arbiter]: dome: running
+10-23 23:18:46.422 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:18:52.128 [INFO] [dome_arbiter]: dome: move over, coast scale 0.50 for the next
+10-23 23:18:52.129 [INFO] [dome_arbiter]: dome: idle
+10-23 23:18:52.672 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:19:12.178 [INFO] [dome_arbiter]: dome: running
+10-23 23:19:12.229 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:19:18.229 [INFO] [dome_arbiter]: dome: move over, coast scale 0.52 for the next
+10-23 23:19:18.230 [INFO] [dome_arbiter]: dome: idle
+10-23 23:19:18.777 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:19:29.064 [INFO] [r2_affect]: mood forced and locked calm by mood_cli
+10-23 23:19:38.277 [INFO] [dome_arbiter]: dome: running
+10-23 23:19:38.322 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:19:44.080 [INFO] [dome_arbiter]: dome: move over, coast scale 0.86 for the next
+10-23 23:19:44.082 [INFO] [dome_arbiter]: dome: idle
+10-23 23:19:44.622 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:20:04.177 [INFO] [dome_arbiter]: dome: running
+10-23 23:20:04.222 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:20:11.679 [INFO] [dome_arbiter]: dome: move over, coast scale 0.87 for the next
+10-23 23:20:11.680 [INFO] [dome_arbiter]: dome: idle
+10-23 23:20:12.223 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:20:31.696 [INFO] [dome_arbiter]: dome: running
+10-23 23:20:31.722 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:20:38.097 [INFO] [dome_arbiter]: dome: move over, coast scale 0.35 for the next
+10-23 23:20:38.098 [INFO] [dome_arbiter]: dome: idle
+10-23 23:20:38.622 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:20:58.180 [INFO] [dome_arbiter]: dome: running
+10-23 23:20:58.222 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:21:05.683 [INFO] [dome_arbiter]: dome: move over, coast scale 1.15 for the next
+10-23 23:21:05.687 [INFO] [dome_arbiter]: dome: idle
+10-23 23:21:06.224 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:21:25.697 [INFO] [dome_arbiter]: dome: running
+10-23 23:21:25.722 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:21:33.100 [INFO] [dome_arbiter]: dome: move over, coast scale 0.79 for the next
+10-23 23:21:33.101 [INFO] [dome_arbiter]: dome: idle
+10-23 23:21:33.625 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:21:53.178 [INFO] [dome_arbiter]: dome: running
+10-23 23:21:53.222 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:21:59.628 [INFO] [dome_arbiter]: dome: move over, coast scale 0.48 for the next
+10-23 23:21:59.629 [INFO] [dome_arbiter]: dome: idle
+10-23 23:22:00.172 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:22:19.678 [INFO] [dome_arbiter]: dome: running
+10-23 23:22:19.728 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:22:26.479 [INFO] [dome_arbiter]: dome: move over, coast scale 1.92 for the next
+10-23 23:22:26.480 [INFO] [dome_arbiter]: dome: idle
+10-23 23:22:27.022 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:22:46.577 [INFO] [dome_arbiter]: dome: running
+10-23 23:22:46.622 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:22:53.328 [INFO] [dome_arbiter]: dome: move over, coast scale 0.95 for the next
+10-23 23:22:53.329 [INFO] [dome_arbiter]: dome: idle
+10-23 23:22:53.872 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:23:13.377 [INFO] [dome_arbiter]: dome: running
+10-23 23:23:13.423 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:23:20.178 [INFO] [dome_arbiter]: dome: move over, coast scale 0.58 for the next
+10-23 23:23:20.179 [INFO] [dome_arbiter]: dome: idle
+10-23 23:23:20.722 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:23:40.277 [INFO] [dome_arbiter]: dome: running
+10-23 23:23:40.322 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:23:48.528 [INFO] [dome_arbiter]: dome: move over, coast scale 0.65 for the next
+10-23 23:23:48.529 [INFO] [dome_arbiter]: dome: idle
+10-23 23:23:49.072 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:24:08.579 [INFO] [dome_arbiter]: dome: running
+10-23 23:24:08.625 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:24:15.732 [INFO] [dome_arbiter]: dome: move over, coast scale 0.97 for the next
+10-23 23:24:15.733 [INFO] [dome_arbiter]: dome: idle
+10-23 23:24:16.273 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:24:35.781 [INFO] [dome_arbiter]: dome: running
+10-23 23:24:35.825 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:24:41.184 [INFO] [dome_arbiter]: dome: move over, coast scale 0.67 for the next
+10-23 23:24:41.186 [INFO] [dome_arbiter]: dome: idle
+10-23 23:24:41.722 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:25:01.277 [INFO] [dome_arbiter]: dome: running
+10-23 23:25:01.323 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:25:08.779 [INFO] [dome_arbiter]: dome: move over, coast scale 0.66 for the next
+10-23 23:25:08.780 [INFO] [dome_arbiter]: dome: idle
+10-23 23:25:09.322 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:25:28.878 [INFO] [dome_arbiter]: dome: running
+10-23 23:25:28.922 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:25:34.779 [INFO] [dome_arbiter]: dome: move over, coast scale 0.56 for the next
+10-23 23:25:34.779 [INFO] [dome_arbiter]: dome: idle
+10-23 23:25:35.322 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:25:54.880 [INFO] [dome_arbiter]: dome: running
+10-23 23:25:54.922 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:26:00.781 [INFO] [dome_arbiter]: dome: move over, coast scale 0.71 for the next
+10-23 23:26:00.782 [INFO] [dome_arbiter]: dome: idle
+10-23 23:26:01.322 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:26:20.880 [INFO] [dome_arbiter]: dome: running
+10-23 23:26:20.925 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:26:26.287 [INFO] [dome_arbiter]: dome: move over, coast scale 1.24 for the next
+10-23 23:26:26.289 [INFO] [dome_arbiter]: dome: idle
+10-23 23:26:26.822 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:26:46.383 [INFO] [dome_arbiter]: dome: running
+10-23 23:26:46.422 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:26:51.481 [INFO] [dome_arbiter]: dome: move over, coast scale 0.73 for the next
+10-23 23:26:51.482 [INFO] [dome_arbiter]: dome: idle
+10-23 23:26:52.022 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:27:11.579 [INFO] [dome_arbiter]: dome: running
+10-23 23:27:11.622 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:27:17.731 [INFO] [dome_arbiter]: dome: move over, coast scale 0.47 for the next
+10-23 23:27:17.732 [INFO] [dome_arbiter]: dome: idle
+10-23 23:27:18.276 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:27:37.777 [INFO] [dome_arbiter]: dome: running
+10-23 23:27:37.822 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:27:44.429 [INFO] [dome_arbiter]: dome: move over, coast scale 1.17 for the next
+10-23 23:27:44.431 [INFO] [dome_arbiter]: dome: idle
+10-23 23:27:44.972 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:28:04.477 [INFO] [dome_arbiter]: dome: running
+10-23 23:28:04.523 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:28:10.828 [INFO] [dome_arbiter]: dome: move over, coast scale 0.45 for the next
+10-23 23:28:10.829 [INFO] [dome_arbiter]: dome: idle
+10-23 23:28:11.372 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:28:30.877 [INFO] [dome_arbiter]: dome: running
+10-23 23:28:30.922 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:28:36.778 [INFO] [dome_arbiter]: dome: move over, coast scale 0.61 for the next
+10-23 23:28:36.779 [INFO] [dome_arbiter]: dome: idle
+10-23 23:28:37.322 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:28:56.884 [INFO] [dome_arbiter]: dome: running
+10-23 23:28:56.922 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:29:02.429 [INFO] [dome_arbiter]: dome: move over, coast scale 1.05 for the next
+10-23 23:29:02.430 [INFO] [dome_arbiter]: dome: idle
+10-23 23:29:02.972 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:29:22.494 [INFO] [dome_arbiter]: dome: running
+10-23 23:29:22.522 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:29:30.235 [INFO] [dome_arbiter]: dome: move over, coast scale 0.50 for the next
+10-23 23:29:30.236 [INFO] [dome_arbiter]: dome: idle
+10-23 23:29:30.772 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:29:50.278 [INFO] [dome_arbiter]: dome: running
+10-23 23:29:50.323 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:29:56.780 [INFO] [dome_arbiter]: dome: move over, coast scale 1.35 for the next
+10-23 23:29:56.782 [INFO] [dome_arbiter]: dome: idle
+10-23 23:29:57.322 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:30:16.786 [INFO] [dome_arbiter]: dome: running
+10-23 23:30:16.823 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:30:23.534 [INFO] [dome_arbiter]: dome: move over, coast scale 0.44 for the next
+10-23 23:30:23.536 [INFO] [dome_arbiter]: dome: idle
+10-23 23:30:24.072 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:30:43.579 [INFO] [dome_arbiter]: dome: running
+10-23 23:30:43.622 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:30:49.328 [INFO] [dome_arbiter]: dome: move over, coast scale 0.63 for the next
+10-23 23:30:49.329 [INFO] [dome_arbiter]: dome: idle
+10-23 23:30:49.872 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:31:09.377 [INFO] [dome_arbiter]: dome: running
+10-23 23:31:09.422 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:31:14.577 [INFO] [dome_arbiter]: dome: move over, coast scale 0.76 for the next
+10-23 23:31:14.578 [INFO] [dome_arbiter]: dome: idle
+10-23 23:31:15.124 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:31:34.679 [INFO] [dome_arbiter]: dome: running
+10-23 23:31:34.722 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:31:38.384 [INFO] [dome_arbiter]: dome: move over, coast scale 0.61 for the next
+10-23 23:31:38.387 [INFO] [dome_arbiter]: dome: idle
+10-23 23:31:38.922 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:31:58.477 [INFO] [dome_arbiter]: dome: running
+10-23 23:31:58.523 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:32:04.781 [INFO] [dome_arbiter]: dome: move over, coast scale 1.15 for the next
+10-23 23:32:04.785 [INFO] [dome_arbiter]: dome: idle
+10-23 23:32:05.322 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:32:24.878 [INFO] [dome_arbiter]: dome: running
+10-23 23:32:24.923 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:32:32.929 [INFO] [dome_arbiter]: dome: move over, coast scale 0.66 for the next
+10-23 23:32:32.930 [INFO] [dome_arbiter]: dome: idle
+10-23 23:32:33.472 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:36:23.047 [INFO] [dome_arbiter]: dome_arbiter up: config /home/pi/r2_ws/install/r2_expression/share/r2_expression/config/expression.yaml, device dome_twist_converter via /dome/cmd/personality, channels dome
+10-23 23:36:23.070 [INFO] [dome_arbiter]: mood: - -> calm
+10-23 23:36:23.088 [INFO] [dome_arbiter]: dome: offline
+10-23 23:39:56.313 [INFO] [dome_twist_converter]: Dome command arbiter: joystick cmd_vel_dome (linear.x) has precedence, Foxglove cmd_vel_dome_foxglove (angular.z x 1.50), hold 0.50 s, timeouts 0.50 / 0.50 s, personality dome/cmd/personality (angular.z, timeout 0.50 s, 0.60 <= |v| <= 2.00 rad/s, |a| <= 6.00 rad/s2), output dome_controller/commands
+10-23 23:39:59.070 [INFO] [r2_affect]: r2_affect up: config /home/pi/r2_ws/install/r2_affect/share/r2_affect/config/affect.yaml, 5.0 Hz, mood calm (aro=0.00 val=0.20 cur=0.40 con=0.60)
+10-23 23:40:00.686 [INFO] [dome_arbiter]: dome_arbiter up: config /home/pi/r2_ws/install/r2_expression/share/r2_expression/config/expression.yaml, device dome_twist_converter via /dome/cmd/personality, channels dome
+10-23 23:40:00.788 [INFO] [dome_arbiter]: mood: - -> calm
+10-23 23:40:00.789 [INFO] [dome_arbiter]: dome: offline
+10-23 23:42:54.885 [INFO] [dome_twist_converter]: Dome command arbiter: joystick cmd_vel_dome (linear.x) has precedence, Foxglove cmd_vel_dome_foxglove (angular.z x 1.50), hold 0.50 s, timeouts 0.50 / 0.50 s, personality dome/cmd/personality (angular.z, timeout 0.50 s, 0.60 <= |v| <= 2.00 rad/s, |a| <= 6.00 rad/s2), output dome_controller/commands
+10-23 23:42:56.402 [INFO] [r2_affect]: r2_affect up: config /home/pi/r2_ws/install/r2_affect/share/r2_affect/config/affect.yaml, 5.0 Hz, mood calm (aro=0.00 val=0.20 cur=0.40 con=0.60)
+10-23 23:42:59.564 [INFO] [dome_arbiter]: dome_arbiter up: config /home/pi/r2_ws/install/r2_expression/share/r2_expression/config/expression.yaml, device dome_twist_converter via /dome/cmd/personality, channels dome
+10-23 23:43:00.237 [INFO] [dome_arbiter]: dome: offline
+10-23 23:43:25.375 [INFO] [dome_arbiter]: mood: - -> calm
+10-23 23:43:55.836 [INFO] [dome_arbiter]: dome: idle
+10-23 23:46:13.694 [INFO] [dome_twist_converter]: Dome command arbiter: joystick cmd_vel_dome (linear.x) has precedence, Foxglove cmd_vel_dome_foxglove (angular.z x 1.50), hold 0.50 s, timeouts 0.50 / 0.50 s, personality dome/cmd/personality (angular.z, timeout 0.50 s, 0.60 <= |v| <= 2.00 rad/s, |a| <= 6.00 rad/s2), output dome_controller/commands
+10-23 23:46:14.026 [INFO] [r2_affect]: r2_affect up: config /home/pi/r2_ws/install/r2_affect/share/r2_affect/config/affect.yaml, 5.0 Hz, mood calm (aro=0.00 val=0.20 cur=0.40 con=0.60)
+10-23 23:46:19.455 [INFO] [dome_arbiter]: dome_arbiter up: config /home/pi/r2_ws/install/r2_expression/share/r2_expression/config/expression.yaml, device dome_twist_converter via /dome/cmd/personality, channels dome
+10-23 23:46:20.199 [INFO] [dome_arbiter]: dome: offline
+10-23 23:46:57.434 [INFO] [dome_arbiter]: mood: - -> calm
+10-23 23:47:06.654 [INFO] [dome_arbiter]: dome: idle
+10-23 23:47:17.452 [INFO] [dome_arbiter]: dome: running
+10-23 23:47:17.478 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:47:24.853 [INFO] [dome_arbiter]: dome: move over, coast scale 0.56 for the next
+10-23 23:47:24.854 [INFO] [dome_arbiter]: dome: idle
+10-23 23:47:25.378 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:47:44.951 [INFO] [dome_arbiter]: dome: running
+10-23 23:47:44.978 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:47:50.255 [INFO] [dome_arbiter]: dome: move over, coast scale 1.34 for the next
+10-23 23:47:50.258 [INFO] [dome_arbiter]: dome: idle
+10-23 23:47:50.778 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:48:10.352 [INFO] [dome_arbiter]: dome: running
+10-23 23:48:10.378 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:48:15.452 [INFO] [dome_arbiter]: dome: move over, coast scale 0.96 for the next
+10-23 23:48:15.453 [INFO] [dome_arbiter]: dome: idle
+10-23 23:48:15.978 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:48:35.551 [INFO] [dome_arbiter]: dome: running
+10-23 23:48:35.578 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:48:42.605 [INFO] [dome_arbiter]: dome: move over, coast scale 0.61 for the next
+10-23 23:48:42.608 [INFO] [dome_arbiter]: dome: idle
+10-23 23:48:43.128 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:49:02.651 [INFO] [dome_arbiter]: dome: running
+10-23 23:49:02.678 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:49:09.102 [INFO] [dome_arbiter]: dome: move over, coast scale 0.45 for the next
+10-23 23:49:09.103 [INFO] [dome_arbiter]: dome: idle
+10-23 23:49:09.631 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:49:29.153 [INFO] [dome_arbiter]: dome: running
+10-23 23:49:29.178 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:49:35.852 [INFO] [dome_arbiter]: dome: move over, coast scale 0.45 for the next
+10-23 23:49:35.853 [INFO] [dome_arbiter]: dome: idle
+10-23 23:49:36.379 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:49:51.332 [INFO] [r2_affect]: mood forced and locked calm by mood_cli
+10-23 23:49:56.552 [INFO] [dome_arbiter]: dome: running
+10-23 23:49:56.578 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:50:03.253 [INFO] [dome_arbiter]: dome: move over, coast scale 2.00 for the next
+10-23 23:50:03.254 [INFO] [dome_arbiter]: dome: idle
+10-23 23:50:03.778 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:50:23.353 [INFO] [dome_arbiter]: dome: running
+10-23 23:50:23.379 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:50:29.655 [INFO] [dome_arbiter]: dome: move over, coast scale 1.41 for the next
+10-23 23:50:29.656 [INFO] [dome_arbiter]: dome: idle
+10-23 23:50:30.179 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:50:35.674 [INFO] [dome_arbiter]: dome: running (manual)
+10-23 23:50:35.675 [INFO] [dome_arbiter]: intent express-f5965232 accepted: dome look_at  from manual
+10-23 23:50:35.678 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:50:36.613 [INFO] [dome_arbiter]: intent express-d75a5625 accepted: dome look_at  from manual
+10-23 23:50:39.876 [INFO] [dome_arbiter]: intent express-f664bcef accepted: dome look_at  from manual
+10-23 23:50:45.822 [INFO] [dome_arbiter]: dome: move over, coast scale 0.42 for the next
+10-23 23:50:45.823 [INFO] [dome_arbiter]: dome: claimed (manual)
+10-23 23:50:46.329 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:50:50.824 [INFO] [dome_arbiter]: dome: idle
+10-23 23:50:55.205 [INFO] [dome_arbiter]: dome: running (manual)
+10-23 23:50:55.206 [INFO] [dome_arbiter]: intent express-51451aba accepted: dome look_at  from manual
+10-23 23:50:55.228 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:50:59.256 [INFO] [dome_arbiter]: dome: move over, coast scale 1.01 for the next
+10-23 23:50:59.257 [INFO] [dome_arbiter]: dome: claimed (manual)
+10-23 23:50:59.778 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:51:04.352 [INFO] [dome_arbiter]: dome: idle
+10-23 23:51:08.917 [INFO] [dome_arbiter]: dome: running (manual)
+10-23 23:51:08.918 [INFO] [dome_arbiter]: intent express-0b3de575 accepted: dome glance  from manual
+10-23 23:51:08.930 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:51:16.518 [INFO] [dome_arbiter]: dome: move over, coast scale 0.22 for the next
+10-23 23:51:16.519 [INFO] [dome_arbiter]: dome: claimed (manual)
+10-23 23:51:17.028 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:51:21.552 [INFO] [dome_arbiter]: dome: idle
+10-23 23:51:36.551 [INFO] [dome_arbiter]: dome: running
+10-23 23:51:36.578 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:51:42.702 [INFO] [dome_arbiter]: dome: move over, coast scale 0.45 for the next
+10-23 23:51:42.703 [INFO] [dome_arbiter]: dome: idle
+10-23 23:51:43.228 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:52:02.756 [INFO] [dome_arbiter]: dome: running
+10-23 23:52:02.778 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:52:09.355 [INFO] [dome_arbiter]: dome: move over, coast scale 0.00 for the next
+10-23 23:52:09.356 [INFO] [dome_arbiter]: dome: idle
+10-23 23:52:09.879 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:52:29.452 [INFO] [dome_arbiter]: dome: running
+10-23 23:52:29.478 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:52:35.653 [INFO] [dome_arbiter]: dome: move over, coast scale 0.86 for the next
+10-23 23:52:35.653 [INFO] [dome_arbiter]: dome: idle
+10-23 23:52:36.179 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:52:55.752 [INFO] [dome_arbiter]: dome: running
+10-23 23:52:55.779 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:53:03.703 [INFO] [dome_arbiter]: dome: move over, coast scale 0.38 for the next
+10-23 23:53:03.704 [INFO] [dome_arbiter]: dome: idle
+10-23 23:53:04.228 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:53:21.652 [INFO] [dome_arbiter]: dome: running (manual)
+10-23 23:53:21.653 [INFO] [dome_arbiter]: intent express-58bc5a9f accepted: dome look_at  from manual
+10-23 23:53:21.678 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:53:24.903 [INFO] [dome_arbiter]: dome: move over, coast scale 0.98 for the next
+10-23 23:53:24.904 [INFO] [dome_arbiter]: dome: claimed (manual)
+10-23 23:53:25.428 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:53:29.951 [INFO] [dome_arbiter]: dome: idle
+10-23 23:53:34.174 [INFO] [dome_arbiter]: dome: running (manual)
+10-23 23:53:34.175 [INFO] [dome_arbiter]: intent express-bef9cb7d accepted: dome look_at  from manual
+10-23 23:53:34.178 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:53:38.476 [INFO] [dome_arbiter]: dome: move over, coast scale 0.01 for the next
+10-23 23:53:38.476 [INFO] [dome_arbiter]: dome: claimed (manual)
+10-23 23:53:38.978 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:53:43.554 [INFO] [dome_arbiter]: dome: idle
+10-23 23:53:47.843 [INFO] [dome_arbiter]: dome: running (manual)
+10-23 23:53:47.844 [INFO] [dome_arbiter]: intent express-aa30b18c accepted: dome look_at  from manual
+10-23 23:53:47.878 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:53:53.445 [INFO] [dome_arbiter]: dome: move over, coast scale 0.65 for the next
+10-23 23:53:53.447 [INFO] [dome_arbiter]: dome: claimed (manual)
+10-23 23:53:53.978 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:53:58.451 [INFO] [dome_arbiter]: dome: idle
+10-23 23:54:02.527 [INFO] [dome_arbiter]: dome: running (manual)
+10-23 23:54:02.528 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:54:02.529 [INFO] [dome_arbiter]: intent express-bce1a850 accepted: dome look_at  from manual
+10-23 23:54:06.328 [INFO] [dome_arbiter]: dome: move over, coast scale 0.33 for the next
+10-23 23:54:06.329 [INFO] [dome_arbiter]: dome: claimed (manual)
+10-23 23:54:06.878 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:54:11.351 [INFO] [dome_arbiter]: dome: idle
+10-23 23:54:15.751 [INFO] [dome_arbiter]: dome: running (manual)
+10-23 23:54:15.752 [INFO] [dome_arbiter]: intent express-652aed96 accepted: dome glance  from manual
+10-23 23:54:15.778 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:54:22.450 [INFO] [dome_arbiter]: dome: move over, coast scale 0.36 for the next
+10-23 23:54:22.451 [INFO] [dome_arbiter]: dome: claimed (manual)
+10-23 23:54:22.978 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:54:27.452 [INFO] [dome_arbiter]: dome: idle
+10-23 23:54:42.451 [INFO] [dome_arbiter]: dome: running
+10-23 23:54:42.478 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:54:48.402 [INFO] [dome_arbiter]: dome: move over, coast scale 0.38 for the next
+10-23 23:54:48.403 [INFO] [dome_arbiter]: dome: idle
+10-23 23:54:48.928 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:55:08.451 [INFO] [dome_arbiter]: dome: running
+10-23 23:55:08.480 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:55:15.702 [INFO] [dome_arbiter]: dome: move over, coast scale 0.38 for the next
+10-23 23:55:15.703 [INFO] [dome_arbiter]: dome: idle
+10-23 23:55:16.228 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:55:35.751 [INFO] [dome_arbiter]: dome: running
+10-23 23:55:35.778 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:55:42.452 [INFO] [dome_arbiter]: dome: move over, coast scale 0.20 for the next
+10-23 23:55:42.453 [INFO] [dome_arbiter]: dome: idle
+10-23 23:55:42.978 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:56:02.552 [INFO] [dome_arbiter]: dome: running
+10-23 23:56:02.578 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:56:09.453 [INFO] [dome_arbiter]: dome: move over, coast scale 0.29 for the next
+10-23 23:56:09.453 [INFO] [dome_arbiter]: dome: idle
+10-23 23:56:09.979 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:56:16.057 [INFO] [dome_arbiter]: dome: running (manual)
+10-23 23:56:16.057 [INFO] [dome_arbiter]: intent express-d5c01cb7 accepted: dome look_at  from manual
+10-23 23:56:16.078 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:56:17.928 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:56:30.236 [INFO] [dome_arbiter]: dome_arbiter up: config /home/pi/r2_ws/install/r2_expression/share/r2_expression/config/expression.yaml, device dome_twist_converter via /dome/cmd/personality, channels dome
+10-23 23:56:30.238 [INFO] [dome_arbiter]: mood: - -> calm
+10-23 23:56:30.238 [INFO] [dome_arbiter]: dome: offline
+10-23 23:56:30.630 [INFO] [dome_arbiter]: dome: idle
+10-23 23:56:50.253 [INFO] [dome_arbiter]: dome: running
+10-23 23:56:50.278 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:56:57.654 [INFO] [dome_arbiter]: dome: move over, coast scale 0.83 for the next
+10-23 23:56:57.656 [INFO] [dome_arbiter]: dome: idle
+10-23 23:56:58.178 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:57:17.752 [INFO] [dome_arbiter]: dome: running
+10-23 23:57:17.778 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:57:24.606 [INFO] [dome_arbiter]: dome: move over, coast scale 1.06 for the next
+10-23 23:57:24.609 [INFO] [dome_arbiter]: dome: idle
+10-23 23:57:25.128 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:57:44.652 [INFO] [dome_arbiter]: dome: running
+10-23 23:57:44.678 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:57:50.003 [INFO] [dome_arbiter]: dome: move over, coast scale 0.16 for the next
+10-23 23:57:50.003 [INFO] [dome_arbiter]: dome: idle
+10-23 23:57:50.529 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:58:08.175 [INFO] [dome_arbiter]: dome_arbiter up: config /home/pi/r2_ws/install/r2_expression/share/r2_expression/config/expression.yaml, device dome_twist_converter via /dome/cmd/personality, channels dome
+10-23 23:58:08.177 [INFO] [dome_arbiter]: dome: offline
+10-23 23:58:08.225 [INFO] [dome_arbiter]: mood: - -> calm
+10-23 23:58:08.632 [INFO] [dome_arbiter]: dome: idle
+10-23 23:58:28.253 [INFO] [dome_arbiter]: dome: running
+10-23 23:58:28.278 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:58:34.058 [INFO] [dome_arbiter]: dome: move over, coast scale 0.92 for the next
+10-23 23:58:34.059 [INFO] [dome_arbiter]: dome: idle
+10-23 23:58:34.578 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:58:54.133 [INFO] [dome_arbiter]: dome: running
+10-23 23:58:54.180 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:58:59.906 [INFO] [dome_arbiter]: dome: move over, coast scale 0.37 for the next
+10-23 23:58:59.908 [INFO] [dome_arbiter]: dome: idle
+10-23 23:59:00.428 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:59:19.954 [INFO] [dome_arbiter]: dome: running
+10-23 23:59:19.981 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:59:27.804 [INFO] [dome_arbiter]: dome: move over, coast scale 0.51 for the next
+10-23 23:59:27.805 [INFO] [dome_arbiter]: dome: idle
+10-23 23:59:28.328 [INFO] [dome_twist_converter]: Dome command source: idle
+10-23 23:59:47.853 [INFO] [dome_arbiter]: dome: running
+10-23 23:59:47.879 [INFO] [dome_twist_converter]: Dome command source: personality
+10-23 23:59:53.304 [INFO] [dome_arbiter]: dome: move over, coast scale 0.38 for the next
+10-23 23:59:53.304 [INFO] [dome_arbiter]: dome: idle
+10-23 23:59:53.828 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:00:13.352 [INFO] [dome_arbiter]: dome: running
+10-24 00:00:13.378 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:00:19.903 [INFO] [dome_arbiter]: dome: move over, coast scale 0.51 for the next
+10-24 00:00:19.904 [INFO] [dome_arbiter]: dome: idle
+10-24 00:00:20.428 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:00:39.953 [INFO] [dome_arbiter]: dome: running
+10-24 00:00:39.978 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:00:45.703 [INFO] [dome_arbiter]: dome: move over, coast scale 0.38 for the next
+10-24 00:00:45.703 [INFO] [dome_arbiter]: dome: idle
+10-24 00:00:46.228 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:01:05.756 [INFO] [dome_arbiter]: dome: running
+10-24 00:01:05.778 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:01:11.104 [INFO] [dome_arbiter]: dome: move over, coast scale 0.55 for the next
+10-24 00:01:11.105 [INFO] [dome_arbiter]: dome: idle
+10-24 00:01:11.628 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:01:31.133 [INFO] [dome_arbiter]: dome: running
+10-24 00:01:31.178 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:01:37.533 [INFO] [dome_arbiter]: dome: move over, coast scale 0.58 for the next
+10-24 00:01:37.533 [INFO] [dome_arbiter]: dome: idle
+10-24 00:01:38.078 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:01:57.551 [INFO] [dome_arbiter]: dome: running
+10-24 00:01:57.578 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:02:04.454 [INFO] [dome_arbiter]: dome: move over, coast scale 2.00 for the next
+10-24 00:02:04.455 [INFO] [dome_arbiter]: dome: idle
+10-24 00:02:04.978 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:02:24.551 [INFO] [dome_arbiter]: dome: running
+10-24 00:02:24.578 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:02:27.429 [INFO] [dome_twist_converter]: Dome command source: foxglove
+10-24 00:02:27.431 [INFO] [dome_arbiter]: dome: move over, coast scale 1.97 for the next
+10-24 00:02:27.432 [INFO] [dome_arbiter]: dome: foreign (foxglove)
+10-24 00:02:28.628 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:02:28.631 [INFO] [dome_arbiter]: dome: idle
+10-24 00:02:47.453 [INFO] [dome_arbiter]: dome: running
+10-24 00:02:47.478 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:02:53.103 [INFO] [dome_arbiter]: dome: move over, coast scale 0.50 for the next
+10-24 00:02:53.104 [INFO] [dome_arbiter]: dome: idle
+10-24 00:02:53.628 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:03:13.131 [INFO] [dome_arbiter]: dome: running
+10-24 00:03:13.180 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:03:18.932 [INFO] [dome_arbiter]: dome: move over, coast scale 0.71 for the next
+10-24 00:03:18.933 [INFO] [dome_arbiter]: dome: idle
+10-24 00:03:19.478 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:03:38.951 [INFO] [dome_arbiter]: dome: running
+10-24 00:03:38.978 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:03:45.353 [INFO] [dome_arbiter]: dome: move over, coast scale 1.25 for the next
+10-24 00:03:45.353 [INFO] [dome_arbiter]: dome: idle
+10-24 00:03:45.878 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:04:05.456 [INFO] [dome_arbiter]: dome: running
+10-24 00:04:05.478 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:04:12.854 [INFO] [dome_arbiter]: dome: move over, coast scale 0.44 for the next
+10-24 00:04:12.855 [INFO] [dome_arbiter]: dome: idle
+10-24 00:04:13.378 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:04:32.954 [INFO] [dome_arbiter]: dome: running
+10-24 00:04:32.978 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:04:40.258 [INFO] [dome_arbiter]: dome: move over, coast scale 1.73 for the next
+10-24 00:04:40.260 [INFO] [dome_arbiter]: dome: idle
+10-24 00:04:40.778 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:05:00.351 [INFO] [dome_arbiter]: dome: running
+10-24 00:05:00.378 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:05:06.152 [INFO] [dome_arbiter]: dome: move over, coast scale 0.58 for the next
+10-24 00:05:06.153 [INFO] [dome_arbiter]: dome: idle
+10-24 00:05:06.678 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:05:26.253 [INFO] [dome_arbiter]: dome: running
+10-24 00:05:26.279 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:05:33.457 [INFO] [dome_arbiter]: dome: move over, coast scale 1.13 for the next
+10-24 00:05:33.460 [INFO] [dome_arbiter]: dome: idle
+10-24 00:05:33.980 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:05:53.552 [INFO] [dome_arbiter]: dome: running
+10-24 00:05:53.579 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:06:00.203 [INFO] [dome_arbiter]: dome: move over, coast scale 0.67 for the next
+10-24 00:06:00.204 [INFO] [dome_arbiter]: dome: idle
+10-24 00:06:00.728 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:06:20.252 [INFO] [dome_arbiter]: dome: running
+10-24 00:06:20.278 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:06:26.053 [INFO] [dome_arbiter]: dome: move over, coast scale 0.52 for the next
+10-24 00:06:26.054 [INFO] [dome_arbiter]: dome: idle
+10-24 00:06:26.578 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:06:46.137 [INFO] [dome_arbiter]: dome: running
+10-24 00:06:46.178 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:06:52.135 [INFO] [dome_arbiter]: dome: move over, coast scale 0.33 for the next
+10-24 00:06:52.136 [INFO] [dome_arbiter]: dome: idle
+10-24 00:06:52.678 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:07:12.153 [INFO] [dome_arbiter]: dome: running
+10-24 00:07:12.178 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:07:20.203 [INFO] [dome_arbiter]: dome: move over, coast scale 0.19 for the next
+10-24 00:07:20.204 [INFO] [dome_arbiter]: dome: idle
+10-24 00:07:20.728 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:07:40.253 [INFO] [dome_arbiter]: dome: running
+10-24 00:07:40.278 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:07:46.853 [INFO] [dome_arbiter]: dome: move over, coast scale 0.51 for the next
+10-24 00:07:46.854 [INFO] [dome_arbiter]: dome: idle
+10-24 00:07:47.378 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:08:06.956 [INFO] [dome_arbiter]: dome: running
+10-24 00:08:06.978 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:08:12.655 [INFO] [dome_arbiter]: dome: move over, coast scale 0.44 for the next
+10-24 00:08:12.656 [INFO] [dome_arbiter]: dome: idle
+10-24 00:08:13.178 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:08:13.196 [INFO] [dome_arbiter]: dome: running (manual)
+10-24 00:08:13.197 [INFO] [dome_arbiter]: intent express-222a6313 accepted: dome turn  from manual
+10-24 00:08:13.228 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:08:16.397 [INFO] [dome_arbiter]: dome: move over, coast scale 0.47 for the next
+10-24 00:08:16.398 [INFO] [dome_arbiter]: dome: claimed (manual)
+10-24 00:08:16.928 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:08:21.430 [INFO] [dome_arbiter]: dome: idle
+10-24 00:08:36.452 [INFO] [dome_arbiter]: dome: running
+10-24 00:08:36.478 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:08:42.452 [INFO] [dome_arbiter]: dome: move over, coast scale 0.48 for the next
+10-24 00:08:42.453 [INFO] [dome_arbiter]: dome: idle
+10-24 00:08:42.978 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:08:52.011 [INFO] [dome_arbiter]: dome: running
+10-24 00:08:52.013 [INFO] [dome_arbiter]: intent express-1ac78401 accepted: dome turn  from behavior
+10-24 00:08:52.028 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:08:56.262 [INFO] [dome_arbiter]: dome: move over, coast scale 0.54 for the next
+10-24 00:08:56.264 [INFO] [dome_arbiter]: dome: idle
+10-24 00:08:56.779 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:08:58.481 [INFO] [dome_arbiter]: dome: running
+10-24 00:08:58.484 [INFO] [dome_arbiter]: intent express-44c87809 accepted: dome turn  from behavior
+10-24 00:08:58.528 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:09:01.346 [INFO] [dome_arbiter]: intent express-7bce03f7 accepted: dome turn  from behavior
+10-24 00:09:05.580 [INFO] [dome_arbiter]: dome: move over, coast scale 0.62 for the next
+10-24 00:09:05.581 [INFO] [dome_arbiter]: dome: idle
+10-24 00:09:06.128 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:09:08.385 [INFO] [dome_arbiter]: dome: running
+10-24 00:09:08.387 [INFO] [dome_arbiter]: intent express-c6f932be accepted: dome turn  from behavior
+10-24 00:09:08.428 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:09:08.627 [INFO] [dome_arbiter]: intent express-28ef4f3f accepted: dome turn  from behavior
+10-24 00:09:13.685 [INFO] [dome_arbiter]: dome: move over, coast scale 1.22 for the next
+10-24 00:09:13.686 [INFO] [dome_arbiter]: dome: idle
+10-24 00:09:14.229 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:09:15.490 [INFO] [dome_arbiter]: dome: running
+10-24 00:09:15.491 [INFO] [dome_arbiter]: intent express-eb48f831 accepted: dome turn  from behavior
+10-24 00:09:15.528 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:09:19.091 [INFO] [dome_arbiter]: dome: move over, coast scale 0.24 for the next
+10-24 00:09:19.092 [INFO] [dome_arbiter]: dome: idle
+10-24 00:09:19.628 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:09:21.439 [INFO] [dome_arbiter]: dome: running
+10-24 00:09:21.440 [INFO] [dome_arbiter]: intent express-3065ff97 accepted: dome turn  from behavior
+10-24 00:09:21.478 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:09:24.009 [INFO] [dome_arbiter]: intent express-b22b1023 accepted: dome turn  from behavior
+10-24 00:09:28.140 [INFO] [dome_arbiter]: dome: move over, coast scale 0.93 for the next
+10-24 00:09:28.141 [INFO] [dome_arbiter]: dome: idle
+10-24 00:09:28.678 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:09:31.620 [INFO] [dome_arbiter]: dome: running
+10-24 00:09:31.621 [INFO] [dome_arbiter]: intent express-fb7ecef1 accepted: dome turn  from behavior
+10-24 00:09:31.628 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:09:33.311 [INFO] [dome_arbiter]: intent express-d4401d59 accepted: dome turn  from behavior
+10-24 00:09:36.072 [INFO] [dome_arbiter]: dome: move over, coast scale 1.01 for the next
+10-24 00:09:36.073 [INFO] [dome_arbiter]: dome: idle
+10-24 00:09:36.579 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:09:39.333 [INFO] [dome_arbiter]: dome: running
+10-24 00:09:39.335 [INFO] [dome_arbiter]: intent express-e3b6cf09 accepted: dome turn  from behavior
+10-24 00:09:39.352 [INFO] [dome_arbiter]: intent express-53cb8eae accepted: dome turn  from behavior
+10-24 00:09:39.378 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:09:42.582 [INFO] [dome_arbiter]: dome: move over, coast scale 0.81 for the next
+10-24 00:09:42.586 [INFO] [dome_arbiter]: dome: idle
+10-24 00:09:43.128 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:09:44.964 [INFO] [dome_arbiter]: dome: running
+10-24 00:09:44.965 [INFO] [dome_arbiter]: intent express-f844cc08 accepted: dome turn  from behavior
+10-24 00:09:44.978 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:09:46.397 [INFO] [dome_arbiter]: intent express-c5a53720 accepted: dome turn  from behavior
+10-24 00:09:51.215 [INFO] [dome_arbiter]: dome: move over, coast scale 1.03 for the next
+10-24 00:09:51.216 [INFO] [dome_arbiter]: dome: idle
+10-24 00:09:51.729 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:09:53.735 [INFO] [dome_arbiter]: dome: running
+10-24 00:09:53.737 [INFO] [dome_arbiter]: intent express-7a95db75 accepted: dome turn  from behavior
+10-24 00:09:53.778 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:09:56.585 [INFO] [dome_arbiter]: intent express-d7613221 accepted: dome turn  from behavior
+10-24 00:10:01.335 [INFO] [dome_arbiter]: dome: move over, coast scale 0.90 for the next
+10-24 00:10:01.336 [INFO] [dome_arbiter]: dome: idle
+10-24 00:10:01.878 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:10:03.918 [INFO] [dome_arbiter]: dome: running
+10-24 00:10:03.919 [INFO] [dome_arbiter]: intent express-167327b3 accepted: dome turn  from behavior
+10-24 00:10:03.928 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:10:06.333 [INFO] [dome_arbiter]: intent express-de22469c accepted: dome turn  from behavior
+10-24 00:10:09.872 [INFO] [dome_arbiter]: dome: move over, coast scale 1.12 for the next
+10-24 00:10:09.875 [INFO] [dome_arbiter]: dome: idle
+10-24 00:10:10.378 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:10:12.937 [INFO] [dome_arbiter]: dome: running
+10-24 00:10:12.938 [INFO] [dome_arbiter]: intent express-c1d6d6a9 accepted: dome turn  from behavior
+10-24 00:10:12.978 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:10:13.309 [INFO] [dome_arbiter]: intent express-d4142d35 accepted: dome turn  from behavior
+10-24 00:10:17.989 [INFO] [dome_arbiter]: dome: move over, coast scale 0.60 for the next
+10-24 00:10:17.991 [INFO] [dome_arbiter]: dome: idle
+10-24 00:10:18.528 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:10:20.678 [INFO] [dome_arbiter]: dome: running
+10-24 00:10:20.679 [INFO] [dome_arbiter]: intent express-caba05da accepted: dome turn  from behavior
+10-24 00:10:20.731 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:10:21.078 [INFO] [dome_arbiter]: intent express-2f9d3062 accepted: dome turn  from behavior
+10-24 00:10:25.929 [INFO] [dome_arbiter]: dome: move over, coast scale 0.95 for the next
+10-24 00:10:25.930 [INFO] [dome_arbiter]: dome: idle
+10-24 00:10:26.478 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:10:28.901 [INFO] [dome_arbiter]: dome: running
+10-24 00:10:28.902 [INFO] [dome_arbiter]: intent express-c5f4766c accepted: dome turn  from behavior
+10-24 00:10:28.928 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:10:30.407 [INFO] [dome_arbiter]: intent express-e339c741 accepted: dome turn  from behavior
+10-24 00:10:33.852 [INFO] [dome_arbiter]: dome: move over, coast scale 0.84 for the next
+10-24 00:10:33.853 [INFO] [dome_arbiter]: dome: idle
+10-24 00:10:34.378 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:10:37.213 [INFO] [dome_arbiter]: dome: running
+10-24 00:10:37.216 [INFO] [dome_arbiter]: intent express-013374e5 accepted: dome turn  from behavior
+10-24 00:10:37.229 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:10:37.299 [INFO] [dome_arbiter]: intent express-beb552dd accepted: dome turn  from behavior
+10-24 00:10:42.314 [INFO] [dome_arbiter]: dome: move over, coast scale 0.26 for the next
+10-24 00:10:42.315 [INFO] [dome_arbiter]: dome: idle
+10-24 00:10:42.828 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:10:44.539 [INFO] [dome_arbiter]: dome: running
+10-24 00:10:44.540 [INFO] [dome_arbiter]: intent express-d60e1615 accepted: dome turn  from behavior
+10-24 00:10:44.578 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:10:48.200 [INFO] [dome_arbiter]: intent express-5b033d53 accepted: dome turn  from behavior
+10-24 00:10:52.490 [INFO] [dome_arbiter]: dome: move over, coast scale 0.37 for the next
+10-24 00:10:52.490 [INFO] [dome_arbiter]: dome: idle
+10-24 00:10:53.028 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:11:12.552 [INFO] [dome_arbiter]: dome: running
+10-24 00:11:12.578 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:11:19.005 [INFO] [dome_arbiter]: dome: move over, coast scale 0.33 for the next
+10-24 00:11:19.008 [INFO] [dome_arbiter]: dome: idle
+10-24 00:11:19.528 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:11:39.052 [INFO] [dome_arbiter]: dome: running
+10-24 00:11:39.079 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:11:45.553 [INFO] [dome_arbiter]: dome: move over, coast scale 0.48 for the next
+10-24 00:11:45.553 [INFO] [dome_arbiter]: dome: idle
+10-24 00:11:46.078 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:12:02.705 [INFO] [dome_arbiter]: dome: running
+10-24 00:12:02.705 [INFO] [dome_arbiter]: intent express-17c79e08 accepted: dome turn  from behavior
+10-24 00:12:02.730 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:12:05.873 [INFO] [dome_arbiter]: intent express-fe378dce accepted: dome turn  from behavior
+10-24 00:12:10.655 [INFO] [dome_arbiter]: dome: move over, coast scale 0.44 for the next
+10-24 00:12:10.656 [INFO] [dome_arbiter]: dome: idle
+10-24 00:12:11.178 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:12:13.697 [INFO] [dome_arbiter]: dome: running
+10-24 00:12:13.697 [INFO] [dome_arbiter]: intent express-f95ba764 accepted: dome turn  from behavior
+10-24 00:12:13.728 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:12:15.049 [INFO] [dome_arbiter]: intent express-e7a385e5 accepted: dome turn  from behavior
+10-24 00:12:19.547 [INFO] [dome_arbiter]: dome: move over, coast scale 0.55 for the next
+10-24 00:12:19.548 [INFO] [dome_arbiter]: dome: idle
+10-24 00:12:20.078 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:12:22.458 [INFO] [dome_arbiter]: dome: running
+10-24 00:12:22.459 [INFO] [dome_arbiter]: intent express-5b1279b0 accepted: dome turn  from behavior
+10-24 00:12:22.478 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:12:24.507 [INFO] [dome_arbiter]: intent express-ff6dddf1 accepted: dome turn  from behavior
+10-24 00:12:29.009 [INFO] [dome_arbiter]: dome: move over, coast scale 0.24 for the next
+10-24 00:12:29.010 [INFO] [dome_arbiter]: dome: idle
+10-24 00:12:29.529 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:12:31.195 [INFO] [dome_arbiter]: dome: running
+10-24 00:12:31.197 [INFO] [dome_arbiter]: intent express-bdd51aed accepted: dome turn  from behavior
+10-24 00:12:31.228 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:12:32.608 [INFO] [dome_arbiter]: intent express-bd82e188 accepted: dome turn  from behavior
+10-24 00:12:39.344 [INFO] [dome_arbiter]: dome: move over, coast scale 1.16 for the next
+10-24 00:12:39.345 [INFO] [dome_arbiter]: dome: idle
+10-24 00:12:39.879 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:12:41.456 [INFO] [dome_arbiter]: dome: running
+10-24 00:12:41.457 [INFO] [dome_arbiter]: intent express-a9ec3f97 accepted: dome turn  from behavior
+10-24 00:12:41.478 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:12:45.306 [INFO] [dome_arbiter]: dome: move over, coast scale 0.66 for the next
+10-24 00:12:45.307 [INFO] [dome_arbiter]: dome: idle
+10-24 00:12:45.828 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:12:48.153 [INFO] [dome_arbiter]: dome: running
+10-24 00:12:48.154 [INFO] [dome_arbiter]: intent express-3c42a055 accepted: dome turn  from behavior
+10-24 00:12:48.178 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:12:50.404 [INFO] [dome_arbiter]: intent express-cf3fcf9f accepted: dome turn  from behavior
+10-24 00:12:55.404 [INFO] [dome_arbiter]: dome: move over, coast scale 0.51 for the next
+10-24 00:12:55.404 [INFO] [dome_arbiter]: dome: idle
+10-24 00:12:55.928 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:12:58.245 [INFO] [dome_arbiter]: dome: running
+10-24 00:12:58.248 [INFO] [dome_arbiter]: intent express-e5e3da57 accepted: dome turn  from behavior
+10-24 00:12:58.279 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:13:00.293 [INFO] [dome_arbiter]: intent express-80a83be1 accepted: dome turn  from behavior
+10-24 00:13:05.197 [INFO] [dome_arbiter]: dome: move over, coast scale 0.81 for the next
+10-24 00:13:05.198 [INFO] [dome_arbiter]: dome: idle
+10-24 00:13:05.728 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:13:07.912 [INFO] [dome_arbiter]: dome: running
+10-24 00:13:07.914 [INFO] [dome_arbiter]: intent express-913507af accepted: dome turn  from behavior
+10-24 00:13:07.928 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:13:10.691 [INFO] [dome_arbiter]: intent express-572125de accepted: dome turn  from behavior
+10-24 00:13:14.413 [INFO] [dome_arbiter]: dome: move over, coast scale 1.13 for the next
+10-24 00:13:14.414 [INFO] [dome_arbiter]: dome: idle
+10-24 00:13:14.928 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:13:17.295 [INFO] [dome_arbiter]: dome: running
+10-24 00:13:17.295 [INFO] [dome_arbiter]: intent express-8a588ec8 accepted: dome turn  from behavior
+10-24 00:13:17.328 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:13:18.528 [INFO] [dome_arbiter]: intent express-a47f49bf accepted: dome turn  from behavior
+10-24 00:13:23.296 [INFO] [dome_arbiter]: dome: move over, coast scale 0.55 for the next
+10-24 00:13:23.297 [INFO] [dome_arbiter]: dome: idle
+10-24 00:13:23.829 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:13:26.306 [INFO] [dome_arbiter]: dome: running
+10-24 00:13:26.307 [INFO] [dome_arbiter]: intent express-b2d86f55 accepted: dome turn  from behavior
+10-24 00:13:26.328 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:13:28.499 [INFO] [dome_arbiter]: intent express-9a260ab9 accepted: dome turn  from behavior
+10-24 00:13:32.507 [INFO] [dome_arbiter]: dome: move over, coast scale 1.02 for the next
+10-24 00:13:32.508 [INFO] [dome_arbiter]: dome: idle
+10-24 00:13:33.028 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:13:35.282 [INFO] [dome_arbiter]: dome: running
+10-24 00:13:35.285 [INFO] [dome_arbiter]: intent express-4637f5ad accepted: dome turn  from behavior
+10-24 00:13:35.328 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:13:35.509 [INFO] [dome_arbiter]: intent express-3ed019c2 accepted: dome turn  from behavior
+10-24 00:13:39.985 [INFO] [dome_arbiter]: dome: move over, coast scale 1.48 for the next
+10-24 00:13:39.987 [INFO] [dome_arbiter]: dome: idle
+10-24 00:13:40.528 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:13:41.940 [INFO] [dome_arbiter]: dome: running
+10-24 00:13:41.941 [INFO] [dome_arbiter]: intent express-68817648 accepted: dome turn  from behavior
+10-24 00:13:41.978 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:13:46.490 [INFO] [dome_arbiter]: dome: move over, coast scale 0.09 for the next
+10-24 00:13:46.491 [INFO] [dome_arbiter]: dome: idle
+10-24 00:13:47.028 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:13:49.366 [INFO] [dome_arbiter]: dome: running
+10-24 00:13:49.367 [INFO] [dome_arbiter]: intent express-9b19eef6 accepted: dome turn  from behavior
+10-24 00:13:49.380 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:13:51.474 [INFO] [dome_arbiter]: intent express-aed724f0 accepted: dome turn  from behavior
+10-24 00:13:56.467 [INFO] [dome_arbiter]: dome: move over, coast scale 0.87 for the next
+10-24 00:13:56.468 [INFO] [dome_arbiter]: dome: idle
+10-24 00:13:56.978 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:13:59.330 [INFO] [dome_arbiter]: dome: running
+10-24 00:13:59.333 [INFO] [dome_arbiter]: intent express-11c56983 accepted: dome turn  from behavior
+10-24 00:13:59.378 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:13:59.448 [INFO] [dome_arbiter]: intent express-6357a290 accepted: dome turn  from behavior
+10-24 00:14:05.931 [INFO] [dome_arbiter]: dome: move over, coast scale 0.46 for the next
+10-24 00:14:05.932 [INFO] [dome_arbiter]: dome: idle
+10-24 00:14:06.478 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:14:08.818 [INFO] [dome_arbiter]: dome: running
+10-24 00:14:08.822 [INFO] [dome_arbiter]: intent express-51867cb0 accepted: dome turn  from behavior
+10-24 00:14:08.828 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:14:08.880 [INFO] [dome_arbiter]: intent express-c4df7ab3 accepted: dome turn  from behavior
+10-24 00:14:13.569 [INFO] [dome_arbiter]: dome: move over, coast scale 0.86 for the next
+10-24 00:14:13.570 [INFO] [dome_arbiter]: dome: idle
+10-24 00:14:14.078 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:14:16.766 [INFO] [dome_arbiter]: dome: running
+10-24 00:14:16.767 [INFO] [dome_arbiter]: intent express-e66acfad accepted: dome turn  from behavior
+10-24 00:14:16.778 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:14:18.243 [INFO] [dome_arbiter]: intent express-2b0f5c8b accepted: dome turn  from behavior
+10-24 00:14:23.066 [INFO] [dome_arbiter]: dome: move over, coast scale 0.93 for the next
+10-24 00:14:23.067 [INFO] [dome_arbiter]: dome: idle
+10-24 00:14:23.578 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:14:25.942 [INFO] [dome_arbiter]: dome: running
+10-24 00:14:25.942 [INFO] [dome_arbiter]: intent express-ca90c781 accepted: dome turn  from behavior
+10-24 00:14:25.978 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:14:27.767 [INFO] [dome_arbiter]: intent express-26d63d05 accepted: dome turn  from behavior
+10-24 00:14:30.242 [INFO] [dome_arbiter]: dome: move over, coast scale 0.97 for the next
+10-24 00:14:30.243 [INFO] [dome_arbiter]: dome: idle
+10-24 00:14:30.778 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:14:31.883 [INFO] [dome_arbiter]: dome: running
+10-24 00:14:31.884 [INFO] [dome_arbiter]: intent express-c3632e06 accepted: dome turn  from behavior
+10-24 00:14:31.928 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:14:35.688 [INFO] [dome_arbiter]: dome: move over, coast scale 0.89 for the next
+10-24 00:14:35.690 [INFO] [dome_arbiter]: dome: idle
+10-24 00:14:36.228 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:14:38.578 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:14:38.578 [INFO] [dome_arbiter]: dome: running
+10-24 00:14:38.581 [INFO] [dome_arbiter]: intent express-a3202d48 accepted: dome turn  from behavior
+10-24 00:14:40.676 [INFO] [dome_arbiter]: intent express-efb121ff accepted: dome turn  from behavior
+10-24 00:14:44.528 [INFO] [dome_arbiter]: dome: move over, coast scale 1.03 for the next
+10-24 00:14:44.528 [INFO] [dome_arbiter]: dome: idle
+10-24 00:14:45.078 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:14:46.860 [INFO] [dome_arbiter]: dome: running
+10-24 00:14:46.862 [INFO] [dome_arbiter]: intent express-846bab2e accepted: dome turn  from behavior
+10-24 00:14:46.878 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:14:49.692 [INFO] [dome_arbiter]: intent express-927d8dbf accepted: dome turn  from behavior
+10-24 00:14:54.411 [INFO] [dome_arbiter]: dome: move over, coast scale 0.82 for the next
+10-24 00:14:54.411 [INFO] [dome_arbiter]: dome: idle
+10-24 00:14:54.928 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:14:56.720 [INFO] [dome_arbiter]: dome: running
+10-24 00:14:56.721 [INFO] [dome_arbiter]: intent express-d930d806 accepted: dome turn  from behavior
+10-24 00:14:56.728 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:14:58.106 [INFO] [dome_arbiter]: intent express-527ee19c accepted: dome turn  from behavior
+10-24 00:15:01.622 [INFO] [dome_arbiter]: dome: move over, coast scale 0.83 for the next
+10-24 00:15:01.624 [INFO] [dome_arbiter]: dome: idle
+10-24 00:15:02.128 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:15:04.966 [INFO] [dome_arbiter]: dome: running
+10-24 00:15:04.967 [INFO] [dome_arbiter]: intent express-a64080c0 accepted: dome turn  from behavior
+10-24 00:15:04.978 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:15:05.064 [INFO] [dome_arbiter]: intent express-4378e480 accepted: dome turn  from behavior
+10-24 00:15:09.616 [INFO] [dome_arbiter]: dome: move over, coast scale 1.06 for the next
+10-24 00:15:09.617 [INFO] [dome_arbiter]: dome: idle
+10-24 00:15:10.128 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:15:12.541 [INFO] [dome_arbiter]: dome: running
+10-24 00:15:12.544 [INFO] [dome_arbiter]: intent express-4fb5b9d4 accepted: dome turn  from behavior
+10-24 00:15:12.581 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:15:12.611 [INFO] [dome_arbiter]: intent express-f4077863 accepted: dome turn  from behavior
+10-24 00:15:17.288 [INFO] [dome_arbiter]: dome: move over, coast scale 0.21 for the next
+10-24 00:15:17.290 [INFO] [dome_arbiter]: dome: idle
+10-24 00:15:17.828 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:15:19.637 [INFO] [dome_arbiter]: dome: running
+10-24 00:15:19.638 [INFO] [dome_arbiter]: intent express-f89f8757 accepted: dome turn  from behavior
+10-24 00:15:19.678 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:15:21.278 [INFO] [dome_arbiter]: intent express-b117a3e4 accepted: dome turn  from behavior
+10-24 00:15:27.288 [INFO] [dome_arbiter]: dome: move over, coast scale 0.60 for the next
+10-24 00:15:27.289 [INFO] [dome_arbiter]: dome: idle
+10-24 00:15:27.828 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:15:29.105 [INFO] [dome_arbiter]: dome: running
+10-24 00:15:29.108 [INFO] [dome_arbiter]: intent express-63924dfa accepted: dome turn  from behavior
+10-24 00:15:29.129 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:15:32.156 [INFO] [dome_arbiter]: dome: move over, coast scale 0.56 for the next
+10-24 00:15:32.156 [INFO] [dome_arbiter]: dome: idle
+10-24 00:15:32.678 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:15:33.775 [INFO] [dome_arbiter]: dome: running
+10-24 00:15:33.776 [INFO] [dome_arbiter]: intent express-d0925b74 accepted: dome turn  from behavior
+10-24 00:15:33.778 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:15:37.776 [INFO] [dome_arbiter]: dome: move over, coast scale 0.35 for the next
+10-24 00:15:37.776 [INFO] [dome_arbiter]: dome: idle
+10-24 00:15:38.278 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:15:40.752 [INFO] [dome_arbiter]: dome: running
+10-24 00:15:40.753 [INFO] [dome_arbiter]: intent express-910e7e96 accepted: dome turn  from behavior
+10-24 00:15:40.778 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:15:42.627 [INFO] [dome_arbiter]: intent express-abef0af8 accepted: dome turn  from behavior
+10-24 00:15:47.654 [INFO] [dome_arbiter]: dome: move over, coast scale 0.84 for the next
+10-24 00:15:47.655 [INFO] [dome_arbiter]: dome: idle
+10-24 00:15:48.178 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:15:51.036 [INFO] [dome_arbiter]: dome: running
+10-24 00:15:51.037 [INFO] [dome_arbiter]: intent express-f7e5a18a accepted: dome turn  from behavior
+10-24 00:15:51.078 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:15:51.177 [INFO] [dome_arbiter]: intent express-bb301d56 accepted: dome turn  from behavior
+10-24 00:15:56.186 [INFO] [dome_arbiter]: dome: move over, coast scale 0.80 for the next
+10-24 00:15:56.187 [INFO] [dome_arbiter]: dome: idle
+10-24 00:15:56.728 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:15:59.168 [INFO] [dome_arbiter]: dome: running
+10-24 00:15:59.170 [INFO] [dome_arbiter]: intent express-653f232a accepted: dome turn  from behavior
+10-24 00:15:59.178 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:16:01.215 [INFO] [dome_arbiter]: intent express-8fcb2c2e accepted: dome turn  from behavior
+10-24 00:16:06.569 [INFO] [dome_arbiter]: dome: move over, coast scale 0.54 for the next
+10-24 00:16:06.569 [INFO] [dome_arbiter]: dome: idle
+10-24 00:16:07.078 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:16:09.401 [INFO] [dome_arbiter]: dome: running
+10-24 00:16:09.401 [INFO] [dome_arbiter]: intent express-58c30aa8 accepted: dome turn  from behavior
+10-24 00:16:09.428 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:16:11.239 [INFO] [dome_arbiter]: intent express-5a563bee accepted: dome turn  from behavior
+10-24 00:16:15.501 [INFO] [dome_arbiter]: dome: move over, coast scale 0.78 for the next
+10-24 00:16:15.502 [INFO] [dome_arbiter]: dome: idle
+10-24 00:16:16.028 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:16:18.412 [INFO] [dome_arbiter]: dome: running
+10-24 00:16:18.414 [INFO] [dome_arbiter]: intent express-497abcb8 accepted: dome turn  from behavior
+10-24 00:16:18.428 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:16:20.707 [INFO] [dome_arbiter]: intent express-bf401550 accepted: dome turn  from behavior
+10-24 00:16:24.464 [INFO] [dome_arbiter]: dome: move over, coast scale 1.43 for the next
+10-24 00:16:24.465 [INFO] [dome_arbiter]: dome: idle
+10-24 00:16:24.979 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:16:27.210 [INFO] [dome_arbiter]: dome: running
+10-24 00:16:27.212 [INFO] [dome_arbiter]: intent express-d8156222 accepted: dome turn  from behavior
+10-24 00:16:27.228 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:16:28.575 [INFO] [dome_arbiter]: intent express-58fe200e accepted: dome turn  from behavior
+10-24 00:16:33.361 [INFO] [dome_arbiter]: dome: move over, coast scale 0.37 for the next
+10-24 00:16:33.361 [INFO] [dome_arbiter]: dome: idle
+10-24 00:16:33.878 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:16:35.117 [INFO] [dome_arbiter]: dome: running
+10-24 00:16:35.118 [INFO] [dome_arbiter]: intent express-b6d245f0 accepted: dome turn  from behavior
+10-24 00:16:35.128 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:16:39.318 [INFO] [dome_arbiter]: dome: move over, coast scale 0.86 for the next
+10-24 00:16:39.319 [INFO] [dome_arbiter]: dome: idle
+10-24 00:16:39.828 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:16:42.177 [INFO] [dome_arbiter]: dome: running
+10-24 00:16:42.178 [INFO] [dome_arbiter]: intent express-ee7b58a8 accepted: dome turn  from behavior
+10-24 00:16:42.228 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:16:44.193 [INFO] [dome_arbiter]: intent express-8ee587e8 accepted: dome turn  from behavior
+10-24 00:16:48.177 [INFO] [dome_arbiter]: dome: move over, coast scale 2.00 for the next
+10-24 00:16:48.178 [INFO] [dome_arbiter]: dome: idle
+10-24 00:16:48.678 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:16:50.802 [INFO] [dome_arbiter]: dome: running
+10-24 00:16:50.803 [INFO] [dome_arbiter]: intent express-81d877ab accepted: dome turn  from behavior
+10-24 00:16:50.828 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:16:53.145 [INFO] [dome_arbiter]: intent express-58fcba59 accepted: dome turn  from behavior
+10-24 00:16:58.004 [INFO] [dome_arbiter]: dome: move over, coast scale 1.06 for the next
+10-24 00:16:58.006 [INFO] [dome_arbiter]: dome: idle
+10-24 00:16:58.528 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:17:18.052 [INFO] [dome_arbiter]: dome: running
+10-24 00:17:18.078 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:17:24.454 [INFO] [dome_arbiter]: dome: move over, coast scale 0.51 for the next
+10-24 00:17:24.455 [INFO] [dome_arbiter]: dome: idle
+10-24 00:17:24.924 [INFO] [dome_arbiter]: dome: running
+10-24 00:17:24.926 [INFO] [dome_arbiter]: intent express-6733581b accepted: dome turn  from behavior
+10-24 00:17:27.509 [INFO] [dome_arbiter]: intent express-003ab661 accepted: dome turn  from behavior
+10-24 00:17:31.419 [INFO] [dome_arbiter]: dome: move over, coast scale 1.12 for the next
+10-24 00:17:31.420 [INFO] [dome_arbiter]: dome: idle
+10-24 00:17:31.928 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:17:34.438 [INFO] [dome_arbiter]: dome: running
+10-24 00:17:34.441 [INFO] [dome_arbiter]: intent express-ada7d791 accepted: dome turn  from behavior
+10-24 00:17:34.478 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:17:37.461 [INFO] [dome_arbiter]: intent express-df1127f9 accepted: dome turn  from behavior
+10-24 00:17:39.886 [INFO] [dome_arbiter]: dome: move over, coast scale 0.97 for the next
+10-24 00:17:39.887 [INFO] [dome_arbiter]: dome: idle
+10-24 00:17:40.428 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:17:42.469 [INFO] [dome_arbiter]: dome: running
+10-24 00:17:42.469 [INFO] [dome_arbiter]: intent express-6e39988d accepted: dome turn  from behavior
+10-24 00:17:42.478 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:17:43.896 [INFO] [dome_arbiter]: intent express-096e4749 accepted: dome turn  from behavior
+10-24 00:17:48.468 [INFO] [dome_arbiter]: dome: move over, coast scale 0.14 for the next
+10-24 00:17:48.469 [INFO] [dome_arbiter]: dome: idle
+10-24 00:17:48.978 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:17:51.678 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:17:51.679 [INFO] [dome_arbiter]: dome: running
+10-24 00:17:51.681 [INFO] [dome_arbiter]: intent express-5455ad1b accepted: dome turn  from behavior
+10-24 00:17:54.292 [INFO] [dome_arbiter]: intent express-9941f790 accepted: dome turn  from behavior
+10-24 00:17:55.578 [INFO] [dome_twist_converter]: Dome command source: foxglove
+10-24 00:17:55.580 [INFO] [dome_arbiter]: dome: move over, coast scale 0.14 for the next
+10-24 00:17:55.581 [INFO] [dome_arbiter]: dome: foreign (foxglove)
+10-24 00:17:56.278 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:17:56.280 [INFO] [dome_arbiter]: dome: idle
+10-24 00:17:57.043 [INFO] [dome_arbiter]: dome: running
+10-24 00:17:57.044 [INFO] [dome_arbiter]: intent express-75fb46c8 accepted: dome turn  from behavior
+10-24 00:17:57.078 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:18:01.245 [INFO] [dome_arbiter]: dome: move over, coast scale 0.93 for the next
+10-24 00:18:01.247 [INFO] [dome_arbiter]: dome: idle
+10-24 00:18:01.778 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:18:02.781 [INFO] [dome_arbiter]: dome: running
+10-24 00:18:02.782 [INFO] [dome_arbiter]: intent express-0ae1b354 accepted: dome turn  from behavior
+10-24 00:18:02.829 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:18:06.732 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 00:18:06.732 [INFO] [dome_arbiter]: dome: idle
+10-24 00:18:07.278 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:18:09.131 [INFO] [dome_arbiter]: dome: running
+10-24 00:18:09.131 [INFO] [dome_arbiter]: intent express-2f5b2c30 accepted: dome turn  from behavior
+10-24 00:18:09.179 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:18:12.931 [INFO] [dome_arbiter]: dome: move over, coast scale 0.61 for the next
+10-24 00:18:12.932 [INFO] [dome_arbiter]: dome: idle
+10-24 00:18:13.478 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:18:15.722 [INFO] [dome_arbiter]: dome: running
+10-24 00:18:15.723 [INFO] [dome_arbiter]: intent express-1ac92e99 accepted: dome turn  from behavior
+10-24 00:18:15.728 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:18:17.169 [INFO] [dome_arbiter]: intent express-bbda097f accepted: dome turn  from behavior
+10-24 00:18:22.273 [INFO] [dome_arbiter]: dome: move over, coast scale 1.36 for the next
+10-24 00:18:22.273 [INFO] [dome_arbiter]: dome: idle
+10-24 00:18:22.778 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:18:25.149 [INFO] [dome_arbiter]: dome: running
+10-24 00:18:25.150 [INFO] [dome_arbiter]: intent express-34925d13 accepted: dome turn  from behavior
+10-24 00:18:25.179 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:18:27.592 [INFO] [dome_arbiter]: intent express-e1d11a8e accepted: dome turn  from behavior
+10-24 00:18:31.050 [INFO] [dome_arbiter]: dome: move over, coast scale 0.78 for the next
+10-24 00:18:31.051 [INFO] [dome_arbiter]: dome: idle
+10-24 00:18:31.579 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:18:32.598 [INFO] [dome_arbiter]: dome: running
+10-24 00:18:32.598 [INFO] [dome_arbiter]: intent express-31950329 accepted: dome turn  from behavior
+10-24 00:18:32.628 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:18:36.448 [INFO] [dome_arbiter]: dome: move over, coast scale 2.00 for the next
+10-24 00:18:36.450 [INFO] [dome_arbiter]: dome: idle
+10-24 00:18:36.978 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:18:39.082 [INFO] [dome_arbiter]: dome: running
+10-24 00:18:39.083 [INFO] [dome_arbiter]: intent express-acc63242 accepted: dome turn  from behavior
+10-24 00:18:39.128 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:18:41.131 [INFO] [dome_arbiter]: intent express-da0c93a0 accepted: dome turn  from behavior
+10-24 00:18:44.933 [INFO] [dome_arbiter]: dome: move over, coast scale 0.50 for the next
+10-24 00:18:44.934 [INFO] [dome_arbiter]: dome: idle
+10-24 00:18:45.478 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:18:47.626 [INFO] [dome_arbiter]: dome: running
+10-24 00:18:47.627 [INFO] [dome_arbiter]: intent express-2e928b39 accepted: dome turn  from behavior
+10-24 00:18:47.679 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:18:48.863 [INFO] [dome_arbiter]: intent express-057b3caa accepted: dome turn  from behavior
+10-24 00:18:52.726 [INFO] [dome_arbiter]: dome: move over, coast scale 0.52 for the next
+10-24 00:18:52.727 [INFO] [dome_arbiter]: dome: idle
+10-24 00:18:53.228 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:18:55.466 [INFO] [dome_arbiter]: dome: running
+10-24 00:18:55.467 [INFO] [dome_arbiter]: intent express-daca0802 accepted: dome turn  from behavior
+10-24 00:18:55.478 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:18:56.935 [INFO] [dome_arbiter]: intent express-1e7a2e5f accepted: dome turn  from behavior
+10-24 00:19:01.317 [INFO] [dome_arbiter]: dome: move over, coast scale 0.27 for the next
+10-24 00:19:01.318 [INFO] [dome_arbiter]: dome: idle
+10-24 00:19:01.828 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:19:04.308 [INFO] [dome_arbiter]: dome: running
+10-24 00:19:04.309 [INFO] [dome_arbiter]: intent express-19c867bb accepted: dome turn  from behavior
+10-24 00:19:04.328 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:19:08.361 [INFO] [dome_arbiter]: dome: move over, coast scale 0.83 for the next
+10-24 00:19:08.363 [INFO] [dome_arbiter]: dome: idle
+10-24 00:19:08.878 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:19:28.451 [INFO] [dome_arbiter]: dome: running
+10-24 00:19:33.402 [INFO] [dome_arbiter]: dome: move over, coast scale 1.03 for the next
+10-24 00:19:33.403 [INFO] [dome_arbiter]: dome: idle
+10-24 00:19:53.452 [INFO] [dome_arbiter]: dome: running
+10-24 00:19:53.478 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:19:59.604 [INFO] [dome_arbiter]: dome: move over, coast scale 0.39 for the next
+10-24 00:19:59.605 [INFO] [dome_arbiter]: dome: idle
+10-24 00:20:19.651 [INFO] [dome_arbiter]: dome: running
+10-24 00:20:25.102 [INFO] [dome_arbiter]: dome: move over, coast scale 1.14 for the next
+10-24 00:20:25.103 [INFO] [dome_arbiter]: dome: idle
+10-24 00:20:45.131 [INFO] [dome_arbiter]: dome: running
+10-24 00:20:51.832 [INFO] [dome_arbiter]: dome: move over, coast scale 1.58 for the next
+10-24 00:20:51.833 [INFO] [dome_arbiter]: dome: idle
+10-24 00:21:11.853 [INFO] [dome_arbiter]: dome: running
+10-24 00:21:18.103 [INFO] [dome_arbiter]: dome: move over, coast scale 1.25 for the next
+10-24 00:21:18.103 [INFO] [dome_arbiter]: dome: idle
+10-24 00:21:38.131 [INFO] [dome_arbiter]: dome: running
+10-24 00:21:38.178 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:21:41.932 [INFO] [dome_arbiter]: dome: move over, coast scale 0.84 for the next
+10-24 00:21:41.933 [INFO] [dome_arbiter]: dome: idle
+10-24 00:22:01.951 [INFO] [dome_arbiter]: dome: running
+10-24 00:22:07.452 [INFO] [dome_arbiter]: dome: move over, coast scale 1.34 for the next
+10-24 00:22:07.453 [INFO] [dome_arbiter]: dome: idle
+10-24 00:22:27.455 [INFO] [dome_arbiter]: dome: running
+10-24 00:22:34.054 [INFO] [dome_arbiter]: dome: move over, coast scale 0.69 for the next
+10-24 00:22:34.055 [INFO] [dome_arbiter]: dome: idle
+10-24 00:22:54.132 [INFO] [dome_arbiter]: dome: running
+10-24 00:23:00.883 [INFO] [dome_arbiter]: dome: move over, coast scale 0.71 for the next
+10-24 00:23:00.884 [INFO] [dome_arbiter]: dome: idle
+10-24 00:23:20.953 [INFO] [dome_arbiter]: dome: running
+10-24 00:23:25.956 [INFO] [dome_arbiter]: dome: move over, coast scale 0.85 for the next
+10-24 00:23:25.959 [INFO] [dome_arbiter]: dome: idle
+10-24 00:23:46.051 [INFO] [dome_arbiter]: dome: running
+10-24 00:23:53.303 [INFO] [dome_arbiter]: dome: move over, coast scale 0.67 for the next
+10-24 00:23:53.305 [INFO] [dome_arbiter]: dome: idle
+10-24 00:24:13.352 [INFO] [dome_arbiter]: dome: running
+10-24 00:24:19.354 [INFO] [dome_arbiter]: dome: move over, coast scale 0.83 for the next
+10-24 00:24:19.355 [INFO] [dome_arbiter]: dome: idle
+10-24 00:24:39.452 [INFO] [dome_arbiter]: dome: running
+10-24 00:24:45.154 [INFO] [dome_arbiter]: dome: move over, coast scale 1.24 for the next
+10-24 00:24:45.156 [INFO] [dome_arbiter]: dome: idle
+10-24 00:25:05.251 [INFO] [dome_arbiter]: dome: running
+10-24 00:25:05.278 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:25:10.605 [INFO] [dome_arbiter]: dome: move over, coast scale 0.79 for the next
+10-24 00:25:10.607 [INFO] [dome_arbiter]: dome: idle
+10-24 00:25:30.651 [INFO] [dome_arbiter]: dome: running
+10-24 00:25:35.702 [INFO] [dome_arbiter]: dome: move over, coast scale 0.64 for the next
+10-24 00:25:35.703 [INFO] [dome_arbiter]: dome: idle
+10-24 00:25:55.751 [INFO] [dome_arbiter]: dome: running
+10-24 00:26:01.353 [INFO] [dome_arbiter]: dome: move over, coast scale 0.86 for the next
+10-24 00:26:01.354 [INFO] [dome_arbiter]: dome: idle
+10-24 00:26:21.452 [INFO] [dome_arbiter]: dome: running
+10-24 00:26:27.752 [INFO] [dome_arbiter]: dome: move over, coast scale 0.46 for the next
+10-24 00:26:27.753 [INFO] [dome_arbiter]: dome: idle
+10-24 00:26:47.852 [INFO] [dome_arbiter]: dome: running
+10-24 00:26:54.403 [INFO] [dome_arbiter]: dome: move over, coast scale 0.77 for the next
+10-24 00:26:54.404 [INFO] [dome_arbiter]: dome: idle
+10-24 00:26:54.928 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:27:14.452 [INFO] [dome_arbiter]: dome: running
+10-24 00:27:20.052 [INFO] [dome_arbiter]: dome: move over, coast scale 0.85 for the next
+10-24 00:27:20.053 [INFO] [dome_arbiter]: dome: idle
+10-24 00:27:40.131 [INFO] [dome_arbiter]: dome: running
+10-24 00:27:40.178 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:27:47.433 [INFO] [dome_arbiter]: dome: move over, coast scale 0.71 for the next
+10-24 00:27:47.433 [INFO] [dome_arbiter]: dome: idle
+10-24 00:27:47.979 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:28:07.453 [INFO] [dome_arbiter]: dome: running
+10-24 00:28:13.902 [INFO] [dome_arbiter]: dome: move over, coast scale 0.86 for the next
+10-24 00:28:13.903 [INFO] [dome_arbiter]: dome: idle
+10-24 00:28:33.953 [INFO] [dome_arbiter]: dome: running
+10-24 00:28:33.978 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:28:38.953 [INFO] [dome_arbiter]: dome: move over, coast scale 0.95 for the next
+10-24 00:28:38.954 [INFO] [dome_arbiter]: dome: idle
+10-24 00:28:59.051 [INFO] [dome_arbiter]: dome: running
+10-24 00:29:05.402 [INFO] [dome_arbiter]: dome: move over, coast scale 0.67 for the next
+10-24 00:29:05.403 [INFO] [dome_arbiter]: dome: idle
+10-24 00:29:25.451 [INFO] [dome_arbiter]: dome: running
+10-24 00:29:31.002 [INFO] [dome_arbiter]: dome: move over, coast scale 0.58 for the next
+10-24 00:29:31.003 [INFO] [dome_arbiter]: dome: idle
+10-24 00:29:51.051 [INFO] [dome_arbiter]: dome: running
+10-24 00:29:51.078 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:29:57.103 [INFO] [dome_arbiter]: dome: move over, coast scale 0.57 for the next
+10-24 00:29:57.104 [INFO] [dome_arbiter]: dome: idle
+10-24 00:30:17.132 [INFO] [dome_arbiter]: dome: running
+10-24 00:30:22.932 [INFO] [dome_arbiter]: dome: move over, coast scale 0.50 for the next
+10-24 00:30:22.933 [INFO] [dome_arbiter]: dome: idle
+10-24 00:30:42.953 [INFO] [dome_arbiter]: dome: running
+10-24 00:30:48.858 [INFO] [dome_arbiter]: dome: move over, coast scale 1.06 for the next
+10-24 00:30:48.858 [INFO] [dome_arbiter]: dome: idle
+10-24 00:31:08.951 [INFO] [dome_arbiter]: dome: running
+10-24 00:31:13.257 [INFO] [dome_arbiter]: dome: move over, coast scale 0.87 for the next
+10-24 00:31:13.259 [INFO] [dome_arbiter]: dome: idle
+10-24 00:31:33.352 [INFO] [dome_arbiter]: dome: running
+10-24 00:31:40.702 [INFO] [dome_arbiter]: dome: move over, coast scale 0.71 for the next
+10-24 00:31:40.703 [INFO] [dome_arbiter]: dome: idle
+10-24 00:32:00.751 [INFO] [dome_arbiter]: dome: running
+10-24 00:32:00.778 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:32:05.202 [INFO] [dome_arbiter]: dome: move over, coast scale 0.48 for the next
+10-24 00:32:05.203 [INFO] [dome_arbiter]: dome: idle
+10-24 00:32:25.251 [INFO] [dome_arbiter]: dome: running
+10-24 00:32:25.278 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:32:32.002 [INFO] [dome_arbiter]: dome: move over, coast scale 0.38 for the next
+10-24 00:32:32.003 [INFO] [dome_arbiter]: dome: idle
+10-24 00:32:52.053 [INFO] [dome_arbiter]: dome: running
+10-24 00:32:58.002 [INFO] [dome_arbiter]: dome: move over, coast scale 0.46 for the next
+10-24 00:32:58.003 [INFO] [dome_arbiter]: dome: idle
+10-24 00:33:18.056 [INFO] [dome_arbiter]: dome: running
+10-24 00:33:24.106 [INFO] [dome_arbiter]: dome: move over, coast scale 1.05 for the next
+10-24 00:33:24.108 [INFO] [dome_arbiter]: dome: idle
+10-24 00:33:24.628 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:33:44.132 [INFO] [dome_arbiter]: dome: running
+10-24 00:33:51.583 [INFO] [dome_arbiter]: dome: move over, coast scale 0.33 for the next
+10-24 00:33:51.584 [INFO] [dome_arbiter]: dome: idle
+10-24 00:33:52.128 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:34:11.651 [INFO] [dome_arbiter]: dome: running
+10-24 00:34:18.652 [INFO] [dome_arbiter]: dome: move over, coast scale 0.70 for the next
+10-24 00:34:18.653 [INFO] [dome_arbiter]: dome: idle
+10-24 00:34:38.751 [INFO] [dome_arbiter]: dome: running
+10-24 00:34:44.203 [INFO] [dome_arbiter]: dome: move over, coast scale 0.67 for the next
+10-24 00:34:44.204 [INFO] [dome_arbiter]: dome: idle
+10-24 00:35:04.253 [INFO] [dome_arbiter]: dome: running
+10-24 00:35:11.603 [INFO] [dome_arbiter]: dome: move over, coast scale 0.28 for the next
+10-24 00:35:11.604 [INFO] [dome_arbiter]: dome: idle
+10-24 00:35:12.128 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:35:31.653 [INFO] [dome_arbiter]: dome: running
+10-24 00:35:38.257 [INFO] [dome_arbiter]: dome: move over, coast scale 0.95 for the next
+10-24 00:35:38.259 [INFO] [dome_arbiter]: dome: idle
+10-24 00:35:58.353 [INFO] [dome_arbiter]: dome: running
+10-24 00:36:03.854 [INFO] [dome_arbiter]: dome: move over, coast scale 0.57 for the next
+10-24 00:36:03.856 [INFO] [dome_arbiter]: dome: idle
+10-24 00:36:23.952 [INFO] [dome_arbiter]: dome: running
+10-24 00:36:30.902 [INFO] [dome_arbiter]: dome: move over, coast scale 0.77 for the next
+10-24 00:36:30.903 [INFO] [dome_arbiter]: dome: idle
+10-24 00:36:50.952 [INFO] [dome_arbiter]: dome: running
+10-24 00:36:56.703 [INFO] [dome_arbiter]: dome: move over, coast scale 0.92 for the next
+10-24 00:36:56.704 [INFO] [dome_arbiter]: dome: idle
+10-24 00:37:16.751 [INFO] [dome_arbiter]: dome: running
+10-24 00:37:22.752 [INFO] [dome_arbiter]: dome: move over, coast scale 0.38 for the next
+10-24 00:37:22.753 [INFO] [dome_arbiter]: dome: idle
+10-24 00:37:42.753 [INFO] [dome_arbiter]: dome: running
+10-24 00:37:48.853 [INFO] [dome_arbiter]: dome: move over, coast scale 0.50 for the next
+10-24 00:37:48.854 [INFO] [dome_arbiter]: dome: idle
+10-24 00:38:08.951 [INFO] [dome_arbiter]: dome: running
+10-24 00:38:16.502 [INFO] [dome_arbiter]: dome: move over, coast scale 1.15 for the next
+10-24 00:38:16.503 [INFO] [dome_arbiter]: dome: idle
+10-24 00:38:17.028 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:38:36.552 [INFO] [dome_arbiter]: dome: running
+10-24 00:38:42.002 [INFO] [dome_arbiter]: dome: move over, coast scale 0.66 for the next
+10-24 00:38:42.003 [INFO] [dome_arbiter]: dome: idle
+10-24 00:39:02.052 [INFO] [dome_arbiter]: dome: running
+10-24 00:39:07.852 [INFO] [dome_arbiter]: dome: move over, coast scale 0.61 for the next
+10-24 00:39:07.853 [INFO] [dome_arbiter]: dome: idle
+10-24 00:39:08.378 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:39:27.953 [INFO] [dome_arbiter]: dome: running
+10-24 00:39:34.804 [INFO] [dome_arbiter]: dome: move over, coast scale 1.73 for the next
+10-24 00:39:34.805 [INFO] [dome_arbiter]: dome: idle
+10-24 00:39:54.851 [INFO] [dome_arbiter]: dome: running
+10-24 00:40:01.754 [INFO] [dome_arbiter]: dome: move over, coast scale 0.57 for the next
+10-24 00:40:01.755 [INFO] [dome_arbiter]: dome: idle
+10-24 00:40:21.852 [INFO] [dome_arbiter]: dome: running
+10-24 00:40:27.353 [INFO] [dome_arbiter]: dome: move over, coast scale 0.51 for the next
+10-24 00:40:27.353 [INFO] [dome_arbiter]: dome: idle
+10-24 00:40:47.452 [INFO] [dome_arbiter]: dome: running
+10-24 00:40:54.302 [INFO] [dome_arbiter]: dome: move over, coast scale 0.51 for the next
+10-24 00:40:54.303 [INFO] [dome_arbiter]: dome: idle
+10-24 00:41:14.352 [INFO] [dome_arbiter]: dome: running
+10-24 00:41:22.503 [INFO] [dome_arbiter]: dome: move over, coast scale 0.56 for the next
+10-24 00:41:22.503 [INFO] [dome_arbiter]: dome: idle
+10-24 00:41:23.028 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:41:42.551 [INFO] [dome_arbiter]: dome: running
+10-24 00:41:48.702 [INFO] [dome_arbiter]: dome: move over, coast scale 0.61 for the next
+10-24 00:41:48.703 [INFO] [dome_arbiter]: dome: idle
+10-24 00:42:08.757 [INFO] [dome_arbiter]: dome: running
+10-24 00:42:13.705 [INFO] [dome_arbiter]: dome: move over, coast scale 0.45 for the next
+10-24 00:42:13.706 [INFO] [dome_arbiter]: dome: idle
+10-24 00:42:33.753 [INFO] [dome_arbiter]: dome: running
+10-24 00:42:39.658 [INFO] [dome_arbiter]: dome: move over, coast scale 0.50 for the next
+10-24 00:42:39.660 [INFO] [dome_arbiter]: dome: idle
+10-24 00:42:59.756 [INFO] [dome_arbiter]: dome: running
+10-24 00:43:06.006 [INFO] [dome_arbiter]: dome: move over, coast scale 0.55 for the next
+10-24 00:43:06.007 [INFO] [dome_arbiter]: dome: idle
+10-24 00:43:26.051 [INFO] [dome_arbiter]: dome: running
+10-24 00:43:33.054 [INFO] [dome_arbiter]: dome: move over, coast scale 0.67 for the next
+10-24 00:43:33.055 [INFO] [dome_arbiter]: dome: idle
+10-24 00:43:53.131 [INFO] [dome_arbiter]: dome: running
+10-24 00:43:58.682 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 00:43:58.684 [INFO] [dome_arbiter]: dome: idle
+10-24 00:44:18.752 [INFO] [dome_arbiter]: dome: running
+10-24 00:44:26.053 [INFO] [dome_arbiter]: dome: move over, coast scale 0.50 for the next
+10-24 00:44:26.053 [INFO] [dome_arbiter]: dome: idle
+10-24 00:44:46.131 [INFO] [dome_arbiter]: dome: running
+10-24 00:44:46.178 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:44:51.932 [INFO] [dome_arbiter]: dome: move over, coast scale 0.78 for the next
+10-24 00:44:51.933 [INFO] [dome_arbiter]: dome: idle
+10-24 00:45:11.952 [INFO] [dome_arbiter]: dome: running
+10-24 00:45:17.702 [INFO] [dome_arbiter]: dome: move over, coast scale 0.96 for the next
+10-24 00:45:17.703 [INFO] [dome_arbiter]: dome: idle
+10-24 00:45:37.752 [INFO] [dome_arbiter]: dome: running
+10-24 00:45:45.052 [INFO] [dome_arbiter]: dome: move over, coast scale 0.64 for the next
+10-24 00:45:45.053 [INFO] [dome_arbiter]: dome: idle
+10-24 00:46:05.134 [INFO] [dome_arbiter]: dome: running
+10-24 00:46:14.085 [INFO] [dome_arbiter]: dome: move over, coast scale 0.65 for the next
+10-24 00:46:14.086 [INFO] [dome_arbiter]: dome: idle
+10-24 00:46:14.629 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:46:34.133 [INFO] [dome_arbiter]: dome: running
+10-24 00:46:40.783 [INFO] [dome_arbiter]: dome: move over, coast scale 0.99 for the next
+10-24 00:46:40.784 [INFO] [dome_arbiter]: dome: idle
+10-24 00:47:00.851 [INFO] [dome_arbiter]: dome: running
+10-24 00:47:07.902 [INFO] [dome_arbiter]: dome: move over, coast scale 0.95 for the next
+10-24 00:47:07.903 [INFO] [dome_arbiter]: dome: idle
+10-24 00:47:27.952 [INFO] [dome_arbiter]: dome: running
+10-24 00:47:34.003 [INFO] [dome_arbiter]: dome: move over, coast scale 1.48 for the next
+10-24 00:47:34.003 [INFO] [dome_arbiter]: dome: idle
+10-24 00:47:54.051 [INFO] [dome_arbiter]: dome: running
+10-24 00:48:00.903 [INFO] [dome_arbiter]: dome: move over, coast scale 0.90 for the next
+10-24 00:48:00.904 [INFO] [dome_arbiter]: dome: idle
+10-24 00:48:20.951 [INFO] [dome_arbiter]: dome: running
+10-24 00:48:28.002 [INFO] [dome_arbiter]: dome: move over, coast scale 1.74 for the next
+10-24 00:48:28.003 [INFO] [dome_arbiter]: dome: idle
+10-24 00:48:48.053 [INFO] [dome_arbiter]: dome: running
+10-24 00:48:55.203 [INFO] [dome_arbiter]: dome: move over, coast scale 0.67 for the next
+10-24 00:48:55.204 [INFO] [dome_arbiter]: dome: idle
+10-24 00:49:15.251 [INFO] [dome_arbiter]: dome: running
+10-24 00:49:21.052 [INFO] [dome_arbiter]: dome: move over, coast scale 0.61 for the next
+10-24 00:49:21.053 [INFO] [dome_arbiter]: dome: idle
+10-24 00:49:41.131 [INFO] [dome_arbiter]: dome: running
+10-24 00:49:47.083 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 00:49:47.084 [INFO] [dome_arbiter]: dome: idle
+10-24 00:49:47.628 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:50:07.131 [INFO] [dome_arbiter]: dome: running
+10-24 00:50:12.435 [INFO] [dome_arbiter]: dome: move over, coast scale 0.56 for the next
+10-24 00:50:12.437 [INFO] [dome_arbiter]: dome: idle
+10-24 00:50:32.451 [INFO] [dome_arbiter]: dome: running
+10-24 00:50:41.661 [INFO] [dome_arbiter]: dome: move over, coast scale 1.20 for the next
+10-24 00:50:41.664 [INFO] [dome_arbiter]: dome: idle
+10-24 00:51:01.751 [INFO] [dome_arbiter]: dome: running
+10-24 00:51:09.208 [INFO] [dome_arbiter]: dome: move over, coast scale 1.29 for the next
+10-24 00:51:09.213 [INFO] [dome_arbiter]: dome: idle
+10-24 00:51:29.252 [INFO] [dome_arbiter]: dome: running
+10-24 00:51:29.278 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:51:36.007 [INFO] [dome_arbiter]: dome: move over, coast scale 1.92 for the next
+10-24 00:51:36.009 [INFO] [dome_arbiter]: dome: idle
+10-24 00:51:56.053 [INFO] [dome_arbiter]: dome: running
+10-24 00:52:02.953 [INFO] [dome_arbiter]: dome: move over, coast scale 0.61 for the next
+10-24 00:52:02.954 [INFO] [dome_arbiter]: dome: idle
+10-24 00:52:23.052 [INFO] [dome_arbiter]: dome: running
+10-24 00:52:23.080 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:52:27.353 [INFO] [dome_arbiter]: dome: move over, coast scale 0.66 for the next
+10-24 00:52:27.363 [INFO] [dome_arbiter]: dome: idle
+10-24 00:52:47.454 [INFO] [dome_arbiter]: dome: running
+10-24 00:52:53.453 [INFO] [dome_arbiter]: dome: move over, coast scale 0.48 for the next
+10-24 00:52:53.454 [INFO] [dome_arbiter]: dome: idle
+10-24 00:53:13.555 [INFO] [dome_arbiter]: dome: running
+10-24 00:53:19.463 [INFO] [dome_arbiter]: dome: move over, coast scale 0.83 for the next
+10-24 00:53:19.467 [INFO] [dome_arbiter]: dome: idle
+10-24 00:53:39.553 [INFO] [dome_arbiter]: dome: running
+10-24 00:53:45.957 [INFO] [dome_arbiter]: dome: move over, coast scale 0.92 for the next
+10-24 00:53:45.960 [INFO] [dome_arbiter]: dome: idle
+10-24 00:54:06.052 [INFO] [dome_arbiter]: dome: running
+10-24 00:54:13.103 [INFO] [dome_arbiter]: dome: move over, coast scale 1.94 for the next
+10-24 00:54:13.104 [INFO] [dome_arbiter]: dome: idle
+10-24 00:54:33.133 [INFO] [dome_arbiter]: dome: running
+10-24 00:54:38.686 [INFO] [dome_arbiter]: dome: move over, coast scale 0.94 for the next
+10-24 00:54:38.688 [INFO] [dome_arbiter]: dome: idle
+10-24 00:54:58.752 [INFO] [dome_arbiter]: dome: running
+10-24 00:54:58.779 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 00:55:05.503 [INFO] [dome_arbiter]: dome: move over, coast scale 1.15 for the next
+10-24 00:55:05.509 [INFO] [dome_arbiter]: dome: idle
+10-24 00:55:25.552 [INFO] [dome_arbiter]: dome: running
+10-24 00:55:31.053 [INFO] [dome_arbiter]: dome: move over, coast scale 1.34 for the next
+10-24 00:55:31.054 [INFO] [dome_arbiter]: dome: idle
+10-24 00:55:51.131 [INFO] [dome_arbiter]: dome: running
+10-24 00:55:56.996 [INFO] [dome_arbiter]: dome: move over, coast scale 0.88 for the next
+10-24 00:55:56.998 [INFO] [dome_arbiter]: dome: idle
+10-24 00:56:17.052 [INFO] [dome_arbiter]: dome: running
+10-24 00:56:23.502 [INFO] [dome_arbiter]: dome: move over, coast scale 1.75 for the next
+10-24 00:56:23.503 [INFO] [dome_arbiter]: dome: idle
+10-24 00:56:43.556 [INFO] [dome_arbiter]: dome: running
+10-24 00:56:50.905 [INFO] [dome_arbiter]: dome: move over, coast scale 0.56 for the next
+10-24 00:56:50.906 [INFO] [dome_arbiter]: dome: idle
+10-24 00:56:51.428 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:57:10.953 [INFO] [dome_arbiter]: dome: running
+10-24 00:57:17.602 [INFO] [dome_arbiter]: dome: move over, coast scale 1.44 for the next
+10-24 00:57:17.603 [INFO] [dome_arbiter]: dome: idle
+10-24 00:57:37.652 [INFO] [dome_arbiter]: dome: running
+10-24 00:57:43.231 [INFO] [dome_arbiter]: dome: move over, coast scale 0.54 for the next
+10-24 00:57:43.236 [INFO] [dome_arbiter]: dome: idle
+10-24 00:58:03.252 [INFO] [dome_arbiter]: dome: running
+10-24 00:58:10.604 [INFO] [dome_arbiter]: dome: move over, coast scale 1.24 for the next
+10-24 00:58:10.605 [INFO] [dome_arbiter]: dome: idle
+10-24 00:58:11.128 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 00:58:30.654 [INFO] [dome_arbiter]: dome: running
+10-24 00:58:36.307 [INFO] [dome_arbiter]: dome: move over, coast scale 0.57 for the next
+10-24 00:58:36.310 [INFO] [dome_arbiter]: dome: idle
+10-24 00:58:56.353 [INFO] [dome_arbiter]: dome: running
+10-24 00:59:03.805 [INFO] [dome_arbiter]: dome: move over, coast scale 0.53 for the next
+10-24 00:59:03.807 [INFO] [dome_arbiter]: dome: idle
+10-24 00:59:23.853 [INFO] [dome_arbiter]: dome: running
+10-24 00:59:31.404 [INFO] [dome_arbiter]: dome: move over, coast scale 0.66 for the next
+10-24 00:59:31.405 [INFO] [dome_arbiter]: dome: idle
+10-24 00:59:51.455 [INFO] [dome_arbiter]: dome: running
+10-24 00:59:58.304 [INFO] [dome_arbiter]: dome: move over, coast scale 0.66 for the next
+10-24 00:59:58.305 [INFO] [dome_arbiter]: dome: idle
+10-24 01:00:18.353 [INFO] [dome_arbiter]: dome: running
+10-24 01:00:24.804 [INFO] [dome_arbiter]: dome: move over, coast scale 0.51 for the next
+10-24 01:00:24.805 [INFO] [dome_arbiter]: dome: idle
+10-24 01:00:44.851 [INFO] [dome_arbiter]: dome: running
+10-24 01:00:50.655 [INFO] [dome_arbiter]: dome: move over, coast scale 0.39 for the next
+10-24 01:00:50.657 [INFO] [dome_arbiter]: dome: idle
+10-24 01:01:10.752 [INFO] [dome_arbiter]: dome: running
+10-24 01:01:16.302 [INFO] [dome_arbiter]: dome: move over, coast scale 0.45 for the next
+10-24 01:01:16.303 [INFO] [dome_arbiter]: dome: idle
+10-24 01:01:36.352 [INFO] [dome_arbiter]: dome: running
+10-24 01:01:41.953 [INFO] [dome_arbiter]: dome: move over, coast scale 0.45 for the next
+10-24 01:01:41.954 [INFO] [dome_arbiter]: dome: idle
+10-24 01:01:42.479 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:02:02.056 [INFO] [dome_arbiter]: dome: running
+10-24 01:02:02.079 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:02:07.656 [INFO] [dome_arbiter]: dome: move over, coast scale 0.76 for the next
+10-24 01:02:07.656 [INFO] [dome_arbiter]: dome: idle
+10-24 01:02:27.752 [INFO] [dome_arbiter]: dome: running
+10-24 01:02:34.253 [INFO] [dome_arbiter]: dome: move over, coast scale 0.62 for the next
+10-24 01:02:34.254 [INFO] [dome_arbiter]: dome: idle
+10-24 01:02:54.352 [INFO] [dome_arbiter]: dome: running
+10-24 01:03:00.655 [INFO] [dome_arbiter]: dome: move over, coast scale 0.33 for the next
+10-24 01:03:00.657 [INFO] [dome_arbiter]: dome: idle
+10-24 01:03:20.754 [INFO] [dome_arbiter]: dome: running
+10-24 01:03:26.653 [INFO] [dome_arbiter]: dome: move over, coast scale 0.64 for the next
+10-24 01:03:26.654 [INFO] [dome_arbiter]: dome: idle
+10-24 01:03:46.752 [INFO] [dome_arbiter]: dome: running
+10-24 01:03:46.778 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:03:52.652 [INFO] [dome_arbiter]: dome: move over, coast scale 0.61 for the next
+10-24 01:03:52.653 [INFO] [dome_arbiter]: dome: idle
+10-24 01:04:12.752 [INFO] [dome_arbiter]: dome: running
+10-24 01:04:18.302 [INFO] [dome_arbiter]: dome: move over, coast scale 0.56 for the next
+10-24 01:04:18.303 [INFO] [dome_arbiter]: dome: idle
+10-24 01:04:38.355 [INFO] [dome_arbiter]: dome: running
+10-24 01:04:45.654 [INFO] [dome_arbiter]: dome: move over, coast scale 0.95 for the next
+10-24 01:04:45.655 [INFO] [dome_arbiter]: dome: idle
+10-24 01:05:05.752 [INFO] [dome_arbiter]: dome: running
+10-24 01:05:12.503 [INFO] [dome_arbiter]: dome: move over, coast scale 0.32 for the next
+10-24 01:05:12.504 [INFO] [dome_arbiter]: dome: idle
+10-24 01:05:32.556 [INFO] [dome_arbiter]: dome: running
+10-24 01:05:32.578 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:05:39.106 [INFO] [dome_arbiter]: dome: move over, coast scale 0.51 for the next
+10-24 01:05:39.108 [INFO] [dome_arbiter]: dome: idle
+10-24 01:05:59.132 [INFO] [dome_arbiter]: dome: running
+10-24 01:06:05.982 [INFO] [dome_arbiter]: dome: move over, coast scale 0.35 for the next
+10-24 01:06:05.984 [INFO] [dome_arbiter]: dome: idle
+10-24 01:06:26.052 [INFO] [dome_arbiter]: dome: running
+10-24 01:06:31.853 [INFO] [dome_arbiter]: dome: move over, coast scale 0.58 for the next
+10-24 01:06:31.854 [INFO] [dome_arbiter]: dome: idle
+10-24 01:06:51.954 [INFO] [dome_arbiter]: dome: running
+10-24 01:06:58.705 [INFO] [dome_arbiter]: dome: move over, coast scale 0.86 for the next
+10-24 01:06:58.706 [INFO] [dome_arbiter]: dome: idle
+10-24 01:07:18.752 [INFO] [dome_arbiter]: dome: running
+10-24 01:07:26.903 [INFO] [dome_arbiter]: dome: move over, coast scale 0.50 for the next
+10-24 01:07:26.903 [INFO] [dome_arbiter]: dome: idle
+10-24 01:07:27.428 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:07:46.951 [INFO] [dome_arbiter]: dome: running
+10-24 01:07:53.002 [INFO] [dome_arbiter]: dome: move over, coast scale 0.56 for the next
+10-24 01:07:53.003 [INFO] [dome_arbiter]: dome: idle
+10-24 01:07:53.528 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:08:13.052 [INFO] [dome_arbiter]: dome: running
+10-24 01:08:13.079 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:08:20.403 [INFO] [dome_arbiter]: dome: move over, coast scale 0.38 for the next
+10-24 01:08:20.404 [INFO] [dome_arbiter]: dome: idle
+10-24 01:08:40.452 [INFO] [dome_arbiter]: dome: running
+10-24 01:08:47.705 [INFO] [dome_arbiter]: dome: move over, coast scale 0.77 for the next
+10-24 01:08:47.707 [INFO] [dome_arbiter]: dome: idle
+10-24 01:09:07.752 [INFO] [dome_arbiter]: dome: running
+10-24 01:09:07.778 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:09:13.655 [INFO] [dome_arbiter]: dome: move over, coast scale 0.46 for the next
+10-24 01:09:13.659 [INFO] [dome_arbiter]: dome: idle
+10-24 01:09:33.752 [INFO] [dome_arbiter]: dome: running
+10-24 01:09:41.503 [INFO] [dome_arbiter]: dome: move over, coast scale 1.09 for the next
+10-24 01:09:41.503 [INFO] [dome_arbiter]: dome: idle
+10-24 01:10:01.553 [INFO] [dome_arbiter]: dome: running
+10-24 01:10:07.654 [INFO] [dome_arbiter]: dome: move over, coast scale 0.61 for the next
+10-24 01:10:07.655 [INFO] [dome_arbiter]: dome: idle
+10-24 01:10:27.753 [INFO] [dome_arbiter]: dome: running
+10-24 01:10:32.954 [INFO] [dome_arbiter]: dome: move over, coast scale 0.70 for the next
+10-24 01:10:32.955 [INFO] [dome_arbiter]: dome: idle
+10-24 01:10:53.053 [INFO] [dome_arbiter]: dome: running
+10-24 01:10:59.106 [INFO] [dome_arbiter]: dome: move over, coast scale 1.01 for the next
+10-24 01:10:59.106 [INFO] [dome_arbiter]: dome: idle
+10-24 01:11:19.131 [INFO] [dome_arbiter]: dome: running
+10-24 01:11:24.085 [INFO] [dome_arbiter]: dome: move over, coast scale 0.81 for the next
+10-24 01:11:24.087 [INFO] [dome_arbiter]: dome: idle
+10-24 01:11:44.132 [INFO] [dome_arbiter]: dome: running
+10-24 01:11:50.683 [INFO] [dome_arbiter]: dome: move over, coast scale 0.71 for the next
+10-24 01:11:50.684 [INFO] [dome_arbiter]: dome: idle
+10-24 01:12:10.752 [INFO] [dome_arbiter]: dome: running
+10-24 01:12:17.354 [INFO] [dome_arbiter]: dome: move over, coast scale 0.96 for the next
+10-24 01:12:17.356 [INFO] [dome_arbiter]: dome: idle
+10-24 01:12:37.353 [INFO] [dome_arbiter]: dome: running
+10-24 01:12:37.378 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:12:44.457 [INFO] [dome_arbiter]: dome: move over, coast scale 0.39 for the next
+10-24 01:12:44.459 [INFO] [dome_arbiter]: dome: idle
+10-24 01:12:44.979 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:13:04.554 [INFO] [dome_arbiter]: dome: running
+10-24 01:13:04.578 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:13:10.206 [INFO] [dome_arbiter]: dome: move over, coast scale 0.55 for the next
+10-24 01:13:10.206 [INFO] [dome_arbiter]: dome: idle
+10-24 01:13:10.733 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:13:30.258 [INFO] [dome_arbiter]: dome: running
+10-24 01:13:30.278 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:13:36.656 [INFO] [dome_arbiter]: dome: move over, coast scale 2.00 for the next
+10-24 01:13:36.657 [INFO] [dome_arbiter]: dome: idle
+10-24 01:13:37.179 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:13:56.751 [INFO] [dome_arbiter]: dome: running
+10-24 01:13:56.778 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:14:03.952 [INFO] [dome_arbiter]: dome: move over, coast scale 1.06 for the next
+10-24 01:14:03.953 [INFO] [dome_arbiter]: dome: idle
+10-24 01:14:24.053 [INFO] [dome_arbiter]: dome: running
+10-24 01:14:24.078 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:14:29.203 [INFO] [dome_arbiter]: dome: move over, coast scale 0.39 for the next
+10-24 01:14:29.203 [INFO] [dome_arbiter]: dome: idle
+10-24 01:14:49.253 [INFO] [dome_arbiter]: dome: running
+10-24 01:14:49.278 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:14:55.953 [INFO] [dome_arbiter]: dome: move over, coast scale 0.96 for the next
+10-24 01:14:55.954 [INFO] [dome_arbiter]: dome: idle
+10-24 01:15:16.052 [INFO] [dome_arbiter]: dome: running
+10-24 01:15:23.354 [INFO] [dome_arbiter]: dome: move over, coast scale 0.83 for the next
+10-24 01:15:23.356 [INFO] [dome_arbiter]: dome: idle
+10-24 01:15:43.451 [INFO] [dome_arbiter]: dome: running
+10-24 01:15:49.303 [INFO] [dome_arbiter]: dome: move over, coast scale 0.58 for the next
+10-24 01:15:49.304 [INFO] [dome_arbiter]: dome: idle
+10-24 01:15:49.828 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:16:09.358 [INFO] [dome_arbiter]: dome: running
+10-24 01:16:09.378 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:16:16.509 [INFO] [dome_arbiter]: dome: move over, coast scale 0.43 for the next
+10-24 01:16:16.510 [INFO] [dome_arbiter]: dome: idle
+10-24 01:16:36.553 [INFO] [dome_arbiter]: dome: running
+10-24 01:16:36.578 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:16:43.904 [INFO] [dome_arbiter]: dome: move over, coast scale 1.56 for the next
+10-24 01:16:43.906 [INFO] [dome_arbiter]: dome: idle
+10-24 01:16:44.428 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:17:03.953 [INFO] [dome_arbiter]: dome: running
+10-24 01:17:09.003 [INFO] [dome_arbiter]: dome: move over, coast scale 0.56 for the next
+10-24 01:17:09.004 [INFO] [dome_arbiter]: dome: idle
+10-24 01:17:29.052 [INFO] [dome_arbiter]: dome: running
+10-24 01:17:35.153 [INFO] [dome_arbiter]: dome: move over, coast scale 0.37 for the next
+10-24 01:17:35.154 [INFO] [dome_arbiter]: dome: idle
+10-24 01:17:35.678 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:17:55.252 [INFO] [dome_arbiter]: dome: running
+10-24 01:18:00.955 [INFO] [dome_arbiter]: dome: move over, coast scale 0.44 for the next
+10-24 01:18:00.957 [INFO] [dome_arbiter]: dome: idle
+10-24 01:18:21.053 [INFO] [dome_arbiter]: dome: running
+10-24 01:18:27.553 [INFO] [dome_arbiter]: dome: move over, coast scale 0.36 for the next
+10-24 01:18:27.553 [INFO] [dome_arbiter]: dome: idle
+10-24 01:18:47.560 [INFO] [dome_arbiter]: dome: running
+10-24 01:18:54.107 [INFO] [dome_arbiter]: dome: move over, coast scale 0.38 for the next
+10-24 01:18:54.108 [INFO] [dome_arbiter]: dome: idle
+10-24 01:19:17.025 [INFO] [dome_arbiter]: dome: offline
+10-24 01:19:40.958 [INFO] [dome_arbiter]: dome: idle
+10-24 01:20:09.104 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:20:09.105 [INFO] [dome_arbiter]: dome: idle
+10-24 01:20:09.628 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:20:29.152 [INFO] [dome_arbiter]: dome: running
+10-24 01:22:18.945 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:23:52.153 [INFO] [dome_arbiter]: dome: running
+10-24 01:25:08.278 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:25:33.751 [INFO] [dome_arbiter]: dome: running
+10-24 01:26:02.506 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:26:48.279 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:26:52.956 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:27:20.603 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:28:10.767 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:28:11.278 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:28:26.469 [INFO] [dome_arbiter]: dome: stale
+10-24 01:28:34.032 [INFO] [dome_arbiter]: dome: offline
+10-24 01:30:41.872 [WARN] [r2_affect]: time step 138.249 s clamped to 0.500 s (sim paused or clock jump); not repeated
+10-24 01:30:49.013 [INFO] [dome_arbiter]: dome: idle
+10-24 01:31:01.918 [INFO] [dome_arbiter]: dome: running
+10-24 01:31:01.943 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:31:05.312 [INFO] [dome_arbiter]: intent probe-2863a1cf accepted: dome look_at  from manual
+10-24 01:31:09.170 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:31:09.171 [INFO] [dome_arbiter]: dome: claimed (manual)
+10-24 01:31:09.679 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:31:14.218 [INFO] [dome_arbiter]: dome: idle
+10-24 01:31:15.285 [INFO] [dome_arbiter]: dome: running (manual)
+10-24 01:31:15.286 [INFO] [dome_arbiter]: intent probe-18e55903 accepted: dome look_at  from manual
+10-24 01:31:15.328 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:31:20.585 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:31:20.586 [INFO] [dome_arbiter]: dome: claimed (manual)
+10-24 01:31:21.128 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:31:25.618 [INFO] [dome_arbiter]: dome: idle
+10-24 01:31:26.730 [INFO] [dome_arbiter]: dome: running (manual)
+10-24 01:31:26.731 [INFO] [dome_arbiter]: intent probe-9264a4c4 accepted: dome look_at  from manual
+10-24 01:31:26.778 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:31:32.781 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:31:32.782 [INFO] [dome_arbiter]: dome: claimed (manual)
+10-24 01:31:33.328 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:31:37.818 [INFO] [dome_arbiter]: dome: idle
+10-24 01:31:38.957 [INFO] [dome_arbiter]: dome: running (manual)
+10-24 01:31:38.960 [INFO] [dome_arbiter]: intent probe-8261deda accepted: dome look_at  from manual
+10-24 01:31:38.979 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:31:43.806 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:31:43.807 [INFO] [dome_arbiter]: dome: claimed (manual)
+10-24 01:31:44.328 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:31:48.817 [INFO] [dome_arbiter]: dome: idle
+10-24 01:31:49.903 [INFO] [dome_arbiter]: dome: running (manual)
+10-24 01:31:49.904 [INFO] [dome_arbiter]: intent probe-22ced11b accepted: dome glance  from manual
+10-24 01:31:49.928 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:31:55.953 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:31:55.954 [INFO] [dome_arbiter]: dome: claimed (manual)
+10-24 01:31:56.478 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:32:01.018 [INFO] [dome_arbiter]: dome: idle
+10-24 01:32:02.165 [INFO] [dome_arbiter]: dome: running (manual)
+10-24 01:32:02.166 [INFO] [dome_arbiter]: intent probe-41841aba accepted: dome look_at  from manual
+10-24 01:32:02.179 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:32:06.016 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:32:06.017 [INFO] [dome_arbiter]: dome: claimed (manual)
+10-24 01:32:06.528 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:32:11.018 [INFO] [dome_arbiter]: dome: idle
+10-24 01:32:26.018 [INFO] [dome_arbiter]: dome: running
+10-24 01:32:26.028 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:32:31.819 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:32:31.820 [INFO] [dome_arbiter]: dome: idle
+10-24 01:32:32.328 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:32:51.875 [INFO] [dome_arbiter]: dome: running
+10-24 01:32:51.878 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:32:55.376 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:32:55.377 [INFO] [dome_arbiter]: dome: idle
+10-24 01:32:55.878 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:33:15.418 [INFO] [dome_arbiter]: dome: running
+10-24 01:33:15.428 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:33:19.069 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:33:19.070 [INFO] [dome_arbiter]: dome: idle
+10-24 01:33:19.578 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:33:39.119 [INFO] [dome_arbiter]: dome: running
+10-24 01:33:39.128 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:33:44.719 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:33:44.720 [INFO] [dome_arbiter]: dome: idle
+10-24 01:33:45.228 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:33:53.801 [INFO] [dome_arbiter]: dome_arbiter up: config /home/pi/r2_ws/install/r2_expression/share/r2_expression/config/expression.yaml, device dome_twist_converter via /dome/cmd/personality, channels dome
+10-24 01:33:53.819 [INFO] [dome_arbiter]: dome: offline
+10-24 01:33:53.823 [INFO] [dome_arbiter]: mood: - -> calm
+10-24 01:33:54.129 [INFO] [dome_arbiter]: dome: idle
+10-24 01:34:02.837 [INFO] [r2_affect]: mood forced and locked curious by mood_cli
+10-24 01:34:03.023 [INFO] [dome_arbiter]: mood: calm -> curious
+10-24 01:34:11.118 [INFO] [dome_arbiter]: dome: running
+10-24 01:34:11.129 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:34:17.969 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:34:17.969 [INFO] [dome_arbiter]: dome: idle
+10-24 01:34:18.480 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:34:26.018 [INFO] [dome_arbiter]: dome: running
+10-24 01:34:26.028 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:34:33.019 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:34:33.020 [INFO] [dome_arbiter]: dome: idle
+10-24 01:34:33.528 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:34:41.119 [INFO] [dome_arbiter]: dome: running
+10-24 01:34:41.128 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:34:48.170 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:34:48.170 [INFO] [dome_arbiter]: dome: idle
+10-24 01:34:48.678 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:34:56.218 [INFO] [dome_arbiter]: dome: running
+10-24 01:34:56.228 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:35:05.920 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:35:05.921 [INFO] [dome_arbiter]: dome: idle
+10-24 01:35:06.428 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:35:14.019 [INFO] [dome_arbiter]: dome: running
+10-24 01:35:14.028 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:35:18.784 [INFO] [r2_affect]: mood forced and locked excited by mood_cli
+10-24 01:35:18.823 [INFO] [dome_arbiter]: mood: curious -> excited
+10-24 01:35:20.021 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:35:20.023 [INFO] [dome_arbiter]: dome: idle
+10-24 01:35:20.528 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:35:24.119 [INFO] [dome_arbiter]: dome: running
+10-24 01:35:24.128 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:35:30.020 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:35:30.021 [INFO] [dome_arbiter]: dome: idle
+10-24 01:35:30.528 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:35:34.118 [INFO] [dome_arbiter]: dome: running
+10-24 01:35:34.128 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:35:38.218 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:35:38.219 [INFO] [dome_arbiter]: dome: idle
+10-24 01:35:38.728 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:35:42.324 [INFO] [dome_arbiter]: dome: running
+10-24 01:35:42.328 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:35:45.673 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:35:45.674 [INFO] [dome_arbiter]: dome: idle
+10-24 01:35:46.178 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:35:49.718 [INFO] [dome_arbiter]: dome: running
+10-24 01:35:49.728 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:35:52.869 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:35:52.870 [INFO] [dome_arbiter]: dome: idle
+10-24 01:35:53.379 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:35:56.919 [INFO] [dome_arbiter]: dome: running
+10-24 01:35:56.928 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:36:01.719 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:36:01.720 [INFO] [dome_arbiter]: dome: idle
+10-24 01:36:02.228 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:36:05.761 [INFO] [dome_arbiter]: dome: running
+10-24 01:36:05.778 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:36:08.818 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:36:08.820 [INFO] [dome_arbiter]: dome: idle
+10-24 01:36:09.328 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:36:12.819 [INFO] [dome_arbiter]: dome: running
+10-24 01:36:12.829 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:36:16.170 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:36:16.170 [INFO] [dome_arbiter]: dome: idle
+10-24 01:36:16.678 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:36:20.218 [INFO] [dome_arbiter]: dome: running
+10-24 01:36:20.228 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:36:26.469 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:36:26.469 [INFO] [dome_arbiter]: dome: idle
+10-24 01:36:26.978 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:36:30.519 [INFO] [dome_arbiter]: dome: running
+10-24 01:36:30.528 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:36:34.936 [INFO] [r2_affect]: mood forced and locked calm by mood_cli
+10-24 01:36:35.020 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:36:35.021 [INFO] [dome_arbiter]: dome: idle
+10-24 01:36:35.026 [INFO] [dome_arbiter]: mood: excited -> calm
+10-24 01:36:35.528 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:36:55.118 [INFO] [dome_arbiter]: dome: running
+10-24 01:36:55.128 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:36:59.169 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:36:59.170 [INFO] [dome_arbiter]: dome: idle
+10-24 01:36:59.678 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:37:19.218 [INFO] [dome_arbiter]: dome: running
+10-24 01:37:19.228 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:37:23.019 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:37:23.019 [INFO] [dome_arbiter]: dome: idle
+10-24 01:37:23.528 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:37:43.118 [INFO] [dome_arbiter]: dome: running
+10-24 01:37:43.128 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:37:48.324 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:37:48.327 [INFO] [dome_arbiter]: dome: idle
+10-24 01:37:48.828 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:38:08.420 [INFO] [dome_arbiter]: dome: running
+10-24 01:38:12.370 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:38:12.371 [INFO] [dome_arbiter]: dome: idle
+10-24 01:38:28.762 [INFO] [dome_arbiter]: dome: stale
+10-24 01:38:29.762 [INFO] [dome_arbiter]: dome: offline
+10-24 01:40:16.399 [INFO] [r2_affect]: r2_affect up: config /home/pi/r2_ws/install/r2_affect/share/r2_affect/config/affect.yaml, 5.0 Hz, mood calm (aro=0.00 val=0.20 cur=0.40 con=0.60)
+10-24 01:40:17.301 [INFO] [dome_twist_converter]: Dome command arbiter: joystick cmd_vel_dome (linear.x) has precedence, Foxglove cmd_vel_dome_foxglove (angular.z x 1.50), hold 0.50 s, timeouts 0.50 / 0.50 s, personality dome/cmd/personality (angular.z, timeout 0.50 s, 0.60 <= |v| <= 2.00 rad/s, |a| <= 6.00 rad/s2), output dome_controller/commands
+10-24 01:40:18.856 [ERROR] [dome_arbiter]: cannot start: another node named /dome_arbiter is already on the graph (a second dome_arbiter, perhaps on another machine?); two would fight over dome_twist_converter via /dome/cmd/personality. Stop it, or pass -p allow_duplicate:=true
+10-24 01:40:21.192 [INFO] [dome_arbiter]: dome: idle
+10-24 01:40:28.800 [INFO] [r2_affect]: mood forced and locked calm by mood_cli
+10-24 01:40:36.590 [INFO] [dome_arbiter]: dome: running
+10-24 01:40:36.628 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:40:40.091 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:40:40.091 [INFO] [dome_arbiter]: dome: idle
+10-24 01:40:40.628 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:41:00.191 [INFO] [dome_arbiter]: dome: running
+10-24 01:41:00.228 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:41:04.793 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:41:04.794 [INFO] [dome_arbiter]: dome: idle
+10-24 01:41:05.328 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:41:24.892 [INFO] [dome_arbiter]: dome: running
+10-24 01:41:24.928 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:41:28.892 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:41:28.893 [INFO] [dome_arbiter]: dome: idle
+10-24 01:41:29.428 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:41:34.378 [INFO] [dome_twist_converter]: Dome command source: foxglove
+10-24 01:41:34.381 [INFO] [dome_arbiter]: dome: foreign (foxglove)
+10-24 01:41:35.478 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:41:35.480 [INFO] [dome_arbiter]: dome: idle
+10-24 01:41:48.991 [INFO] [dome_arbiter]: dome: running
+10-24 01:41:49.028 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:41:52.443 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:41:52.444 [INFO] [dome_arbiter]: dome: idle
+10-24 01:41:52.978 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:42:05.537 [INFO] [r2_affect]: mood forced and locked sleepy by mood_cli
+10-24 01:42:05.695 [INFO] [dome_arbiter]: mood: calm -> sleepy
+10-24 01:42:05.698 [INFO] [dome_arbiter]: dome: running
+10-24 01:42:05.728 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:42:10.297 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:42:10.298 [INFO] [dome_arbiter]: dome: idle
+10-24 01:42:10.828 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:42:18.740 [INFO] [dome_arbiter]: dome: running
+10-24 01:42:18.741 [INFO] [dome_arbiter]: intent probe-6efcf608 accepted: dome turn  from behavior
+10-24 01:42:18.778 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:42:24.142 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:42:24.142 [INFO] [dome_arbiter]: dome: idle
+10-24 01:42:24.678 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:42:54.190 [INFO] [dome_arbiter]: dome: running
+10-24 01:42:54.228 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:42:55.692 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:42:55.693 [INFO] [dome_arbiter]: dome: idle
+10-24 01:42:56.228 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:43:05.060 [INFO] [r2_affect]: mood forced and locked calm by mood_cli
+10-24 01:43:05.095 [INFO] [dome_arbiter]: mood: sleepy -> calm
+10-24 01:43:25.190 [INFO] [dome_arbiter]: dome: running
+10-24 01:43:25.228 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:43:29.691 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:43:29.692 [INFO] [dome_arbiter]: dome: idle
+10-24 01:43:30.228 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:43:49.762 [INFO] [dome_arbiter]: dome: running
+10-24 01:43:49.778 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:43:53.863 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:43:53.864 [INFO] [dome_arbiter]: dome: idle
+10-24 01:43:54.378 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:44:13.891 [INFO] [dome_arbiter]: dome: running
+10-24 01:44:13.928 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:44:18.792 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:44:18.793 [INFO] [dome_arbiter]: dome: idle
+10-24 01:44:19.328 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:44:38.890 [INFO] [dome_arbiter]: dome: running
+10-24 01:44:38.928 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:44:45.740 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:44:45.741 [INFO] [dome_arbiter]: dome: idle
+10-24 01:44:46.278 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:45:05.762 [INFO] [dome_arbiter]: dome: running
+10-24 01:45:05.778 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:45:12.812 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:45:12.813 [INFO] [dome_arbiter]: dome: idle
+10-24 01:45:13.328 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:45:32.890 [INFO] [dome_arbiter]: dome: running
+10-24 01:45:32.930 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:45:38.492 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:45:38.494 [INFO] [dome_arbiter]: dome: idle
+10-24 01:45:39.028 [INFO] [dome_twist_converter]: Dome command source: idle
+10-24 01:45:58.590 [INFO] [dome_arbiter]: dome: running
+10-24 01:45:58.628 [INFO] [dome_twist_converter]: Dome command source: personality
+10-24 01:46:02.991 [INFO] [dome_arbiter]: dome: move over, coast scale 1.00 for the next
+10-24 01:46:02.992 [INFO] [dome_arbiter]: dome: idle
+10-24 01:46:03.530 [INFO] [dome_twist_converter]: Dome command source: idle

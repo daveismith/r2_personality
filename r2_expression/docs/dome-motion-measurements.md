@@ -138,7 +138,7 @@ Chosen defaults (`defaults.dome`, all configurable):
   a retry from under 0.35 rad is one pulse at the floor of
   `clamp((|err| - 0.12) / 0.35, 0.1, 0.6)` s, then a 0, settle and check again (so a 0.2 rad
   error gets 0.23 s, which coasts in to about the target).
-- `settle_band_rad` 0.10 (5.7 degrees) for every profile (per-profile override kept).
+- `settle_band_rad` 0.10 (5.7 degrees) for every profile at first (per-profile override kept); raised to 0.15 (8.6 degrees) in the shipped yaml after six robot moves ended 4-8 degrees off, see the robot note.
 
 `r2_mocks`' `DomePlant` follows: a command from 0.7 up to 1.25 rad/s achieves `speed_gain`
 of itself (1.29 clockwise, 0.76 anticlockwise by default; the measured 1.5 and 2.0 gave 0.89
