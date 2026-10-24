@@ -55,9 +55,9 @@ defaults:
 
 # Named dome motion profiles, for moods and for an intent's params.profile.
 profiles:
-  snappy: {v_max: 2.0, accel: 4.0, k: 3.0, settle_band_rad: 0.10}
-  smooth: {v_max: 1.0, accel: 1.5, k: 1.5, settle_band_rad: 0.10}
-  lazy:   {v_max: 0.6, accel: 0.8, k: 1.0, settle_band_rad: 0.10}
+  snappy: {v_max: 2.0, accel: 4.0, k: 3.0, settle_band_rad: 0.15}
+  smooth: {v_max: 1.0, accel: 1.5, k: 1.5, settle_band_rad: 0.15}
+  lazy:   {v_max: 0.6, accel: 0.8, k: 1.0, settle_band_rad: 0.15}
 
 # While the mood is stale, and for any mood without an entry: the device's own default
 # look. The Magic Panel is left untouched.
