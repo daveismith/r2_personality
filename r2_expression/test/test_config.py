@@ -604,8 +604,7 @@ def sound_rejects(change, fragment):
 
 def test_shipped_sound_defaults_are_the_plan_values():
     sound = load_config(SHIPPED).defaults.sound
-    assert (sound.house_level_dbfs, sound.fade_ms, sound.interruptible) == (-16.0, 20, False)
-    assert (sound.level.floor_dbfs, sound.level.ceiling_dbfs) == (-40.0, -6.0)
+    assert sound.interruptible is False
     assert load_config(SHIPPED).neutral.sound.gain_db == -6.0
     assert load_config(SHIPPED).neutral.sound.chatter is None
 
@@ -629,25 +628,17 @@ def test_shipped_pools_are_tags_of_the_fixed_list_and_never_excluded():
 
 def test_sound_defaults_may_be_left_out_or_partial():
     config = cfg()
-    assert config.defaults.sound.house_level_dbfs == -16.0
     assert not config.defaults.sound.interruptible
     data = base_data()
-    data['defaults']['sound'] = {'interruptible': True, 'level': {'floor_dbfs': -50}}
-    sound = parse_config(data).defaults.sound
-    assert sound.interruptible and sound.level.floor_dbfs == -50.0 and sound.fade_ms == 20
+    data['defaults']['sound'] = {'interruptible': True}
+    assert parse_config(data).defaults.sound.interruptible
 
 
 @pytest.mark.parametrize('sound, fragment', [
-    ({'house_level_dbfs': 3}, 'above 0 dBFS'),
-    ({'house_level_dbfs': 'loud'}, 'must be a number'),
-    ({'fade_ms': -1}, 'out of range'),
-    ({'fade_ms': 20.5}, 'must be an integer'),
-    ({'fade_ms': 100000}, 'out of range'),
     ({'interruptible': 'yes'}, 'true or false'),
-    ({'level': {'floor_dbfs': -6, 'ceiling_dbfs': -40}}, 'must be below'),
-    ({'level': {'floor_dbfs': -40, 'ceiling_dbfs': 1}}, 'above 0 dBFS'),
-    ({'level': {'peak': -1}}, 'unknown key'),
-    ({'level': -6}, 'must be a mapping'),
+    ({'fade_ms': 20}, 'unknown key'),
+    ({'house_level_dbfs': -16}, 'unknown key'),
+    ({'level': {'floor_dbfs': -40}}, 'unknown key'),
     ({'volume': 1}, 'unknown key'),
 ])
 def test_sound_defaults_are_validated(sound, fragment):

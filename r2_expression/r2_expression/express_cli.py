@@ -94,7 +94,7 @@ LISTENER_WAIT_S = 2.0
 FLUSH_S = 0.3
 SERVICE_WAIT_S = 5.0
 SERVICE_REPLY_S = 5.0
-STATUS_WINDOW_S = 1.5
+STATUS_WINDOW_S = 2.5
 
 _RGB = re.compile(r'(?:0x)?([0-9a-fA-F]{6})\Z')
 _PROFILE = re.compile(r'[A-Za-z0-9_-]+\Z')
@@ -320,8 +320,8 @@ def build_parser():
     p.add_argument('--gain', type=_gain, metavar='DB', help='added to the clip and mood gain')
     p = sub.add_parser('vocalize', help='sound: speak a synthesised phrase (needs the synth)')
     sender(p, None, False, SOUND)
-    p.add_argument('--arousal', type=_unit, metavar='A', help='0 to 1 (default 0.5)')
-    p.add_argument('--valence', type=_unit, metavar='V', help='0 to 1 (default 0.5)')
+    p.add_argument('--arousal', type=_unit, metavar='A', help="0 to 1 (default: the mood's)")
+    p.add_argument('--valence', type=_unit, metavar='V', help="0 to 1 (default: the mood's)")
     p.add_argument('--length', type=_seconds, metavar='S', help='seconds (default: its own)')
     p.add_argument('--seed', type=_ranged_int(-2147483647, 2147483647), metavar='N',
                    help='replay a phrase (default: random)')

@@ -61,7 +61,10 @@ TAGS = ('chatter', 'excited', 'sad', 'question', 'ooh', 'hum', 'alarm', 'scream'
 EXCLUDED_TAG = 'excluded'
 FALLBACK_TAG = 'chatter'
 DEFAULT_THRESHOLD = 0.6
-MANUAL_PRIORITY = 199            # an excluded clip plays only at this priority or above
+# An excluded clip plays only at this priority or above: PRIORITY_MANUAL - 1, the same value
+# as r2_expression.core.MANUAL_PLAY_PRIORITY, the arbiter's own check of the rule.
+MANUAL_PRIORITY = 199
+EXCLUDED_REFUSAL = 'excluded: manual play only'   # the play's reason below it
 CLIPPED_FRACTION = 0.01          # a clip clipped more than this is picked at half weight
 
 _TOP_KEYS = ('house_level_dbfs', 'generated', 'sets', 'clips')
@@ -175,15 +178,15 @@ def resolve_play(by_name, pool_map, name, pool, priority, rng):
     Return ``(clip, '')`` for a play request, or ``(None, reason)``.
 
     ``name`` wins over ``pool``. The reasons are the player's refusals: ``unknown name``,
-    ``excluded`` (an excluded clip below :data:`MANUAL_PRIORITY`), ``unknown pool`` (not in
-    :data:`TAGS`), ``empty pool`` (no playable clip carries the tag).
+    ``excluded: manual play only`` (an excluded clip below :data:`MANUAL_PRIORITY`),
+    ``unknown pool`` (not in :data:`TAGS`), ``empty pool`` (no playable clip carries the tag).
     """
     if name:
         clip = by_name.get(name)
         if clip is None:
             return None, 'unknown name'
         if clip.excluded and priority < MANUAL_PRIORITY:
-            return None, 'excluded'
+            return None, EXCLUDED_REFUSAL
         return clip, ''
     if pool not in pool_map:
         return None, 'unknown pool'

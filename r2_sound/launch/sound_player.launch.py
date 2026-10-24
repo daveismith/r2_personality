@@ -17,7 +17,9 @@ Launch ``sound_player`` (plan 5.7): every parameter of plan 5.3 is an argument.
 
 ``backend:=wav`` writes what would play under ``wav_dir`` (the sim and the agents);
 ``backend:=sounddevice`` plays through PortAudio (``device``: a name substring, '' the
-default). ``catalogue`` '' is the installed ``clips.yaml``.
+default). ``catalogue`` '' is the installed ``clips.yaml``. The arguments come from
+:mod:`r2_sound.parameters`, which imports nothing third-party: launching never loads
+``soundfile`` or PortAudio.
 """
 
 from launch import LaunchDescription
@@ -25,25 +27,7 @@ from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
-from r2_sound.player_node import NODE_NAME, PARAMETERS
-
-DESCRIPTIONS = {
-    'catalogue': "the clips.yaml to load ('' the installed one)",
-    'sounds_dir': 'where the catalogue paths are relative to',
-    'backend': 'sounddevice | wav | null',
-    'device': "output device name substring ('' the default)",
-    'sample_rate': 'output rate, Hz',
-    'cache_mb': 'decode cache cap, MB',
-    'state_hz': '~/state rate while playing (1 Hz while idle)',
-    'level_hz': 'level topics rate while playing',
-    'stream_linger_s': 'the sounddevice stream closes this long after the last play',
-    'fade_ms': 'fade-out on stop, replace and the duration cut',
-    'dome_level_topic': "the dome's UInt8 audio level input",
-    'level_floor_dbfs': 'level mapped to 0 on the dome',
-    'level_ceiling_dbfs': 'level mapped to 255 on the dome',
-    'wav_dir': 'where the wav backend writes',
-    'allow_duplicate': 'start even when another sound_player is on the graph',
-}
+from r2_sound.parameters import DESCRIPTIONS, NODE_NAME, PARAMETERS
 
 
 def generate_launch_description():

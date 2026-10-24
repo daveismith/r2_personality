@@ -1970,19 +1970,25 @@ def test_rule21_the_default_for_an_intent_without_the_field_is_the_configs():
     assert a.intent(msg, 3.0).accepted is False                     # i1 plays on: it waits
 
 
-def test_rule21_idle_and_behavior_plays_carry_min_of_clip_length_and_the_cap():
+def test_rule21_idle_and_behavior_plays_are_capped_and_send_0_when_the_cap_does_not_bite():
     for source, priority in (('idle', 10), ('behavior', 100)):
-        for params, want in [({'name': 'sent1'}, 1500), ({'name': 'long1'}, 30000),
-                             ({'pool': 'hum'}, 30000)]:
+        for params, want, remaining in [({'name': 'sent1'}, 0, 1500),
+                                        ({'name': 'long1'}, 30000, 30000),
+                                        ({'pool': 'hum'}, 30000, 30000)]:
             a = sound()
             (x,) = sintent(a, 1.0, source, priority, params=params).actions
             assert x.request['duration_ms'] == want, (source, params)
+            assert a.status('sound', 1.0).active_remaining_ms == remaining, (source, params)
     a = sound()
     (x,) = sintent(a, 1.0, 'idle', 10, params={'name': 'sent2'}, duration_ms=1000).actions
     assert x.request['duration_ms'] == 1000
     a = sound()
     (x,) = sintent(a, 1.0, 'idle', 10, params={'name': 'sent2'}, duration_ms=9000).actions
-    assert x.request['duration_ms'] == 2500              # not past the clip
+    assert x.request['duration_ms'] == 0                 # not past the clip: the whole clip
+    assert a.status('sound', 1.0).active_remaining_ms == 2500
+    a = sound()
+    (x,) = sintent(a, 1.0, 'idle', 10, params={'name': 'sent2'}, duration_ms=2500).actions
+    assert x.request['duration_ms'] == 0                 # exactly the clip: no cut either
     a = sound(sound_channel_cfg(max_duration_ms=1000))
     (x,) = sintent(a, 1.0, 'idle', 10, params={'name': 'sent2'}).actions
     assert x.request['duration_ms'] == 1000
@@ -2007,6 +2013,10 @@ def test_rule21_the_personality_never_plays_an_excluded_clip_by_name():
     a = sound()
     r = sintent(a, 1.0, 'behavior', 100, params={'name': 'cantina'})
     assert not r.accepted and 'manual play only' in r.reason
+    r = sintent(a, 1.0, 'manual', 198, params={'name': 'cantina'})   # by priority, not by source
+    assert not r.accepted and r.reason == 'excluded: manual play only'
+    r = sintent(a, 1.0, 'manual', 199, params={'name': 'cantina'})
+    assert r.accepted
 
 
 def test_rule24_a_remaining_ms_of_zero_does_not_end_a_run_early():
@@ -2029,7 +2039,7 @@ def test_rule22_chatter_is_due_within_every_s_and_draws_from_the_moods_pools():
     (x,) = plays(sstep(a, 10.5, strength=0.0))
     assert (x.priority, x.why, x.request['name'], x.request['gain_db']) == (
         10, 'intent', 'sent1', -3.0)
-    assert x.request['duration_ms'] == 1500 and x.intent_id.startswith('chatter-')
+    assert x.request['duration_ms'] == 0 and x.intent_id.startswith('chatter-')   # whole
     a = sound(rng=FixedRng(0.999), strength=0.0)               # the last of the window
     assert plays(sstep(a, 19.5, strength=0.0)) == []
     (x,) = plays(sstep(a, 20.5, strength=0.0))
@@ -2421,4 +2431,6 @@ def test_rule9_no_outgoing_request_sets_hue():
 def test_rule3_no_personality_run_has_duration_zero():
     for x in ALL_ACTIONS:
         if x.call in (CALL_RUN, CALL_SAY, CALL_PLAY) and x.priority <= 100:
-            assert x.request['duration_ms'] > 0
+            # The one 0: a play by name of a clip no longer than the cap (rule 21).
+            whole_clip = x.call == CALL_PLAY and x.request['name']
+            assert x.request['duration_ms'] > 0 or whole_clip

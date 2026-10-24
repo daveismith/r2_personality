@@ -61,9 +61,10 @@ schema (plan section 4.3):
   (optional) is the bearing the dome rests at (+ve left), in (-pi, pi]. A mood
   without ``dome`` moves as neutral, with one warning.
 
-Sound (phase 3 plan 4.4). ``defaults.sound`` is ``{house_level_dbfs: -16, fade_ms: 20,
-interruptible: false, level: {floor_dbfs: -40, ceiling_dbfs: -6}}`` (:class:`SoundDefaults`;
-``interruptible`` is the default for a sound intent that does not say). A mood, and ``neutral``,
+Sound (phase 3 plan 4.4). ``defaults.sound`` is ``{interruptible: false}``
+(:class:`SoundDefaults`): the default for the intents the arbiter builds itself (chatter,
+voice); a ROS ``ExpressionIntent`` carries its own bool and ``express`` sends true. The fade,
+the house level and the level range are the player's own parameters. A mood, and ``neutral``,
 may have ``sound: {gain_db, chatter}``: ``gain_db`` within :data:`GAIN_RANGE_DB` (default 0) and,
 for a mood only, ``chatter: {every_s: [min, max], pools: {tag: weight}}`` where every tag is one of
 :data:`SOUND_TAGS` (never ``excluded``) or :data:`VOICE_POOL` and each weight > 0. ``voice`` is
@@ -141,7 +142,6 @@ VOICE_POOL = 'voice'           # a chatter pool of synthesised phrases, not a ca
 # What a mood's chatter may name: the playable tags and the synthesiser's voice.
 CHATTER_POOLS = tuple(t for t in SOUND_TAGS if t != EXCLUDED_TAG) + (VOICE_POOL,)
 GAIN_RANGE_DB = (-20.0, 6.0)   # a mood's sound gain
-MAX_FADE_MS = 1000
 MIN_FEEDBACK_TIMEOUT_S = 0.2   # defaults.dome.feedback_timeout_s: two 10 Hz joint states
 
 
@@ -173,21 +173,10 @@ class DomeDefaults:
 
 
 @dataclass(frozen=True)
-class SoundLevel:
-    """The range ``/sound/level`` maps onto 0-255 for the dome (``defaults.sound.level``)."""
-
-    floor_dbfs: float = -40.0
-    ceiling_dbfs: float = -6.0
-
-
-@dataclass(frozen=True)
 class SoundDefaults:
     """The sound channel's settings (``defaults.sound``)."""
 
-    house_level_dbfs: float = -16.0   # what the catalogue's gain_db targets
-    fade_ms: int = 20
-    interruptible: bool = False       # for a sound intent that does not say
-    level: SoundLevel = SoundLevel()
+    interruptible: bool = False       # for the intents the arbiter builds itself
 
 
 @dataclass(frozen=True)
@@ -576,39 +565,15 @@ def _defaults(value):
     return Defaults(**out)
 
 
-def _dbfs(value, path):
-    """Return a level in dBFS: finite and at most 0."""
-    number = _number(value, path)
-    if number > 0.0:
-        raise ExpressionConfigError('%s: %g is above 0 dBFS' % (path, number))
-    return number
-
-
 def _sound_defaults(value, path):
     mapping = _mapping(value, path)
     _known_keys(mapping, _SOUND_FIELDS, path)
     out = {}
     for key, raw in mapping.items():
         here = _join(path, key)
-        if key == 'house_level_dbfs':
-            out[key] = _dbfs(raw, here)
-        elif key == 'fade_ms':
-            out[key] = _integer(raw, here, 0, MAX_FADE_MS)
-        elif key == 'interruptible':
-            if not isinstance(raw, bool):
-                raise ExpressionConfigError('%s: must be true or false, got %r' % (here, raw))
-            out[key] = raw
-        else:
-            level = _mapping(raw, here)
-            _known_keys(level, ('floor_dbfs', 'ceiling_dbfs'), here)
-            floor = _dbfs(level.get('floor_dbfs', SoundLevel.floor_dbfs),
-                          _join(here, 'floor_dbfs'))
-            ceiling = _dbfs(level.get('ceiling_dbfs', SoundLevel.ceiling_dbfs),
-                            _join(here, 'ceiling_dbfs'))
-            if floor >= ceiling:
-                raise ExpressionConfigError('%s: floor_dbfs %g must be below ceiling_dbfs %g'
-                                            % (here, floor, ceiling))
-            out[key] = SoundLevel(floor_dbfs=floor, ceiling_dbfs=ceiling)
+        if not isinstance(raw, bool):
+            raise ExpressionConfigError('%s: must be true or false, got %r' % (here, raw))
+        out[key] = raw
     return SoundDefaults(**out)
 
 

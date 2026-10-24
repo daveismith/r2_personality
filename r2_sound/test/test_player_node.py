@@ -356,7 +356,7 @@ def test_refusals(player):
                            ({'pool': 'nope'}, 'unknown pool'),
                            ({'pool': 'sad'}, 'empty pool'),
                            ({'pool': 'excluded'}, 'empty pool'),
-                           ({'name': 'music', 'priority': 100}, 'excluded')):
+                           ({'name': 'music', 'priority': 100}, 'excluded: manual play only')):
         response = player.play(**fields)
         assert (response.accepted, response.reason) == (False, reason), fields
     for fields, reason in (({'arousal': 1.5}, 'bad arousal: must be 0..1'),
@@ -369,6 +369,12 @@ def test_refusals(player):
 def test_an_excluded_clip_plays_at_manual_priority(player):
     response, end, _, _ = play_and_wait(player, name='music', priority=199)
     assert response.accepted and end.last_end == ENDED
+
+
+def test_the_player_is_the_only_publisher_of_its_dome_level(player):
+    infos = wait_until(lambda: player.node.get_publishers_info_by_topic(player.topics['dome']),
+                       10.0, 'the dome level publisher')
+    assert [(i.node_name, i.node_namespace) for i in infos] == [(player.name, '/')]
 
 
 def test_parameters_are_read_at_startup(player):
@@ -462,6 +468,20 @@ def test_the_null_backend_writes_nothing(fresh):
     assert player.play(name='low').duration_ms == 400   # 22.05 kHz, resampled
     assert player.wait_idle(mark).backend == 'null'
     assert player.wavs() == []
+
+
+def test_a_missing_device_runs_silent_on_null_unless_required(fresh):
+    device = ('-p', 'device:=No Such DAC xyz')
+    player = fresh(backend='sounddevice', extra=device)
+    mark = player.mark()
+    assert player.play(name='beep').accepted
+    assert player.wait_idle(mark).backend == 'null (no device: No Such DAC xyz)'
+    text = player.proc.text()
+    assert text.count("no output device matches 'No Such DAC xyz'") == 1 and 'ERROR' in text
+    required = fresh(backend='sounddevice', extra=device + ('-p', 'require_device:=true'),
+                     wait=False)
+    assert required.proc.proc.wait(timeout=STARTUP_S) == 1
+    assert 'no output device matches' in required.proc.text()
 
 
 def test_a_bad_parameter_exits_1(fresh):

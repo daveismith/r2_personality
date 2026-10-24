@@ -59,9 +59,11 @@ Rules (plan 4.2), each named by a test:
    it outright, the runs it displaced are tracked again.
 5. **Duration cap** (rule 3, decision 11.4). ``idle`` and ``behavior`` runs
    carry ``min(duration, max_duration_ms)``, ``max_duration_ms`` for 0; the
-   personality never sends 0. ``manual`` and ``safety`` are exempt. LED runs
-   end on the device by their duration; a Magic Panel run is stopped by the
-   arbiter at its duration (the panel has none).
+   personality never sends 0, except a sound play of a known clip no longer
+   than the cap, whose 0 is the whole clip (rule 21). ``manual`` and
+   ``safety`` are exempt. LED runs end on the device by their duration; a
+   Magic Panel run is stopped by the arbiter at its duration (the panel has
+   none).
 6. **Manual auto-claim.** A ``manual`` intent claims its channel as owner
    ``manual`` at its own priority (never lowered by a renewal), ending
    ``manual_hold_s`` after the later of the last intent and the end of its
@@ -184,8 +186,9 @@ as above, with these differences, each named by a test:
     intent said ``interruptible: true``; an intent that does not say takes
     ``defaults.sound.interruptible`` (false: a cut phrase sounds like a fault). A higher
     priority always pre-empts, the player fading the old sound out. ``idle`` and ``behavior``
-    plays carry ``duration_ms`` = min(clip length, ``max_duration_ms``), a pool play (clip not
-    known yet) ``max_duration_ms``; ``manual`` plays are uncapped and 0 is the clip's length.
+    plays carry ``duration_ms`` = ``max_duration_ms`` when it is shorter than the clip, 0 (the
+    whole clip) when the clip is known and no longer than the cap, and ``max_duration_ms`` for
+    a pool play (clip not known yet); ``manual`` plays are uncapped and 0 is the clip's length.
     A phrase's ``length_s`` is capped the same way; 0 (the synth's own, at most
     :data:`PHRASE_OWN_MAX_S`) stays 0 unless the intent's ``duration_ms`` sets it or the cap
     is shorter.
@@ -239,6 +242,9 @@ PRIORITY_MANUAL = 200
 PRIORITY_SAFETY = 255
 LADDER = MappingProxyType({'idle': PRIORITY_IDLE, 'behavior': PRIORITY_BEHAVIOR,
                            'manual': PRIORITY_MANUAL, 'safety': PRIORITY_SAFETY})
+# An excluded clip plays by name from here up, in the arbiter and in the player alike: the
+# same value as r2_sound.catalogue.MANUAL_PRIORITY (no import: r2_sound is not a dependency).
+MANUAL_PLAY_PRIORITY = PRIORITY_MANUAL - 1
 CAPPED_SOURCES = ('idle', 'behavior')
 STOPPING_SOURCES = ('manual', 'safety')   # may stop a channel with no run of ours
 
@@ -1065,9 +1071,10 @@ class Arbiter:
 
         Its ``state`` (0 idle, 1 playing, 2 fading), ``name``, ``owner``, ``priority``,
         ``intent_id``, ``elapsed_ms``, ``remaining_ms`` and ``last_end`` (0 none, 1 ended, 2
-        duration, 3 stopped, 4 replaced). A run of ours that the player shows playing takes its
-        end from ``remaining_ms`` (the stream's own clock, rule 13); one it no longer shows,
-        :data:`SNAPSHOT_GRACE_S` after its confirmation, has ended on the device.
+        duration, 3 stopped, 4 replaced, 5 failed). A run of ours that the player shows
+        playing takes its end from ``remaining_ms`` (the stream's own clock, rule 13); one it
+        no longer shows, :data:`SNAPSHOT_GRACE_S` after its confirmation, has ended on the
+        device.
         """
         now = self._clock(now)
         self._require('sound')
@@ -1619,7 +1626,8 @@ class Arbiter:
 
         The first is what the request carries, the second how long the play will run (0:
         unknown). The personality's is capped by ``max_duration_ms`` and by the clip's length
-        (rule 21); a manual play is not, and 0 means the clip's length.
+        (rule 21), and is 0 (the whole clip) when the cap does not bite on a known clip; a
+        manual play is not capped, and 0 means the clip's length.
         """
         requested = f.duration_ms or params.get('duration_ms', 0)
         if isinstance(requested, bool) or not isinstance(requested, int) or \
@@ -1631,7 +1639,10 @@ class Arbiter:
             if clip_ms:
                 limit = min(limit, clip_ms)
         duration = _least(requested, limit)
-        return duration, _least(duration, clip_ms)
+        length = _least(duration, clip_ms)
+        if f.source in CAPPED_SOURCES and clip_ms and duration >= clip_ms:
+            duration = 0              # the cap does not bite: the whole clip, never a cut
+        return duration, length
 
     def _render_sound(self, cs, f, params, intent_id, now):
         """Return ``(actions, run)`` for a ``play`` or ``vocalize`` (rules 20, 21); else refuse."""
@@ -1650,7 +1661,7 @@ class Arbiter:
             if name is not None and name not in catalogue.clips:
                 raise _Refuse('unknown name')
             if name is not None and catalogue.clips[name].excluded and \
-                    f.source in CAPPED_SOURCES:
+                    pr < MANUAL_PLAY_PRIORITY:
                 raise _Refuse('excluded: manual play only')
             if pool is not None and pool not in catalogue.pools:
                 raise _Refuse('unknown pool')

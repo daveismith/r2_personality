@@ -87,6 +87,15 @@ def test_repeated_names_get_a_numeric_suffix(tmp_path):
     assert names == ['padawan-leia', 'padawan-leia-2']
 
 
+def test_repeat_suffixes_follow_the_sorted_paths(tmp_path):
+    root = tmp_path / 's'
+    write_wav(str(root / 'R2 Padawan' / '5LEIA.wav'), tone())       # os.walk: this first
+    write_wav(str(root / 'R2 Padawan' / '0' / '5LEIA.wav'), tone())
+    items = bc._unique_names(bc._scan(str(root)))
+    assert [(i.path, i.name) for i in items] == [
+        ('R2 Padawan/0/5LEIA.wav', 'padawan-leia'), ('R2 Padawan/5LEIA.wav', 'padawan-leia-2')]
+
+
 @pytest.mark.parametrize('rel, label', [
     ('32SENT1.mp3', 'chatter'), ('25OOH3.mp3', 'ooh'), ('52HUM19.mp3', 'hum'),
     ('13ALARM3.mp3', 'alarm'), ('1SCREAM2.mp3', 'scream'), ('2CHORTLE.mp3', 'laugh'),
@@ -169,9 +178,10 @@ def test_the_sheet_has_every_clip_and_the_plan_columns(tree, tmp_path):
     catalogue, _, _, sheet, _ = run(tree, tmp_path)
     with open(sheet) as f:
         assert f.readline().strip() == ('name,set,path,duration_s,rms_dbfs,suggested_tag,'
-                                        'confidence,tags,clip_override_db')
+                                        'confidence,tags,clip_override_db,status')
     rows = read_sheet_rows(sheet)
     assert [r['name'] for r in rows] == [c.name for c in catalogue.clips]
+    assert all(r['status'] == '' for r in rows)
     assert all(r['suggested_tag'] and r['confidence'] for r in rows)
     assert all(r['tags'] == '' and r['clip_override_db'] == '' for r in rows)
     assert rows[0]['path'].count('/') == 1
@@ -217,13 +227,106 @@ def test_a_bad_tag_or_override_in_the_sheet_is_refused_with_its_line(tree, tmp_p
         run(tree, tmp_path)
 
 
-def test_a_sheet_row_for_a_vanished_clip_is_dropped_with_a_warning(tree, tmp_path):
+def write_sheet_rows(sheet, rows):
+    with open(sheet, 'w', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=list(rows[0]), lineterminator='\n')
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+@pytest.mark.parametrize('column', ['name', 'path'])
+def test_two_sheet_rows_with_one_name_or_path_are_refused_with_both_lines(
+        tree, tmp_path, column):
     _, _, _, sheet, _ = run(tree, tmp_path)
-    edit_sheet(sheet, **{'music-4': {'tags': 'calm'}})
-    os.remove(os.path.join(tree, 'R2 sounds and music', '4.wav'))
+    rows = read_sheet_rows(sheet)
+    first = next(i for i, r in enumerate(rows) if r['name'] == 'music-4')
+    copy = dict(rows[1 if first != 1 else 2])
+    copy[column] = rows[first][column]
+    copy['name' if column == 'path' else 'path'] += '-x'   # only the one column is shared
+    rows.append(copy)
+    write_sheet_rows(sheet, rows)
+    line = len(rows) + 1                                   # the header is line 1
+    with pytest.raises(CatalogueError, match=r'tags.csv:%d: %s: .%s. is also on line %d' % (
+            line, column, rows[first][column].replace('/', '.'), first + 2)):
+        run(tree, tmp_path)
+
+
+def test_a_missing_row_may_share_a_name(tmp_path):
+    sheet = str(tmp_path / 'tags.csv')
+    empty = {'tags': '', 'clip_override_db': ''}
+    write_sheet_rows(sheet, [
+        {'name': 'a', 'path': 'S/x/a.wav', **empty, 'status': 'missing'},
+        {'name': 'a', 'path': 'S/y/a.wav', **empty, 'status': ''}])
+    assert [r['path'] for r in bc.read_sheet(sheet)] == ['S/x/a.wav', 'S/y/a.wav']
+
+
+def test_a_sheet_row_for_a_vanished_clip_is_kept_and_its_tag_comes_back(tree, tmp_path):
+    _, _, _, sheet, _ = run(tree, tmp_path)
+    edit_sheet(sheet, **{'music-4': {'tags': 'calm', 'clip_override_db': '2'}})
+    wav = os.path.join(tree, 'R2 sounds and music', '4.wav')
+    with open(wav, 'rb') as f:
+        audio = f.read()
+    os.remove(wav)
     catalogue, warnings, *_ = run(tree, tmp_path)
     assert 'music-4' not in by_name(catalogue)
-    assert any('music-4' in w for w in warnings)
+    assert any('music-4' in w and 'missing' in w for w in warnings)
+    row = {r['name']: r for r in read_sheet_rows(sheet)}['music-4']
+    assert (row['tags'], row['clip_override_db'], row['status']) == ('calm', '2', 'missing')
+    assert row['path'] == 'R2 sounds and music/4.wav' and row['rms_dbfs']
+    run(tree, tmp_path)                                    # still gone: still kept
+    assert {r['name']: r for r in read_sheet_rows(sheet)}['music-4'] == row
+    with open(wav, 'wb') as f:
+        f.write(audio)
+    catalogue, warnings, *_ = run(tree, tmp_path)
+    assert warnings == [] and by_name(catalogue)['music-4'].tags == ('calm',)
+    row = {r['name']: r for r in read_sheet_rows(sheet)}['music-4']
+    assert (row['tags'], row['status']) == ('calm', '')
+
+
+def test_sheet_rows_follow_their_path_when_names_shift(tmp_path):
+    root = tmp_path / 'sounds'
+    a = root / 'R2 Padawan' / 'a' / '5LEIA.wav'
+    write_wav(str(a), tone(1000))
+    write_wav(str(root / 'R2 Padawan' / 'b' / '5LEIA.wav'), tone(1500))
+    _, _, _, sheet, _ = run(str(root), tmp_path)
+    edit_sheet(sheet, **{'padawan-leia': {'tags': 'hum'}, 'padawan-leia-2': {'tags': 'sad'}})
+    os.remove(str(a))                                      # b is now padawan-leia
+    catalogue, *_ = run(str(root), tmp_path)
+    assert by_name(catalogue)['padawan-leia'].tags == ('sad',)
+    rows = read_sheet_rows(sheet)
+    assert [(r['name'], r['path'], r['tags'], r['status']) for r in rows] == [
+        ('padawan-leia', 'R2 Padawan/a/5LEIA.wav', 'hum', 'missing'),
+        ('padawan-leia', 'R2 Padawan/b/5LEIA.wav', 'sad', '')]
+    write_wav(str(a), tone(1000))
+    catalogue, *_ = run(str(root), tmp_path)
+    assert by_name(catalogue)['padawan-leia'].tags == ('hum',)
+    assert by_name(catalogue)['padawan-leia-2'].tags == ('sad',)
+
+
+def test_a_row_without_a_path_or_with_a_moved_file_is_matched_by_name(tree, tmp_path):
+    _, _, _, sheet, _ = run(tree, tmp_path)
+    edit_sheet(sheet, **{'music-4': {'tags': 'calm'},
+                         'music-1': {'tags': 'greeting', 'path': ''}})
+    sub = os.path.join(tree, 'R2 sounds and music', 'moved')
+    os.makedirs(sub)
+    os.rename(os.path.join(tree, 'R2 sounds and music', '4.wav'), os.path.join(sub, '4.wav'))
+    catalogue, warnings, *_ = run(tree, tmp_path)
+    assert warnings == []
+    assert by_name(catalogue)['music-4'].tags == ('calm',)
+    assert by_name(catalogue)['music-4'].path == 'R2 sounds and music/moved/4.wav'
+    assert by_name(catalogue)['music-1'].tags == ('greeting',)
+
+
+def test_the_sheet_wins_over_the_exclusion_list(tree, tmp_path):
+    first, _, _, sheet, _ = run(tree, tmp_path)
+    assert by_name(first)['padawan-theme'].excluded
+    edit_sheet(sheet, **{'padawan-theme': {'tags': 'hum'},
+                         'music-march': {'tags': 'excluded'}})
+    second, *_ = run(tree, tmp_path)
+    theme = by_name(second)['padawan-theme']
+    assert not theme.excluded and theme.tags == ('hum',) and theme in pools(second)['hum']
+    assert theme.suggested_tag == 'excluded'
+    assert by_name(second)['music-march'].excluded
 
 
 def test_a_file_that_cannot_be_decoded_stops_the_run_and_keeps_the_sheet(tree, tmp_path):

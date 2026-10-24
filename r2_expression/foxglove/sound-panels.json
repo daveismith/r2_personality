@@ -85,13 +85,13 @@
       "foxglovePanelTitle": "Sound level (/sound/level) and the dome's audio level (/dome/audio/level)"
     },
     "RawMessages!soundstate": {
-      "topicPath": "/sound/state",
+      "topicPath": "/sound_player/state",
       "diffTopicPath": "",
       "diffMethod": "custom",
       "diffEnabled": false,
       "showFullMessageForDiff": false,
       "expansion": "all",
-      "foxglovePanelTitle": "What the player is doing (/sound/state)"
+      "foxglovePanelTitle": "What the player is doing (/sound_player/state)"
     }
   },
   "globalVariables": {},

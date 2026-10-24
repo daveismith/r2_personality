@@ -83,16 +83,31 @@ def to_mono(samples):
     return x if x.ndim == 1 else x.mean(axis=1)
 
 
+RESAMPLE_BLOCK = 65536               # output samples interpolated at a time
+
+
 def resample(x, sample_rate, target=SAMPLE_RATE):
-    """Return mono ``x`` at ``target`` Hz: box-filtered decimation, then linear interpolation."""
+    """
+    Return mono ``x`` at ``target`` Hz: box-filtered decimation, then linear interpolation.
+
+    The result has the dtype of ``x`` (float32 stays float32: the player's decode) and is
+    interpolated a block at a time, so no float64 copy of the whole output is ever made.
+    """
     if sample_rate == target or len(x) == 0:
         return x
+    x = np.asarray(x)
+    dtype = x.dtype if np.issubdtype(x.dtype, np.floating) else np.float64
     if sample_rate > target:
         width = int(math.ceil(sample_rate / target))
-        x = np.convolve(x, np.ones(width) / width, mode='same')
+        x = np.convolve(x, np.full(width, 1.0 / width, dtype=dtype), mode='same')
     n_out = int(round(len(x) * target / sample_rate))
-    positions = np.arange(n_out) * (sample_rate / target)
-    return np.interp(positions, np.arange(len(x)), x)
+    step = sample_rate / target
+    source = np.arange(len(x))
+    out = np.empty(n_out, dtype=dtype)
+    for start in range(0, n_out, RESAMPLE_BLOCK):
+        positions = np.arange(start, min(n_out, start + RESAMPLE_BLOCK)) * step
+        out[start:start + len(positions)] = np.interp(positions, source, x)
+    return out
 
 
 def _frames(x):

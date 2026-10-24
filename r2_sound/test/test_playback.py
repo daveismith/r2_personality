@@ -16,6 +16,7 @@
 
 import os
 import random
+import sys
 import threading
 import time
 import types
@@ -24,12 +25,12 @@ import numpy as np
 import pytest
 
 from fixtures import make_player_tree, PLAYER_RATE, read_wav, square, write_wav  # noqa: I100
-from r2_sound import backends, gain
+from r2_sound import backends, decode as decode_module, gain
 from r2_sound.analysis import resample
 from r2_sound.catalogue import load_catalogue, pick, pick_weights, pools, resolve_play
-from r2_sound.decode import decode, DecodeCache
-from r2_sound.player import (END_DURATION, END_ENDED, END_REPLACED, END_STOPPED, FADING,
-                             IDLE, Player, PLAYING, PlayJob)
+from r2_sound.decode import CHUNK_FRAMES, decode, DecodeCache, DecodeCancelled
+from r2_sound.player import (END_DURATION, END_ENDED, END_FAILED, END_REPLACED, END_STOPPED,
+                             FADING, IDLE, Player, PLAYING, PlayJob, Voice)
 
 RATE = PLAYER_RATE
 BLOCK = 1470
@@ -102,7 +103,8 @@ def test_decode_applies_gain_and_rate(tmp_path):
 def test_cache_evicts_least_recently_used():
     loads = []
 
-    def loader(path, rate, gain_db):
+    def loader(path, rate, gain_db, abandoned):
+        assert abandoned() is False                       # always a callable, never None
         loads.append(path)
         return np.zeros(100, dtype=np.float32)            # 400 bytes each
 
@@ -120,10 +122,56 @@ def test_cache_evicts_least_recently_used():
     assert cache.keys() == [] and cache.bytes == 0
 
 
+def test_decode_reads_in_chunks_and_stops_when_abandoned(tmp_path):
+    path = str(tmp_path / 'long.wav')
+    write_wav(path, square(5.0, 0.25, RATE), RATE)        # 220500 frames: four chunks
+    checks = []
+    x = decode(path, RATE, 0.0, abandoned=lambda: checks.append(1) and False)
+    assert len(x) == 5 * RATE and len(checks) == -(-5 * RATE // CHUNK_FRAMES) + 1
+    assert x.dtype == np.float32
+    checks.clear()
+    with pytest.raises(DecodeCancelled):
+        decode(path, RATE, 0.0, abandoned=lambda: checks.append(1) or len(checks) > 2)
+    assert len(checks) == 3                               # two chunks read, then stopped
+
+
+@pytest.mark.parametrize('source_rate', [RATE, 22050, 48000])
+def test_decode_is_float32_and_the_same_chunked_or_not(tmp_path, monkeypatch, source_rate):
+    path = str(tmp_path / 'stereo.wav')
+    t = np.arange(int(3.5 * source_rate)) / source_rate
+    left = 0.3 * np.sin(2 * np.pi * 300 * t)
+    import soundfile
+    soundfile.write(path, np.stack([left, 0.5 * left], axis=1), source_rate, 'PCM_16')
+    chunked = decode(path, RATE, -3.0)
+    monkeypatch.setattr(decode_module, 'CHUNK_FRAMES', 10 ** 7)   # the whole file at once
+    whole = decode(path, RATE, -3.0)
+    assert chunked.dtype == whole.dtype == np.float32
+    assert len(chunked) == int(round(len(t) * RATE / source_rate))
+    assert np.array_equal(chunked, whole)
+
+
+def test_cache_peek_never_decodes_and_keeps_the_gain_in_the_key():
+    loads = []
+
+    def loader(path, rate, gain_db, abandoned):
+        loads.append((path, gain_db))
+        if abandoned():
+            raise DecodeCancelled(path)
+        return np.zeros(10, dtype=np.float32)
+
+    cache = DecodeCache(1000, RATE, loader)
+    assert cache.peek('a') is None and loads == [] and (cache.hits, cache.misses) == (0, 0)
+    a = cache.get('a', -3.0)
+    assert cache.peek('a', -3.0) is a and cache.peek('a') is None and cache.hits == 1
+    with pytest.raises(DecodeCancelled):
+        cache.get('b', abandoned=lambda: True)
+    assert cache.peek('b') is None and [k[0] for k in cache.keys()] == ['a']
+
+
 def test_cache_drops_a_decode_begun_before_a_clear():
     cache = None
 
-    def loader(path, rate, gain_db):
+    def loader(path, rate, gain_db, abandoned):
         cache.clear()                                     # a reload while decoding
         return np.zeros(10, dtype=np.float32)
 
@@ -132,9 +180,13 @@ def test_cache_drops_a_decode_begun_before_a_clear():
     assert cache.keys() == []
 
 
-def test_cache_does_not_keep_a_buffer_over_the_cap():
-    cache = DecodeCache(100, RATE, lambda p, r, g: np.zeros(1000, dtype=np.float32))
-    assert len(cache.get('big')) == 1000 and cache.keys() == []
+def test_cache_does_not_keep_a_buffer_over_half_the_cap():
+    sizes = {'big': 150, 'small': 100}                    # 600 and 400 bytes
+    cache = DecodeCache(1000, RATE, lambda p, r, g, a: np.zeros(sizes[p], dtype=np.float32))
+    cache.get('small')
+    assert len(cache.get('big')) == 150 and [k[0] for k in cache.keys()] == ['small']
+    cache.get('big')
+    assert cache.misses == 3                              # decoded again, never cached
 
 
 # --- pools --------------------------------------------------------------------------------
@@ -152,7 +204,8 @@ def test_resolve_play_refusals(tree):
     assert resolve_play(by_name, pool_map, '', 'nope', 100, rng) == (None, 'unknown pool')
     assert resolve_play(by_name, pool_map, '', 'sad', 100, rng) == (None, 'empty pool')
     assert resolve_play(by_name, pool_map, '', 'excluded', 199, rng) == (None, 'empty pool')
-    assert resolve_play(by_name, pool_map, 'music', '', 100, rng) == (None, 'excluded')
+    assert resolve_play(by_name, pool_map, 'music', '', 100, rng) == (
+        None, 'excluded: manual play only')
     assert resolve_play(by_name, pool_map, 'music', '', 199, rng)[0].name == 'music'
     picked = {resolve_play(by_name, pool_map, '', 'ooh', 100, rng)[0].name for _ in range(50)}
     assert picked == {'ooh1', 'ooh2'}
@@ -236,8 +289,8 @@ def fake_sd(monkeypatch):
     devices = [{'name': 'HDMI 0', 'max_output_channels': 2},
                {'name': 'USB Audio mic', 'max_output_channels': 0},
                {'name': 'USB Audio DAC', 'max_output_channels': 2}]
-    monkeypatch.setattr(backends, 'sounddevice', types.SimpleNamespace(
-        OutputStream=FakeStream, query_devices=lambda: devices))
+    module = types.SimpleNamespace(OutputStream=FakeStream, query_devices=lambda: devices)
+    monkeypatch.setattr(backends, '_sounddevice', lambda: module)
     return FakeStream
 
 
@@ -292,9 +345,26 @@ def test_sounddevice_backend_device_not_found(fake_sd):
 
 
 def test_sounddevice_missing_is_an_error(monkeypatch):
-    monkeypatch.setattr(backends, 'sounddevice', None)
-    with pytest.raises(RuntimeError, match='PortAudio'):
-        backends.make_backend('sounddevice', RATE)
+    backends._sounddevice.cache_clear()
+    monkeypatch.setitem(sys.modules, 'sounddevice', None)     # import fails
+    try:
+        with pytest.raises(RuntimeError, match='PortAudio'):
+            backends.make_backend('sounddevice', RATE)
+        with pytest.raises(RuntimeError, match='PortAudio'):  # a failure is not cached
+            backends.make_backend('sounddevice', RATE)
+    finally:
+        backends._sounddevice.cache_clear()
+
+
+def test_a_missing_device_raises_from_the_factory(fake_sd):
+    with pytest.raises(backends.DeviceNotFound, match='HDMI 0, USB Audio DAC'):
+        backends.make_backend('sounddevice', RATE, device='USB Speaker')
+    assert fake_sd.made == []
+
+
+def test_a_null_backend_takes_a_name():
+    assert backends.NullBackend(RATE).name == 'null'
+    assert backends.NullBackend(RATE, name='null (no device: USB)').name == 'null (no device: USB)'
 
 
 def wait_for(predicate, timeout=5.0):
@@ -372,16 +442,26 @@ class Sink:
 
 @pytest.fixture
 def worker(tree):
+    """Start a worker whose cache holds the tree's clips: each play is a hit, started now."""
     sounds, _ = tree
     sink = Sink()
-    player = Player(backends.NullBackend(RATE), DecodeCache(2 ** 24, RATE), sink, RATE)
+    cache = DecodeCache(2 ** 24, RATE)
+    for name in ('beep', 'low', 'long', 'music', 'ooh1', 'ooh2', 'scream'):
+        warm = job(sounds, name)
+        cache.get(warm.path, warm.catalogue_gain_db)
+    player = Player(backends.NullBackend(RATE), cache, sink, RATE)
     player.start()
     yield player, sink, sounds
     player.close()
 
 
+CLIP_MS = {'beep': 500, 'low': 400, 'long': 3000}   # make_player_tree's; the rest are 300
+
+
 def job(sounds, name, **kw):
+    """Return the job the node would make: the catalogue's gain and length (``clip_ms``)."""
     gains = {'beep': -6.0}
+    kw.setdefault('clip_ms', CLIP_MS.get(name, 300))
     return PlayJob(name, os.path.join(sounds, 'Test/%s.wav' % name), gains.get(name, 0.0),
                    kw.pop('gain_db', gains.get(name, 0.0)), **kw)
 
@@ -425,14 +505,27 @@ def test_worker_replace_stop_and_cut(worker):
     assert last_state(sink).last_end == END_DURATION
 
 
-def test_worker_refuses_a_bad_file_and_after_close(worker, tmp_path):
+def test_worker_refuses_a_missing_file_at_once_and_after_close(worker, tmp_path):
     player, sink, sounds = worker
-    bad = PlayJob('bad', str(tmp_path / 'missing.wav'), 0.0, 0.0)
-    accepted, reason, _ = player.play(bad)
-    assert not accepted and reason.startswith('decode failed')
+    assert player.play(job(sounds, 'long'))[0]
+    bad = PlayJob('bad', str(tmp_path / 'missing.wav'), 0.0, 0.0, clip_ms=300)
+    assert player.play(bad) == (False, 'decode failed: no such file', 0)   # nothing queued
+    state = last_state(sink)
+    assert (state.state, state.name) == (PLAYING, 'long') and sink.plays == [True]
+    assert sink.warnings == []
     player.close()
     assert player.play(job(sounds, 'beep')) == (False, 'closed', 0)
     assert last_state(sink).state == IDLE and sink.levels[-1][1] == 0.0
+
+
+def test_worker_ends_an_undecodable_file_as_failed(worker, tmp_path):
+    player, sink, sounds = worker
+    bad = str(tmp_path / 'bad.wav')
+    open(bad, 'wb').write(b'not audio')
+    assert player.play(PlayJob('bad', bad, 0.0, 0.0, clip_ms=300)) == (True, '', 300)
+    wait_for(lambda: last_state(sink).last_end == END_FAILED)
+    assert 'decode failed' in sink.warnings[0] and sink.plays == [True, False]
+    assert last_state(sink).state == IDLE
 
 
 def test_worker_close_stops_a_play(worker):
@@ -466,3 +559,234 @@ def test_stop_after_a_natural_end_is_false(worker):
     player.play(job(sounds, 'ooh1'))
     wait_for(lambda: last_state(sink).state == IDLE)
     assert not player.stop() and last_state(sink).last_end == END_ENDED
+
+
+class KeepBackend(backends.NullBackend):
+    """The null backend, keeping each buffer it was given."""
+
+    def __init__(self, rate):
+        super().__init__(rate)
+        self.buffers = []
+
+    def start(self, buffer, on_block, on_end, name=''):
+        self.buffers.append(buffer)
+        super().start(buffer, on_block, on_end, name)
+
+
+@pytest.fixture
+def fakes(tmp_path, monkeypatch):
+    """Run in ``tmp_path`` with the fake loaders' files there: the player checks a file is."""
+    monkeypatch.chdir(tmp_path)
+    for name in ('c.wav', 't.wav', 'e.wav', 'slow.wav', 'bad.wav', 'theme.wav'):
+        open(name, 'wb').close()
+
+
+def player_with(loader, cache_bytes=2 ** 24, backend=None, synth=None):
+    sink = Sink()
+    cache = DecodeCache(cache_bytes, RATE, loader)
+    player = Player(backend or backends.NullBackend(RATE), cache, sink, RATE, synth=synth)
+    player.start()
+    return player, sink, cache
+
+
+def test_a_duration_within_a_millisecond_of_the_end_is_no_cut(fakes):
+    clip = np.full(13240, 0.25, dtype=np.float32)        # 300.2 ms
+    backend = KeepBackend(RATE)
+    player, sink, cache = player_with(lambda p, r, g, a: clip, backend=backend)
+    try:
+        assert player.play(PlayJob('c', 'c.wav', 0.0, 0.0, duration_ms=300, clip_ms=300)) == (
+            True, '', 300)                                # the clip's length, rounded: no cut
+        wait_for(lambda: last_state(sink).state == IDLE)
+        assert last_state(sink).last_end == END_ENDED
+        assert backend.buffers[0] is cache.get('c.wav')  # the cached buffer, no copy
+        assert player.play(PlayJob('c', 'c.wav', 0.0, 0.0, duration_ms=298))[2] == 298
+        wait_for(lambda: last_state(sink).state == IDLE and len(backend.buffers) == 2)
+        wait_for(lambda: last_state(sink).last_end == END_DURATION)
+        assert len(backend.buffers[1]) == int(round(0.298 * RATE))   # 2 ms short: a cut
+    finally:
+        player.close()
+
+
+def test_a_cache_hit_starts_at_once_with_its_exact_length(fakes):
+    loads = []
+
+    def loader(path, rate, gain_db, abandoned):
+        loads.append(path)
+        return np.full(4410, 0.25, dtype=np.float32)    # 100 ms, the catalogue says 120
+    player, sink, cache = player_with(loader)
+    try:
+        assert player.play(PlayJob('c', 'c.wav', 0.0, 0.0, clip_ms=120)) == (True, '', 120)
+        wait_for(lambda: last_state(sink).state == IDLE and sink.plays == [True, False])
+        assert player.play(PlayJob('c', 'c.wav', 0.0, 0.0, clip_ms=120)) == (True, '', 100)
+        assert sink.plays[-1] is True and loads == ['c.wav']    # started on the worker
+        assert player.play(PlayJob('c', 'c.wav', -3.0, -3.0, clip_ms=120))[2] == 120
+        wait_for(lambda: len(loads) == 2)               # another gain: another key, a miss
+    finally:
+        player.close()
+
+
+def slow_loader(seconds, frames=4410, fail=False):
+    def load(path, rate, gain_db, abandoned):
+        time.sleep(seconds)
+        if fail:
+            raise RuntimeError('Error opening %r: Format not recognised.' % path)
+        return np.full(frames, 0.25, dtype=np.float32)
+    return load
+
+
+def test_a_slow_decode_is_answered_at_once_and_plays_when_done(fakes):
+    player, sink, _ = player_with(slow_loader(0.5))
+    try:
+        began = time.monotonic()
+        answer = player.play(PlayJob('theme', 't.wav', 0.0, 0.0, clip_ms=100, owner='me'))
+        assert time.monotonic() - began < 0.1 and answer == (True, '', 100)
+        time.sleep(0.2)
+        queued = last_state(sink)            # decoding: the state already shows the play
+        assert (queued.state, queued.name, queued.owner) == (PLAYING, 'theme', 'me')
+        assert (queued.elapsed_ms, queued.remaining_ms) == (0, 100)
+        assert sink.plays == [True]          # playing agrees with the state from acceptance
+        wait_for(lambda: streamed(sink))     # the stream starts once the decode is done
+        assert time.monotonic() - began >= 0.5
+        wait_for(lambda: last_state(sink).state == IDLE)
+        assert last_state(sink).last_end == END_ENDED and sink.plays == [True, False]
+    finally:
+        player.close()
+
+
+def test_a_slow_decode_replaces_the_play_and_a_stop_drops_it(tree, fakes):
+    sounds, _ = tree
+    loaders = {'slow.wav': slow_loader(0.4)}
+    player, sink, cache = player_with(lambda p, r, g, a: (loaders.get(p) or decode)(p, r, g, a))
+    try:
+        cache.get(job(sounds, 'long').path)          # a hit: it plays at once
+        assert player.play(job(sounds, 'long'))[0] and sink.plays == [True]
+        assert player.play(PlayJob('slow', 'slow.wav', 0.0, 0.0, clip_ms=100))[0]
+        replaced = last_state(sink)          # the old play ended, the new one shows at once
+        assert (replaced.state, replaced.name) == (PLAYING, 'slow')
+        assert replaced.last_end == END_REPLACED and sink.plays == [True]   # no toggle
+        assert player.stop()
+        assert (last_state(sink).state, last_state(sink).last_end) == (IDLE, END_STOPPED)
+        time.sleep(0.6)
+        assert all(s.elapsed_ms == 0 for _, s in sink.states if s.name == 'slow')
+        assert sink.plays == [True, False]
+    finally:
+        player.close()
+
+
+def test_a_slow_decode_that_fails_ends_the_play_with_a_warning(fakes):
+    player, sink, _ = player_with(slow_loader(0.2, fail=True))
+    try:
+        assert player.play(PlayJob('bad', 'bad.wav', 0.0, 0.0, clip_ms=500)) == (True, '', 500)
+        wait_for(lambda: sink.warnings)
+        assert 'bad' in sink.warnings[0] and 'decode failed' in sink.warnings[0]
+        wait_for(lambda: last_state(sink).last_end == END_FAILED)
+        assert last_state(sink).state == IDLE and sink.plays == [True, False]
+    finally:
+        player.close()
+
+
+def streamed(sink):
+    """Return True once a play's stream has run: a level above 0."""
+    with sink.lock:
+        return any(rms > 0 for _, rms in sink.levels)
+
+
+def wait_for_state(sink, predicate, timeout=5.0):
+    def found():
+        with sink.lock:
+            return next((s for _, s in sink.states if predicate(s)), None)
+    wait_for(lambda: found() is not None, timeout)
+    return found()
+
+
+def test_a_stop_or_a_replacing_play_cancels_a_long_decode_between_chunks(tree, fakes):
+    sounds, _ = tree
+    reads = {'theme.wav': 0}
+
+    def chunked(path, rate, gain_db, abandoned):
+        if path != 'theme.wav':
+            return decode(path, rate, gain_db, abandoned)
+        for _ in range(250):                          # 5 s of 20 ms chunks
+            if abandoned():
+                raise DecodeCancelled(path)
+            reads[path] += 1
+            time.sleep(0.02)
+        return np.full(4410, 0.25, dtype=np.float32)
+
+    player, sink, cache = player_with(chunked)
+    try:
+        assert player.play(PlayJob('theme', 'theme.wav', 0.0, 0.0, clip_ms=100))[0]
+        time.sleep(0.1)
+        assert player.stop()
+        time.sleep(0.1)
+        stopped_at = reads['theme.wav']
+        assert stopped_at < 15                        # the decoder let go within a chunk
+        assert player.play(PlayJob('theme', 'theme.wav', 0.0, 0.0, clip_ms=100))[0]
+        time.sleep(0.1)
+        began = time.monotonic()
+        assert player.play(job(sounds, 'beep')) == (True, '', 500)   # replaces the decode
+        wait_for(lambda: streamed(sink), timeout=1.0)                # not behind 5 s of it
+        assert sink.plays == [True, False, True]                     # the replace: no toggle
+        assert time.monotonic() - began < 0.5
+        wait_for(lambda: last_state(sink).state == IDLE)
+        assert reads['theme.wav'] < 2 * stopped_at + 15
+        assert sink.warnings == [] and [k[0] for k in cache.keys()] == [job(sounds, 'beep').path]
+    finally:
+        player.close()
+
+
+class FailingBackend(backends.NullBackend):
+    """The null backend whose start fails once ``fail`` is set."""
+
+    fail = False
+
+    def start(self, buffer, on_block, on_end, name=''):
+        if self.fail:
+            raise RuntimeError('device gone')
+        super().start(buffer, on_block, on_end, name)
+
+
+def test_a_refused_play_leaves_a_pending_decode_in_place(fakes):
+    def synth(arousal, valence, length_s, seed, rate):
+        raise ValueError('no syllables')
+
+    clips = {'e.wav': np.zeros(0, dtype=np.float32)}
+
+    def loader(path, rate, gain_db, abandoned):
+        if path in clips:
+            return clips[path]
+        return slow_loader(1.0)(path, rate, gain_db, abandoned)
+
+    player, sink, cache = player_with(loader, synth=synth)
+    try:
+        cache.get('e.wav')                                 # an empty clip, cached: a hit
+        assert player.play(PlayJob('theme', 't.wav', 0.0, 0.0, clip_ms=100))[0]
+        voice = PlayJob('voice:7', '', 0.0, 0.0, voice=Voice(0.5, 0.5, 1.0, 7))
+        assert player.play(voice) == (False, 'synth failed: no syllables', 0)
+        assert player.play(PlayJob('e', 'e.wav', 0.0, 0.0)) == (False, 'empty clip', 0)
+        state = player.snapshot()
+        assert (state.state, state.name, state.last_end) == (PLAYING, 'theme', 0)
+        assert last_state(sink).name == 'theme' and sink.plays == [True]
+        wait_for(lambda: streamed(sink))                   # the pending play still starts
+        wait_for(lambda: last_state(sink).state == IDLE)
+        assert last_state(sink).last_end == END_ENDED and sink.plays == [True, False]
+    finally:
+        player.close()
+
+
+def test_a_backend_failing_on_a_hit_ends_the_dropped_decode_at_once(fakes):
+    backend = FailingBackend(RATE)
+    player, sink, cache = player_with(
+        lambda p, r, g, a: slow_loader(1.0)(p, r, g, a) if p == 't.wav' else
+        np.full(4410, 0.25, dtype=np.float32), backend=backend)
+    try:
+        cache.get('c.wav')
+        assert player.play(PlayJob('theme', 't.wav', 0.0, 0.0, clip_ms=100))[0]
+        backend.fail = True
+        accepted, reason, _ = player.play(PlayJob('c', 'c.wav', 0.0, 0.0))
+        assert not accepted and reason == 'backend: device gone'
+        state = last_state(sink)                           # published now, not at the tick
+        assert (state.state, state.last_end) == (IDLE, END_STOPPED)
+        assert sink.plays == [True, False]
+    finally:
+        player.close()

@@ -53,7 +53,8 @@ overlapping channels, because the device replaces any run sharing a display.
    run the device refuses outright leaves the runs it would have replaced tracked.
 6. **Duration cap.** `idle` and `behavior` runs are sent with `min(duration,
    max_duration_ms)`, and `max_duration_ms` instead of 0: a dead arbiter or personality
-   leaves nothing running for more than 30 s. `manual` and `safety` are exempt. LED runs end
+   leaves nothing running for more than 30 s. The one 0 they send is a sound play of a
+   known clip no longer than the cap: the whole clip (see "Durations" below). `manual` and `safety` are exempt. LED runs end
    on the device; a Magic Panel run is stopped by the arbiter at its duration, once no
    person holds the panel (a refused stop is retried after the device's 5 s hold).
 7. **A person at the dome is the device's hold.** A `held by console|ui|text topic` or
@@ -448,9 +449,11 @@ behaviour play at the same priority waits for it, and two manual plays at 199 do
 another unless the first was sent interruptible (`express` sends `interruptible: true`; add
 `--hold` for a phrase that must finish).
 
-**Durations.** An `idle` or `behavior` play carries `duration_ms` = min(the clip's length from
-the catalogue, `max_duration_ms`), a play by pool (clip not known yet) the cap; the player cuts
-there with its fade and says `last_end` 2 (duration). A manual play is uncapped, 0 being the
+**Durations.** An `idle` or `behavior` play is capped at `max_duration_ms`: a clip longer
+than the cap carries `duration_ms` = the cap and the player cuts there with its fade
+(`last_end` 2, duration); a clip the catalogue says is no longer than the cap carries 0, the
+whole clip (`last_end` 1), so the player never sees a "cut" at the clip's own length; a play
+by pool (clip not known yet) carries the cap. A manual play is uncapped, 0 being the
 clip's length. `active_remaining_ms` in the status is the player's own `remaining_ms`.
 
 **Gain.** The request's `gain_db` is the intent's plus, for a personality play (idle or
@@ -458,12 +461,14 @@ behaviour), the mood's `sound.gain_db` (neutral's while stale); a manual play ca
 alone. The player adds the catalogue gain and clamps the sum.
 
 **The voice** is `sound: {gain_db, chatter: {every_s: [min, max], pools: {tag: weight}}}` per
-mood in `expression.yaml` (`neutral` has only `gain_db`; `defaults.sound` holds
-`house_level_dbfs`, `fade_ms`, `interruptible` and the `level` range for the player's feed).
+mood in `expression.yaml` (`neutral` has only `gain_db`; `defaults.sound` holds only `interruptible`, the default for the
+intents the arbiter builds itself, chatter and voice; a ROS `ExpressionIntent` carries its own
+bool and `express` sends true. The fade, the house level and the level range are `sound_player`
+parameters, not settings here).
 Tags are the fixed list of the plan's step 0, never `excluded`; weights > 0; gain within -20
 to +6 dB; `every_s` ascending. The chatter is the flourish scheduler: a due slot draws a pool by
 weight, then a clip uniformly from it (a clip with `clip_fraction` over 0.01 at half weight; the
-`SoundClip` message does not carry it yet, so it counts as 0), and plays it as an idle intent;
+`SoundClip` message carries it, 0.0 when the player leaves it unset), and plays it as an idle intent;
 `mood_strength` pulls the top of `every_s` toward its bottom like the dome's glances. A slot
 that falls while the channel is claimed, stale, offline or playing is skipped. At catalogue
 time a pool with no playable clip is dropped with one WARN, and a mood with none left falls
@@ -473,7 +478,7 @@ listed again when the state topic returns after `device_stale_s` of silence.
 
 **Stale and offline.** When `/mood/state` goes stale a running `idle` play is stopped (a
 `StopSound`) and the chatter stops; `behavior` and `manual` plays go on and manual still
-works. With no catalogue, or no `/sound/state` for `device_stale_s`, the channel is `offline`:
+works. With no catalogue, or no `/sound_player/state` for `device_stale_s`, the channel is `offline`:
 nothing is sent, personality intents are dropped and counted, and a run ends. A play of the
 arbiter's own owner found on the first state is adopted at idle priority. The Foxglove tab is
 `foxglove/sound-panels.json`.
@@ -497,7 +502,7 @@ Two ways, same messages: the `express` CLI and the Foxglove tab
 | stop the dome | `express stop dome` | Publish "stop dome"; Call Service `/expression/claim/dome` |
 | play a sound | `express play scream [--gain -3] [--duration 2]`, `express play --pool excited` | Publish "sound play excited" (edit the params) |
 | speak (step 7) | `express vocalize [--arousal 0.8] [--valence 0.6] [--length 1.5] [--seed 42]` | |
-| the catalogue | `express sounds [--pool hum] [--device /sound_player]` (reads the player's `list`; plays nothing) | Raw Messages `/sound/state` |
+| the catalogue | `express sounds [--pool hum] [--device /sound_player]` (reads the player's `list`; plays nothing) | Raw Messages `/sound_player/state` |
 | stop / hold the sound | `express stop sound`, `express claim sound` / `release sound` | Publish "stop sound"; Call Service `/expression/claim/sound`; Plot `/sound/level`, `/dome/audio/level` |
 
 `configure --drift` works on `fld`, `tfld`, `bfld` and `rld` (the PSIs have no drift).

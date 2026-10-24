@@ -15,7 +15,8 @@
 """
 The player's outputs (plan 4.3): ``sounddevice``, ``wav`` and ``null``.
 
-The only module that imports ``sounddevice``. Every backend plays one buffer at a time
+The only module that imports ``sounddevice``, and only when a :class:`SoundDeviceBackend` is
+made (PortAudio initialises on that import). Every backend plays one buffer at a time
 (float32 mono at the output rate, gain already applied) through the same interface:
 
 * ``start(buffer, on_block, on_end, name='')`` begins a play; a play still running is ended
@@ -37,6 +38,7 @@ and measure the same way.
 """
 
 import datetime
+import functools
 import os
 import re
 import threading
@@ -45,11 +47,6 @@ import wave
 
 import numpy as np
 from r2_sound.gain import block_rms, fade_out
-
-try:
-    import sounddevice
-except (ImportError, OSError):       # no PortAudio: only the sounddevice backend is lost
-    sounddevice = None
 
 BLOCKS_PER_S = 30.0                  # 1470 frames at 44.1 kHz
 
@@ -186,17 +183,32 @@ class Backend:
         return True
 
 
+@functools.lru_cache(maxsize=None)
+def _sounddevice():
+    """Return the ``sounddevice`` module, imported at the first call (a failure is not kept)."""
+    try:
+        import sounddevice
+    except (ImportError, OSError) as exc:     # no PortAudio
+        raise RuntimeError('sounddevice cannot be imported (is PortAudio installed?): '
+                           '%s' % exc) from None
+    return sounddevice
+
+
+class DeviceNotFound(ValueError):
+    """No output device matches the ``device`` substring."""
+
+
 def find_device(substring):
     """Return the index of the first output device whose name contains ``substring``."""
     if not substring:
         return None
     found = []
-    for index, device in enumerate(sounddevice.query_devices()):
+    for index, device in enumerate(_sounddevice().query_devices()):
         if device['max_output_channels'] > 0:
             if substring.lower() in device['name'].lower():
                 return index
             found.append(device['name'])
-    raise ValueError('no output device matches %r (have: %s)' % (
+    raise DeviceNotFound('no output device matches %r (have: %s)' % (
         substring, ', '.join(found) or 'none'))
 
 
@@ -212,15 +224,14 @@ class SoundDeviceBackend(Backend):
 
     def __init__(self, rate, device='', linger_s=2.0, clock=time.monotonic):
         super().__init__(rate)
-        if sounddevice is None:
-            raise RuntimeError('sounddevice cannot be imported (is PortAudio installed?)')
+        _sounddevice()               # now, not at the first play: no PortAudio fails startup
         self.device = device
         self.linger_s = float(linger_s)
         self._clock = clock
         self._stream = None
         self._idle_since = None
         # Found once: PortAudio's device list is fixed from its start, so a DAC plugged in
-        # later needs a restart anyway; a missing one stops the node at startup.
+        # later needs a restart anyway (the node runs on null when it is missing).
         self._device_index = find_device(device)
 
     def start(self, buffer, on_block, on_end, name=''):
@@ -230,7 +241,7 @@ class SoundDeviceBackend(Backend):
         self._swap(play)
         if self._stream is None:
             try:
-                stream = sounddevice.OutputStream(
+                stream = _sounddevice().OutputStream(
                     samplerate=self.rate, blocksize=self.block, channels=1,
                     dtype='float32', device=self._device_index, callback=self._callback)
                 stream.start()
@@ -348,30 +359,32 @@ class WavBackend(Backend):
 
 
 class NullBackend(WavBackend):
-    """The ``wav`` backend without the file: for the tests."""
+    """The ``wav`` backend without the file: the tests, and a missing device (``name`` says)."""
 
-    name = 'null'
-
-    def __init__(self, rate, warn=None):
+    def __init__(self, rate, warn=None, name='null'):
         super().__init__(rate, None, warn)
+        self.name = name
 
 
-_FACTORIES = {
-    'sounddevice': lambda rate, device, linger_s, wav_dir, warn:
-        SoundDeviceBackend(rate, device, linger_s),
-    'wav': lambda rate, device, linger_s, wav_dir, warn: WavBackend(rate, wav_dir, warn),
-    'null': lambda rate, device, linger_s, wav_dir, warn: NullBackend(rate, warn),
-}
-BACKENDS = tuple(_FACTORIES)
+BACKENDS = ('sounddevice', 'wav', 'null')
 
 
 def check_backend(kind):
     """Raise ValueError unless ``kind`` is one of :data:`BACKENDS`."""
-    if kind not in _FACTORIES:
+    if kind not in BACKENDS:
         raise ValueError('backend must be one of %s, got %r' % (', '.join(BACKENDS), kind))
 
 
 def make_backend(kind, rate, device='', linger_s=2.0, wav_dir=None, warn=None):
-    """Return the backend named ``kind`` (one of :data:`BACKENDS`)."""
+    """
+    Return the backend named ``kind`` (one of :data:`BACKENDS`).
+
+    A ``sounddevice`` backend with no output device matching ``device`` raises
+    :class:`DeviceNotFound` (naming the devices found): what to do then is the node's call.
+    """
     check_backend(kind)
-    return _FACTORIES[kind](rate, device, linger_s, wav_dir, warn)
+    if kind == 'wav':
+        return WavBackend(rate, wav_dir, warn)
+    if kind == 'null':
+        return NullBackend(rate, warn)
+    return SoundDeviceBackend(rate, device, linger_s)

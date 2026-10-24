@@ -25,17 +25,23 @@ it from its file name, suggests a bucket for every unlabelled clip from its acou
 suggestions are a first pass to be confirmed by ear.
 
 * Name: ``<set prefix>-<stem>``, lower-case, other characters to ``-``, a number at the
-  end padded to two digits, a ``-2``, ``-3`` suffix for a repeat. In the Padawan set the
-  file's leading index is dropped (``32SENT1.mp3`` is ``padawan-sent01``); in the music
-  set the stem stays (``140.mp3`` is ``music-140``).
+  end padded to two digits, a ``-2``, ``-3`` suffix for a repeat, given in the sorted order
+  of the files' paths (so stable from run to run). In the Padawan set the file's leading
+  index is dropped (``32SENT1.mp3`` is ``padawan-sent01``); in the music set the stem stays
+  (``140.mp3`` is ``music-140``). A renamed set directory changes its clips' names and paths.
 * Label: from the file name (:data:`LABELS`); ``SENT`` is ``chatter`` and so on. Music,
   speech and silence (:data:`EXCLUSIONS`) are ``excluded``. A labelled clip is its own
   suggestion at confidence 1.0 and is a reference for the others.
 * Sheet (``tags.csv``): the tool fills every column but ``tags`` and ``clip_override_db``,
-  which are David's and are read back by column name and kept. Rows are sorted by name.
-  A row for a clip that is no longer on disk is dropped with a warning.
+  which are David's and are read back by column name and kept. A row belongs to the clip at
+  its ``path`` (relative to ``--sounds-dir``), else to the clip of its ``name`` (a file moved
+  inside its set). A row whose clip is not on disk is never deleted: it stays, as read, with
+  ``status`` ``missing`` (and a warning), and gets its clip back when the file returns.
+  Rows are sorted by name.
 * ``clips.yaml``: ``tags`` are the merged ones (:func:`r2_sound.catalogue.effective_tags`);
-  ``excluded`` is set by the exclusion list or an ``excluded`` tag.
+  ``excluded`` is true when they hold ``excluded``. The sheet wins over the exclusion list:
+  a listed clip is suggested ``excluded`` at confidence 1.0, but other tags in the sheet
+  make it playable.
 * Kit: ``<kit>/<suggested bucket>/<name>.wav`` (16-bit mono 22.05 kHz, at the clip's
   catalogue gain, cut to 10 s), ``play_bucket.sh`` and ``README.md``.
 
@@ -70,7 +76,8 @@ LABELS = (('sent', 'chatter'), ('ooh', 'ooh'), ('hum', 'hum'), ('alarm', 'alarm'
 EXCLUSIONS = ('theme', 'chorus', 'emperor', 'cantina', 'march', 'disco', 'starwars', 'leia',
               'silence')
 SHEET_COLUMNS = ('name', 'set', 'path', 'duration_s', 'rms_dbfs', 'suggested_tag',
-                 'confidence', 'tags', 'clip_override_db')
+                 'confidence', 'tags', 'clip_override_db', 'status')
+MISSING = 'missing'              # the status of a sheet row whose clip is not on disk
 KIT_SAMPLE_RATE = 22050
 KIT_MAX_S = 10.0
 _INDEX = re.compile(r'^\d+(?=[^\W\d_])')
@@ -112,10 +119,20 @@ def label_of(rel_path):
 
 
 def read_sheet(path):
-    """Return name -> (tags tuple, clip_override_db text) from an existing sheet."""
+    """
+    Return the rows of an existing sheet, in file order, each a dict.
+
+    ``name``, ``path``, ``tags`` (a tuple, validated), ``override`` (the
+    ``clip_override_db`` text, validated) and ``fields`` (the row as read, for a row kept
+    as ``missing``). Two rows with the same ``path`` (when not empty), or two rows with
+    the same ``name`` neither of which is ``missing``, are refused with both line numbers,
+    like a bad tag. A ``missing`` row may share its name: the tool writes one when a repeat
+    suffix moves (``-2`` becomes the name of a clip whose sibling is gone).
+    """
     if not path or not os.path.isfile(path):
-        return {}
-    rows = {}
+        return []
+    rows = []
+    seen = {'name': {}, 'path': {}}       # value -> the line it was first on
     with open(path, newline='', encoding='utf-8-sig') as f:
         reader = csv.DictReader(f)
         names = reader.fieldnames or ()
@@ -139,8 +156,50 @@ def read_sheet(path):
                 except ValueError:
                     raise CatalogueError(f'{path}:{number}: clip_override_db: {override!r} '
                                          'is not a number') from None
-            rows[name] = (tags, override)
+            clip_path = (row.get('path') or '').strip()
+            kept = (row.get('status') or '').strip() == MISSING
+            for column, value in (('name', '' if kept else name), ('path', clip_path)):
+                if not value:
+                    continue
+                first = seen[column].setdefault(value, number)
+                if first != number:
+                    raise CatalogueError(f'{path}:{number}: {column}: {value!r} is also on '
+                                         f'line {first}')
+            rows.append({'name': name, 'path': clip_path, 'tags': tags,
+                         'override': override, 'fields': row})
     return rows
+
+
+def match_sheet(items, rows):
+    """
+    Return ``(clip name -> row, orphan rows)``: each row's clip, by path first, then by name.
+
+    A name only claims a row whose path is empty or not on disk; a row no clip claims is an
+    orphan (kept in the sheet as ``missing``).
+    """
+    matched = {}
+    unclaimed = dict(enumerate(rows))     # popped as claimed: the orphans are what is left
+    by_path = {row['path']: index for index, row in unclaimed.items() if row['path']}
+    for item in items:
+        index = by_path.pop(item.path, None)
+        if index is not None:
+            matched[item.name] = unclaimed.pop(index)
+    paths = {i.path for i in items}
+    by_name = {}
+    for index, row in unclaimed.items():
+        if row['path'] not in paths:
+            by_name.setdefault(row['name'], index)
+    for item in items:
+        if item.name not in matched:
+            index = by_name.pop(item.name, None)
+            if index is not None:
+                matched[item.name] = unclaimed.pop(index)
+    return matched, list(unclaimed.values())
+
+
+def _sheet_fields(row):
+    """Return ``(tags, override)`` of a sheet row, or none of either without a row."""
+    return (row['tags'], row['override']) if row else ((), '')
 
 
 def _scan(sounds_dir):
@@ -158,7 +217,14 @@ def _scan(sounds_dir):
                 if file.lower().endswith(AUDIO_EXTENSIONS):
                     absolute = os.path.join(root, file)
                     found.append((set_name, os.path.relpath(absolute, set_dir), absolute))
-    return found
+    # os.walk gives a directory's files before its subdirectories: sort by the whole path,
+    # so the repeat suffixes follow it alone.
+    return sorted(found, key=lambda f: _rel_path(f[0], f[1]))
+
+
+def _rel_path(set_name, rel):
+    """Return a file's path inside ``sounds_dir`` as the catalogue writes it."""
+    return f'{set_name}/{rel}'.replace(os.sep, '/')
 
 
 class _Item:
@@ -167,7 +233,7 @@ class _Item:
     def __init__(self, name, set_name, rel, absolute, label):
         self.name, self.set, self.rel, self.absolute, self.label = (
             name, set_name, rel, absolute, label)
-        self.path = f'{set_name}/{rel}'.replace(os.sep, '/')
+        self.path = _rel_path(set_name, rel)
         self.listed = label == EXCLUDED_TAG
         self.measurement = self.features = self.kit_audio = self.suggestion = None
 
@@ -232,7 +298,7 @@ def _clips(items, sheet, threshold, house_level):
     for item in sorted(items, key=lambda i: i.name):
         m, median = item.measurement, medians[item.set]
         set_gain = gain.set_gain_db(median, house_level)
-        tags, override = sheet.get(item.name, ((), ''))
+        tags, override = _sheet_fields(sheet.get(item.name))
         total = gain.clip_gain_db(set_gain, gain.outlier_trim_db(m.rms_dbfs, median),
                                   float(override or 0.0), m.peak_dbfs)
         suggested, confidence = item.suggestion
@@ -243,7 +309,7 @@ def _clips(items, sheet, threshold, house_level):
             peak_dbfs=_round(m.peak_dbfs), clip_fraction=_round(m.clip_fraction, 6),
             set_gain_db=_round(set_gain), gain_db=_round(total), tags=merged,
             suggested_tag=suggested, confidence=_round(confidence, 3),
-            excluded=item.listed or EXCLUDED_TAG in merged, label=item.label))
+            excluded=EXCLUDED_TAG in merged, label=item.label))
     sets = {}
     for set_name, median in medians.items():
         sets[set_name] = SetInfo(sum(1 for c in clips if c.set_name == set_name), _round(median),
@@ -290,15 +356,21 @@ def _keep_generated(path, catalogue):
     return catalogue
 
 
-def _sheet_text(clips, sheet):
+def _sheet_text(clips, matched, orphans):
+    lines = []
+    for clip in clips:
+        tags, override = _sheet_fields(matched.get(clip.name))
+        lines.append([clip.name, clip.set_name, clip.path, f'{clip.duration_ms / 1000:.2f}',
+                      f'{clip.rms_dbfs:.2f}', clip.suggested_tag, f'{clip.confidence:.3f}',
+                      ','.join(tags), override, ''])
+    for row in orphans:
+        fields = row['fields']
+        lines.append([row['name']] + [(fields.get(c) or '') for c in SHEET_COLUMNS[1:7]]
+                     + [','.join(row['tags']), row['override'], MISSING])
     buffer = io.StringIO()
     writer = csv.writer(buffer, lineterminator='\n')
     writer.writerow(SHEET_COLUMNS)
-    for clip in clips:
-        tags, override = sheet.get(clip.name, ((), ''))
-        writer.writerow([clip.name, clip.set_name, clip.path, f'{clip.duration_ms / 1000:.2f}',
-                         f'{clip.rms_dbfs:.2f}', clip.suggested_tag, f'{clip.confidence:.3f}',
-                         ','.join(tags), override])
+    writer.writerows(sorted(lines, key=lambda line: (line[0], line[2])))
     return buffer.getvalue()
 
 
@@ -338,8 +410,10 @@ comma-separated) from this fixed list:
 Leave `tags` empty to accept the suggestion when its `confidence` is at least {threshold},
 otherwise the clip goes in `chatter`. `clip_override_db` (a number) raises or lowers one
 clip that sits wrong in its set; the catalogue still keeps the peak at -1 dBFS.
-`excluded` keeps a clip out of every pool (manual play only). Re-run `build_catalogue` to
-merge the sheet into `clips.yaml`; it never touches your two columns.
+`excluded` keeps a clip out of every pool (manual play only); any other tag on a clip of
+the exclusion list makes it playable. Re-run `build_catalogue` to merge the sheet into
+`clips.yaml`; it never touches your two columns, and a row whose file is gone stays, marked
+`missing` in `status`, until the file is back.
 """
 
 
@@ -382,17 +456,19 @@ def build(sounds_dir, out, sheet=None, kit=None, threshold=DEFAULT_THRESHOLD,
     found = _scan(sounds_dir)
     if not found:
         raise CatalogueError(f'{sounds_dir}: no audio files found in any set directory')
-    sheet_rows = read_sheet(sheet)
+    rows = read_sheet(sheet)                      # a bad sheet fails before the decoding
     items = _analyse(_unique_names(found), bool(kit))
-    for name in sorted(set(sheet_rows) - {i.name for i in items}):
-        warnings.append(f'{sheet}: row {name!r} has no clip any more; dropped')
+    matched, orphans = match_sheet(items, rows)
+    for row in orphans:
+        warnings.append(f'{sheet}: row {row["name"]!r} ({row["path"] or "no path"}) has no '
+                        f'clip on disk; kept as {MISSING}')
     _suggest(items)
-    clips, sets = _clips(items, sheet_rows, threshold, house_level)
+    clips, sets = _clips(items, matched, threshold, house_level)
     today = today or datetime.date.today().isoformat()
     catalogue = _keep_generated(out, Catalogue(house_level, today, sets, tuple(clips)))
     _write_text(out, _dump_yaml(catalogue))
     if sheet:
-        _write_text(sheet, _sheet_text(clips, sheet_rows))
+        _write_text(sheet, _sheet_text(clips, matched, orphans))
     if kit:
         _write_kit(kit, items, clips, threshold)
     return catalogue, warnings

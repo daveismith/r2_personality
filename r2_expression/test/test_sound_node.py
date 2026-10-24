@@ -18,11 +18,11 @@ Integration tests: ``sound_arbiter`` against a FAKE sound player, each as a subp
 The real ``sound_player`` (the ``r2_sound`` package) is built in parallel with this channel, so
 the device here is a small fake in this file (run as ``python3 test_sound_node.py --fake``): it
 serves ``~/list``, ``~/play``, ``~/vocalize`` and ``~/stop`` with the plan's refusal reasons and
-publishes ``~/state`` at 5 Hz, ``elapsed_ms`` and ``remaining_ms`` advancing on wall time and
-``last_end`` set on an end, a replacement or a stop (phase 3 plan 5.1). It prints one line per
-request (``FAKE PLAY ...``), which the tests read. **Step 8a of the plan exercises the real
-player** (``sound_player`` on the ``null`` and ``wav`` backends with this arbiter); nothing here
-stands in for that.
+publishes ``~/state`` at 5 Hz while playing and 1 Hz idle (the real player's cadence),
+``elapsed_ms`` and ``remaining_ms`` advancing on wall time and ``last_end`` set on an end, a
+replacement or a stop (phase 3 plan 5.1). It prints one line per
+request (``FAKE PLAY ...``), which the tests read. These tests cover the arbiter's own
+rules; ``test_sound_stack.py`` runs the arbiter against the REAL player (rules 1 and 2).
 
 Everything is test-private, as in ``test_nodes.py`` (whose ``Proc`` and ``wait_until`` are
 reused): the fake runs as ``sound_player_t<tag>`` (which moves its services and state topic),
@@ -87,7 +87,8 @@ def fake_main(argv):
             self.pub = self.create_publisher(
                 SoundState, '~/state', QoSProfile(depth=10,
                                                   reliability=ReliabilityPolicy.RELIABLE))
-            self.create_timer(0.2, self.publish)
+            self.last_publish = 0.0
+            self.create_timer(0.2, self.tick)
             self.create_timer(0.05, self.watch)
 
         def on_list(self, request, response):
@@ -156,7 +157,13 @@ def fake_main(argv):
                 self.current, self.last_end = None, 2 if cur['cut'] else 1
                 self.publish()
 
+        def tick(self):
+            """Like the real player: 1 Hz while idle, ``state_hz`` (5) while playing."""
+            if self.current is not None or time.monotonic() - self.last_publish >= 1.0:
+                self.publish()
+
         def publish(self):
+            self.last_publish = time.monotonic()
             msg = SoundState()
             msg.header.stamp = self.get_clock().now().to_msg()
             msg.backend = 'fake'
@@ -408,7 +415,7 @@ def test_chatter_under_a_locked_excited_mood_arrives_within_its_every_s_from_its
     for play in plays:
         assert (play['prio'], play['owner'], play['pool']) == ('10', OWNER, '-')
         assert play['id'].startswith('chatter-') and float(play['gain']) == 2.0
-        assert int(play['dur']) == {'yay': 1200, 'sent1': 1500, 'sent2': 2500}[play['name']]
+        assert int(play['dur']) == 0          # each clip is under the cap: the whole clip
     assert first[0]['name'] in ('yay', 'sent1', 'sent2')
 
 
@@ -453,7 +460,7 @@ def test_duration_is_capped_for_idle_and_behavior_plays_and_a_manual_one_is_not(
     s.intent('manual', 199, 'play', {'name': 'cantina'}, intent_id='m1')
     s.wait_playing('cantina')
     assert [(p['name'], p['dur']) for p in s.plays()] == [
-        ('hum1', '3000'), ('sent2', '2500'), ('cantina', '0')]
+        ('hum1', '3000'), ('sent2', '0'), ('cantina', '0')]           # sent2: under the cap
     assert s.state.remaining_ms > 100000                               # nothing cut it
     s.intent('manual', 199, 'stop', intent_id='st1')
     wait_until(lambda: s.state.state == 0, 8.0, 'stopped', s.output)

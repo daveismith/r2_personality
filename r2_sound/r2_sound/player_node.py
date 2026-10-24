@@ -24,11 +24,12 @@ again). Topics: ``~/state`` (SoundState), ``/sound/level`` (Float32 RMS),
 The executor runs the service callbacks only: the node has no timer. A play request is
 resolved here (name or pool, exclusion, gain clamp), a vocalize request checked and given a
 seed (0 asks for a random one), and handed to the worker (:class:`r2_sound.player.Player`),
-which decodes or renders, owns the backend and publishes. A phrase is cut at the request's
-``length_s`` (rule 3); the synth renders that length, or its shortest phrase when asked for
-less. The node
-has its own SIGINT/SIGTERM handlers, so the context is still up when it closes: the play is
-stopped and the zeros and the IDLE state go out before rclpy shuts down.
+which renders (or has its decoder thread decode), owns the backend and publishes; a slow
+decode is answered before it is done, so a call never waits on one. A phrase is cut at the
+request's ``length_s`` (rule 3); the synth renders that length, or its shortest phrase when
+asked for less. The node has its own SIGINT/SIGTERM handlers, so the context is still up
+when it closes: the play is stopped and the zeros and the IDLE state go out before rclpy
+shuts down.
 """
 
 import dataclasses
@@ -47,10 +48,11 @@ from astromech_msgs.srv import ListSounds
 from astromech_msgs.srv import PlaySound
 from astromech_msgs.srv import StopSound
 from astromech_msgs.srv import Vocalize
-from r2_sound.backends import check_backend, make_backend
+from r2_sound.backends import check_backend, DeviceNotFound, make_backend, NullBackend
 from r2_sound.catalogue import CatalogueError, load_catalogue, pools, resolve_play
 from r2_sound.decode import DecodeCache
 from r2_sound.gain import level_to_byte, play_gain_db, to_dbfs
+from r2_sound.parameters import NODE_NAME, PARAMETERS, RANGES
 from r2_sound.player import Player, PlayJob, Voice
 from r2_sound.synth import LENGTH_RANGE_S, render as render_phrase
 from rcl_interfaces.msg import ParameterDescriptor
@@ -71,7 +73,6 @@ from std_msgs.msg import UInt8
 from std_srvs.srv import Trigger
 import yaml
 
-NODE_NAME = 'sound_player'
 LEVEL_TOPIC = '/sound/level'
 PLAYING_TOPIC = '/sound/playing'
 DUPLICATE_WAIT_S = 1.0       # discovery time before the graph is asked for a node of our name
@@ -85,32 +86,6 @@ VOICE_PREFIX = 'voice:'
 def default_catalogue_path():
     """Return the installed ``clips.yaml``."""
     return os.path.join(get_package_share_directory('r2_sound'), 'config', 'clips.yaml')
-
-
-# Every parameter is read at startup; a later `ros2 param set` of any of them is refused.
-PARAMETERS = {
-    'catalogue': '',                 # '' is the installed clips.yaml
-    'sounds_dir': '/sounds',
-    'backend': 'sounddevice',
-    'device': '',
-    'sample_rate': 44100,
-    'cache_mb': 64.0,
-    'state_hz': 5.0,
-    'level_hz': 30.0,
-    'stream_linger_s': 2.0,
-    'fade_ms': 20.0,
-    'dome_level_topic': '/dome/audio/level',
-    'level_floor_dbfs': -40.0,
-    'level_ceiling_dbfs': -6.0,
-    'wav_dir': '/ws/.audio/out',
-    'allow_duplicate': False,
-}
-# name: (low, high) for the numbers, both inclusive. ListSounds.sample_rate is a uint16.
-RANGES = {
-    'sample_rate': (8000, 48000), 'cache_mb': (0.0, 4096.0), 'state_hz': (0.1, 30.0),
-    'level_hz': (1.0, 100.0), 'stream_linger_s': (0.0, 600.0), 'fade_ms': (0.0, 1000.0),
-    'level_floor_dbfs': (-120.0, 0.0), 'level_ceiling_dbfs': (-120.0, 0.0),
-}
 
 
 def read_parameters(node):
@@ -230,8 +205,7 @@ class SoundPlayerNode(Node):
         p = self.params
         rate = p['sample_rate']
         self._sink = _Sink(self, p['level_floor_dbfs'], p['level_ceiling_dbfs'])
-        backend = make_backend(p['backend'], rate, p['device'], p['stream_linger_s'],
-                               p['wav_dir'], self._sink.warn)
+        backend = self._make_backend(rate)
         self._player = Player(backend, DecodeCache(p['cache_mb'] * 2 ** 20, rate),
                               self._sink, rate, p['fade_ms'], p['state_hz'],
                               p['level_hz'], synth=render_phrase)
@@ -250,7 +224,25 @@ class SoundPlayerNode(Node):
         self.get_logger().info(
             'sound_player up: %d clips from %s (sounds %s), backend %s%s, %d Hz' % (
                 len(self._view[0].clips), p['catalogue'], p['sounds_dir'],
-                p['backend'], ' (%s)' % p['wav_dir'] if p['backend'] == 'wav' else '', rate))
+                backend.name, ' (%s)' % p['wav_dir'] if p['backend'] == 'wav' else '', rate))
+
+    def _make_backend(self, rate):
+        """
+        Return the output; a missing device is fatal only with ``require_device``.
+
+        Without it the node logs one ERROR naming the devices found and runs silent on a
+        ``null`` backend named ``null (no device: <device>)``, so the state says why.
+        """
+        p = self.params
+        try:
+            return make_backend(p['backend'], rate, p['device'], p['stream_linger_s'],
+                                p['wav_dir'], self._sink.warn)
+        except DeviceNotFound as exc:
+            if p['require_device']:
+                raise
+            self.get_logger().error('%s; running silent on the null backend '
+                                    '(require_device:=true to exit)' % exc)
+            return NullBackend(rate, self._sink.warn, name='null (no device: %s)' % p['device'])
 
     # --- the catalogue ----------------------------------------------------------------------
 
@@ -329,7 +321,7 @@ class SoundPlayerNode(Node):
         path = os.path.join(self.params['sounds_dir'], clip.path)
         accepted, reason, duration_ms = self._player.play(PlayJob(
             clip.name, path, clip.gain_db, gain_db, request.duration_ms, request.priority,
-            _owner(request), request.intent_id))
+            _owner(request), request.intent_id, clip_ms=clip.duration_ms))
         response.accepted, response.reason = accepted, reason
         response.name, response.duration_ms = clip.name, duration_ms
         if not accepted:
@@ -409,7 +401,12 @@ def _try_shutdown():
 
 
 def main(args=None):
-    """Run ``sound_player``; exit 1 on a bad parameter, catalogue or backend at startup."""
+    """
+    Run ``sound_player``; exit 1 on a bad parameter, catalogue or backend at startup.
+
+    A missing output device is not one unless ``require_device`` (see
+    :meth:`SoundPlayerNode._make_backend`).
+    """
     # rclpy's own handlers would shut the context down before close() could publish.
     rclpy.init(args=args, signal_handler_options=SignalHandlerOptions.NO)
     for signum in (signal.SIGINT, signal.SIGTERM):

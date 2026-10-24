@@ -182,4 +182,4 @@ def test_sound_state_level_and_player_panels(sound):
     assert [p['value'] for p in plot['paths']] == ['/sound/level.data',
                                                    '/dome/audio/level.data']
     (raw,) = panels(sound, 'RawMessages').values()
-    assert raw['topicPath'] == '/sound/state'
+    assert raw['topicPath'] == '/sound_player/state'

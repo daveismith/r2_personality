@@ -61,10 +61,7 @@ defaults:
     after_still_s: 1.0     # SUPPRESSED clears this long after the body is still
   # Sound (phase 3 plan 4.4).
   sound:
-    house_level_dbfs: -16  # what the catalogue's gain_db targets (the player's, informational here)
-    fade_ms: 20            # the fade of a pre-empted or cut sound (the player's, informational here)
-    interruptible: false   # the default for a sound intent that does not say: equal priority waits
-    level: {floor_dbfs: -40, ceiling_dbfs: -6}   # /sound/level onto 0-255 (the player's)
+    interruptible: false   # for intents the arbiter builds (chatter, voice); a ROS intent carries its own, express sends true
 
 # Named dome motion profiles, for moods and for an intent's params.profile.
 profiles:
