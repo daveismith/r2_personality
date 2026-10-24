@@ -107,3 +107,48 @@ same speed (a genuine fast push, or a wrap crossing with the firmware's 9-degree
 accepted one sample late). `DomePlant(misread_at=(313, 331, 279))` reproduces the fault in the
 tests; the grid across the sector lands in the band with the gate and some moves miss it
 without.
+
+## Loop tuning
+
+Also 2026-10-23, real dome, calm locked, hands off, with `coast` at the measured 0.52 s * v
+and the arbiter learning the coast scale (the first rule 5). Five consecutive manual moves
+(joint angles, radians; bearings are the opposite sign):
+
+| move | what happened |
+|---|---|
+| look to -1.0 | landed 0.3 degrees off |
+| look to +1.0 | stopped 7.3 degrees short |
+| look to -3.0 (across the wrap, a +2.4 rad move) | overshot by 53 degrees; after one retry ended 15 degrees past |
+| snappy look to 0 | overshot 9 degrees, then corrected to 1 degree |
+| 0.6 rad glance | went out 1.43 rad (48 degrees of overshoot) and returned to 1 degree |
+
+The arbiter's log showed `move over, coast scale X` with X swinging 0.30, 0.53, 0.19, 0.47,
+0.23, 1.19, 0.23, 0.72, 1.25, 1.08 over consecutive moves. The learned scale was noise:
+10 Hz samples, the ring misreads, and the velocity map's asymmetry (a commanded 1.0 rad/s
+gives about 1.29 clockwise and 0.76 anticlockwise). A low lesson makes the next move stop
+late by tens of degrees. And the floor speed's own coast (0.6 commanded, 0.35 to 0.5
+achieved, `0.52 * v` = 0.18 to 0.26 rad, 10 to 15 degrees; measured 0.12 at 0.35) exceeds the
+old 3 degree settle band, so a retry at the floor cannot converge on a 7 degree error.
+
+Chosen defaults (`defaults.dome`, all configurable):
+
+- `coast.learn` false: the scale stays 1.0. With true: `learn_rate` 0.3 of the way to the
+  observed ratio per lesson, kept within `scale_limits` [0.7, 1.4]. The 10 minute fade stays.
+- `retries` 2, `final_pulse_below_rad` 0.35, `floor: {coast_rad: 0.12, speed_rad_s: 0.35}`:
+  a retry from under 0.35 rad is one pulse at the floor of
+  `clamp((|err| - 0.12) / 0.35, 0.1, 0.6)` s, then a 0, settle and check again (so a 0.2 rad
+  error gets 0.23 s, which coasts in to about the target).
+- `settle_band_rad` 0.10 (5.7 degrees) for every profile (per-profile override kept).
+
+`r2_mocks`' `DomePlant` follows: a command from 0.7 up to 1.25 rad/s achieves `speed_gain`
+of itself (1.29 clockwise, 0.76 anticlockwise by default; the measured 1.5 and 2.0 gave 0.89
+and 0.90 and stay as the command), and the coast below 0.76 rad/s is the measured 0.12 rad at
+0.35 rad/s (the line would say 0.18).
+
+Simulation on that plant (`tuning_grid` in `test/test_motion.py`): look_at moves of 0.6, 1.0
+and 2.4 rad, both ways, from eight starts (none, pi, 0 and 2 pi crossed), for snappy, smooth
+and lazy, with a `CoastMemory` carried between moves. With learning off or on, every one of
+the 144 moves ends within the 0.10 band after at most two retries, with no timeouts (worst
+miss 5.5 degrees); with the firmware quirks and the ring misread on top, 143 of 144 (a
+snappy 0.6 rad move whose start sits in the 355 to 4 degree gap, 9.6 degrees). To be
+confirmed on the droid: item 8b of the plan, the same five moves again.

@@ -63,7 +63,7 @@ PERSONALITY_TIMEOUT_S = 0.5      # the converter's default
 CONVERTER_TICK_S = 0.05
 MOOD_STALE_S = 1.0
 DEVICE_STALE_S = 2.0
-BAND_RAD = 0.05                  # the smooth profile's settle band (fixtures.PROFILES)
+BAND_RAD = 0.10                  # the smooth profile's settle band (fixtures.PROFILES)
 FULL = os.environ.get('R2_PHASE2_FULL') == '1'
 _counter = 0
 
@@ -90,9 +90,12 @@ def _converter():
     require('r2_bringup', 'dome_twist_converter')
 
 
-def dome_config_text():
+def dome_config_text(learn_coast=False):
     """Return the test dome config: short staleness, a 1 s manual hold, no glances."""
     data = yaml.safe_load(config_text(data=dome_data(), manual_hold_s=1.0))
+    if learn_coast:            # a whole lesson at a time: the shipped default is off
+        data['defaults'].setdefault('dome', {})['coast'] = {
+            'learn': True, 'scale_limits': [0.01, 2.0], 'learn_rate': 1.0}
     assert (data['defaults']['mood_stale_s'], data['defaults']['device_stale_s']) == (
         MOOD_STALE_S, DEVICE_STALE_S)
     for mood in data['moods'].values():
@@ -104,7 +107,8 @@ def dome_config_text():
 class DomeRig:
     """The converter, the mock and the arbiter, and a test node that plays everyone else."""
 
-    def __init__(self, tmp_path, mock_args=(), debug=False, start_arbiter=True):
+    def __init__(self, tmp_path, mock_args=(), debug=False, start_arbiter=True,
+                 learn_coast=False):
         global _counter
         _counter += 1
         self.tag = 'dn%d_%d' % (os.getpid(), _counter)
@@ -121,7 +125,7 @@ class DomeRig:
             '/expression/intent', '/mood/state', '/expression/status', '/expression/claim/dome')}
         self.config = str(tmp_path / ('expression_%s.yaml' % self.tag))
         with open(self.config, 'w') as f:
-            f.write(dome_config_text())
+            f.write(dome_config_text(learn_coast))
         self.arbiter_args = ('--log-level', '%s:=debug' % self.arbiter_name) if debug else ()
         self.converter = Proc([
             'ros2', 'run', 'r2_bringup', 'dome_twist_converter', '--ros-args',
@@ -621,7 +625,7 @@ def test_i_the_learned_coast_persists_across_two_moves(rig):
     # Gazebo's plant: no coast. The first move's first 0 comes short of the target by the
     # predicted coast, so it creeps the rest; the second knows better and its first 0 comes
     # at the target (or past it: under load a late sample may overshoot, never stop short).
-    r = rig(mock_args=('-p', 'ideal:=true', '-p', 'initial_rad:=0.3'))
+    r = rig(mock_args=('-p', 'ideal:=true', '-p', 'initial_rad:=0.3'), learn_coast=True)
     r.start_mood('calm')
 
     def short_by(bearing):

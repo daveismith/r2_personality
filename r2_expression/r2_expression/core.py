@@ -1409,7 +1409,9 @@ class Arbiter:
     def _dome_limits(config):
         dome = config.defaults.dome
         return motion.Limits(min_speed=dome.min_speed_rad_s, max_move_s=dome.max_move_s,
-                             settle_s=dome.settle_s, coast=dome.coast, retries=dome.retries,
+                             settle_s=dome.settle_s, coast=dome.coast, floor=dome.floor,
+                             final_pulse_below_rad=dome.final_pulse_below_rad,
+                             retries=dome.retries,
                              feedback_timeout_s=dome.feedback_timeout_s,
                              max_plausible_rad_s=dome.max_plausible_rad_s)
 

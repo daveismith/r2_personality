@@ -302,8 +302,17 @@ publishes `/expression/status`, as the others. The verbs (`look_at`, `glance`, `
 `stop`; `track` is refused `not in this phase`) and the motion settings are in
 `expression.yaml` (`defaults.dome`, `profiles`, each mood's `dome`). `defaults.dome`'s
 `min_speed_rad_s` (0.6) sits above both floors of the droid's velocity map (a positive command
-under about 0.44 rad/s and a negative one under about 0.567 rad/s send 0 %); `retries` (1) and
-`feedback_timeout_s` (0.5) are the moves' retry budget and feedback timeout. `max_plausible_rad_s`
+under about 0.44 rad/s and a negative one under about 0.567 rad/s send 0 %); `retries` (2) and
+`feedback_timeout_s` (0.5) are the moves' retry budget and feedback timeout. A retry from
+closer than `final_pulse_below_rad` (0.35) is a timed pulse at `min_speed`,
+`clamp((|err| - floor.coast_rad) / floor.speed_rad_s, 0.1, 0.6)` s, because the floor speed
+itself coasts 0.12 rad (`floor: {coast_rad: 0.12, speed_rad_s: 0.35}`, measured); every
+profile's `settle_band_rad` is 0.10 (5.7 degrees). `coast.learn` (false) keeps the coast
+scale at 1.0, trusting the measured fit; true lets each stop move the scale `learn_rate`
+(0.3) of the way to the observed ratio, within `scale_limits` ([0.7, 1.4]), and the
+10-minute fade still applies. (On the droid the learned scale swung 0.2 to 1.2 from move to
+move, from noise, and a low lesson made the next move stop tens of degrees late; see
+`docs/dome-motion-measurements.md`, "Loop tuning".) `max_plausible_rad_s`
 (4.0, twice the cap) is the plausibility gate: the droid's ring sensor sometimes reads about
 0.6 rad low for one sample while the dome passes 313 to 331 degrees clockwise, and a move
 holds back any joint state that implies a faster dome than this, dropping it unless the next

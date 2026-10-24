@@ -1281,6 +1281,14 @@ def dome(config=None, rng=None, mood='excited', position=0.0, **kwargs):
     return a
 
 
+def learning_cfg():
+    """Return the dome config with ``coast.learn`` on, a whole lesson at a time."""
+    data = dome_data()
+    data.setdefault('defaults', {})['dome'] = {
+        'coast': {'learn': True, 'scale_limits': [0.01, 2.0], 'learn_rate': 1.0}}
+    return parse_config(data)
+
+
 def feed(a, actions):
     """Collect ``actions``; the last velocity among them drives the plant from now on."""
     actions = collect(actions)
@@ -1622,7 +1630,7 @@ def test_dome_idle_glance_fires_within_every_s_and_returns_to_where_it_started()
     assert st.active_intent_id.startswith('glance-')
     sent = live(a, 16.0, mood='calm')
     assert not a.moving and speeds(sent)[-1] == 0.0
-    assert a.test_plant.position == pytest.approx(0.4, abs=0.05)
+    assert a.test_plant.position == pytest.approx(0.4, abs=0.10)
 
 
 def test_dome_glance_never_while_claimed_and_the_drop_is_counted():
@@ -1750,7 +1758,7 @@ def _approaches(sent):
 
 
 def test_dome_the_learned_coast_is_carried_to_the_next_move():
-    a = dome()                                           # an ideal plant: no coast
+    a = dome(learning_cfg())                                           # an ideal plant: no coast
     assert a.coast_scale == 1.0
     first = list(dome_intent(a, 'look_at', {'bearing': 1.5, 'profile': 'smooth'}).actions)
     first += live(a, 6.0)
@@ -1762,8 +1770,15 @@ def test_dome_the_learned_coast_is_carried_to_the_next_move():
     assert a.coast_scale < 0.1
 
 
+def test_dome_coast_learning_is_off_by_default_and_the_scale_stays_1():
+    a = dome()                                           # an ideal plant: a lesson would say 0
+    dome_intent(a, 'look_at', {'bearing': 1.5, 'profile': 'smooth'})
+    live(a, 6.0)
+    assert not a.moving and a.coast_scale == 1.0
+
+
 def test_dome_a_move_stopped_before_it_learned_leaves_the_carried_coast_alone():
-    a = dome()
+    a = dome(learning_cfg())
     dome_intent(a, 'look_at', {'bearing': 1.5, 'profile': 'smooth'})
     live(a, 6.0)
     learned = a.coast_scale
@@ -1778,7 +1793,7 @@ def test_dome_the_default_config_gives_the_motion_models_default_limits():
 
 
 def test_dome_a_replacement_carries_its_predecessors_learned_coast_to_the_memory():
-    a = dome()
+    a = dome(learning_cfg())
     dome_intent(a, 'glance', {'amplitude': 1.0, 'dwell_s': 3.0, 'profile': 'smooth'})
     move = a._ch['dome'].run.move
     while not move.coast_learned:
@@ -1792,7 +1807,7 @@ def test_dome_a_replacement_carries_its_predecessors_learned_coast_to_the_memory
 
 @pytest.mark.parametrize('how', ['claim', 'stop'])
 def test_dome_a_move_interrupted_by_a_claim_or_a_stop_teaches_the_coast_nothing(how):
-    a = dome()                                           # an ideal plant: a fresh move learns
+    a = dome(learning_cfg())                             # an ideal plant: a fresh move learns
     dome_intent(a, 'glance', {'amplitude': 1.0, 'dwell_s': 3.0, 'profile': 'smooth'})
     move = a._ch['dome'].run.move
     while not move.coast_learned:

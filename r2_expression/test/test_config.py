@@ -27,7 +27,7 @@ from fixtures import AFFECT_YAML, base_data, cfg, dome_data, LEDS_LIST, SHIPPED 
 from fixtures import capture_names, MAGIC_LIST
 from r2_expression.config import (DEFAULT_PROFILE, DomeDefaults, ExpressionConfigError,
                                   load_config, load_config_string, missing_moods, parse_config)
-from r2_expression.motion import Coast, Heading, Profile
+from r2_expression.motion import Coast, Floor, Heading, Profile
 from r2_expression.palette import LedCatalogue, MagicCatalogue, validate_picks
 
 
@@ -126,9 +126,11 @@ def test_shipped_dome_defaults_are_the_plan_4_5_values():
     d = load_config(SHIPPED).defaults.dome
     assert (d.min_speed_rad_s, d.max_speed_rad_s, d.max_accel_rad_s2, d.max_move_s,
             d.settle_s, d.rest_recheck_s) == (0.6, 2.0, 6.0, 8.0, 0.8, 30.0)
-    assert (d.retries, d.feedback_timeout_s, d.max_plausible_rad_s) == (1, 0.5, 4.0)
+    assert (d.retries, d.feedback_timeout_s, d.max_plausible_rad_s) == (2, 0.5, 4.0)
     assert d == DomeDefaults()                       # the yaml and the code agree
     assert d.coast == Coast(0.52, 0.0) and d.heading == Heading(-1, 0.0)
+    assert (d.coast.learn, d.coast.scale_limits, d.coast.learn_rate) == (False, (0.7, 1.4), 0.3)
+    assert (d.floor, d.final_pulse_below_rad) == (Floor(0.12, 0.35), 0.35)
     assert (d.body_speed_m_s, d.body_yaw_rad_s, d.after_foreign_s, d.after_still_s) == (
         0.15, 0.3, 3.0, 1.0)
 
@@ -136,9 +138,9 @@ def test_shipped_dome_defaults_are_the_plan_4_5_values():
 def test_shipped_every_mood_has_a_dome_entry_and_profiles_within_the_caps():
     config = load_config(SHIPPED)
     assert config.dome_warnings == ()
-    assert config.profiles['snappy'] == Profile(2.0, 4.0, 3.0, 0.05)
-    assert config.profiles['smooth'] == Profile(1.0, 1.5, 1.5, 0.05)
-    assert config.profiles['lazy'] == Profile(0.6, 0.8, 1.0, 0.09)
+    assert config.profiles['snappy'] == Profile(2.0, 4.0, 3.0, 0.10)
+    assert config.profiles['smooth'] == Profile(1.0, 1.5, 1.5, 0.10)
+    assert config.profiles['lazy'] == Profile(0.6, 0.8, 1.0, 0.10)
     assert config.neutral.dome.profile == 'smooth'
     assert config.neutral.dome.glance is None and config.neutral.dome.rest_rad is None
     for name, mood in config.moods.items():
@@ -285,6 +287,17 @@ def test_dome_defaults_partial_blocks_keep_the_rest():
     ({'coast': {'c1_s': -0.1}}, 'defaults.dome.coast.c1_s: must be > 0'),
     ({'coast': {'c2_rad': -0.1}}, 'defaults.dome.coast.c2_rad: must be >= 0'),
     ({'coast': {'c3': 1}}, 'defaults.dome.coast.c3: unknown key'),
+    ({'coast': {'learn': 1}}, 'defaults.dome.coast.learn: must be true or false'),
+    ({'coast': {'scale_limits': [0.7]}}, 'defaults.dome.coast.scale_limits: must be [min, max]'),
+    ({'coast': {'scale_limits': [0.0, 1.4]}}, 'scale_limits[0]: must be > 0'),
+    ({'coast': {'scale_limits': [1.1, 1.4]}}, 'must have min <= 1 <= max'),
+    ({'coast': {'scale_limits': [0.7, 0.9]}}, 'must have min <= 1 <= max'),
+    ({'coast': {'learn_rate': 0}}, 'defaults.dome.coast.learn_rate: must be > 0'),
+    ({'coast': {'learn_rate': 1.5}}, 'defaults.dome.coast.learn_rate: 1.5 is above 1'),
+    ({'floor': {'coast_rad': -0.1}}, 'defaults.dome.floor.coast_rad: must be >= 0'),
+    ({'floor': {'speed_rad_s': 0}}, 'defaults.dome.floor.speed_rad_s: must be > 0'),
+    ({'floor': {'pulse': 1}}, 'defaults.dome.floor.pulse: unknown key'),
+    ({'final_pulse_below_rad': 0}, 'defaults.dome.final_pulse_below_rad: must be > 0'),
     ({'heading': {'sign': 0}}, 'defaults.dome.heading.sign: must be -1 or 1'),
     ({'heading': {'sign': True}}, 'defaults.dome.heading.sign: must be -1 or 1'),
     ({'heading': {'offset_rad': 4.0}}, 'defaults.dome.heading.offset_rad: 4 is outside'),

@@ -74,9 +74,9 @@ MAGIC_CAT = MagicCatalogue(
     unbounded=frozenset({56}))
 
 
-PROFILES = {'snappy': {'v_max': 2.0, 'accel': 4.0, 'k': 3.0, 'settle_band_rad': 0.05},
-            'smooth': {'v_max': 1.0, 'accel': 1.5, 'k': 1.5, 'settle_band_rad': 0.05},
-            'lazy': {'v_max': 0.6, 'accel': 0.8, 'k': 1.0, 'settle_band_rad': 0.09}}
+PROFILES = {'snappy': {'v_max': 2.0, 'accel': 4.0, 'k': 3.0, 'settle_band_rad': 0.10},
+            'smooth': {'v_max': 1.0, 'accel': 1.5, 'k': 1.5, 'settle_band_rad': 0.10},
+            'lazy': {'v_max': 0.6, 'accel': 0.8, 'k': 1.0, 'settle_band_rad': 0.10}}
 MIN_SPEED = DomeDefaults().min_speed_rad_s    # every dome command is 0 or at least this
 CALM_GLANCE = {'every_s': [10, 20], 'amplitude_rad': [0.3, 0.5], 'dwell_s': [0.5, 1.0]}
 

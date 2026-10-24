@@ -96,7 +96,7 @@ def test_lag_is_first_order_the_position_integrates_the_velocity():
 @pytest.mark.parametrize('speed', [1.0, 2.0])
 def test_coast_after_a_stop_is_the_presets_fit_at_v(preset, speed):
     _, coast_s, offset = PRESET_LAGS_COASTS[preset]
-    plant = DomePlant(preset=preset)
+    plant = DomePlant(preset=preset, speed_gain=(1.0, 1.0))
     run(plant, speed, 10.0)                       # settled at the commanded speed
     at_stop, v = plant.position_rad, plant.velocity_rad_s
     assert v == pytest.approx(speed, abs=1e-3)
@@ -111,8 +111,8 @@ def test_floor_a_command_of_0_6_achieves_0_58_of_it_and_coasts_0_12_rad():
     at_stop = plant.position_rad
     assert plant.velocity_rad_s == pytest.approx(0.348, abs=1e-3)
     settle(plant, 0.0)
-    assert plant.position_rad - at_stop == pytest.approx(0.52 * 0.348, abs=1e-9)
-    assert plant.position_rad - at_stop == pytest.approx(0.122, abs=0.07)
+    assert plant.position_rad - at_stop == pytest.approx(0.12 * 0.348 / 0.35, abs=1e-9)
+    assert plant.position_rad - at_stop == pytest.approx(0.122, abs=0.005)   # not the line's 0.18
     findings = DomePlant(preset='findings_2026_10')
     run(findings, 0.6, 10.0)
     assert findings.velocity_rad_s == pytest.approx(0.6, abs=1e-3)
@@ -163,7 +163,7 @@ def test_a_new_command_ends_the_coast():
 
 
 def test_negative_commands_above_both_floors_mirror_positive_ones():
-    up, down = DomePlant(), DomePlant()
+    up, down = DomePlant(speed_gain=(1.0, 1.0)), DomePlant(speed_gain=(1.0, 1.0))
     for plant, sign in ((up, 1.0), (down, -1.0)):
         run(plant, sign * 1.0, 4.0)
         run(plant, 0.0, 4.0)
@@ -319,3 +319,26 @@ def test_misread_is_ignored_by_the_ideal_plant():
                       misread_at=(313.0, 331.0, 279.0))
     readings = sampled(plant, 1.0, 3.0)
     assert all(abs(d) < 0.2 for d in deltas(readings))
+
+
+def test_a_command_of_1_runs_1_29_clockwise_and_0_76_anticlockwise_by_default():
+    up, down = DomePlant(), DomePlant()
+    run(up, 1.0, 10.0)
+    run(down, -1.0, 10.0)
+    assert up.velocity_rad_s == pytest.approx(1.29, abs=1e-3)
+    assert down.velocity_rad_s == pytest.approx(-0.76, abs=1e-3)
+    fast = DomePlant()
+    run(fast, 2.0, 10.0)
+    assert fast.velocity_rad_s == pytest.approx(2.0, abs=1e-3)      # above the band: the command
+    flat = DomePlant(speed_gain=(1.0, 1.0))
+    run(flat, 1.0, 10.0)
+    assert flat.velocity_rad_s == pytest.approx(1.0, abs=1e-3)
+
+
+def test_coast_below_the_line_near_the_floor_is_continuous():
+    from r2_mocks.dome_plant import coast_distance
+    assert coast_distance(0.35) == pytest.approx(0.12)
+    assert coast_distance(0.76) == pytest.approx(0.52 * 0.76)
+    speeds = [0.01 * n for n in range(0, 200)]
+    values = [coast_distance(v) for v in speeds]
+    assert all(b >= a and b - a < 0.02 for a, b in zip(values, values[1:]))

@@ -43,15 +43,21 @@ reason)``. Rules, each named by a test:
    (measured on the droid, step 8b: 0.52 s and 0), so the move sends 0 once ``|err|`` is
    within that of the target (plus half of what the dome covers in one step: the stop
    falls on the nearest step, not the one after), or once it has passed the target.
-5. **Settle.** After the 0 the move waits ``settle_s`` (longer, up to twice that, while the
-   samples still show motion); then ``|err| <= settle_band`` is a leg ``reached``; else,
-   with the retry budget (``retries``, 1) left, it approaches again at ``min_speed``; else
-   the leg ends ``settled_short``. The settled position also shows how far the dome
-   really coasted: the move scales its coast prediction by observed over predicted
-   (``coast_scale``, 0 to 2) from then on, so the retry is not stopped by a coast an
-   ideal plant (Gazebo) never has, and a dome coasting longer than the fit is caught.
-   The arbiter carries the learned scale to the next move (:class:`CoastMemory`), so
-   only the first move after a start (or a long rest) learns the plant from scratch.
+5. **Settle and retry.** After the 0 the move waits ``settle_s`` (longer, up to twice that,
+   while the samples still show motion); then ``|err| <= settle_band`` is a leg ``reached``;
+   else, with the retry budget (``retries``, 2) left, it tries again; else the leg ends
+   ``settled_short``. A retry from closer than ``final_pulse_below_rad`` (0.35) is a
+   *pulse*: ``min_speed`` for ``clamp((|err| - floor.coast_rad) / floor.speed_rad_s, 0.1,
+   0.6)`` s, then a 0, settle and check again. The dome cannot do better than the coast of
+   its floor speed (measured 0.12 rad at 0.35 rad/s achieved, 7 degrees: more than the
+   first 0.05 band), so an approach at the floor with its own early stop cannot converge on
+   a small error.
+   From farther away the retry is a full approach at ``min_speed``. With ``coast.learn``
+   (off by default: the measured fit is trusted and the scale stays 1.0) the settled
+   position also shows how far the dome really coasted: each stop moves ``coast_scale`` by
+   ``learn_rate`` of the way to observed over predicted, kept within ``scale_limits``,
+   so the retry is not stopped by a coast an ideal plant (Gazebo) never has. The arbiter
+   carries a learned scale to the next move (:class:`CoastMemory`).
 6. **Bounded.** At ``max_move_s`` after it began (plus the dwell, for a glance) the move
    sends 0 and ends ``timeout``; with no new sample for ``feedback_timeout_s`` it sends 0
    and ends ``no feedback``; :meth:`Move.stop` sends 0 and ends ``stopped``. A finished
@@ -94,7 +100,6 @@ MAX_TURN_RAD = TWO_PI          # a full turn; the slip ring allows more, the pla
 EXTRAPOLATE_MAX_S = 0.35       # past this a sample is not moved on any further
 STILL_RAD_S = 0.05             # measured speed under this: the dome has stopped
 LEARN_MIN_RAD = 0.02           # a predicted coast shorter than this teaches nothing
-MAX_COAST_SCALE = 2.0
 COAST_HALF_LIFE_S = 600.0      # a carried coast scale halves its distance to 1.0 this often
 
 REACHED = 'reached'
@@ -132,14 +137,31 @@ class Heading:
 
 @dataclass(frozen=True)
 class Coast:
-    """How far the dome runs on after a 0: ``max(0, c1_s * |v| - c2_rad)``."""
+    """
+    How far the dome runs on after a 0: ``max(0, c1_s * |v| - c2_rad)``.
+
+    ``learn`` (off): whether a move scales that prediction by what its stops show (rule 5).
+    A lesson moves the scale ``learn_rate`` of the way to the observed ratio and the result
+    stays within ``scale_limits``.
+    """
 
     c1_s: float = 0.52
     c2_rad: float = 0.0
+    learn: bool = False
+    scale_limits: tuple = (0.7, 1.4)
+    learn_rate: float = 0.3
 
     def distance(self, speed):
         """Return the coast after a 0 at ``speed`` rad/s."""
         return max(0.0, self.c1_s * abs(speed) - self.c2_rad)
+
+
+@dataclass(frozen=True)
+class Floor:
+    """What the dome does at ``min_speed`` (measured: 0.6 commanded, 0.35 achieved, 0.12 coast)."""
+
+    coast_rad: float = 0.12
+    speed_rad_s: float = 0.35
 
 
 @dataclass(frozen=True)
@@ -165,7 +187,9 @@ class Limits:
     max_move_s: float = 8.0
     settle_s: float = 0.8
     coast: Coast = Coast()
-    retries: int = 1
+    floor: Floor = Floor()
+    final_pulse_below_rad: float = 0.35   # rule 5: a retry from closer than this is a pulse
+    retries: int = 2
     feedback_timeout_s: float = 0.5
     max_plausible_rad_s: float = 4.0    # rule 9: the fastest dome speed a sample may imply
 
@@ -225,11 +249,14 @@ class Move:
         self._target = 0.0           # the leg's target, unwrapped
         self._until = 0.0            # end of the settle wait or the dwell
         self._creep = False          # the retry: at min_speed
+        self._pulse_dir = 1.0        # the final-approach pulse's direction
         self._leg_reason = REACHED
         self._v_peak = 0.0           # the fastest command of this approach (rule 7)
         self._start = None           # unwrapped position where the move began
         self.coast_scale = coast_scale   # observed coast over predicted (rule 5)
         self.coast_learned = False   # a stop of this move has set coast_scale
+        if not limits.coast.learn:
+            self.coast_scale = 1.0   # the measured fit is trusted
         self._stop = None            # (position, direction, predicted coast) at the last 0
         self._inherited = follows is not None    # the first command is the predecessor's
         self._reversed = False       # stopped a taken-over command going the wrong way
@@ -243,6 +270,8 @@ class Move:
             self._v_peak = follows._v_peak
             self.coast_scale = follows.coast_scale
             self.coast_learned = follows.coast_learned   # its scale, to teach when done
+            if not limits.coast.learn:
+                self.coast_scale = 1.0
         else:
             self._limiter = RateLimiter(limits.min_speed)
             self._u = self._sample = 0.0
@@ -282,6 +311,11 @@ class Move:
                 if out is not None:
                     return out
                 continue
+            if self._phase == 'pulse':
+                out = self._pulse(now)
+                if out is not None:
+                    return out
+                continue
             if now < self._until or (self._phase == 'settle' and self._moving() and
                                      now < self._until + self.limits.settle_s):
                 return 0.0, False, ''
@@ -294,7 +328,7 @@ class Move:
                 err = self._target - self._u
                 if abs(err) > self.profile.settle_band_rad and self._retries > 0:
                     self._retries -= 1
-                    self._begin_approach(creep=True)
+                    self._begin_retry(err, now)
                     continue
                 self._leg_reason = (REACHED if abs(err) <= self.profile.settle_band_rad
                                     else SETTLED_SHORT)
@@ -363,6 +397,27 @@ class Move:
         self._phase, self._creep = 'approach', creep
         self._v_peak = abs(self._limiter.velocity)
 
+    def _begin_retry(self, err, now):
+        """Rule 5: a pulse at the floor from close by, else a full approach at the floor."""
+        floor = self.limits.floor
+        if abs(err) >= self.limits.final_pulse_below_rad:
+            self._begin_approach(creep=True)
+            return
+        pulse = max(0.1, min(0.6, (abs(err) - floor.coast_rad) / floor.speed_rad_s))
+        self._phase, self._until = 'pulse', now + pulse
+        self._pulse_dir = math.copysign(1.0, err)
+        self._v_peak = abs(self._limiter.velocity)
+
+    def _pulse(self, now):
+        """Hold the floor speed until the pulse ends, then settle (0 sent, re-evaluated)."""
+        if now >= self._until:
+            self._settle(now, now + self.limits.settle_s)
+            return 0.0, False, ''
+        floor = self.limits.min_speed
+        out = self._limiter.step(self._pulse_dir * floor, floor, self.profile.accel, now)
+        self._v_peak = max(self._v_peak, abs(out))
+        return out, False, ''
+
     def _settle(self, now, until):
         self._phase, self._until = 'settle', until
         self._limiter.step(0.0, 0.0, 0.0, now)
@@ -398,12 +453,15 @@ class Move:
         return out, False, ''
 
     def _learn_coast(self):
-        """Rule 5: scale the coast by what the last stop showed (a sim has none)."""
+        """Rule 5, with ``coast.learn``: move the scale toward what the last stop showed."""
         if self._stop is not None:
             at, direction, predicted = self._stop
-            if predicted >= LEARN_MIN_RAD:
-                observed = max(0.0, (self._u - at) * direction)
-                self.coast_scale = min(MAX_COAST_SCALE, observed / predicted)
+            coast = self.limits.coast
+            if coast.learn and predicted >= LEARN_MIN_RAD:
+                observed = max(0.0, (self._u - at) * direction) / predicted
+                low, high = coast.scale_limits
+                scale = self.coast_scale + coast.learn_rate * (observed - self.coast_scale)
+                self.coast_scale = max(low, min(high, scale))
                 self.coast_learned = True
             self._stop = None
 

@@ -26,13 +26,19 @@ schema (plan section 4.3):
   both floors of the velocity map: 0.44 positive, 0.567 negative),
   ``max_speed_rad_s`` (2.0) and ``max_accel_rad_s2`` (6.0), the renderer's own
   clamps (the converter's personality caps are the authority; keep them
-  equal); ``max_move_s`` (8.0), ``settle_s`` (0.8), ``retries`` (1, an integer
+  equal); ``max_move_s`` (8.0), ``settle_s`` (0.8), ``retries`` (2, an integer
   >= 0), ``feedback_timeout_s`` (0.5, at least 0.2), ``max_plausible_rad_s`` (4.0, the fastest
   dome speed a joint-state sample may imply before the move holds it back, plan 2.1),
   ``rest_recheck_s`` (30.0),
-  ``coast: {c1_s: 0.52, c2_rad: 0.0}``, ``heading: {sign: -1, offset_rad:
-  0.0}`` (sign -1 or 1, offset in (-pi, pi]), ``body_speed_m_s`` (0.15),
-  ``body_yaw_rad_s`` (0.3), ``after_foreign_s`` (3.0), ``after_still_s``
+  ``coast: {c1_s: 0.52, c2_rad: 0.0, learn: false, scale_limits: [0.7, 1.4],
+  learn_rate: 0.3}`` (``learn`` a boolean: with it off the coast scale stays 1.0 and the
+  measured fit is trusted; on, each lesson moves the scale ``learn_rate`` (in (0, 1]) of the
+  way to the observed ratio, kept within ``scale_limits``, 0 < min <= 1 <= max),
+  ``floor: {coast_rad: 0.12, speed_rad_s: 0.35}`` (what the dome does at ``min_speed``,
+  measured; ``coast_rad`` may be 0) and ``final_pulse_below_rad`` (0.35: a retry from
+  closer than this is a timed pulse at the floor, not an approach),
+  ``heading: {sign: -1, offset_rad: 0.0}`` (sign -1 or 1, offset in (-pi, pi]),
+  ``body_speed_m_s`` (0.15), ``body_yaw_rad_s`` (0.3), ``after_foreign_s`` (3.0), ``after_still_s``
   (1.0). ``c2_rad`` may be 0; ``min_speed_rad_s`` may not exceed
   ``max_speed_rad_s``.
 * ``profiles`` (optional): name -> dome motion profile ``{v_max, accel, k,
@@ -89,7 +95,7 @@ import math
 from types import MappingProxyType
 from typing import Hashable, Mapping, Optional, Tuple, Union
 
-from r2_expression.motion import Coast, Heading, Profile
+from r2_expression.motion import Coast, Floor, Heading, Profile
 import yaml
 
 LED_STYLE_CHANNELS = ('fld', 'rld', 'psi')
@@ -109,7 +115,7 @@ HUE_KEY = 'hue'
 TOP_LEVEL_KEYS = ('defaults', 'profiles', 'neutral', 'moods')
 MOOD_PROFILE = 'mood'          # an intent's profile: the mood's own; never a profile name
 # The dome's profile when nothing names one (the plan's ``smooth``).
-DEFAULT_PROFILE = Profile(v_max=1.0, accel=1.5, k=1.5, settle_band_rad=0.05)
+DEFAULT_PROFILE = Profile(v_max=1.0, accel=1.5, k=1.5, settle_band_rad=0.10)
 _PICK_KEYS = ('channel',) + PICK_KINDS + ('weight', 'rgb', 'speed', 'repeat', 'end',
                                           'duration_ms')
 _LED_ONLY_PICK_KEYS = ('rgb', 'speed')
@@ -131,11 +137,13 @@ class DomeDefaults:
     max_accel_rad_s2: float = 6.0
     max_move_s: float = 8.0
     settle_s: float = 0.8
-    retries: int = 1
+    retries: int = 2
     feedback_timeout_s: float = 0.5
     max_plausible_rad_s: float = 4.0
     rest_recheck_s: float = 30.0
     coast: Coast = Coast()
+    floor: Floor = Floor()
+    final_pulse_below_rad: float = 0.35
     heading: Heading = Heading()
     body_speed_m_s: float = 0.15
     body_yaw_rad_s: float = 0.3
@@ -487,6 +495,28 @@ def _defaults(value):
     return Defaults(**out)
 
 
+_COAST_KEYS = ('c1_s', 'c2_rad', 'learn', 'scale_limits', 'learn_rate')
+
+
+def _coast_learning(coast, here):
+    """Return the validated ``learn``, ``scale_limits`` and ``learn_rate`` of a coast mapping."""
+    learn = coast.get('learn', Coast.learn)
+    if not isinstance(learn, bool):
+        raise ExpressionConfigError('%s.learn: must be true or false, got %r' % (here, learn))
+    path = _join(here, 'scale_limits')
+    limits = coast.get('scale_limits', Coast.scale_limits)
+    if not isinstance(limits, (list, tuple)) or len(limits) != 2:
+        raise ExpressionConfigError('%s: must be [min, max], got %r' % (path, limits))
+    low, high = (_positive(limits[0], path + '[0]'), _positive(limits[1], path + '[1]'))
+    if not low <= 1.0 <= high:
+        raise ExpressionConfigError('%s: [%g, %g] must have min <= 1 <= max (1.0 is the fit)'
+                                    % (path, low, high))
+    rate = _positive(coast.get('learn_rate', Coast.learn_rate), _join(here, 'learn_rate'))
+    if rate > 1.0:
+        raise ExpressionConfigError('%s.learn_rate: %g is above 1' % (here, rate))
+    return {'learn': learn, 'scale_limits': (low, high), 'learn_rate': rate}
+
+
 def _dome_defaults(value, path):
     mapping = _mapping(value, path)
     _known_keys(mapping, _DOME_FIELDS, path)
@@ -495,12 +525,23 @@ def _dome_defaults(value, path):
         here = _join(path, key)
         if key == 'coast':
             coast = _mapping(raw, here)
-            _known_keys(coast, ('c1_s', 'c2_rad'), here)
+            _known_keys(coast, _COAST_KEYS, here)
             c2 = _number(coast.get('c2_rad', Coast.c2_rad), _join(here, 'c2_rad'))
             if c2 < 0.0:
                 raise ExpressionConfigError('%s.c2_rad: must be >= 0, got %g' % (here, c2))
-            out[key] = Coast(c1_s=_positive(coast.get('c1_s', Coast.c1_s), _join(here, 'c1_s')),
-                             c2_rad=c2)
+            out[key] = Coast(
+                c1_s=_positive(coast.get('c1_s', Coast.c1_s), _join(here, 'c1_s')), c2_rad=c2,
+                **_coast_learning(coast, here))
+        elif key == 'floor':
+            floor = _mapping(raw, here)
+            _known_keys(floor, ('coast_rad', 'speed_rad_s'), here)
+            coast_rad = _number(floor.get('coast_rad', Floor.coast_rad),
+                                _join(here, 'coast_rad'))
+            if coast_rad < 0.0:
+                raise ExpressionConfigError('%s.coast_rad: must be >= 0, got %g'
+                                            % (here, coast_rad))
+            out[key] = Floor(coast_rad=coast_rad, speed_rad_s=_positive(
+                floor.get('speed_rad_s', Floor.speed_rad_s), _join(here, 'speed_rad_s')))
         elif key == 'heading':
             heading = _mapping(raw, here)
             _known_keys(heading, ('sign', 'offset_rad'), here)

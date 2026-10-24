@@ -26,10 +26,12 @@ from r2_expression.motion import (Coast, CoastMemory, glance, Heading, Limits, l
 from r2_mocks.dome_plant import (DEAD_BAND_NEGATIVE_RAD_S, DEAD_BAND_POSITIVE_RAD_S,
                                  GAP_HIGH_RAD, GAP_LOW_RAD)
 
-PROFILES = {'snappy': Profile(v_max=2.0, accel=4.0, k=3.0, settle_band_rad=0.05),
-            'smooth': Profile(v_max=1.0, accel=1.5, k=1.5, settle_band_rad=0.05),
-            'lazy': Profile(v_max=0.6, accel=0.8, k=1.0, settle_band_rad=0.09)}
+PROFILES = {'snappy': Profile(v_max=2.0, accel=4.0, k=3.0, settle_band_rad=0.10),
+            'smooth': Profile(v_max=1.0, accel=1.5, k=1.5, settle_band_rad=0.10),
+            'lazy': Profile(v_max=0.6, accel=0.8, k=1.0, settle_band_rad=0.10)}
 LIMITS = Limits()
+# The first learning rule (before the loop tuning of step 8b): the full lesson, any scale.
+LEARNING = Limits(coast=Coast(learn=True, scale_limits=(0.0, 2.0), learn_rate=1.0))
 READING_ERROR_RAD = math.radians(4.5)
 GRID = [sign * math.radians(deg) for deg in range(5, 181, 5) for sign in (1, -1)]
 # The droid's lag (0.6 s to 90 %) and coast (0.52 s * v) are on the plant now (step 8b). What
@@ -38,7 +40,7 @@ GRID = [sign * math.radians(deg) for deg in range(5, 181, 5) for sign in (1, -1)
 # and a lazy move (v_max at the floor, which the droid achieves at about 0.35 rad/s) cannot
 # turn more than about 120 degrees in max_move_s.
 NEAR_BAND_RAD = 0.02
-LAZY_MAX_DEG = 120
+LAZY_MAX_DEG = 115
 LOGS = []                        # every simulated command log, for the rule 1 and 2 sweeps
 
 
@@ -188,7 +190,7 @@ def test_early_stop_by_the_coast_sends_the_0_before_the_target_and_coasts_in():
 
 def test_retry_approaches_again_at_min_speed_when_settled_outside_the_band():
     profile = PROFILES['snappy']                          # the ideal plant never coasts
-    move = look_at(2.0, profile, LIMITS, 0.0)
+    move = look_at(2.0, profile, LEARNING, 0.0)
     reason, log = run(move, PlantDouble(0.0, ideal=True))
     first_zero = next(t for t, v, _ in log if v == 0.0)
     retry = [v for t, v, _ in log if t > first_zero and v != 0.0]
@@ -386,7 +388,7 @@ def test_module_has_no_ros_imports():
 
 def test_rule5_the_coast_memory_carries_a_learned_scale_and_fades_it_toward_1():
     plant = PlantDouble(0.0, ideal=True)                  # Gazebo: no coast
-    first = look_at(-1.5, PROFILES['smooth'], LIMITS, 0.0)
+    first = look_at(-1.5, PROFILES['smooth'], LEARNING, 0.0)
     run(first, plant)
     assert first.coast_learned and first.coast_scale < 0.1
     memory = CoastMemory(half_life_s=600.0)
@@ -400,10 +402,10 @@ def test_rule5_the_coast_memory_carries_a_learned_scale_and_fades_it_toward_1():
 
 def test_rule5_a_move_that_never_stopped_teaches_the_memory_nothing():
     memory = CoastMemory()
-    taught = look_at(-1.5, PROFILES['smooth'], LIMITS, 0.0)
+    taught = look_at(-1.5, PROFILES['smooth'], LEARNING, 0.0)
     run(taught, PlantDouble(0.0, ideal=True))
     memory.learn(taught, 20.0)
-    untaught = look_at(1.0, PROFILES['smooth'], LIMITS, 20.0, coast_scale=memory.recall(20.0))
+    untaught = look_at(1.0, PROFILES['smooth'], LEARNING, 20.0, coast_scale=memory.recall(20.0))
     untaught.step(0.0, 20.0)
     untaught.stop()
     assert not untaught.coast_learned
@@ -413,7 +415,7 @@ def test_rule5_a_move_that_never_stopped_teaches_the_memory_nothing():
 
 def glance_until_learned():
     """Return a glance stepped on the ideal plant until a stop taught it, and the time."""
-    move = glance(1.0, 2.0, PROFILES['smooth'], LIMITS, 0.0)
+    move = glance(1.0, 2.0, PROFILES['smooth'], LEARNING, 0.0)
     plant = PlantDouble(0.0, ideal=True)
     t = 0.0
     while not move.coast_learned and t < 10.0:            # out, stopped, settled: learned
@@ -442,11 +444,132 @@ def test_rule5_a_move_cut_short_without_a_stop_teaches_the_memory_nothing():
 
 def test_rule5_a_carried_scale_spares_the_ideal_plant_its_second_approach():
     def approaches(scale):
-        move = look_at(-1.5, PROFILES['smooth'], LIMITS, 0.0, coast_scale=scale)
+        move = look_at(-1.5, PROFILES['smooth'], LEARNING, 0.0, coast_scale=scale)
         _, log = run(move, PlantDouble(0.0, ideal=True))
         return sum(1 for (_, a, _), (_, b, _) in zip([(0, 0.0, 0)] + log, log) if b and not a)
     assert approaches(1.0) == 2                           # stops short by the fit, creeps
     assert approaches(0.0) == 1
+
+
+# --- loop tuning (step 8b): coast.learn, the final-approach pulse, the measured plant ---------
+
+MOVES_RAD = (0.6, 1.0, 2.4)
+GRID_STARTS = (0.0, 0.3, 1.5, 2.8, 3.0, 4.0, 5.5, 6.0)      # none, pi, 0 and 2*pi crossed
+
+
+def tuning_grid(limits):
+    """
+    Return ``{(profile, move_rad, direction): (reached, runs, timeouts)}`` on the measured plant.
+
+    The plant has the per-direction speed gain (1.29 clockwise, 0.76 anticlockwise at a
+    command of 1.0). Each case runs from every start in turn, with a :class:`CoastMemory`
+    carrying what the moves learned (nothing, with ``coast.learn`` off).
+    """
+    out = {}
+    for name, profile in PROFILES.items():
+        for size in MOVES_RAD:
+            for direction in (1.0, -1.0):
+                memory, reached, timeouts = CoastMemory(), 0, 0
+                for start in GRID_STARTS:
+                    target = start + direction * size
+                    move = look_at(wrap(target), profile, limits, 0.0,
+                                   coast_scale=memory.recall(0.0))
+                    plant = PlantDouble(start)
+                    reason, _ = run(move, plant)
+                    memory.learn(move, 0.0)
+                    reached += landed(plant, target) <= profile.settle_band_rad
+                    timeouts += reason == 'timeout'
+                out[(name, size, direction)] = (reached, len(GRID_STARTS), timeouts)
+    return out
+
+
+@pytest.mark.parametrize('learn', [False, True])
+def test_the_measured_plant_both_ways_reaches_the_band_within_the_retries_without_timeouts(learn):
+    # Measured plant with the speed asymmetry; 0.6, 1.0 and 2.4 rad moves, both ways, three
+    # profiles, eight starts. With 2 retries, the floor pulse and the 0.10 band all reach it
+    # with learning off (the shipped default) and on (a clamped, slow lesson).
+    limits = Limits(coast=Coast(learn=learn))
+    for case, (reached, runs, timeouts) in tuning_grid(limits).items():
+        assert (reached, timeouts) == (runs, 0), case
+
+
+def test_coast_learn_off_keeps_the_scale_at_1_even_when_one_is_carried_in():
+    plant = PlantDouble(0.0, ideal=True)                  # no coast: a lesson would say 0
+    move = look_at(-1.5, PROFILES['smooth'], LIMITS, 0.0, coast_scale=0.3)
+    run(move, plant)
+    assert move.coast_scale == 1.0 and not move.coast_learned
+    memory = CoastMemory()
+    memory.learn(move, 5.0)
+    assert memory.recall(5.0) == 1.0
+
+
+def test_coast_learn_on_moves_the_scale_by_the_rate_toward_the_ratio_within_the_limits():
+    ideal = PlantDouble(0.0, ideal=True)                  # observed ratio 0
+    move = look_at(-1.5, PROFILES['smooth'], Limits(coast=Coast(learn=True)), 0.0)
+    run(move, ideal)
+    assert move.coast_learned and move.coast_scale == pytest.approx(0.7)   # 1 - 0.3, the floor
+    gentle = Limits(coast=Coast(learn=True, learn_rate=0.2, scale_limits=(0.1, 3.0)))
+    move = look_at(-1.5, PROFILES['smooth'], gentle, 0.0)
+    run(move, PlantDouble(0.0, ideal=True))
+    assert move.coast_scale == pytest.approx(0.64)        # 0.8 after the first stop, 0.64 after
+    #                                                       the retry's (two lessons of 0.2)
+    high = Limits(coast=Coast(learn=True, learn_rate=1.0, scale_limits=(0.7, 1.4)))
+    move = look_at(-1.5, PROFILES['smooth'], high, 0.0)
+    run(move, PlantDouble(0.0, ideal=True))
+    assert move.coast_scale == pytest.approx(0.7)         # a whole lesson, held at the limit
+
+
+def pulses(log):
+    """Return the ``(start, length)`` of each run of non-zero commands in ``log``."""
+    runs, begun = [], None
+    for t, v, _ in log:
+        if v and begun is None:
+            begun = t
+        elif not v and begun is not None:
+            runs.append((begun, t - begun))
+            begun = None
+    return runs
+
+
+def retry_pulse(c1_s, **limits):
+    """Return ``(error left at the first stop, length of the next command run)`` (ideal plant)."""
+    settings = Limits(coast=Coast(c1_s=c1_s), **limits)
+    _, log = run(look_at(2.0, PROFILES['smooth'], settings, 0.0), PlantDouble(0.0, ideal=True))
+    first, retry = pulses(log)[:2]
+    stopped = next(p for t, _, p in log if t >= first[0] + first[1])
+    assert all(v == LIMITS.min_speed for t, v, _ in log if retry[0] <= t < retry[0] + retry[1])
+    return 2.0 - stopped, retry[1]
+
+
+@pytest.mark.parametrize('c1_s', [0.3, 0.5])
+def test_retry_from_closer_than_the_threshold_is_one_timed_pulse_at_the_floor(c1_s):
+    # The ideal plant never coasts, so the first stop leaves what the coast predicted as the
+    # error; the retry is one pulse of clamp((err - 0.12) / 0.35, 0.1, 0.6) s at min_speed
+    # (to the 20 Hz step), not an approach with its own early stop.
+    err, length = retry_pulse(c1_s)
+    assert 0.12 < err < 0.35
+    assert length == pytest.approx((err - 0.12) / 0.35, abs=0.06)
+
+
+def test_retry_pulse_is_bounded_between_0_1_and_0_6_s():
+    err, length = retry_pulse(0.24)                       # just over the band: 0.03 / 0.35 s
+    assert 0.1 < err < 0.16 and length == pytest.approx(0.1, abs=0.06)
+    err, length = retry_pulse(0.51, floor=motion.Floor(coast_rad=0.0, speed_rad_s=0.35))
+    assert err / 0.35 > 0.6 and length == pytest.approx(0.6, abs=0.06)    # 0.93 s, held at 0.6
+
+
+def test_floor_settings_set_the_pulse_length():
+    _, plain = retry_pulse(0.5, floor=motion.Floor(coast_rad=0.0, speed_rad_s=0.35))
+    _, lifted = retry_pulse(0.5, floor=motion.Floor(coast_rad=0.2, speed_rad_s=0.35))
+    assert plain == pytest.approx(0.6, abs=0.06)          # (0.295 - 0) / 0.35, held at 0.6
+    assert lifted == pytest.approx(0.27, abs=0.06)        # (0.295 - 0.2) / 0.35 ... or 0.1
+    assert lifted < plain - 0.2
+
+
+def test_retry_from_farther_than_the_threshold_is_a_full_approach_not_a_pulse():
+    err, length = retry_pulse(0.7)
+    assert err > 0.35
+    assert length > 0.35 / LIMITS.min_speed - 0.1         # an approach, not a pulse
 
 
 # --- the plausibility gate (rule 9): the ring sensor's misreads ----------------------------
@@ -458,15 +581,15 @@ SECTOR_CASES = [(math.radians(start), math.radians(target))     # clockwise, up 
                 if abs(target - start) > 9]
 
 
-def sector_runs(limits):
+def sector_runs(limits, profiles=PROFILES):
     """Return ``(reason, miss_rad)`` for look_at moves across the faulty sector."""
     out = []
     for start, target in SECTOR_CASES:
         for name in ('smooth', 'snappy'):
             plant = PlantDouble(start, misread_at=MISREAD)
-            reason, _ = simulate(look_at(wrap(target), PROFILES[name], limits, 0.0), plant)
+            reason, _ = simulate(look_at(wrap(target), profiles[name], limits, 0.0), plant)
             out.append((name, math.degrees(start), math.degrees(target), reason,
-                        landed(plant, target) - PROFILES[name].settle_band_rad))
+                        landed(plant, target) - profiles[name].settle_band_rad))
     return out
 
 
@@ -476,10 +599,24 @@ def test_gate_look_at_across_the_misreading_sector_lands_in_the_band():
         assert excess <= NEAR_BAND_RAD, (name, start, target)
 
 
-def test_gate_matters_without_it_the_misread_throws_moves_out_of_the_band():
-    bad = [run for run in sector_runs(UNGATED)
-           if run[3] == 'timeout' or run[4] > NEAR_BAND_RAD]
-    assert bad                          # some moves miss by more than the near-band slack
+def first_stop_misses(limits):
+    """Return how far from the target the dome is 0.75 s after the first 0, per sector case."""
+    out = []
+    for start, target in SECTOR_CASES:
+        for name in ('smooth', 'snappy'):
+            plant = PlantDouble(start, misread_at=MISREAD)
+            _, log = simulate(look_at(wrap(target), PROFILES[name], limits, 0.0), plant)
+            stopped = next(t for t, v, _ in log if v == 0.0)
+            there = next(p for t, _, p in log if t >= stopped + 0.75)
+            out.append(abs(there - start - wrap(target - start)))
+    return out
+
+
+def test_gate_matters_without_it_the_misread_throws_the_first_stop_off():
+    # With the retries of step 8b (2, and the 0.10 band) every move ends in the band either way;
+    # what the gate still saves is the first stop: ungated, some miss it by over 0.3 rad.
+    assert max(first_stop_misses(UNGATED)) > 0.3
+    assert max(first_stop_misses(LIMITS)) < 0.3
 
 
 def test_gate_holds_a_one_sample_outlier_and_drops_it():

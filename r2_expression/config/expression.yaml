@@ -34,11 +34,19 @@ defaults:
     max_accel_rad_s2: 6.0
     max_move_s: 8.0        # every move ends by then (a glance: plus its dwell)
     settle_s: 0.8          # wait after the stop before judging where the dome came to rest
-    retries: 1             # approaches again at min_speed if it settled outside the band
+    retries: 2             # outside the band after settling: a floor-speed pulse (close by) or approach, this many times
     feedback_timeout_s: 0.5  # no new joint state for this long: the move ends with a 0
     max_plausible_rad_s: 4.0  # a joint state implying a faster dome than this is held back (ring sensor misreads)
     rest_recheck_s: 30.0   # a resting dome that drifted is corrected at most this often
-    coast: {c1_s: 0.52, c2_rad: 0.0}      # run-on after a 0: c1 * v - c2, measured on the droid 2026-10-23 (8b)
+    # Run-on after a 0: c1 * v - c2, measured on the droid 2026-10-23 (8b). learn: false keeps the
+    # scale at 1.0 (the fit is trusted; five consecutive moves learned 0.2 to 1.2 from noise). With
+    # learn: true each lesson moves the scale learn_rate of the way to the observed ratio, within scale_limits.
+    coast: {c1_s: 0.52, c2_rad: 0.0, learn: false, scale_limits: [0.7, 1.4], learn_rate: 0.3}
+    # What the dome does at min_speed (0.6 gave 0.35 rad/s and a 0.12 rad run-on): a retry from
+    # closer than final_pulse_below_rad is one pulse of min_speed for
+    # clamp((|err| - coast_rad) / speed_rad_s, 0.1, 0.6) s, then the stop and the check again.
+    floor: {coast_rad: 0.12, speed_rad_s: 0.35}   # speed_rad_s is the ACHIEVED speed
+    final_pulse_below_rad: 0.35
     heading: {sign: -1, offset_rad: 0.0}  # joint positive = clockwise, bearings +ve left
     body_speed_m_s: 0.15   # body faster than this (or yawing faster than below): SUPPRESSED
     body_yaw_rad_s: 0.3
@@ -47,9 +55,9 @@ defaults:
 
 # Named dome motion profiles, for moods and for an intent's params.profile.
 profiles:
-  snappy: {v_max: 2.0, accel: 4.0, k: 3.0, settle_band_rad: 0.05}
-  smooth: {v_max: 1.0, accel: 1.5, k: 1.5, settle_band_rad: 0.05}
-  lazy:   {v_max: 0.6, accel: 0.8, k: 1.0, settle_band_rad: 0.09}
+  snappy: {v_max: 2.0, accel: 4.0, k: 3.0, settle_band_rad: 0.10}
+  smooth: {v_max: 1.0, accel: 1.5, k: 1.5, settle_band_rad: 0.10}
+  lazy:   {v_max: 0.6, accel: 0.8, k: 1.0, settle_band_rad: 0.10}
 
 # While the mood is stale, and for any mood without an entry: the device's own default
 # look. The Magic Panel is left untouched.

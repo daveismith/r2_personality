@@ -39,6 +39,12 @@ coast ``0.37 v - 4 deg``, measured at higher speeds), kept so earlier tests keep
   ``FLOOR_BAND_RAD_S`` (0.7) achieve ``floor_gain`` of the command: 0.58 by default, 1 in the
   findings preset. Above that the achieved speed is the command: the measured 1.0 to 2.0 rad/s
   run 0.76 to 1.29 of it, about a mean near 1, which the position loop absorbs.
+* **Direction**: the map is not symmetric. A command of 1.0 rad/s gave 1.29 clockwise and 0.76
+  anticlockwise, so commands from ``FLOOR_BAND_RAD_S`` up to ``GAIN_BAND_RAD_S`` (1.25, where
+  the measured 1.5 and 2.0 gave 0.89 and 0.90 of the command: left as the command) achieve
+  ``speed_gain`` (clockwise, anticlockwise) of the command: ``(1.29, 0.76)`` by default,
+  ``(1, 1)`` in the findings preset. The floor's coast is the measured 0.12 rad at 0.35 rad/s
+  (``floor_coast``; the line would say 0.18), joined to the line by ``coast_knee``.
 * **Position**: the firmware's angle wrapped to [0, 2*pi). The firmware never reports 359 to
   2 deg, so each crossing of 0 reads about 9 deg long (findings: "the 355 to 4 deg dead
   zone"). With ``firmware_quirks`` the reported angle never takes a value inside
@@ -57,7 +63,7 @@ coast ``0.37 v - 4 deg``, measured at higher speeds), kept so earlier tests keep
 ``ideal=True`` is a pure integrator, like Gazebo's joint under a velocity controller: the
 velocity is the command at once (no dead band, lag or coast, and no quirks), and the position
 is still reported wrapped to [0, 2*pi). Apart from the dead band, positive and negative are
-symmetric (the map's per-direction speeds above the floor are not modelled).
+symmetric (``speed_gain`` is not applied).
 """
 
 import math
@@ -68,11 +74,14 @@ DEAD_BAND_NEGATIVE_RAD_S = (22 - 0.5 - 14.5) / 12.36    # about 0.567 (0.5663)
 # Lag and coast: the coast distance is coast_s * v - coast_offset_rad.
 PRESETS = {
     'measured_2026_10': {'lag_90_s': 0.6, 'coast_s': 0.52, 'coast_offset_rad': 0.0,
-                         'floor_gain': 0.58},
+                         'floor_gain': 0.58, 'speed_gain': (1.29, 0.76),
+                         'floor_coast': (0.35, 0.12), 'coast_knee': (0.76, 0.3952)},
     'findings_2026_10': {'lag_90_s': 1.5, 'coast_s': 0.37, 'coast_offset_rad': math.radians(4.0),
-                         'floor_gain': 1.0},
+                         'floor_gain': 1.0, 'speed_gain': (1.0, 1.0),
+                         'floor_coast': None, 'coast_knee': None},
 }
 FLOOR_BAND_RAD_S = 0.7          # commands under this achieve floor_gain of the command
+GAIN_BAND_RAD_S = 1.25          # commands from FLOOR_BAND_RAD_S up to this achieve speed_gain
 DEFAULT_PRESET = 'measured_2026_10'
 MEASURED_MISREAD = (313.0, 331.0, 279.0)    # degrees: sector low, sector high, the bogus reading
 MISREAD_S = 0.08                # shorter than a 10 Hz sample period: one bad sample
@@ -89,19 +98,27 @@ def wrap(angle):
 
 def coast_distance(speed, preset=DEFAULT_PRESET):
     """Return the distance in rad the dome coasts from ``|speed|`` rad/s under ``preset``."""
-    fit = PRESETS[preset]
-    return max(0.0, fit['coast_s'] * abs(speed) - fit['coast_offset_rad'])
+    fit, speed = PRESETS[preset], abs(speed)
+    if fit['floor_coast'] is not None and speed < fit['coast_knee'][0]:
+        # Measured: 0.35 rad/s coasted 0.12, less than the line's 0.18. Straight lines from 0 to
+        # that point and on to the line at the knee.
+        points = [(0.0, 0.0), fit['floor_coast'], fit['coast_knee']]
+        for (x0, y0), (x1, y1) in zip(points, points[1:]):
+            if speed <= x1:
+                return y0 + (y1 - y0) * (speed - x0) / (x1 - x0)
+    return max(0.0, fit['coast_s'] * speed - fit['coast_offset_rad'])
 
 
 class DomePlant:
     """The dome's true position and velocity, and the position the firmware reports."""
 
     def __init__(self, ideal=False, firmware_quirks=True, initial_rad=0.0,
-                 preset=DEFAULT_PRESET, misread_at=None):
+                 preset=DEFAULT_PRESET, misread_at=None, speed_gain=None):
         fit = PRESETS[preset]
         self.preset = preset
         self.lag_90_s = fit['lag_90_s']
         self._floor_gain = fit['floor_gain']
+        self._speed_gain = fit['speed_gain'] if speed_gain is None else tuple(speed_gain)
         self._tau = self.lag_90_s / math.log(10.0)
         self.ideal = ideal
         self.firmware_quirks = firmware_quirks and not ideal
@@ -173,6 +190,8 @@ class DomePlant:
         self._coast_decel = 0.0
         if abs(target) < FLOOR_BAND_RAD_S:
             target *= self._floor_gain
+        elif abs(target) < GAIN_BAND_RAD_S:
+            target *= self._speed_gain[0 if target > 0.0 else 1]
         decay = math.exp(-dt / self._tau)
         self._position += target * dt - (target - self._velocity) * self._tau * (1.0 - decay)
         self._velocity = target + (self._velocity - target) * decay
