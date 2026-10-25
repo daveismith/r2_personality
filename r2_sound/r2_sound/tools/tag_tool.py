@@ -46,7 +46,7 @@ except ImportError:
     # Mirrors r2_sound.catalogue.TAGS (not importable on the Mac); keep in step.
     SOUND_TAGS = ('chatter', 'excited', 'sad', 'question', 'ooh', 'hum', 'alarm', 'scream',
                   'laugh', 'annoyed', 'whistle', 'calm', 'scared', 'sleepy', 'greeting',
-                  'misc', 'excluded')
+                  'yes', 'no', 'misc', 'excluded')
 
 THRESHOLD = 0.6
 DUPLICATE_FIELDS = ('duplicate_of', 'suggested_duplicate_of', 'duplicate_score')

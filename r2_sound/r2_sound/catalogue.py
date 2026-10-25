@@ -59,7 +59,8 @@ from r2_sound.gain import MAX_GAIN_DB, MIN_GAIN_DB
 import yaml
 
 TAGS = ('chatter', 'excited', 'sad', 'question', 'ooh', 'hum', 'alarm', 'scream', 'laugh',
-        'annoyed', 'whistle', 'calm', 'scared', 'sleepy', 'greeting', 'misc', 'excluded')
+        'annoyed', 'whistle', 'calm', 'scared', 'sleepy', 'greeting', 'yes', 'no', 'misc',
+        'excluded')   # yes / no: answers for behaviours that ask R2 a question (2026-10-25)
 EXCLUDED_TAG = 'excluded'
 FALLBACK_TAG = 'chatter'
 DEFAULT_THRESHOLD = 0.6

@@ -134,8 +134,8 @@ _MAGIC_ONLY_PICK_KEYS = ('repeat', 'end')
 MAX_UINT32 = 4294967295
 # The pool vocabulary (phase 3 plan step 0, decision 11.13): new tags need a plan change.
 SOUND_TAGS = ('chatter', 'excited', 'sad', 'question', 'ooh', 'hum', 'alarm', 'scream',
-              'laugh', 'annoyed', 'whistle', 'calm', 'scared', 'sleepy', 'greeting', 'misc',
-              'excluded')
+              'laugh', 'annoyed', 'whistle', 'calm', 'scared', 'sleepy', 'greeting', 'yes',
+              'no', 'misc', 'excluded')
 EXCLUDED_TAG = 'excluded'      # music, speech, silence: manual play only, never in a pool
 FALLBACK_TAG = 'chatter'       # a mood whose pools all resolve to nothing falls back to it
 VOICE_POOL = 'voice'           # a chatter pool of synthesised phrases, not a catalogue tag

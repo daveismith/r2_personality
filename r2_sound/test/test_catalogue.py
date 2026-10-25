@@ -47,11 +47,11 @@ def rejects(d, fragment):
     return str(info.value)
 
 
-def test_the_fixed_tag_list_is_the_plans_seventeen():
+def test_the_fixed_tag_list_is_the_plans_nineteen():
     assert TAGS == ('chatter', 'excited', 'sad', 'question', 'ooh', 'hum', 'alarm', 'scream',
                     'laugh', 'annoyed', 'whistle', 'calm', 'scared', 'sleepy', 'greeting',
-                    'misc', 'excluded')
-    assert len(set(TAGS)) == 17
+                    'yes', 'no', 'misc', 'excluded')
+    assert len(set(TAGS)) == 19
 
 
 def test_a_valid_catalogue_parses_into_frozen_dataclasses():

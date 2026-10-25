@@ -186,7 +186,8 @@ duplicates:                      # the clips left out as duplicates (the loader 
 ```
 
 The fixed tag list: `chatter, excited, sad, question, ooh, hum, alarm, scream, laugh,
-annoyed, whistle, calm, scared, sleepy, greeting, misc, excluded`.
+annoyed, whistle, calm, scared, sleepy, greeting, yes, no, misc, excluded`. `yes` and `no` are
+answer pools for behaviours that ask R2 a question (added 2026-10-25); no mood chatters from them.
 
 **Gain** (`r2_sound/gain.py`): each set's median RMS goes to -16 dBFS; a clip more than 8 dB
 from its set median is pulled halfway back; the sheet's `clip_override_db` is added; the peak

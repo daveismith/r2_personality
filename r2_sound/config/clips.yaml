@@ -1,8 +1,8 @@
 house_level_dbfs: -16.0
-generated: '2026-10-24'
+generated: '2026-10-25'
 sets:
   R2 Padawan: {clips: 55, median_rms_dbfs: -12.15, set_gain_db: -3.85}
-  R2 sounds and music: {clips: 168, median_rms_dbfs: -9.41, set_gain_db: -6.59}
+  R2 sounds and music: {clips: 160, median_rms_dbfs: -9.41, set_gain_db: -6.59}
 clips:
 - name: music-1
   set: R2 sounds and music
@@ -41,7 +41,7 @@ clips:
   clip_fraction: 0.003788
   set_gain_db: -6.59
   gain_db: -6.59
-  tags: [chatter]
+  tags: [sad]
   suggested_tag: question
   confidence: 0.4
   excluded: false
@@ -97,7 +97,7 @@ clips:
   clip_fraction: 0.005805
   set_gain_db: -6.59
   gain_db: -6.59
-  tags: [chatter]
+  tags: [excited]
   suggested_tag: excited
   confidence: 0.4
   excluded: false
@@ -298,20 +298,6 @@ clips:
   confidence: 0.281
   excluded: false
   label: ''
-- name: music-118
-  set: R2 sounds and music
-  path: R2 sounds and music/118.mp3
-  duration_ms: 3088
-  rms_dbfs: -7.96
-  peak_dbfs: 2.68
-  clip_fraction: 0.001314
-  set_gain_db: -6.59
-  gain_db: -6.59
-  tags: [alarm]
-  suggested_tag: alarm
-  confidence: 0.753
-  excluded: false
-  label: ''
 - name: music-119
   set: R2 sounds and music
   path: R2 sounds and music/119.mp3
@@ -447,7 +433,7 @@ clips:
   clip_fraction: 0.001359
   set_gain_db: -6.59
   gain_db: -6.59
-  tags: [chatter]
+  tags: [hum]
   suggested_tag: hum
   confidence: 0.481
   excluded: false
@@ -578,20 +564,6 @@ clips:
   confidence: 0.273
   excluded: false
   label: ''
-- name: music-136
-  set: R2 sounds and music
-  path: R2 sounds and music/136.mp3
-  duration_ms: 1207
-  rms_dbfs: -11.02
-  peak_dbfs: 0.06
-  clip_fraction: 0.000103
-  set_gain_db: -6.59
-  gain_db: -6.59
-  tags: [hum]
-  suggested_tag: hum
-  confidence: 0.714
-  excluded: false
-  label: ''
 - name: music-137
   set: R2 sounds and music
   path: R2 sounds and music/137.mp3
@@ -699,23 +671,9 @@ clips:
   clip_fraction: 0.001616
   set_gain_db: -6.59
   gain_db: -6.59
-  tags: [chatter]
+  tags: [excited]
   suggested_tag: excited
   confidence: 0.4
-  excluded: false
-  label: ''
-- name: music-144
-  set: R2 sounds and music
-  path: R2 sounds and music/144.mp3
-  duration_ms: 2705
-  rms_dbfs: -11.35
-  peak_dbfs: 1.62
-  clip_fraction: 0.001257
-  set_gain_db: -6.59
-  gain_db: -6.59
-  tags: [chatter]
-  suggested_tag: laugh
-  confidence: 0.502
   excluded: false
   label: ''
 - name: music-145
@@ -755,7 +713,7 @@ clips:
   clip_fraction: 0.008436
   set_gain_db: -6.59
   gain_db: -6.59
-  tags: [chatter]
+  tags: [excited]
   suggested_tag: excited
   confidence: 0.4
   excluded: false
@@ -853,7 +811,7 @@ clips:
   clip_fraction: 0.003045
   set_gain_db: -6.59
   gain_db: -6.59
-  tags: [chatter]
+  tags: [whistle]
   suggested_tag: scream
   confidence: 0.376
   excluded: false
@@ -923,7 +881,7 @@ clips:
   clip_fraction: 0.008338
   set_gain_db: -6.59
   gain_db: -6.59
-  tags: [chatter]
+  tags: [excited]
   suggested_tag: excited
   confidence: 0.4
   excluded: false
@@ -1133,7 +1091,7 @@ clips:
   clip_fraction: 0.000438
   set_gain_db: -6.59
   gain_db: -6.59
-  tags: [chatter]
+  tags: [hum]
   suggested_tag: hum
   confidence: 0.28
   excluded: false
@@ -1273,7 +1231,7 @@ clips:
   clip_fraction: 0.005203
   set_gain_db: -6.59
   gain_db: -6.59
-  tags: [chatter]
+  tags: [hum]
   suggested_tag: hum
   confidence: 0.247
   excluded: false
@@ -1656,20 +1614,6 @@ clips:
   confidence: 0.7
   excluded: false
   label: ''
-- name: music-59
-  set: R2 sounds and music
-  path: R2 sounds and music/59.mp3
-  duration_ms: 3410
-  rms_dbfs: -9.44
-  peak_dbfs: 1.04
-  clip_fraction: 0.000379
-  set_gain_db: -6.59
-  gain_db: -6.59
-  tags: [chatter]
-  suggested_tag: annoyed
-  confidence: 0.52
-  excluded: false
-  label: ''
 - name: music-6
   set: R2 sounds and music
   path: R2 sounds and music/6.mp3
@@ -1698,20 +1642,6 @@ clips:
   confidence: 0.898
   excluded: false
   label: ''
-- name: music-61
-  set: R2 sounds and music
-  path: R2 sounds and music/61.mp3
-  duration_ms: 3696
-  rms_dbfs: -9.4
-  peak_dbfs: 1.5
-  clip_fraction: 0.000785
-  set_gain_db: -6.59
-  gain_db: -6.59
-  tags: [chatter]
-  suggested_tag: excited
-  confidence: 0.4
-  excluded: false
-  label: ''
 - name: music-62
   set: R2 sounds and music
   path: R2 sounds and music/62.mp3
@@ -1721,7 +1651,7 @@ clips:
   clip_fraction: 0.002224
   set_gain_db: -6.59
   gain_db: -6.59
-  tags: [chatter]
+  tags: [excited]
   suggested_tag: excited
   confidence: 0.4
   excluded: false
@@ -1847,7 +1777,7 @@ clips:
   clip_fraction: 0.003788
   set_gain_db: -6.59
   gain_db: -6.59
-  tags: [chatter]
+  tags: [alarm]
   suggested_tag: alarm
   confidence: 0.293
   excluded: false
@@ -1945,7 +1875,7 @@ clips:
   clip_fraction: 0.000531
   set_gain_db: -6.59
   gain_db: -6.59
-  tags: [chatter]
+  tags: [alarm]
   suggested_tag: alarm
   confidence: 0.267
   excluded: false
@@ -1959,7 +1889,7 @@ clips:
   clip_fraction: 0.005162
   set_gain_db: -6.59
   gain_db: -6.59
-  tags: [chatter]
+  tags: [excited]
   suggested_tag: excited
   confidence: 0.4
   excluded: false
@@ -2034,20 +1964,6 @@ clips:
   confidence: 0.751
   excluded: false
   label: ''
-- name: music-83
-  set: R2 sounds and music
-  path: R2 sounds and music/83.mp3
-  duration_ms: 1055
-  rms_dbfs: -7.4
-  peak_dbfs: 0.37
-  clip_fraction: 0.000968
-  set_gain_db: -6.59
-  gain_db: -6.59
-  tags: [ooh]
-  suggested_tag: ooh
-  confidence: 0.835
-  excluded: false
-  label: ''
 - name: music-84
   set: R2 sounds and music
   path: R2 sounds and music/84.mp3
@@ -2099,7 +2015,7 @@ clips:
   clip_fraction: 0.001369
   set_gain_db: -6.59
   gain_db: -6.59
-  tags: [chatter]
+  tags: [ooh]
   suggested_tag: ooh
   confidence: 0.356
   excluded: false
@@ -2116,20 +2032,6 @@ clips:
   tags: [chatter]
   suggested_tag: misc
   confidence: 0.28
-  excluded: false
-  label: ''
-- name: music-89
-  set: R2 sounds and music
-  path: R2 sounds and music/89.mp3
-  duration_ms: 1409
-  rms_dbfs: -6.47
-  peak_dbfs: 0.85
-  clip_fraction: 0.003837
-  set_gain_db: -6.59
-  gain_db: -6.59
-  tags: [ooh]
-  suggested_tag: ooh
-  confidence: 0.886
   excluded: false
   label: ''
 - name: music-9
@@ -2169,7 +2071,7 @@ clips:
   clip_fraction: 0.000888
   set_gain_db: -6.59
   gain_db: -6.59
-  tags: [chatter]
+  tags: [sad]
   suggested_tag: sad
   confidence: 0.4
   excluded: false
@@ -2216,20 +2118,6 @@ clips:
   confidence: 0.462
   excluded: false
   label: ''
-- name: music-95
-  set: R2 sounds and music
-  path: R2 sounds and music/95.mp3
-  duration_ms: 848
-  rms_dbfs: -8.39
-  peak_dbfs: 0.4
-  clip_fraction: 0.001284
-  set_gain_db: -6.59
-  gain_db: -6.59
-  tags: [ooh]
-  suggested_tag: ooh
-  confidence: 0.9
-  excluded: false
-  label: ''
 - name: music-96
   set: R2 sounds and music
   path: R2 sounds and music/96.mp3
@@ -2253,7 +2141,7 @@ clips:
   clip_fraction: 0.002886
   set_gain_db: -6.59
   gain_db: -6.59
-  tags: [chatter]
+  tags: [ooh]
   suggested_tag: ooh
   confidence: 0.389
   excluded: false
@@ -2281,7 +2169,7 @@ clips:
   clip_fraction: 0.00018
   set_gain_db: -6.59
   gain_db: -6.59
-  tags: [chatter]
+  tags: [ooh]
   suggested_tag: ooh
   confidence: 0.292
   excluded: false
@@ -3126,4 +3014,12 @@ clips:
   confidence: 1.0
   excluded: false
   label: whistle
-duplicates: []
+duplicates:
+- {name: music-118, path: R2 sounds and music/118.mp3, duplicate_of: padawan-alarm07}
+- {name: music-136, path: R2 sounds and music/136.mp3, duplicate_of: padawan-hum20}
+- {name: music-144, path: R2 sounds and music/144.mp3, duplicate_of: padawan-chortle}
+- {name: music-59, path: R2 sounds and music/59.mp3, duplicate_of: padawan-annoyed}
+- {name: music-61, path: R2 sounds and music/61.mp3, duplicate_of: padawan-sent08}
+- {name: music-83, path: R2 sounds and music/83.mp3, duplicate_of: padawan-ooh03}
+- {name: music-89, path: R2 sounds and music/89.mp3, duplicate_of: padawan-ooh01}
+- {name: music-95, path: R2 sounds and music/95.mp3, duplicate_of: music-60}
