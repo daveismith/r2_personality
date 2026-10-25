@@ -1819,7 +1819,7 @@ clips:
   clip_fraction: 0.002019
   set_gain_db: -6.59
   gain_db: -6.59
-  tags: [sad]
+  tags: [sad, 'no']
   suggested_tag: sad
   confidence: 0.4
   excluded: false
@@ -2071,7 +2071,7 @@ clips:
   clip_fraction: 0.000888
   set_gain_db: -6.59
   gain_db: -6.59
-  tags: [sad]
+  tags: [sad, 'no']
   suggested_tag: sad
   confidence: 0.4
   excluded: false
