@@ -234,3 +234,17 @@ def test_kit_index_reads_the_duplicates_folder(tmp_path):
     index = tag_tool.index_kit(kit)
     assert tag_tool.kit_path(index, 'music-64', 'chatter') == (
         kit / 'duplicates' / 'music-64__of__padawan-sent10.wav')
+
+
+def test_payload_passes_the_duplicate_timing_through(tmp_path):
+    path = tmp_path / 'tags.csv'
+    path.write_text(
+        'name,set,path,tags,clip_override_db,duplicate_of,suggested_duplicate_of,'
+        'duplicate_score,duplicate_timing,status\n'
+        'a-1,S,S/1.mp3,,,,a-2,0.970,"other take; active 0.78/0.70 s (ratio 0.90), '
+        'pitch x0.99",\n'
+        'a-2,S,S/2.mp3,,,,,,,\n', encoding='utf-8')
+    clips = tag_tool.clips_payload(path, {})['clips']
+    assert clips[0]['duplicate_timing'].startswith('other take; active 0.78/0.70 s')
+    assert clips[1]['duplicate_timing'] == ''
+    assert 'duplicate_timing' in tag_tool.PAGE and 'other take' in tag_tool.PAGE

@@ -183,7 +183,8 @@ def test_the_sheet_has_every_clip_and_the_plan_columns(tree, tmp_path):
     with open(sheet) as f:
         assert f.readline().strip() == ('name,set,path,duration_s,rms_dbfs,suggested_tag,'
                                         'confidence,tags,clip_override_db,duplicate_of,'
-                                        'suggested_duplicate_of,duplicate_score,status')
+                                        'suggested_duplicate_of,duplicate_score,'
+                                        'duplicate_timing,status')
     rows = read_sheet_rows(sheet)
     assert [r['name'] for r in rows] == [c.name for c in catalogue.clips]
     assert all(r['status'] == '' for r in rows)
@@ -553,6 +554,85 @@ def test_an_old_format_sheet_reads_and_comes_out_with_the_columns(dup_tree, tmp_
     assert (rows['music-4']['tags'], rows['music-4']['clip_override_db']) == ('calm', '2')
     assert rows['music-10']['suggested_duplicate_of'] == 'music-3'
     assert rows['music-4']['duplicate_of'] == ''
+
+
+def test_the_sheet_has_the_timing_column_after_the_score(dup_tree, tmp_path):
+    _, _, _, sheet, _ = run(dup_tree, tmp_path)
+    columns = list(bc.SHEET_COLUMNS)
+    assert columns[columns.index('duplicate_score') + 1] == 'duplicate_timing'
+    rows = {r['name']: r for r in read_sheet_rows(sheet)}
+    assert rows['music-10']['duplicate_timing'].startswith('same recording; lead ')
+    assert rows['music-3']['duplicate_timing'] == ''
+    assert rows['music-11']['duplicate_timing'] == ''
+
+
+def test_a_sheet_without_the_timing_column_reads_and_gets_it(dup_tree, tmp_path):
+    _, _, _, sheet, _ = run(dup_tree, tmp_path)
+    edit_sheet(sheet, **{'music-4': {'tags': 'calm', 'clip_override_db': '2'}})
+    rows = read_sheet_rows(sheet)
+    for row in rows:
+        del row['duplicate_timing']
+    write_sheet_rows(sheet, rows)
+    with open(sheet) as f:
+        assert 'duplicate_timing' not in f.readline()
+    catalogue, warnings, *_ = run(dup_tree, tmp_path)
+    assert warnings == [] and by_name(catalogue)['music-4'].tags == ('calm',)
+    with open(sheet) as f:
+        assert f.readline().strip().split(',') == list(bc.SHEET_COLUMNS)
+    rows = {r['name']: r for r in read_sheet_rows(sheet)}
+    assert rows['music-4']['clip_override_db'] == '2'
+    assert rows['music-10']['duplicate_timing'].startswith('same recording')
+
+
+def test_pairs_report_prints_the_timing_columns(dup_tree, tmp_path, capsys):
+    out = str(tmp_path / 'c' / 'clips.yaml')
+    assert bc.main(['--sounds-dir', dup_tree, '--out', out, '--pairs', '3']) == 0
+    printed = capsys.readouterr().out
+    assert 'verdict' in printed and 'same recording' in printed
+
+
+def _print_of(signal):
+    return analysis.fingerprint(np.asarray(signal, dtype=np.float32), RATE)
+
+
+def _bursts(gaps, freq=1500.0, on_s=0.1, lead_s=0.1, tail_s=0.1):
+    """Return Hann-shaped tone bursts of ``on_s`` separated by the ``gaps`` (s)."""
+    parts = [np.zeros(int(lead_s * RATE))]
+    for i in range(len(gaps) + 1):
+        parts.append(tone(freq, on_s, 0.4) * np.hanning(int(on_s * RATE)))
+        if i < len(gaps):
+            parts.append(np.zeros(int(gaps[i] * RATE)))
+    parts.append(np.zeros(int(tail_s * RATE)))
+    return np.concatenate(parts)
+
+
+def test_timing_same_recording_with_extra_trailing_silence():
+    base = _bursts((0.2, 0.2))
+    longer = np.concatenate([base, np.zeros(int(0.3 * RATE))])
+    t = analysis.timing_comparison(_print_of(base), _print_of(longer))
+    assert t.verdict == 'same recording'
+    assert t.trail_b_s == pytest.approx(t.trail_a_s + 0.3, abs=0.02)
+    assert t.active_a_s == pytest.approx(t.active_b_s, abs=0.02)
+    assert t.summary().startswith('same recording; lead ') and len(t.summary()) < 90
+
+
+def test_timing_other_take_has_shortened_gaps_and_the_same_pitch():
+    # three 100 ms bursts, each gap 40 ms shorter: the bursts do not move by one stretch
+    a, b = _print_of(_bursts((0.08, 0.12))), _print_of(_bursts((0.04, 0.08)))
+    t = analysis.timing_comparison(a, b)
+    assert t.verdict == 'other take'
+    assert t.ratio < 0.97 and t.pitch_ratio == pytest.approx(1.0, abs=0.04)
+    assert t.pitch_ratio == pytest.approx(1.0, abs=0.04)
+    assert t.summary().startswith('other take; active ') and len(t.summary()) < 90
+
+
+def test_timing_uniform_stretch_by_resampling_moves_the_pitch():
+    base = _bursts((0.2, 0.2))
+    n = int(len(base) * 1.25)
+    slow = np.interp(np.linspace(0, len(base) - 1, n), np.arange(len(base)), base)
+    t = analysis.timing_comparison(_print_of(base), _print_of(slow))
+    assert t.verdict == 'resampled'
+    assert t.ratio == pytest.approx(1.25, abs=0.03) and t.pitch_ratio < 0.9
 
 
 def line_of(sheet, name):

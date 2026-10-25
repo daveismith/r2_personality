@@ -60,6 +60,9 @@ their profile correlation. Two clips of the same sample count and rate whose 8 k
 signals agree within :data:`EXACT_TOLERANCE` score 1.0. :func:`duplicate_pairs` scores
 only the pairs whose durations are within 25 % or 0.3 s (:func:`durations_close`): the
 music set's copies of the Padawan clips carry 5-10 % more padding, so a tight gate hid them.
+
+:func:`timing_comparison` then says how the timing of a suggested pair differs (lead and
+trail silence, active length, whether the syllables fall at other times); see its docstring.
 """
 
 from dataclasses import dataclass
@@ -394,3 +397,133 @@ def duplicate_pairs(prints: Sequence[Fingerprint]):
             a, b = (i, j) if i < j else (j, i)
             pairs.append((round(duplicate_score(prints[a], prints[b]), 3), a, b))
     return sorted(pairs, key=lambda p: (-p[0], p[1], p[2]))
+
+
+# --- timing comparison of a duplicate pair -----------------------------------------------
+
+TIMING_FRAME_S = 0.010           # envelope frames: RMS over 10 ms
+TIMING_ACTIVE_DB = 35.0          # active frames are within this of the clip's loudest frame
+TIMING_MAX_LAG = 20              # frames (200 ms) of shift tried for the envelope fit
+TIMING_RATIO_TOL = 0.03          # active lengths within 3 % are the same length
+TIMING_FIT = 0.9                 # shift_fit at or above this: the same envelope
+TIMING_STRETCH_MARGIN = 0.05     # stretch_fit must beat shift_fit by this to be a stretch
+TIMING_PITCH_TOL = 0.04          # spectral centroids within 4 % are the same pitch
+
+
+@dataclass(frozen=True)
+class Timing:
+    """How the timing of two clips of a duplicate pair compares; see :func:`timing_comparison`."""
+
+    lead_a_s: float
+    lead_b_s: float
+    trail_a_s: float
+    trail_b_s: float
+    active_a_s: float
+    active_b_s: float
+    ratio: float            # active_b / active_a
+    shift_fit: float        # best envelope correlation over small shifts
+    stretch_fit: float      # the same after resampling b's envelope onto a's length
+    pitch_ratio: float      # spectral centroid of b's active part / a's
+    verdict: str            # same recording, other take, stretched, resampled or unclear
+
+    def summary(self) -> str:
+        """Return a one-line description of the comparison."""
+        if self.verdict == 'same recording':
+            return (f'{self.verdict}; lead {self.lead_a_s:.2f}/{self.lead_b_s:.2f} s, '
+                    f'trail {self.trail_a_s:.2f}/{self.trail_b_s:.2f} s, '
+                    f'active {self.active_a_s:.2f}/{self.active_b_s:.2f} s')
+        return (f'{self.verdict}; active {self.active_a_s:.2f}/{self.active_b_s:.2f} s '
+                f'(ratio {self.ratio:.2f}), pitch x{self.pitch_ratio:.2f}')
+
+
+def _active_region(signal):
+    """Return ``(first, last, envelope, frame)``: active frame span and the linear RMS frames."""
+    frame = max(1, int(round(TIMING_FRAME_S * FP_RATE)))
+    x = np.asarray(signal, dtype=np.float64)
+    count = len(x) // frame
+    if count == 0:
+        return None
+    rms = np.sqrt(np.mean(x[:count * frame].reshape(count, frame) ** 2, axis=1))
+    db = 20.0 * np.log10(np.maximum(rms, 1e-12))
+    active = np.nonzero(db > db.max() - TIMING_ACTIVE_DB)[0]
+    if rms.max() < 1e-9 or len(active) == 0:
+        return None
+    return int(active[0]), int(active[-1]), rms, frame
+
+
+def _envelope_fit(a, b):
+    """Return the best normalised correlation of two envelopes over the lag range."""
+    a, b = a - a.mean(), b - b.mean()
+    best = -1.0
+    for lag in range(-TIMING_MAX_LAG, TIMING_MAX_LAG + 1):
+        pa, pb = a[max(0, lag):], b[max(0, -lag):]
+        n = min(len(pa), len(pb))
+        if n >= 2:
+            best = max(best, _correlation(pa[:n], pb[:n]))
+    return best
+
+
+def _centroid_hz(x):
+    if len(x) < 2:
+        return 0.0
+    spectrum = np.abs(np.fft.rfft(x * np.hanning(len(x))))
+    total = float(spectrum.sum())
+    if total < 1e-12:
+        return 0.0
+    freqs = np.fft.rfftfreq(len(x), 1.0 / FP_RATE)
+    return float(np.sum(freqs * spectrum) / total)
+
+
+def timing_comparison(a: Fingerprint, b: Fingerprint) -> Timing:
+    """
+    Compare the timing of two clips (``a`` is the reference, ``b`` the other) on their signals.
+
+    The envelope is the RMS over 10 ms frames; the active region is the frames within 35 dB of
+    the clip's loudest. ``shift_fit`` is the best normalised correlation of the two active
+    envelopes over shifts of up to 200 ms, ``stretch_fit`` the same after b's active envelope
+    is resampled onto a's length. The verdict:
+
+    * ``same recording``: the active lengths agree within 3 % and the envelopes fit (>= 0.9);
+    * ``other take``: the lengths differ and stretching does not help (the syllables fall at
+      other times, the pitch kept);
+    * ``stretched``: the lengths differ, stretching fits better and the pitch is kept;
+    * ``resampled``: the lengths differ and the pitch moved by 4 % or more (slower or faster
+      playback);
+    * ``unclear`` otherwise, or when a clip is silent.
+    """
+    ra, rb = _active_region(a.signal), _active_region(b.signal)
+    if ra is None or rb is None:
+        return Timing(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 'unclear')
+    fields = []
+    for r, signal in ((ra, a.signal), (rb, b.signal)):
+        first, last, _, frame = r
+        lead = first * frame / FP_RATE
+        trail = (len(signal) - (last + 1) * frame) / FP_RATE
+        fields.append((lead, trail, (last + 1 - first) * frame / FP_RATE))
+    env_a = ra[2][ra[0]:ra[1] + 1]
+    env_b = rb[2][rb[0]:rb[1] + 1]
+    ratio = len(env_b) / len(env_a)
+    shift_fit = _envelope_fit(env_a, env_b)
+    resampled = np.interp(np.linspace(0.0, len(env_b) - 1.0, len(env_a)),
+                          np.arange(len(env_b)), env_b)
+    stretch_fit = _envelope_fit(env_a, resampled)
+    centroids = []
+    for r, signal in ((ra, a.signal), (rb, b.signal)):
+        first, last, _, frame = r
+        centroids.append(_centroid_hz(np.asarray(signal, dtype=np.float64)[
+            first * frame:(last + 1) * frame]))
+    pitch = centroids[1] / centroids[0] if centroids[0] > 0.0 else 1.0
+    different = abs(ratio - 1.0) >= TIMING_RATIO_TOL
+    if not different and shift_fit >= TIMING_FIT:
+        verdict = 'same recording'
+    elif different and stretch_fit < shift_fit + TIMING_STRETCH_MARGIN:
+        verdict = 'other take'
+    elif different and abs(pitch - 1.0) < TIMING_PITCH_TOL:
+        verdict = 'stretched'
+    elif different:
+        verdict = 'resampled'
+    else:
+        verdict = 'unclear'
+    return Timing(fields[0][0], fields[1][0], fields[0][1], fields[1][1],
+                  fields[0][2], fields[1][2], round(ratio, 4), round(shift_fit, 4),
+                  round(stretch_fit, 4), round(pitch, 4), verdict)

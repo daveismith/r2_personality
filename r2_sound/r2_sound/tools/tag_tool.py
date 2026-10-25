@@ -49,7 +49,8 @@ except ImportError:
                   'yes', 'no', 'misc', 'excluded')
 
 THRESHOLD = 0.6
-DUPLICATE_FIELDS = ('duplicate_of', 'suggested_duplicate_of', 'duplicate_score')
+DUPLICATE_FIELDS = ('duplicate_of', 'suggested_duplicate_of', 'duplicate_score',
+                    'duplicate_timing')
 DUPLICATES_DIR = 'duplicates'      # build_catalogue's kit folder: <name>__of__<kept>.wav
 DUPLICATE_SEPARATOR = '__of__'
 SHEET_REL = Path('src/r2_personality/r2_sound/config/tags.csv')
@@ -480,6 +481,11 @@ function renderDuplicate(P, c) {
     `Marked duplicate of ${c.dup}: left out of clips.yaml (tags ignored)`}));
   if (sug) D.append(el('div', {textContent:
     `Suggested duplicate of ${sug} (score ${c.duplicate_score || '?'})`}));
+  if (sug && c.duplicate_timing) D.append(el('div', {className: 'mut',
+    textContent: c.duplicate_timing}));
+  if (sug && (c.duplicate_timing || '').startsWith('other take')) D.append(el('div',
+    {className: 'mut', textContent:
+    'Same phrase, different timing: worth keeping both for the synth'}));
   const keptName = c.dup || sug;
   if (keptName) {
     const k = el('audio', {controls: true, src: audioSrc(keptName)}); k.id = 'kept';

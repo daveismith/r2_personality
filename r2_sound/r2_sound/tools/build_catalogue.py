@@ -38,8 +38,9 @@ suggestions are a first pass to be confirmed by ear.
   clip: a labelled one over an unlabelled one (the label is the reference that makes its
   suggestion confident), then the one whose RMS is nearest its set's median, then the shorter
   name, then the first alphabetically. Every other member is suggested
-  ``suggested_duplicate_of`` the kept one, with ``duplicate_score`` its score against it. Only
-  the sheet's ``duplicate_of`` acts.
+  ``suggested_duplicate_of`` the kept one, with ``duplicate_score`` its score against it and
+  ``duplicate_timing`` a one-line :func:`r2_sound.analysis.timing_comparison` of the two
+  (lead, trail and active lengths; the verdict). Only the sheet's ``duplicate_of`` acts.
 * Sheet (``tags.csv``): the tool fills every column but ``tags``, ``clip_override_db`` and
   ``duplicate_of``, which are David's and are read back by column name and kept (a sheet
   without ``duplicate_of`` reads as all empty and is written with it). A row belongs to the clip at
@@ -89,7 +90,8 @@ EXCLUSIONS = ('theme', 'chorus', 'emperor', 'cantina', 'march', 'disco', 'starwa
               'silence')
 SHEET_COLUMNS = ('name', 'set', 'path', 'duration_s', 'rms_dbfs', 'suggested_tag',
                  'confidence', 'tags', 'clip_override_db', 'duplicate_of',
-                 'suggested_duplicate_of', 'duplicate_score', 'status')
+                 'suggested_duplicate_of', 'duplicate_score', 'duplicate_timing',
+                 'status')
 MISSING = 'missing'              # the status of a sheet row whose clip is not on disk
 DUPLICATES_DIR = 'duplicates'    # the kit folder of the marked duplicates
 DUPLICATE_SEPARATOR = '__of__'   # <name>__of__<kept>.wav
@@ -278,7 +280,8 @@ class _Item:
         self.listed = label == EXCLUDED_TAG
         self.measurement = self.features = self.kit_audio = self.suggestion = None
         self.fingerprint = None
-        self.duplicate = ('', None)     # (suggested_duplicate_of, duplicate_score)
+        self.duplicate = ('', None, '')     # (suggested_duplicate_of, score, timing summary)
+        self.timing = None              # the Timing of this clip against the kept one
 
 
 def _unique_names(found):
@@ -379,7 +382,10 @@ def _suggest_duplicates(items, threshold):
                 if score is None:
                     score = round(analysis.duplicate_score(items[i].fingerprint,
                                                            items[kept].fingerprint), 3)
-                items[i].duplicate = (items[kept].name, score)
+                timing = analysis.timing_comparison(items[kept].fingerprint,
+                                                    items[i].fingerprint)
+                items[i].timing = timing
+                items[i].duplicate = (items[kept].name, score, timing.summary())
     return [(score, items[a], items[b]) for score, a, b in pairs]
 
 
@@ -458,16 +464,16 @@ def _sheet_text(clips, matched, orphans, suggested_duplicates):
     lines = []
     for clip in clips:
         tags, override, duplicate_of = _sheet_fields(matched.get(clip.name))
-        partner, score = suggested_duplicates.get(clip.name, ('', None))
+        partner, score, timing = suggested_duplicates.get(clip.name, ('', None, ''))
         lines.append([clip.name, clip.set_name, clip.path, f'{clip.duration_ms / 1000:.2f}',
                       f'{clip.rms_dbfs:.2f}', clip.suggested_tag, f'{clip.confidence:.3f}',
                       ','.join(tags), override, duplicate_of, partner,
-                      '' if score is None else f'{score:.3f}', ''])
+                      '' if score is None else f'{score:.3f}', timing, ''])
     for row in orphans:
         fields = row['fields']
         lines.append([row['name']] + [(fields.get(c) or '') for c in SHEET_COLUMNS[1:7]]
                      + [','.join(row['tags']), row['override'], row['duplicate_of']]
-                     + [(fields.get(c) or '') for c in SHEET_COLUMNS[10:12]] + [MISSING])
+                     + [(fields.get(c) or '') for c in SHEET_COLUMNS[10:13]] + [MISSING])
     buffer = io.StringIO()
     writer = csv.writer(buffer, lineterminator='\n')
     writer.writerow(SHEET_COLUMNS)
@@ -521,7 +527,13 @@ the exclusion list makes it playable. Re-run `build_catalogue` to merge the shee
 
 Duplicates: `suggested_duplicate_of` names the clip that sounds the same (score
 `duplicate_score`, 1.0 for the same samples) and is the one to keep; it is only a
-suggestion. Listen to both, and to mark a duplicate write the kept clip's name in
+suggestion. `duplicate_timing` compares the two: the silence before and after the sound, the
+length of the sound itself, and a verdict: `same recording` (same length and rhythm; any
+difference is padding or level), `other take` (the same phrase with its rhythm moved by tens
+of ms and the pitch held), `stretched` (the same sound played longer or shorter, pitch held)
+or `resampled` (slower or faster playback, the pitch moved with it). `other take` pairs are
+the ones worth keeping both of for synth work. Listen to both, and to mark a duplicate write
+the kept clip's name in
 `duplicate_of` (or press `d` in the tag tool). A marked duplicate leaves `clips.yaml` (the
 player never lists or picks it; it is listed under `duplicates:`) and its WAV moves here to
 `duplicates/<name>__of__<kept>.wav`, so it can still be heard. `duplicate_of` must name
@@ -591,7 +603,8 @@ def _active_duplicates(sheet, items, matched, warnings):
 
 def build(sounds_dir, out, sheet=None, kit=None, threshold=DEFAULT_THRESHOLD,
           house_level=gain.HOUSE_LEVEL_DBFS, today=None,
-          duplicate_threshold=analysis.DUPLICATE_THRESHOLD, pairs_out=None):
+          duplicate_threshold=analysis.DUPLICATE_THRESHOLD, pairs_out=None,
+          timings_out=None, timings_top=0):
     """
     Build the catalogue, the sheet and the kit; return ``(catalogue, warnings)``.
 
@@ -613,6 +626,10 @@ def build(sounds_dir, out, sheet=None, kit=None, threshold=DEFAULT_THRESHOLD,
     scored = _suggest_duplicates(items, duplicate_threshold)
     if pairs_out is not None:
         pairs_out.extend((score, a.name, b.name) for score, a, b in scored)
+    if timings_out is not None:
+        for _, a, b in scored[:timings_top]:
+            timings_out[(a.name, b.name)] = analysis.timing_comparison(a.fingerprint,
+                                                                       b.fingerprint)
     every, sets = _clips(items, matched, threshold, house_level, duplicate_of)
     clips = [c for c in every if c.name not in duplicate_of]
     duplicates = [{'name': c.name, 'path': c.path, 'duplicate_of': duplicate_of[c.name]}
@@ -664,11 +681,13 @@ def main(args=None):
     parser.add_argument('--house-level', type=float, default=gain.HOUSE_LEVEL_DBFS)
     options = parser.parse_args(args)
     pairs = []
+    timings = {}
     try:
         catalogue, warnings = build(options.sounds_dir, options.out, options.sheet,
                                     options.kit, options.threshold, options.house_level,
                                     duplicate_threshold=options.duplicate_threshold,
-                                    pairs_out=pairs)
+                                    pairs_out=pairs, timings_out=timings,
+                                    timings_top=options.pairs)
     except CatalogueError as error:
         print(f'build_catalogue: {error}', file=sys.stderr)
         return 1
@@ -678,8 +697,13 @@ def main(args=None):
     print(f'duplicates: {len(catalogue_duplicates(options.out))} marked; '
           f'{sum(p[0] >= options.duplicate_threshold for p in pairs)} pairs at score >= '
           f'{options.duplicate_threshold}')
+    if options.pairs > 0:
+        print('  score  lead a/b s  trail a/b s  active a/b s  ratio  verdict  (clip a  clip b)')
     for score, a, b in pairs[:options.pairs]:
-        print(f'  {score:.3f}  {a}  {b}')
+        t = timings[(a, b)]
+        print(f'  {score:.3f}  {t.lead_a_s:.2f}/{t.lead_b_s:.2f}  '
+              f'{t.trail_a_s:.2f}/{t.trail_b_s:.2f}  {t.active_a_s:.2f}/{t.active_b_s:.2f}  '
+              f'{t.ratio:.2f}  {t.verdict}  ({a}  {b})')
     return 0
 
 

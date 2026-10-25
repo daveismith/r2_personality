@@ -223,8 +223,8 @@ suggested. On the two sets the copies score 0.917 to 0.998 and the next pairs, v
 rather than copies, 0.818 to 0.891 (`--pairs 30` prints the best pairs). Linked pairs form
 a group; the group keeps a labelled clip over an unlabelled one, then the clip whose RMS is nearest its set's median, then the shorter
 name, then the first alphabetically, and every other member gets `suggested_duplicate_of`
-(the kept clip) and `duplicate_score` in the sheet. Those two columns are refreshed every
-run and do nothing; only David's `duplicate_of` acts. A clip whose `duplicate_of` names
+(the kept clip), `duplicate_score` and `duplicate_timing` in the sheet. Those three columns
+are refreshed every run and do nothing (`duplicate_timing` is empty when there is no suggestion); only David's `duplicate_of` acts. A clip whose `duplicate_of` names
 another clip is left out of `clips` (the player never lists or picks it), listed under
 `duplicates:` (name, path, duplicate_of) and not counted in its set's `clips:`; the set
 medians still count it, so marking one moves no other gain. Its tags are ignored (with a
@@ -233,9 +233,22 @@ so it can still be heard. A `duplicate_of` whose clip is not on disk (a `missing
 the duplicate in the catalogue with a WARN, so the sound is not lost.
 
 The sheet's columns: `name, set, path, duration_s, rms_dbfs, suggested_tag, confidence,
-tags, clip_override_db, duplicate_of, suggested_duplicate_of, duplicate_score, status`.
+tags, clip_override_db, duplicate_of, suggested_duplicate_of, duplicate_score,
+duplicate_timing, status`.
 David's are `tags`, `clip_override_db` and `duplicate_of`; a sheet from before the
-duplicate columns reads fine and is written with them.
+duplicate columns, or without `duplicate_timing`, reads fine and is written with them.
+
+`duplicate_timing` (`analysis.timing_comparison`) compares a suggested pair, its numbers given as kept clip / this clip, on the 10 ms RMS
+envelope of the 8 kHz signals: the active part is the frames within 35 dB of the loudest; it
+gives lead and trail silence and active length for both (kept clip first), then a verdict.
+`same recording`: active lengths within 3 % and the envelopes correlate >= 0.9 within 200 ms
+of shift (so only padding or level differs). `other take`: the lengths differ and
+stretching one envelope onto the other does not fit better (the syllables fall at other
+times, the pitch kept). `stretched`: the lengths differ, stretching fits clearly better and
+the spectral centroid is within 4 %. `resampled`: the lengths differ and the centroid moved
+(slower or faster playback). `other take` pairs are the ones worth keeping for synth work:
+the same phrase, the rhythm jittered by tens of ms, the pitch held. `--pairs N` prints the
+timing columns beside score and names.
 
 **Tagging and re-running.**
 
