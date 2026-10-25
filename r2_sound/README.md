@@ -216,9 +216,9 @@ voice; the player itself refuses a play of an empty pool with `empty pool`.
 **Duplicates.** Some sounds are in both sets (and a few twice in one). `build_catalogue`
 fingerprints each clip (log energies in 16 bands, 125 Hz to 4 kHz, over 50 ms frames of the
 8 kHz mono signal, each band's mean removed, so a level difference does not count) and scores
-every pair whose durations are within 3 % or 60 ms, across the sets too: the lesser of the
+every pair whose durations are within 25 % or 0.3 s (the music set's copies carry 5-10 % more padding than the Padawan originals), across the sets too: the lesser of the
 band profiles' correlation and the time patterns' best cross-correlation within 100 ms of
-lag, 0..1; the same samples score 1.0. Pairs at 0.9 or above (`--duplicate-threshold`) are
+lag, 0..1; the same samples score 1.0. Pairs at 0.85 or above (`--duplicate-threshold`) are
 suggested. On the two sets the copies score 0.917 to 0.998 and the next pairs, variants
 rather than copies, 0.818 to 0.891 (`--pairs 30` prints the best pairs). Linked pairs form
 a group; the group keeps a labelled clip over an unlabelled one, then the clip whose RMS is nearest its set's median, then the shorter
@@ -241,7 +241,7 @@ duplicate columns reads fine and is written with them.
 
 ```sh
 build_catalogue --sounds-dir /sounds --out config/clips.yaml --sheet config/tags.csv \
-    --kit /ws/.audio/tagging [--threshold 0.6] [--duplicate-threshold 0.9] [--pairs 30]
+    --kit /ws/.audio/tagging [--threshold 0.6] [--duplicate-threshold 0.85] [--pairs 30]
 ```
 
 1. Listen a bucket at a time on the Mac: `/ws/.audio/tagging/play_bucket.sh chatter` plays

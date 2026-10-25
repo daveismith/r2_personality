@@ -58,7 +58,8 @@ normalised cross-correlation of the time patterns over a lag of up to
 :data:`FP_MAX_LAG` frames (100 ms) either way; two steady sounds (no time pattern) score
 their profile correlation. Two clips of the same sample count and rate whose 8 kHz
 signals agree within :data:`EXACT_TOLERANCE` score 1.0. :func:`duplicate_pairs` scores
-only the pairs whose durations are within 3 % or 60 ms (:func:`durations_close`).
+only the pairs whose durations are within 25 % or 0.3 s (:func:`durations_close`): the
+music set's copies of the Padawan clips carry 5-10 % more padding, so a tight gate hid them.
 """
 
 from dataclasses import dataclass
@@ -90,12 +91,12 @@ FP_FLOOR_DB = 60.0             # band-frames are floored this far below the loud
 FP_MAX_LAG = 4                 # frames either way (100 ms)
 FP_STEADY_DB = 0.5             # a time pattern with an RMS below this is a steady sound
 EXACT_TOLERANCE = 2e-3         # max |difference| of the 8 kHz signals for an exact match
-DURATION_REL = 0.03            # pairs are scored only when their durations are this close
-DURATION_ABS_S = 0.06          # ... or within this
+DURATION_REL = 0.25            # pairs are scored only when their durations are this close
+DURATION_ABS_S = 0.3           # ... or within this
 # A suggested duplicate scores at least this. On the two real sets (2026-10-24) the pairs
 # at 0.917 and above are the same recording (their aligned waveforms correlate at 0.35 to
 # 0.83); the next ones (0.818 to 0.891) correlate at 0.1 to 0.34: variants, not copies.
-DUPLICATE_THRESHOLD = 0.9
+DUPLICATE_THRESHOLD = 0.85
 
 FEATURE_KEYS = ('duration_s', 'attack_s', 'decay_frac', 'bursts', 'burst_rate', 'zcr_hz',
                 'zcr_slope', 'centroid_hz', 'centroid_slope')
@@ -378,7 +379,7 @@ def duplicate_score(a: Fingerprint, b: Fingerprint) -> float:
 
 
 def durations_close(a_s: float, b_s: float) -> bool:
-    """Return True when two durations are within 3 % (of the longer) or 60 ms."""
+    """Return True when two durations are within 25 % (of the longer) or 0.3 s."""
     return abs(a_s - b_s) <= max(DURATION_REL * max(a_s, b_s), DURATION_ABS_S)
 
 

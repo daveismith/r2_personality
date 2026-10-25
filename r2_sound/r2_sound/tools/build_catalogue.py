@@ -16,7 +16,7 @@
 Build ``config/clips.yaml``, ``config/tags.csv`` and the tagging kit from the sound sets.
 
     build_catalogue --sounds-dir /sounds --out config/clips.yaml --sheet config/tags.csv \
-        --kit /ws/.audio/tagging [--threshold 0.6] [--duplicate-threshold 0.9]
+        --kit /ws/.audio/tagging [--threshold 0.6] [--duplicate-threshold 0.85]
 
 Walks the set directories under ``--sounds-dir`` (one level of sets, any depth of files),
 decodes each file with ``soundfile``, measures it (:mod:`r2_sound.gain`), names it, labels

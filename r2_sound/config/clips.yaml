@@ -2505,7 +2505,7 @@ clips:
   clip_fraction: 0.0
   set_gain_db: -3.85
   gain_db: -3.85
-  tags: [misc]
+  tags: ['no']
   suggested_tag: misc
   confidence: 1.0
   excluded: false

@@ -479,8 +479,8 @@ def test_duplicate_score_exact_near_and_different():
     assert analysis.duplicate_score(steady[0], steady[1]) < 0.5
     assert analysis.duplicate_score(steady[1], steady[2]) < 0.5
     assert analysis.duplicate_score(steady[0], exact) == 0.0          # steady vs not
-    assert analysis.durations_close(1.0, 1.029) and analysis.durations_close(0.5, 0.55)
-    assert not analysis.durations_close(1.0, 1.07)
+    assert analysis.durations_close(1.0, 1.2) and analysis.durations_close(0.5, 0.75)
+    assert not analysis.durations_close(1.0, 1.4)
 
 
 @pytest.fixture
