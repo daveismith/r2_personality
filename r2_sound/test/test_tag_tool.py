@@ -248,3 +248,4 @@ def test_payload_passes_the_duplicate_timing_through(tmp_path):
     assert clips[0]['duplicate_timing'].startswith('other take; active 0.78/0.70 s')
     assert clips[1]['duplicate_timing'] == ''
     assert 'duplicate_timing' in tag_tool.PAGE and 'other take' in tag_tool.PAGE
+    assert 'Collapse all' in tag_tool.PAGE and 'r2tag.collapsed' in tag_tool.PAGE

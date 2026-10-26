@@ -28,21 +28,38 @@ suggestions are a first pass to be confirmed by ear.
   end padded to two digits, a ``-2``, ``-3`` suffix for a repeat, given in the sorted order
   of the files' paths (so stable from run to run). In the Padawan set the file's leading
   index is dropped (``32SENT1.mp3`` is ``padawan-sent01``); in the music set the stem stays
-  (``140.mp3`` is ``music-140``). A renamed set directory changes its clips' names and paths.
-* Label: from the file name (:data:`LABELS`); ``SENT`` is ``chatter`` and so on. Music,
-  speech and silence (:data:`EXCLUSIONS`) are ``excluded``. A labelled clip is its own
-  suggestion at confidence 1.0 and is a reference for the others.
+  (``140.mp3`` is ``music-140``), as in the MP3 Trigger set, whose index is the trigger
+  number and tells two ``birthday`` files apart (``001 gen-1.mp3`` is ``trigger-001-gen-1``).
+  A renamed set directory changes its clips' names and paths.
+* Label: from the file name after its leading index (:data:`LABELS`); ``SENT``, ``gen`` and
+  ``chat`` are ``chatter``, ``happy`` is ``excited`` and so on. Music, speech and silence
+  (:data:`EXCLUSIONS`) are ``excluded``. A labelled clip is its own suggestion at
+  confidence 1.0 and is a reference for the others.
 * Duplicates: every pair of clips of close duration (either set) is scored
   (:func:`r2_sound.analysis.duplicate_pairs`); the pairs at or above
   ``--duplicate-threshold`` join groups (connected components), and each group keeps one
-  clip: a labelled one over an unlabelled one (the label is the reference that makes its
-  suggestion confident), then the one whose RMS is nearest its set's median, then the shorter
-  name, then the first alphabetically. Every other member is suggested
-  ``suggested_duplicate_of`` the kept one, with ``duplicate_score`` its score against it and
-  ``duplicate_timing`` a one-line :func:`r2_sound.analysis.timing_comparison` of the two
-  (lead, trail and active lengths; the verdict). Only the sheet's ``duplicate_of`` acts.
+  clip: one not marked ``duplicate_of`` in the sheet (it is leaving the catalogue) over one
+  that is, then one reviewed (tags in the sheet, or the kept clip of a marked duplicate)
+  over one not, then the more descriptive file name (:func:`name_rank`: a word that says
+  what the sound is, over ``SENT``/``chat``/``misc``, over ``gen``/``mus``, over a bare
+  number), then a labelled one over an unlabelled one (the label is the reference that makes
+  its suggestion confident), then the one of the earlier set (:data:`SET_PREFIXES` order: a
+  new folder's copies are suggested as duplicates of the library, not the reverse), then
+  the one whose RMS is nearest its set's median, then the shorter name, then the first
+  alphabetically. Every other member is suggested ``suggested_duplicate_of`` the kept one,
+  with ``duplicate_score`` its score against it and ``duplicate_timing`` a one-line
+  :func:`r2_sound.analysis.timing_comparison` of the two (lead, trail and active lengths;
+  the verdict). Only the sheet's ``duplicate_of`` acts.
+* Identical clips (a pair at score 1.000, :data:`IDENTICAL_SCORE`, whose durations are
+  within 1 %, so the same samples beyond the fingerprint's 10 s too) are **marked for
+  David**: the group's kept clip is chosen by the rule above and every other member gets
+  ``duplicate_of`` written into the sheet (the one case where the tool writes that column),
+  unless it is already marked or is itself the kept clip of a marked duplicate, or the kept
+  clip is marked (no chains: a WARN asks for a hand mark). A row cleared by hand is marked
+  again on the next run; tags on a marked clip are ignored with a WARN.
 * Sheet (``tags.csv``): the tool fills every column but ``tags``, ``clip_override_db`` and
-  ``duplicate_of``, which are David's and are read back by column name and kept (a sheet
+  ``duplicate_of``, which are David's (``duplicate_of`` also gets the identical clips, above)
+  and are read back by column name and kept (a sheet
   without ``duplicate_of`` reads as all empty and is written with it). A row belongs to the clip at
   its ``path`` (relative to ``--sounds-dir``), else to the clip of its ``name`` (a file moved
   inside its set). A row whose clip is not on disk is never deleted: it stays, as read, with
@@ -81,13 +98,18 @@ import soundfile
 import yaml
 
 AUDIO_EXTENSIONS = ('.mp3', '.wav', '.flac', '.ogg')
-SET_PREFIXES = {'R2 Padawan': ('padawan', True), 'R2 sounds and music': ('music', False)}
-LABELS = (('sent', 'chatter'), ('ooh', 'ooh'), ('hum', 'hum'), ('alarm', 'alarm'),
-          ('scream', 'scream'), ('chortle', 'laugh'), ('annoyed', 'annoyed'),
-          ('wolfwstl', 'whistle'), ('misc', 'misc'), ('powerup', 'misc'),
-          ('doodoo', 'misc'), ('shortckt', 'misc'), ('patrol', 'misc'))
+SET_PREFIXES = {'R2 Padawan': ('padawan', True), 'R2 sounds and music': ('music', False),
+                'mp3-trigger': ('trigger', False)}
+# (prefix of the stem after its index, bucket); the MP3 Trigger set's names are gen, chat,
+# happy, sad, whis and screa.
+LABELS = (('sent', 'chatter'), ('gen', 'chatter'), ('chat', 'chatter'), ('ooh', 'ooh'),
+          ('hum', 'hum'), ('alarm', 'alarm'), ('screa', 'scream'), ('chortle', 'laugh'),
+          ('annoyed', 'annoyed'), ('happy', 'excited'), ('sad', 'sad'),
+          ('wolfwstl', 'whistle'), ('whis', 'whistle'), ('misc', 'misc'),
+          ('powerup', 'misc'), ('doodoo', 'misc'), ('shortckt', 'misc'), ('patrol', 'misc'))
 EXCLUSIONS = ('theme', 'chorus', 'emperor', 'cantina', 'march', 'disco', 'starwars', 'leia',
-              'silence')
+              'silence', 'mus-', 'song', 'gangnam', 'birthday', 'harlemshake', 'in love',
+              'macho man', 'peanut butter', 'uptownfunk', 'celebration', 'tango', 'throne')
 SHEET_COLUMNS = ('name', 'set', 'path', 'duration_s', 'rms_dbfs', 'suggested_tag',
                  'confidence', 'tags', 'clip_override_db', 'duplicate_of',
                  'suggested_duplicate_of', 'duplicate_score', 'duplicate_timing',
@@ -96,8 +118,11 @@ MISSING = 'missing'              # the status of a sheet row whose clip is not o
 DUPLICATES_DIR = 'duplicates'    # the kit folder of the marked duplicates
 DUPLICATE_SEPARATOR = '__of__'   # <name>__of__<kept>.wav
 KIT_SAMPLE_RATE = 22050
+IDENTICAL_SCORE = 0.9995         # a duplicate score that prints as 1.000: the same samples
+IDENTICAL_DURATION_REL = 0.01    # ... and the same length, so the same beyond 10 s too
+NAME_RANK = {'gen': 1, 'mus': 1, 'sent': 2, 'chat': 2, 'misc': 2}   # a bare number is 0
 KIT_MAX_S = 10.0
-_INDEX = re.compile(r'^\d+(?=[^\W\d_])')
+_INDEX = re.compile(r'^\d+[\s_-]*(?=[^\W\d_])')   # 32SENT1, 001 gen-1
 _TRAILING_NUMBER = re.compile(r'^([a-z]+)(\d+)$')
 
 
@@ -121,6 +146,20 @@ def base_name(set_name, rel_path):
     if match:
         slug = f'{match.group(1)}{int(match.group(2)):02d}'
     return f'{prefix}-{slug}'
+
+
+def name_rank(rel_path):
+    """
+    Return how descriptive a file's name is, 0 (a number) to 3 (a word for the sound).
+
+    The stem after its index, less trailing numbers: ``140`` is 0, ``gen-1`` and ``mus-2``
+    1 (they say nothing about the sound), ``SENT1``, ``chat-3`` and ``MISC2`` 2 (a kind),
+    ``happy-2``, ``cantina beep`` and ``OOH3`` 3 (:data:`NAME_RANK`).
+    """
+    words = re.sub(r'[\d-]+$', '', _slug(_INDEX.sub('', stem_of(rel_path))))
+    if not words:
+        return 0
+    return NAME_RANK.get(words.split('-')[0], 3)
 
 
 def label_of(rel_path):
@@ -278,6 +317,9 @@ class _Item:
             name, set_name, rel, absolute, label)
         self.path = _rel_path(set_name, rel)
         self.listed = label == EXCLUDED_TAG
+        self.descriptive = name_rank(rel)
+        # set by build: sheet tags or the kept clip of a mark / an acting duplicate_of
+        self.reviewed = self.marked = False
         self.measurement = self.features = self.kit_audio = self.suggestion = None
         self.fingerprint = None
         self.duplicate = ('', None, '')     # (suggested_duplicate_of, score, timing summary)
@@ -345,16 +387,22 @@ def _medians(items):
     return medians
 
 
+def set_rank(set_name):
+    """Return a set's place in :data:`SET_PREFIXES` (the order the sets were added)."""
+    order = tuple(SET_PREFIXES)
+    return order.index(set_name) if set_name in order else len(order)
+
+
 def keep_key(item, medians):
     """Return the sort key of the clip a duplicate group keeps (the smallest wins)."""
-    return (not item.label, abs(item.measurement.rms_dbfs - medians[item.set]),
+    return (item.marked, not item.reviewed, -item.descriptive, not item.label,
+            set_rank(item.set), abs(item.measurement.rms_dbfs - medians[item.set]),
             len(item.name), item.name)
 
 
-def _suggest_duplicates(items, threshold):
-    """Fill ``duplicate`` on every item; return the scored pairs ``[(score, a, b)]``."""
-    pairs = analysis.duplicate_pairs([i.fingerprint for i in items])
-    parent = list(range(len(items)))
+def _components(count, links):
+    """Return the connected components of more than one index, each a sorted list."""
+    parent = list(range(count))
 
     def root(i):
         while parent[i] != i:
@@ -362,18 +410,65 @@ def _suggest_duplicates(items, threshold):
             i = parent[i]
         return i
 
-    scores = {}
-    for score, a, b in pairs:
-        scores[(a, b)] = score
-        if score >= threshold:
-            parent[root(a)] = root(b)
+    for a, b in links:
+        parent[root(a)] = root(b)
     groups = {}
-    for i in range(len(items)):
+    for i in range(count):
         groups.setdefault(root(i), []).append(i)
+    return [members for members in groups.values() if len(members) > 1]
+
+
+def _same_length(a, b):
+    x, y = a.measurement.duration_s, b.measurement.duration_s
+    return abs(x - y) <= IDENTICAL_DURATION_REL * max(x, y)
+
+
+def _auto_mark(items, pairs, matched, duplicate_of, warnings):
+    """
+    Mark the identical clips in the sheet rows; return ``[(name, kept)]`` of the new marks.
+
+    ``duplicate_of`` and ``matched`` are extended in place (a clip without a row gets one).
+    """
+    links = [(a, b) for score, a, b in pairs
+             if score >= IDENTICAL_SCORE and _same_length(items[a], items[b])]
     medians = _medians(items)
-    for members in groups.values():
-        if len(members) < 2:
-            continue
+    kept_of_marks = set(duplicate_of.values())
+    marks = []
+    for members in _components(len(items), links):
+        kept = items[min(members, key=lambda i: keep_key(items[i], medians))]
+        for i in members:
+            item = items[i]
+            if item is kept or item.marked:
+                continue
+            if kept.marked:
+                warnings.append(f'{item.name} and {kept.name} are identical, but every clip '
+                                'of the group is marked a duplicate already; mark by hand')
+                continue
+            if item.name in kept_of_marks:
+                warnings.append(f'{item.name} is identical to {kept.name} but is the kept '
+                                'clip of a marked duplicate; mark by hand (no chains)')
+                continue
+            row = matched.get(item.name)
+            if row is None:
+                row = matched[item.name] = {'name': item.name, 'path': item.path, 'tags': (),
+                                            'override': '', 'duplicate_of': '', 'line': 0,
+                                            'fields': {}}
+            if row['tags']:
+                warnings.append(f'{item.name} is identical to {kept.name} and marked its '
+                                'duplicate; the tags are ignored while it is a duplicate')
+            row['duplicate_of'] = duplicate_of[item.name] = kept.name
+            item.marked = True
+            marks.append((item.name, kept.name))
+    return marks
+
+
+def _suggest_duplicates(items, threshold, pairs=None):
+    """Fill ``duplicate`` on every item; return the scored pairs ``[(score, a, b)]``."""
+    if pairs is None:
+        pairs = analysis.duplicate_pairs([i.fingerprint for i in items])
+    scores = {(a, b): score for score, a, b in pairs}
+    medians = _medians(items)
+    for members in _components(len(items), [(a, b) for s, a, b in pairs if s >= threshold]):
         kept = min(members, key=lambda i: keep_key(items[i], medians))
         for i in members:
             if i != kept:
@@ -532,8 +627,10 @@ length of the sound itself, and a verdict: `same recording` (same length and rhy
 difference is padding or level), `other take` (the same phrase with its rhythm moved by tens
 of ms and the pitch held), `stretched` (the same sound played longer or shorter, pitch held)
 or `resampled` (slower or faster playback, the pitch moved with it). `other take` pairs are
-the ones worth keeping both of for synth work. Listen to both, and to mark a duplicate write
-the kept clip's name in
+the ones worth keeping both of for synth work. Identical clips (score 1.000, the same
+length) are marked for you: `duplicate_of` is filled in, keeping the clip with the more
+descriptive file name (clear it and it comes back). For the rest, listen to both, and to
+mark a duplicate write the kept clip's name in
 `duplicate_of` (or press `d` in the tag tool). A marked duplicate leaves `clips.yaml` (the
 player never lists or picks it; it is listed under `duplicates:`) and its WAV moves here to
 `duplicates/<name>__of__<kept>.wav`, so it can still be heard. `duplicate_of` must name
@@ -604,12 +701,13 @@ def _active_duplicates(sheet, items, matched, warnings):
 def build(sounds_dir, out, sheet=None, kit=None, threshold=DEFAULT_THRESHOLD,
           house_level=gain.HOUSE_LEVEL_DBFS, today=None,
           duplicate_threshold=analysis.DUPLICATE_THRESHOLD, pairs_out=None,
-          timings_out=None, timings_top=0):
+          timings_out=None, timings_top=0, marks_out=None):
     """
     Build the catalogue, the sheet and the kit; return ``(catalogue, warnings)``.
 
     ``sheet`` is read if it exists and always (re)written; ``kit`` is optional. A list
-    given as ``pairs_out`` receives the scored pairs ``(score, clip a, clip b)``, best first.
+    given as ``pairs_out`` receives the scored pairs ``(score, clip a, clip b)``, best first;
+    one given as ``marks_out`` the identical clips marked this run, ``(name, kept)``.
     """
     warnings = []
     found = _scan(sounds_dir)
@@ -622,8 +720,16 @@ def build(sounds_dir, out, sheet=None, kit=None, threshold=DEFAULT_THRESHOLD,
         warnings.append(f'{sheet}: row {row["name"]!r} ({row["path"] or "no path"}) has no '
                         f'clip on disk; kept as {MISSING}')
     duplicate_of = _active_duplicates(sheet, items, matched, warnings)
+    for item in items:
+        item.reviewed = (bool(_sheet_fields(matched.get(item.name))[0])
+                         or item.name in duplicate_of.values())
+        item.marked = item.name in duplicate_of
     _suggest(items)
-    scored = _suggest_duplicates(items, duplicate_threshold)
+    pairs = analysis.duplicate_pairs([i.fingerprint for i in items])
+    marks = _auto_mark(items, pairs, matched, duplicate_of, warnings)
+    if marks_out is not None:
+        marks_out.extend(marks)
+    scored = _suggest_duplicates(items, duplicate_threshold, pairs)
     if pairs_out is not None:
         pairs_out.extend((score, a.name, b.name) for score, a, b in scored)
     if timings_out is not None:
@@ -682,17 +788,20 @@ def main(args=None):
     options = parser.parse_args(args)
     pairs = []
     timings = {}
+    marks = []
     try:
         catalogue, warnings = build(options.sounds_dir, options.out, options.sheet,
                                     options.kit, options.threshold, options.house_level,
                                     duplicate_threshold=options.duplicate_threshold,
                                     pairs_out=pairs, timings_out=timings,
-                                    timings_top=options.pairs)
+                                    timings_top=options.pairs, marks_out=marks)
     except CatalogueError as error:
         print(f'build_catalogue: {error}', file=sys.stderr)
         return 1
     for warning in warnings:
         print(f'WARN {warning}', file=sys.stderr)
+    for name, kept in marks:
+        print(f'marked {name} duplicate_of {kept} (identical samples)')
     print('\n'.join(summary(catalogue)))
     print(f'duplicates: {len(catalogue_duplicates(options.out))} marked; '
           f'{sum(p[0] >= options.duplicate_threshold for p in pairs)} pairs at score >= '

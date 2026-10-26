@@ -151,8 +151,9 @@ tests needs route 2.
 
 ## The catalogue
 
-`config/clips.yaml` lists every clip of the two sets under `/sounds` (`R2 Padawan`,
-`R2 sounds and music`); the audio stays out of git. It is built by `build_catalogue` and
+`config/clips.yaml` lists every clip of the three sets under `/sounds` (`R2 Padawan`,
+`R2 sounds and music` and `mp3-trigger`, the MP3 Trigger card's folder, added 2026-10-26,
+whose file names carry the mood); the audio stays out of git. It is built by `build_catalogue` and
 read by the pure `r2_sound.catalogue.load_catalogue(path, sounds_dir)`, which returns
 `(Catalogue, warnings)` as frozen dataclasses and drops (with a warning, never an error) the
 clips whose file is missing under `sounds_dir`. `pools(catalogue)` maps each tag to its
@@ -196,7 +197,9 @@ stays at or below -1 dBFS. The medians are over the clips not on the exclusion l
 
 **Suggestions** (`r2_sound/analysis.py`): labelled clips (named `SENT`, `OOH`, `HUM`,
 `ALARM`, `SCREAM`, `CHORTLE`, `ANNOYED`, `WOLFWSTL`, `MISC`, `Powerup`, `DOODOO`,
-`SHORTCKT`, `PATROL`) suggest their own bucket at confidence 1.0 and are the references. Every
+`SHORTCKT`, `PATROL`; in the trigger set `gen` and `chat` are `chatter`, `happy` is
+`excited`, `sad`, `whis` and `screa` their own) suggest their own bucket at confidence 1.0
+and are the references. Every
 other clip gets the bucket of its 3 nearest references in standardised feature space
 (duration, envelope shape, burst count, zero-crossing rate and its slope, spectral centroid
 and its slope), with a confidence from the neighbours' agreement and distance. For buckets
@@ -205,7 +208,7 @@ long descending one `sad`, a fast multi-burst high-centroid one `excited`, a lon
 one `sleepy`; they apply only when the neighbours are less sure than 0.6. `calm`, `scared`
 and `greeting` come from the sheet only. **These are a first pass to be confirmed by ear.**
 Music, speech and silence (`Theme`, `Chorus`, `Emperor`, `Cantina`, `March`, `Disco`,
-`StarWars`, `Leia`, `Silence`) are `excluded`.
+`StarWars`, `Leia`, `Silence`, the trigger set's `mus-` and its song titles) are `excluded`.
 
 **The merge rule** (`catalogue.effective_tags`): a clip's tags are the sheet's `tags` if it
 has any; otherwise `[suggested_tag]` if its `confidence` is at or above the threshold
@@ -213,18 +216,29 @@ has any; otherwise `[suggested_tag]` if its `confidence` is at or above the thre
 `chatter` in `sound_arbiter`'s palette (rule 8), so an untouched sheet still gives R2 a
 voice; the player itself refuses a play of an empty pool with `empty pool`.
 
-**Duplicates.** Some sounds are in both sets (and a few twice in one). `build_catalogue`
+**Duplicates.** Many sounds are in more than one set (and a few twice in one). `build_catalogue`
 fingerprints each clip (log energies in 16 bands, 125 Hz to 4 kHz, over 50 ms frames of the
 8 kHz mono signal, each band's mean removed, so a level difference does not count) and scores
 every pair whose durations are within 25 % or 0.3 s (the music set's copies carry 5-10 % more padding than the Padawan originals), across the sets too: the lesser of the
 band profiles' correlation and the time patterns' best cross-correlation within 100 ms of
 lag, 0..1; the same samples score 1.0. Pairs at 0.85 or above (`--duplicate-threshold`) are
-suggested. On the two sets the copies score 0.917 to 0.998 and the next pairs, variants
-rather than copies, 0.818 to 0.891 (`--pairs 30` prints the best pairs). Linked pairs form
-a group; the group keeps a labelled clip over an unlabelled one, then the clip whose RMS is nearest its set's median, then the shorter
-name, then the first alphabetically, and every other member gets `suggested_duplicate_of`
-(the kept clip), `duplicate_score` and `duplicate_timing` in the sheet. Those three columns
-are refreshed every run and do nothing (`duplicate_timing` is empty when there is no suggestion); only David's `duplicate_of` acts. A clip whose `duplicate_of` names
+suggested. Across the three sets 72 pairs are at or above it: the same file in two places
+scores 1.000, the music set's copies of the Padawan clips 0.917 to 0.998, and the next
+pairs, variants rather than copies, 0.818 to 0.891 (`--pairs 30` prints the best pairs).
+Linked pairs form a group; the group keeps the clip not already marked a duplicate, then
+one reviewed (tags in the sheet, or the kept clip of a marked duplicate), then the more
+descriptive file name (a word for the sound over `SENT`/`chat`/`misc` over `gen`/`mus` over
+a bare number), then a labelled clip over an unlabelled one, then the earlier set (so a new
+folder's copies point at the library), then the clip whose RMS is nearest its set's median,
+then the shorter name, then the first alphabetically; every other member gets
+`suggested_duplicate_of` (the kept clip), `duplicate_score` and `duplicate_timing` in the
+sheet. Those three columns are refreshed every run and do nothing (`duplicate_timing` is
+empty when there is no suggestion); only `duplicate_of` acts. **Identical clips** (score
+1.000 and durations within 1 %, so the same samples beyond the fingerprint's 10 s) are
+marked by the run itself: `duplicate_of` is written for every member but the kept one
+(printed as `marked <name> duplicate_of <kept>`), unless the clip is already marked, is the
+kept clip of a hand mark, or the whole group is marked (a WARN asks for a hand mark, so no
+chains). Clearing such a mark by hand only lasts until the next run. A clip whose `duplicate_of` names
 another clip is left out of `clips` (the player never lists or picks it), listed under
 `duplicates:` (name, path, duplicate_of) and not counted in its set's `clips:`; the set
 medians still count it, so marking one moves no other gain. Its tags are ignored (with a
@@ -235,8 +249,9 @@ the duplicate in the catalogue with a WARN, so the sound is not lost.
 The sheet's columns: `name, set, path, duration_s, rms_dbfs, suggested_tag, confidence,
 tags, clip_override_db, duplicate_of, suggested_duplicate_of, duplicate_score,
 duplicate_timing, status`.
-David's are `tags`, `clip_override_db` and `duplicate_of`; a sheet from before the
-duplicate columns, or without `duplicate_timing`, reads fine and is written with them.
+David's are `tags`, `clip_override_db` and `duplicate_of` (the run writes the last one
+too, for identical clips only); a sheet from before the duplicate columns, or without
+`duplicate_timing`, reads fine and is written with them.
 
 `duplicate_timing` (`analysis.timing_comparison`) compares a suggested pair, its numbers given as kept clip / this clip, on the 10 ms RMS
 envelope of the 8 kHz signals: the active part is the frames within 35 dB of the loudest; it
@@ -265,9 +280,13 @@ build_catalogue --sounds-dir /sounds --out config/clips.yaml --sheet config/tags
    `python3 src/r2_personality/r2_sound/r2_sound/tools/tag_tool.py --workspace ~/path/to/r2_dev`
    (`--sheet`, `--kit`, `--port 8765`, `--no-browser` as options); in the container,
    `tag_tool --workspace /ws --no-browser` and open the printed URL. Clips are listed by
-   suggested bucket with the kit WAV playing; keys: space replays, Enter = Confirm and next,
-   arrows = previous/next, 1-9 and 0 toggle the first ten tags, `d` = mark the suggested
-   duplicate and next, `k` = play the kept clip. **Confirm** writes the suggested tag into
+   suggested bucket with the kit WAV playing; a group collapses on a click of its heading
+   (**Collapse all** / **Expand all** for the lot; the browser remembers the choice), and
+   the filter narrows the list to the unreviewed clips, one bucket or one set. Keys: space
+   replays, Enter = Confirm and next, arrows = previous/next (collapsed groups are skipped),
+   1-9 and 0 toggle the first ten tags, `d` = mark the suggested duplicate and next, `k` =
+   play the kept clip, `c` = collapse or expand the current group. Restart the tool after a
+   `build_catalogue` run that added clips: it indexes the kit at startup. **Confirm** writes the suggested tag into
    `tags` (so the merge no longer depends on the confidence), **Clear** empties it again.
    **Duplicates:** a clip with a suggestion shows "Suggested duplicate of <name> (score
    0.97)" with **Play kept** (that clip's kit WAV) and **Mark duplicate of <name>**. The

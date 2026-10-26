@@ -78,6 +78,9 @@ def read_sheet_rows(sheet):
     ('R2 sounds and music', '140.mp3', 'music-140'),
     ('R2 sounds and music', '2SecOfSilence.mp3', 'music-2secofsilence'),
     ('R2 sounds and music', 'Scream.mp3', 'music-scream'),
+    ('mp3-trigger', '001 gen-1.mp3', 'trigger-001-gen-1'),
+    ('mp3-trigger', '185 birthday.mp3', 'trigger-185-birthday'),    # 192 BIRTHDAY differs
+    ('mp3-trigger', '192 BIRTHDAY.mp3', 'trigger-192-birthday'),
     ('Some Other Set', 'Hello World.mp3', 'some-other-set-hello-world')])
 def test_name_derivation(set_name, rel, name):
     assert bc.base_name(set_name, rel) == name
@@ -105,7 +108,10 @@ def test_repeat_suffixes_follow_the_sorted_paths(tmp_path):
     ('13ALARM3.mp3', 'alarm'), ('1SCREAM2.mp3', 'scream'), ('2CHORTLE.mp3', 'laugh'),
     ('8ANNOYED.mp3', 'annoyed'), ('4WOLFWSTL.mp3', 'whistle'), ('17MISC3.mp3', 'misc'),
     ('Powerup.mp3', 'misc'), ('3DOODOO.mp3', 'misc'), ('6SHORTCKT.mp3', 'misc'),
-    ('7PATROL1.mp3', 'misc'), ('Scream.mp3', 'scream'), ('140.mp3', ''), ('Hello.mp3', '')])
+    ('7PATROL1.mp3', 'misc'), ('Scream.mp3', 'scream'), ('140.mp3', ''), ('Hello.mp3', ''),
+    ('001 gen-1.mp3', 'chatter'), ('026 chat-1.mp3', 'chatter'), ('051 happy-1.mp3', 'excited'),
+    ('076 sad-1.mp3', 'sad'), ('101 whis-1.mp3', 'whistle'), ('126 screa-1.mp3', 'scream'),
+    ('255 start.mp3', '')])
 def test_label_mapping(rel, label):
     assert bc.label_of(rel) == label
 
@@ -113,7 +119,11 @@ def test_label_mapping(rel, label):
 @pytest.mark.parametrize('rel', [
     '9Theme.mp3', '12Chorus.mp3', '11Emperor.mp3', '10Cantina.mp3', 'Cantina.mp3', 'March.mp3',
     'SWDiscoShort.mp3', 'StarWars.mp3', '5LEIA.mp3', 'clean Leia/x.mp3',
-    'leia-hologram-cleaned-amped-up.mp3', '2SecOfSilence.mp3'])
+    'leia-hologram-cleaned-amped-up.mp3', '2SecOfSilence.mp3', '151 leia-1.mp3',
+    '176 mus-1.mp3', '180 cantina song.mp3', '182 gangnamstyle.mp3', '185 birthday.mp3',
+    '186 harlemshake.mp3', '187 in love.mp3', '188 macho man.mp3',
+    '189 Peanut Butter Jelly Time.mp3', '190 UptownFunk.mp3', '191 Celebration.mp3',
+    '193 R2TANGO.mp3', '194 R2THEME.mp3', '195 R2THRONE.mp3'])
 def test_the_exclusion_list(rel):
     assert bc.label_of(rel) == 'excluded'
 
@@ -492,7 +502,7 @@ def dup_tree(tmp_path):
 def test_duplicates_are_suggested_and_the_kept_clip_follows_the_rule(dup_tree, tmp_path):
     pairs = []
     catalogue, warnings, _, sheet, _ = run(dup_tree, tmp_path, pairs_out=pairs)
-    assert warnings == [] and len(catalogue.clips) == 14          # nothing dropped yet
+    assert warnings == [] and len(catalogue.clips) == 13    # music-10 is identical: marked
     rows = {r['name']: r for r in read_sheet_rows(sheet)}
     # the exact copy: same RMS, so the shorter name is kept
     assert rows['music-10']['suggested_duplicate_of'] == 'music-3'
@@ -513,22 +523,83 @@ def test_duplicates_are_suggested_and_the_kept_clip_follows_the_rule(dup_tree, t
     score = {frozenset((a, b)): s for s, a, b in pairs}
     assert score[frozenset(('music-3', 'music-11'))] < analysis.DUPLICATE_THRESHOLD
     assert frozenset(('music-1', 'music-2')) not in score            # 1 s vs 2 s: not scored
-    assert all(r['duplicate_of'] == '' for r in rows.values())
+    assert {n for n, r in rows.items() if r['duplicate_of']} == {'music-10'}
+
+
+@pytest.mark.parametrize('rel, rank', [
+    ('140.mp3', 0), ('001 gen-1.mp3', 1), ('176 mus-1.mp3', 1), ('32SENT1.mp3', 2),
+    ('026 chat-1.mp3', 2), ('17MISC3.mp3', 2), ('052 happy-2.mp3', 3),
+    ('176 cantina beep.mp3', 3), ('25OOH3.mp3', 3), ('2SecOfSilence.mp3', 3),
+    ('clean Leia/5LEIA.mp3', 3)])
+def test_name_rank(rel, rank):
+    assert bc.name_rank(rel) == rank
+
+
+def test_identical_clips_are_marked_keeping_the_descriptive_name(tmp_path):
+    root = tmp_path / 's'
+    same = tone()
+    for rel in ('mp3-trigger/001 gen-1.wav', 'mp3-trigger/052 happy-2.wav',
+                'R2 sounds and music/140.wav'):
+        write_wav(str(root / rel), same)
+    write_wav(str(root / 'R2 sounds and music' / '141.wav'), tone(seconds=2.0))
+    marks = []
+    catalogue, warnings, out, sheet, kit = run(str(root), tmp_path, marks_out=marks)
+    assert warnings == []
+    assert sorted(marks) == [('music-140', 'trigger-052-happy-2'),
+                             ('trigger-001-gen-1', 'trigger-052-happy-2')]
+    assert sorted(by_name(catalogue)) == ['music-141', 'trigger-052-happy-2']
+    rows = {r['name']: r for r in read_sheet_rows(sheet)}
+    assert rows['music-140']['duplicate_of'] == 'trigger-052-happy-2'
+    assert rows['trigger-001-gen-1']['duplicate_of'] == 'trigger-052-happy-2'
+    assert rows['trigger-052-happy-2']['duplicate_of'] == ''
+    assert os.path.exists(os.path.join(kit, 'duplicates',
+                                       'music-140__of__trigger-052-happy-2.wav'))
+    before = snapshot(tmp_path)
+    run(str(root), tmp_path, today='2026-11-02')                    # idempotent
+    assert snapshot(tmp_path) == before
+    # cleared by hand and tagged: marked again (the same samples), the tags kept but ignored
+    edit_sheet(sheet, **{'music-140': {'duplicate_of': '', 'tags': 'calm'}})
+    marks = []
+    catalogue, warnings, *_ = run(str(root), tmp_path, marks_out=marks)
+    assert marks == [('music-140', 'trigger-052-happy-2')]
+    assert len(warnings) == 1 and 'music-140' in warnings[0] and 'ignored' in warnings[0]
+    rows = {r['name']: r for r in read_sheet_rows(sheet)}
+    assert (rows['music-140']['duplicate_of'], rows['music-140']['tags']) == (
+        'trigger-052-happy-2', 'calm')
+    # the kept clip of a hand mark is never auto-marked (no chains)
+    edit_sheet(sheet, **{'music-140': {'duplicate_of': ''},
+                         'music-141': {'duplicate_of': 'music-140'}})
+    marks = []
+    catalogue, warnings, *_ = run(str(root), tmp_path, marks_out=marks)
+    assert marks == [] and len(warnings) == 1 and 'no chains' in warnings[0]
+    assert sorted(by_name(catalogue)) == ['music-140', 'trigger-052-happy-2']
 
 
 def test_the_kept_rule_tie_breaks():
     class Item:
-        def __init__(self, name, rms, set_name='S', label=''):
+        def __init__(self, name, rms, set_name='S', label='', reviewed=False, marked=False,
+                     descriptive=0):
             self.name, self.set, self.label = name, set_name, label
+            self.reviewed, self.marked, self.descriptive = reviewed, marked, descriptive
             self.measurement = types.SimpleNamespace(rms_dbfs=rms)
 
-    medians = {'S': -10.0}
+    medians = {'S': -10.0, 'R2 Padawan': -10.0, 'mp3-trigger': -10.0}
     items = [Item('b-long', -10.5), Item('a-long', -9.5), Item('zz', -11.0)]
     assert min(items, key=lambda i: bc.keep_key(i, medians)).name == 'a-long'
     items = [Item('b-long', -10.5), Item('a-long', -9.5), Item('zz', -10.5)]
     assert min(items, key=lambda i: bc.keep_key(i, medians)).name == 'zz'
     items = [Item('a-long', -10.0), Item('zz-far', -14.0, label='chatter')]   # a label wins
     assert min(items, key=lambda i: bc.keep_key(i, medians)).name == 'zz-far'
+    items.append(Item('zzz-tagged', -15.0, reviewed=True))            # sheet tags win over it
+    assert min(items, key=lambda i: bc.keep_key(i, medians)).name == 'zzz-tagged'
+    items[-1].marked = True                               # but a marked duplicate never keeps
+    assert min(items, key=lambda i: bc.keep_key(i, medians)).name == 'zz-far'
+    items.append(Item('zzzz-named', -16.0, descriptive=3))      # a descriptive name over a label
+    assert min(items, key=lambda i: bc.keep_key(i, medians)).name == 'zzzz-named'
+    items = [Item('trigger-001-gen-1', -10.0, 'mp3-trigger', label='chatter'),
+             Item('padawan-sent01', -12.0, 'R2 Padawan', label='chatter')]
+    assert min(items, key=lambda i: bc.keep_key(i, medians)).name == 'padawan-sent01'
+    assert bc.set_rank('R2 Padawan') < bc.set_rank('mp3-trigger') < bc.set_rank('Other')
 
 
 def old_format(sheet):
@@ -586,7 +657,8 @@ def test_a_sheet_without_the_timing_column_reads_and_gets_it(dup_tree, tmp_path)
 
 def test_pairs_report_prints_the_timing_columns(dup_tree, tmp_path, capsys):
     out = str(tmp_path / 'c' / 'clips.yaml')
-    assert bc.main(['--sounds-dir', dup_tree, '--out', out, '--pairs', '3']) == 0
+    assert bc.main(['--sounds-dir', dup_tree, '--out', out, '--pairs', '3',
+                    '--sheet', str(tmp_path / 't.csv')]) == 0      # never the real sheet
     printed = capsys.readouterr().out
     assert 'verdict' in printed and 'same recording' in printed
 
@@ -660,8 +732,8 @@ def test_bad_duplicate_of_is_refused_with_its_line(dup_tree, tmp_path, edits, me
 
 def test_a_marked_duplicate_leaves_the_catalogue_and_moves_in_the_kit(dup_tree, tmp_path):
     first, _, out, sheet, kit = run(dup_tree, tmp_path)
-    assert os.path.exists(os.path.join(kit, by_name(first)['music-10'].suggested_tag,
-                                       'music-10.wav'))
+    dup_dir = os.path.join(kit, 'duplicates')
+    assert os.listdir(dup_dir) == ['music-10__of__music-3.wav']   # identical: marked by the run
     edit_sheet(sheet, **{'music-10': {'duplicate_of': 'music-3', 'tags': 'alarm'},
                          'music-2': {'duplicate_of': 'padawan-sent09'}})
     catalogue, warnings, *_ = run(dup_tree, tmp_path)
@@ -694,11 +766,14 @@ def test_a_marked_duplicate_leaves_the_catalogue_and_moves_in_the_kit(dup_tree, 
     run(dup_tree, tmp_path, today='2026-11-02')                    # idempotent
     assert snapshot(tmp_path) == before
     edit_sheet(sheet, **{'music-10': {'duplicate_of': ''}, 'music-2': {'duplicate_of': ''}})
+    # music-10 and music-3 are identical, so one is marked again; music-10 has tags now
+    # (reviewed), so it is the kept one this time
     catalogue, *_ = run(dup_tree, tmp_path)
-    assert 'music-10' in by_name(catalogue) and len(catalogue.clips) == 14
-    assert not os.path.exists(dup_dir)
+    assert {'music-2', 'music-10'} <= set(by_name(catalogue)) and len(catalogue.clips) == 13
+    assert os.listdir(dup_dir) == ['music-3__of__music-10.wav']
     with open(out) as f:
-        assert yaml.safe_load(f)['duplicates'] == []
+        assert yaml.safe_load(f)['duplicates'] == [
+            {'name': 'music-3', 'path': 'R2 sounds and music/3.wav', 'duplicate_of': 'music-10'}]
 
 
 def test_a_duplicate_of_a_vanished_clip_stays_in_the_catalogue(dup_tree, tmp_path):

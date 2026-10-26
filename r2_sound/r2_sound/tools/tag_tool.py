@@ -20,7 +20,8 @@ Standard library only, so it runs on the Mac with just the workspace checkout::
     python3 src/r2_personality/r2_sound/r2_sound/tools/tag_tool.py --workspace ~/r2_dev
 
 It serves one page on 127.0.0.1 that lists the clips of ``config/tags.csv`` by suggested
-bucket, plays the kit WAVs of ``<workspace>/.audio/tagging`` and writes David's three
+bucket (each group collapsible, the choice kept in the browser; a filter by review state,
+bucket or set), plays the kit WAVs of ``<workspace>/.audio/tagging`` and writes David's three
 columns, ``tags``, ``clip_override_db`` and ``duplicate_of``, back into the sheet
 (atomically, keeping one ``.bak``). A save re-reads the sheet from disk and changes only
 those columns of the rows it names, so a ``build_catalogue`` run while the page was open
@@ -342,7 +343,10 @@ body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.4 system-ui,
 #list { width:300px; max-height:calc(100vh - 120px); overflow:auto; background:var(--card);
   border:1px solid var(--line); border-radius:6px; flex:none; }
 #list h3 { margin:0; padding:4px 8px; font-size:13px; background:var(--bg);
-  position:sticky; top:0; border-bottom:1px solid var(--line); }
+  position:sticky; top:0; border-bottom:1px solid var(--line); cursor:pointer;
+  user-select:none; display:flex; justify-content:space-between; }
+#list h3.cur { color:var(--acc); }
+#list h3 .arrow { display:inline-block; width:1em; }
 .item { padding:3px 8px; cursor:pointer; display:flex; justify-content:space-between; }
 .item.cur { background:var(--on); color:var(--onfg); }
 .item.done .n::before { content:"\2713 "; }
@@ -374,7 +378,9 @@ r2_sound README, &ldquo;Tagging and re-running&rdquo;) to merge the sheet into c
   <label>Filter <select id="filter"></select></label>
   <span id="progress"></span>
   <span class="mut">Keys: space replay, Enter confirm+next, arrows prev/next,
-    1-9,0 toggle tags, d mark suggested duplicate+next, k play kept</span>
+    1-9,0 toggle tags, d mark suggested duplicate+next, k play kept, c collapse/expand
+    the group</span>
+  <button id="collapse">Collapse all</button><button id="expand">Expand all</button>
   <button id="save" class="primary">Save</button><span id="dirty" class="warn"></span>
   <span id="msg"></span>
 </div>
@@ -386,6 +392,11 @@ r2_sound README, &ldquo;Tagging and re-running&rdquo;) to merge the sheet into c
 <script>
 "use strict";
 let TAGS = [], THR = 0.6, clips = [], byName = {}, orig = {}, cur = null, filt = 'all';
+let collapsed = new Set();            // the collapsed groups (bucket names), kept per browser
+try { collapsed = new Set(JSON.parse(localStorage.getItem('r2tag.collapsed') || '[]')); }
+catch (e) { /* no storage: the groups start open */ }
+const remember = () => { try { localStorage.setItem('r2tag.collapsed',
+  JSON.stringify([...collapsed])); } catch (e) { /* ignore */ } };
 const $ = id => document.getElementById(id);
 const el = (t, props, ...kids) => { const e = document.createElement(t);
   Object.assign(e, props || {}); kids.forEach(k => e.append(k)); return e; };
@@ -405,9 +416,10 @@ async function load() {
     byName[c.name] = c; orig[c.name] = state(c); });
   const N = $('names'); N.innerHTML = '';
   clips.forEach(c => N.append(el('option', {value: c.name})));
-  const buckets = [...new Set(clips.map(c => c.suggested_tag || '(none)'))].sort();
+  const buckets = [...new Set(clips.map(bucketOf))].sort();
+  const sets = [...new Set(clips.map(c => 'set: ' + (c.set || '')))].sort();
   const f = $('filter'); f.innerHTML = '';
-  ['all', 'unreviewed'].concat(buckets).forEach(
+  ['all', 'unreviewed'].concat(buckets, sets).forEach(
     b => f.append(el('option', {value: b, textContent: b})));
   f.onchange = () => { filt = f.value; renderList(); };
   f.onkeydown = e => e.stopPropagation();
@@ -415,8 +427,13 @@ async function load() {
   renderAll();
 }
 const bucketOf = c => c.suggested_tag || '(none)';
-const visible = c => filt === 'all' ||
-  (filt === 'unreviewed' ? !reviewed(c) : bucketOf(c) === filt);
+const visible = c => filt === 'all' ? true : filt === 'unreviewed' ? !reviewed(c)
+  : filt.startsWith('set: ') ? (c.set || '') === filt.slice(5) : bucketOf(c) === filt;
+const shown = c => visible(c) && !collapsed.has(bucketOf(c));   // listed and navigable
+function toggleGroup(b) { if (collapsed.has(b)) collapsed.delete(b); else collapsed.add(b);
+  remember(); renderList(); }
+function collapseAll(on) { clips.map(bucketOf).forEach(
+  b => on ? collapsed.add(b) : collapsed.delete(b)); remember(); renderList(); }
 
 function renderAll() { renderList(); renderPanel(true); renderStatus(); }
 function renderStatus() {
@@ -431,8 +448,14 @@ function renderList() {
   Object.keys(groups).sort().forEach(b => {
     const all = groups[b], shown = all.filter(visible);
     if (!shown.length) return;
-    const nrev = all.filter(reviewed).length;
-    L.append(el('h3', {textContent: `${b}  ${nrev}/${all.length} reviewed`}));
+    const nrev = all.filter(reviewed).length, closed = collapsed.has(b);
+    const h = el('h3', {className: closed && all.some(c => c.name === cur) ? 'cur' : '',
+        title: closed ? 'click to expand' : 'click to collapse'},
+      el('span', {}, el('span', {className: 'arrow', textContent: closed ? '\u25b8' : '\u25be'}),
+        b),
+      el('span', {className: 'mut', textContent: `${nrev}/${all.length} reviewed`}));
+    h.onclick = () => toggleGroup(b); L.append(h);
+    if (closed) return;
     shown.forEach(c => { const d = el('div', {className: 'item' + (c.name === cur ? ' cur' : '') +
         (reviewed(c) ? ' done' : '') + (dirty(c) ? ' dirty' : '')},
         el('span', {}, el('span', {className: 'n', textContent: c.name}),
@@ -526,7 +549,7 @@ function playKept() { const k = $('kept'); if (!k) return;
 function select(name, play) { const k = $('kept'); if (k) k.pause();
   cur = name; renderList(); renderPanel(play !== false);
   const e = document.querySelector('.item.cur'); if (e) e.scrollIntoView({block: 'nearest'}); }
-function step(d) { const v = clips.filter(visible); if (!v.length) return;
+function step(d) { const v = clips.filter(shown); if (!v.length) return;
   let i = v.findIndex(c => c.name === cur);
   i = i < 0 ? 0 : Math.max(0, Math.min(v.length - 1, i + d)); select(v[i].name); }
 function toggle(t) { const c = byName[cur], i = c.tags_list.indexOf(t);
@@ -549,6 +572,8 @@ async function save() {
   $('msg').textContent = `saved ${d.saved} rows`; renderList(); renderStatus();
 }
 $('save').onclick = save;
+$('collapse').onclick = () => collapseAll(true);
+$('expand').onclick = () => collapseAll(false);
 window.addEventListener('beforeunload', e => {
   if (dirtyCount()) { e.preventDefault(); e.returnValue = ''; } });
 document.addEventListener('keydown', e => {
@@ -561,6 +586,8 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'd') { e.preventDefault(); const c = byName[cur];
     if (c && c.suggested_duplicate_of && markDup(c.suggested_duplicate_of)) step(1); }
   else if (e.key === 'k') { e.preventDefault(); playKept(); }
+  else if (e.key === 'c') { e.preventDefault(); const c = byName[cur];
+    if (c) toggleGroup(bucketOf(c)); }
   else if (/^[0-9]$/.test(e.key)) { const i = (parseInt(e.key, 10) + 9) % 10;
     if (i < TAGS.length) toggle(TAGS[i]); }
 });
