@@ -324,8 +324,15 @@ Run the tool from the container (`colcon build --symlink-install` first so the d
 
 `r2_sound/synth.py` (pure numpy; the model, its ranges and how to add a syllable are in its
 docstring) composes a phrase of 2-8 syllables (beep, chirp up/down, warble, trill, whistle,
-buzz, purr) from `(arousal, valence)` in 0..1 and a seed, and renders it at the house level
-(-16 dBFS RMS, peak at most -1 dBFS). `vocalize` renders on the player's worker (synchronously: a phrase takes
+buzz, sigh) from `(arousal, valence)` in 0..1 and a seed, and renders it at the house level
+(-16 dBFS RMS, peak at most -1 dBFS). v2 (2026-10-27, after David's judging of the v1 grid):
+the syllables follow a phrase contour (flat, rise, fall, arch or sigh, drawn by the mood)
+instead of jumping at random, come in groups of 1-4 with pauses between (the reference
+chatter's rhythm), open on a chirp, whistle or sigh, keep a pitch floor of 330 Hz and
+harmonics in every mood (a formant above the pitch, FM on every tonal kind, more of it when
+annoyed), and a sad phrase is two or three long syllables, sighs among them; the purr is
+gone. The weights can make a kind absent from a mood (no sigh in excitement, no trill in
+calm). `vocalize` renders on the player's worker (synchronously: a phrase takes
 milliseconds), never on a callback, and plays the phrase like a clip named `voice:<seed>`: the same state, level
 topics, fade and `last_end`; the `wav` backend writes it like any play. `seed` 0 draws one and
 the response returns it, so a phrase can be replayed; `length_s` 0 lets the synth choose from
@@ -336,7 +343,10 @@ for a 2 s phrase in the dev container.
 
 The review grid for David: `synth_grid` renders 25 phrases (arousal and valence each 0.1 ..
 0.9, seed 1) to `/ws/.audio/synth/a<A>_v<V>.wav` at 22.05 kHz with an `index.md` and a
-`play_grid.sh` (afplay, in order, printing the coordinates). David judged the grid on
-2026-10-26: the syllables and the arousal axis pass, the composition and the low-valence
-voice do not (R2 sighs when sad and always keeps high-frequency content); the v2 scope is
-under step 7 of the phase 3 plan.
+`play_grid.sh` (afplay, in order, printing the coordinates and the contour, `|` between
+groups); `--medley 5` also writes `medley/<mood>-<seed>.wav`, five phrases of each of five
+mood voices (sad, calm, neutral, annoyed, excited) with `play_medley.sh`, chatter as it is
+heard. David judged the v1 grid on 2026-10-26 (the syllables and the arousal axis passed,
+the composition and the low-valence voice did not: R2 sighs when sad and always keeps
+high-frequency content); v2 answers those notes and its grid and medley await his ear. The
+v1 grid is kept at `/ws/.audio/synth-v1/` for comparison.

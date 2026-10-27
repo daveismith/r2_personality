@@ -14,6 +14,7 @@
 
 """Pure tests of the synthesiser (plan step 7, rule 9): determinism, bounds, the mood mapping."""
 
+import math
 import time
 
 import numpy as np
@@ -72,7 +73,8 @@ def test_an_unrequested_length_is_the_synths_own():
     for arousal in GRID:
         for seed in SEEDS:
             x, info = synth.render(arousal, 0.5, 0.0, seed, RATE)
-            assert 0.6 - 1e-3 <= len(x) / RATE <= 2.5 + 1e-3
+            lo, hi = synth.FREE_LENGTH_S
+            assert lo - 1e-3 <= len(x) / RATE <= hi + 1e-3
             assert info.phrase.requested_s == 0.0
 
 
@@ -113,10 +115,106 @@ def test_the_mood_shifts_the_syllable_distribution():
     happy, sad = synth.weights(0.5, 0.9), synth.weights(0.5, 0.1)
     assert happy[kinds.index('chirp_up')] > sad[kinds.index('chirp_up')]
     assert sad[kinds.index('buzz')] > happy[kinds.index('buzz')]
+    assert sad[kinds.index('sigh')] > happy[kinds.index('sigh')]
     excited, calm = synth.weights(0.9, 0.5), synth.weights(0.1, 0.5)
     assert excited[kinds.index('trill')] > calm[kinds.index('trill')]
-    assert calm[kinds.index('purr')] > excited[kinds.index('purr')]
-    assert all(np.isclose(w.sum(), 1.0) and np.all(w > 0) for w in (happy, sad, excited, calm))
+    assert excited[kinds.index('beep')] > calm[kinds.index('beep')]
+    assert calm[kinds.index('whistle')] > excited[kinds.index('whistle')]
+    assert all(np.isclose(w.sum(), 1.0) and np.all(w >= 0) for w in (happy, sad, excited, calm))
+    assert excited[kinds.index('sigh')] == 0.0 and happy[kinds.index('buzz')] == 0.0
+    contours = list(synth.CONTOURS)
+    low, high = synth.contour_weights(0.1, 0.1), synth.contour_weights(0.5, 0.9)
+    assert low[contours.index('sigh')] > high[contours.index('sigh')]
+    assert high[contours.index('rise')] > low[contours.index('rise')]
+
+
+# --- v2: the composer (David's notes on the v1 grid, 2026-10-26) ------------------------------
+
+def every_phrase(length_s=0.0):
+    for arousal in GRID:
+        for valence in GRID:
+            for seed in SEEDS:
+                yield synth.compose(arousal, valence, length_s, seed)
+
+
+def test_a_phrase_opens_on_a_chirp_a_whistle_or_a_sigh():
+    for phrase in every_phrase():
+        assert phrase.kinds[0] in synth.OPENERS, phrase.kinds
+    assert 'beep' not in synth.OPENERS and 'buzz' not in synth.OPENERS
+
+
+def test_syllables_come_in_groups_with_pauses_between():
+    pauses, inner = [], []
+    for phrase in every_phrase():
+        assert sum(phrase.groups) == len(phrase.syllables) and all(g >= 1 for g in phrase.groups)
+        assert max(phrase.groups) <= phrase.mood.group_max
+        gaps = [b - a - s.duration_s
+                for a, b, s in zip(phrase.onsets_s, phrase.onsets_s[1:], phrase.syllables)]
+        edge, i = set(), 0
+        for size in phrase.groups[:-1]:
+            i += size
+            edge.add(i - 1)
+        pauses += [g for k, g in enumerate(gaps) if k in edge]
+        inner += [g for k, g in enumerate(gaps) if k not in edge]
+    assert pauses and inner
+    assert np.median(pauses) > 2.5 * np.median(inner), (np.median(pauses), np.median(inner))
+
+
+def test_the_contour_is_centred_and_followed():
+    for name, shape in synth.CONTOURS.items():
+        u = np.linspace(0.0, 1.0, 10001)
+        assert abs(float(np.mean(shape(u)))) < 0.01, name
+    rising = [p for p in every_phrase() if p.contour == 'rise' and len(p.syllables) >= 4]
+    assert rising
+    firsts, lasts = [], []
+    for p in rising:
+        pitch = [math.sqrt(s.f_start * s.f_end) for s in p.syllables]
+        firsts.append(np.mean(pitch[:2]))
+        lasts.append(np.mean(pitch[-2:]))
+    assert np.median(np.log2(np.array(lasts) / np.array(firsts))) > 0.2    # over 2 semitones
+
+
+def test_the_pitch_floor_holds_in_every_mood():
+    for phrase in every_phrase():
+        for s in phrase.syllables:
+            assert math.sqrt(s.f_start * s.f_end) >= synth.PITCH_FLOOR_HZ * 0.6, (phrase.mood, s)
+            assert max(s.f_start, s.f_end) <= synth.PITCH_CEILING_HZ * 1.6
+
+
+def spectral_centroid(x, rate):
+    """Return the median amplitude-weighted centroid (Hz) of the sounding 2048-frames."""
+    n, freqs, w = 2048, np.fft.rfftfreq(2048, 1.0 / rate), np.hanning(2048)
+    frames = [x[i:i + n] for i in range(0, len(x) - n, 512)]
+    rms = np.array([np.sqrt(np.mean(f ** 2)) for f in frames])
+    out = []
+    for f, a in zip(frames, rms):
+        if a < rms.max() * 10 ** (-30 / 20):
+            continue
+        spec = np.abs(np.fft.rfft(f * w))
+        spec[freqs < 150] = 0.0
+        out.append(float((spec * freqs).sum() / spec.sum()))
+    return float(np.median(out))
+
+
+@pytest.mark.parametrize('arousal, valence', [(0.1, 0.1), (0.5, 0.1), (0.9, 0.1), (0.5, 0.5)])
+def test_every_mood_keeps_its_brightness(arousal, valence):
+    # R2 never hums low: even the sad corner keeps its centroid in the kilohertz (the sad
+    # reference clips sit at 3.7-5 kHz; v1's sad corner was 400 Hz).
+    centroids = [spectral_centroid(synth.render(arousal, valence, 0.0, seed, 22050)[0]
+                                   .astype(float), 22050) for seed in SEEDS]
+    assert np.mean(centroids) > 1200.0, centroids
+
+
+def test_sad_phrases_are_few_long_syllables_and_often_sigh():
+    sad = [synth.compose(0.1, 0.1, 0.0, seed) for seed in range(1, 41)]
+    excited = [synth.compose(0.9, 0.9, 0.0, seed) for seed in range(1, 41)]
+    assert np.mean([len(p.syllables) for p in sad]) < np.mean([len(p.syllables) for p in excited])
+    assert np.mean([np.mean([s.duration_s for s in p.syllables]) for p in sad]) > 2 * np.mean(
+        [np.mean([s.duration_s for s in p.syllables]) for p in excited])
+    assert sum('sigh' in p.kinds for p in sad) >= 12
+    assert not any('sigh' in p.kinds for p in excited)
+    assert sum(p.contour in ('sigh', 'fall') for p in sad) > sum(
+        p.contour in ('sigh', 'fall') for p in excited)
 
 
 @pytest.mark.parametrize('kind', synth.KINDS)

@@ -15,12 +15,14 @@
 """
 Render the synth's review grid: 5 arousal x 5 valence phrases at one seed (plan step 7).
 
-    synth_grid [--out /ws/.audio/synth] [--seed 1] [--rate 22050]
+    synth_grid [--out /ws/.audio/synth] [--seed 1] [--rate 22050] [--medley N]
 
 Writes ``a<A>_v<V>.wav`` (16-bit mono) for arousal and valence each in 0.1, 0.3, 0.5, 0.7,
-0.9, an ``index.md`` with the grid (syllables, length, level, render time) and
+0.9, an ``index.md`` with the grid (contour, syllables, length, level, render time) and
 ``play_grid.sh``, which plays them in order with ``afplay`` (the Mac, route 1), printing the
-coordinates first. Prints one line a phrase.
+coordinates first. ``--medley N`` also writes ``medley/<mood>-<seed>.wav`` for N seeds of
+each of :data:`MOODS` (the voices the moods use, several phrases each, as chatter is heard)
+with its own ``play_medley.sh``. Prints one line a phrase.
 """
 
 import argparse
@@ -33,6 +35,8 @@ from r2_sound import synth
 from r2_sound.backends import write_wav
 
 GRID = (0.1, 0.3, 0.5, 0.7, 0.9)
+MOODS = (('sad', 0.15, 0.15), ('calm', 0.2, 0.75), ('neutral', 0.5, 0.5),
+         ('annoyed', 0.8, 0.2), ('excited', 0.9, 0.8))
 DEFAULT_OUT = '/ws/.audio/synth'
 PLAYER = """#!/bin/sh
 # Play the synth grid in order: arousal rows, valence columns (index.md has the table).
@@ -64,7 +68,7 @@ def render_grid(out, seed=1, rate=22050):
 
 def index_text(cells, seed, rate):
     """Return ``index.md`` for the rendered ``cells``."""
-    lines = ['# Synth v1 review grid', '',
+    lines = ['# Synth v2 review grid', '',
              'Seed %d, %d Hz, 16-bit mono; each phrase at the house level (-16 dBFS RMS, '
              'peak at most -1 dBFS). Rows: arousal; columns: valence. Play them in order with '
              '`./play_grid.sh`. Notes for the iteration go to the step 7 PR.' % (seed, rate),
@@ -75,20 +79,52 @@ def index_text(cells, seed, rate):
         row = ['`%s`<br>%.2f s, %d syl.' % (file_name(a, v), by_cell[a, v].length_s,
                                             len(by_cell[a, v].phrase.syllables)) for v in GRID]
         lines.append('| **%.1f** | %s |' % (a, ' | '.join(row)))
-    lines += ['', '## Each phrase', '', '| file | syllables | length s | RMS dBFS | peak dBFS '
-              '| render ms |', '|---|---|---|---|---|---|']
+    lines += ['', '## Each phrase', '', 'Syllables are shown in their groups, `|` between '
+              'groups.', '', '| file | contour | syllables | length s | RMS dBFS | peak dBFS '
+              '| render ms |', '|---|---|---|---|---|---|---|']
     for a, v, info, ms in cells:
-        lines.append('| `%s` | %s | %.2f | %.1f | %.1f | %.1f |' % (
-            file_name(a, v), ' '.join(info.phrase.kinds), info.length_s, info.rms_dbfs,
-            info.peak_dbfs, ms))
+        lines.append('| `%s` | %s | %s | %.2f | %.1f | %.1f | %.1f |' % (
+            file_name(a, v), info.phrase.contour, grouped(info.phrase), info.length_s,
+            info.rms_dbfs, info.peak_dbfs, ms))
     return '\n'.join(lines) + '\n'
+
+
+def grouped(phrase):
+    """Return the phrase's syllable kinds with ``|`` between its groups."""
+    out, i = [], 0
+    for size in phrase.groups:
+        out.append(' '.join(phrase.kinds[i:i + size]))
+        i += size
+    return ' | '.join(out)
+
+
+def render_medley(out, seeds, rate=22050):
+    """Render ``seeds`` phrases of each mood of :data:`MOODS` into ``out/medley``."""
+    folder = os.path.join(out, 'medley')
+    os.makedirs(folder, exist_ok=True)
+    lines = [PLAYER]
+    for name, arousal, valence in MOODS:
+        for seed in range(1, seeds + 1):
+            samples, info = synth.render(arousal, valence, 0.0, seed, rate)
+            file = '%s-%d.wav' % (name, seed)
+            write_wav(os.path.join(folder, file), samples, rate)
+            lines.append('echo "%s (a %.2f v %.2f) seed %d: %s, %s"' % (
+                name, arousal, valence, seed, info.phrase.contour, grouped(info.phrase)))
+            lines.append('"$PLAYER" %s' % file)
+            print('%s-%d  %.2f s  %s  %s' % (
+                name, seed, info.length_s, info.phrase.contour, grouped(info.phrase)))
+    script = os.path.join(folder, 'play_medley.sh')
+    with open(script, 'w') as f:
+        f.write('\n'.join(lines) + '\n')
+    os.chmod(script, os.stat(script).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
 
 def player_text(cells):
     """Return ``play_grid.sh`` for the rendered ``cells``."""
     lines = [PLAYER]
     for a, v, info, _ in cells:
-        lines.append('echo "arousal %.1f valence %.1f: %s"' % (a, v, ' '.join(info.phrase.kinds)))
+        lines.append('echo "arousal %.1f valence %.1f: %s, %s"' % (
+            a, v, info.phrase.contour, grouped(info.phrase)))
         lines.append('"$PLAYER" %s' % file_name(a, v))
     return '\n'.join(lines) + '\n'
 
@@ -99,8 +135,12 @@ def main(args=None):
     parser.add_argument('--out', default=DEFAULT_OUT)
     parser.add_argument('--seed', type=int, default=1)
     parser.add_argument('--rate', type=int, default=22050)
+    parser.add_argument('--medley', type=int, default=0, metavar='N',
+                        help='also render N seeds of each mood voice into medley/')
     options = parser.parse_args(args)
     cells = render_grid(options.out, options.seed, options.rate)
+    if options.medley > 0:
+        render_medley(options.out, options.medley, options.rate)
     with open(os.path.join(options.out, 'index.md'), 'w') as f:
         f.write(index_text(cells, options.seed, options.rate))
     script = os.path.join(options.out, 'play_grid.sh')
