@@ -336,4 +336,7 @@ for a 2 s phrase in the dev container.
 
 The review grid for David: `synth_grid` renders 25 phrases (arousal and valence each 0.1 ..
 0.9, seed 1) to `/ws/.audio/synth/a<A>_v<V>.wav` at 22.05 kHz with an `index.md` and a
-`play_grid.sh` (afplay, in order, printing the coordinates).
+`play_grid.sh` (afplay, in order, printing the coordinates). David judged the grid on
+2026-10-26: the syllables and the arousal axis pass, the composition and the low-valence
+voice do not (R2 sighs when sad and always keeps high-frequency content); the v2 scope is
+under step 7 of the phase 3 plan.
