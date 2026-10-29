@@ -1,0 +1,1997 @@
+1793234536.039 MOOD calm locked=True str=1.00
+1793234536.076 JOINT 5.794 deg=332.0
+1793234536.275 DOME state=0 owner= prio=0 src= act= id= rem=0 mood=calm dropped=0 refused=0 stamp=1793234536.361
+1793234536.306 CONV source=idle v=0.000 capped=False stamp=1793234536.390
+1793234538.174 JOINT 5.794 deg=332.0
+1793234540.257 JOINT 5.794 deg=332.0
+1793234542.354 JOINT 5.794 deg=332.0
+1793234544.450 JOINT 5.794 deg=332.0
+1793234545.233 DOME state=1 owner= prio=0 src=idle act=glance id=glance-11 rem=9104 mood=calm dropped=0 refused=0 stamp=1793234545.262
+1793234545.234 CONV source=personality v=-0.600 capped=False stamp=1793234545.290
+1793234545.239 PERS -0.600
+1793234545.239 LOG dome_arbiter 20 dome: running
+1793234545.241 CTRL -0.600
+1793234545.241 LOG dome_twist_converter 20 Dome command source: personality
+1793234545.675 JOINT 5.725 deg=328.0
+1793234545.851 JOINT 4.677 deg=268.0
+1793234545.874 PERS 0.000
+1793234545.875 JOINT 5.498 deg=315.0
+1793234545.976 CTRL 0.000
+1793234545.979 JOINT 5.411 deg=310.0
+1793234546.100 JOINT 5.288 deg=303.0
+1793234546.224 JOINT 5.201 deg=298.0
+1793234546.370 CONV source=personality v=0.000 capped=False stamp=1793234546.389
+1793234546.374 JOINT 5.149 deg=295.0
+1793234546.725 PERS 0.600
+1793234546.754 CTRL 0.600
+1793234546.894 CONV source=personality v=0.600 capped=False stamp=1793234546.890
+1793234546.896 PERS 0.000
+1793234546.901 CTRL 0.000
+1793234547.309 CONV source=personality v=0.000 capped=False stamp=1793234547.389
+1793234547.726 PERS 0.600
+1793234547.753 CTRL 0.600
+1793234547.801 CONV source=personality v=0.600 capped=False stamp=1793234547.889
+1793234547.944 PERS 0.000
+1793234547.944 CTRL 0.000
+1793234548.172 JOINT 5.096 deg=292.0
+1793234548.316 CONV source=personality v=0.000 capped=False stamp=1793234548.390
+1793234549.875 PERS 0.600
+1793234549.902 CTRL 0.600
+1793234550.175 JOINT 5.096 deg=292.0
+1793234550.304 CONV source=personality v=1.000 capped=False stamp=1793234550.389
+1793234550.383 JOINT 5.166 deg=296.0
+1793234550.574 JOINT 5.288 deg=303.0
+1793234550.625 PERS 0.000
+1793234550.653 CTRL 0.000
+1793234550.675 JOINT 5.376 deg=308.0
+1793234550.774 JOINT 5.463 deg=313.0
+1793234550.805 CONV source=personality v=0.000 capped=False stamp=1793234550.890
+1793234550.874 JOINT 4.835 deg=277.0
+1793234551.474 PERS 0.600
+1793234551.503 CTRL 0.600
+1793234551.805 CONV source=personality v=0.600 capped=False stamp=1793234551.890
+1793234551.977 JOINT 4.887 deg=280.0
+1793234552.137 JOINT 5.672 deg=325.0
+1793234552.177 PERS 0.000
+1793234552.177 JOINT 5.760 deg=330.0
+1793234552.206 CTRL 0.000
+1793234552.302 CONV source=personality v=0.000 capped=False stamp=1793234552.389
+1793234552.663 JOINT 5.829 deg=334.0
+1793234552.978 LOG dome_arbiter 20 dome: move over, coast scale 1.00 for the next
+1793234552.979 DOME state=0 owner= prio=0 src= act= id= rem=0 mood=calm dropped=0 refused=0 stamp=1793234553.066
+1793234552.979 LOG dome_arbiter 20 dome: idle
+1793234553.506 CONV source=idle v=0.000 capped=False stamp=1793234553.590
+1793234553.508 LOG dome_twist_converter 20 Dome command source: idle
+1793234554.758 JOINT 5.829 deg=334.0
+1793234556.856 JOINT 5.829 deg=334.0
+1793234558.953 JOINT 5.829 deg=334.0
+1793234561.057 JOINT 5.829 deg=334.0
+1793234563.149 JOINT 5.829 deg=334.0
+1793234565.247 JOINT 5.829 deg=334.0
+1793234567.345 JOINT 5.829 deg=334.0
+1793234569.443 JOINT 5.829 deg=334.0
+1793234571.540 JOINT 5.829 deg=334.0
+1793234573.111 PERS 0.600
+1793234573.112 LOG dome_arbiter 20 dome: running
+1793234573.113 DOME state=1 owner= prio=0 src=idle act=glance id=glance-12 rem=9045 mood=calm dropped=0 refused=0 stamp=1793234573.162
+1793234573.113 CONV source=personality v=0.600 capped=False stamp=1793234573.190
+1793234573.116 CTRL 0.600
+1793234573.116 LOG dome_twist_converter 20 Dome command source: personality
+1793234573.636 JOINT 5.847 deg=335.0
+1793234573.774 JOINT 5.917 deg=339.0
+1793234573.975 JOINT 6.004 deg=344.0
+1793234574.157 JOINT 6.056 deg=347.0
+1793234574.159 PERS 0.000
+1793234574.159 CTRL 0.000
+1793234574.172 JOINT 6.126 deg=351.0
+1793234574.305 CONV source=personality v=0.000 capped=False stamp=1793234574.390
+1793234574.373 JOINT 6.178 deg=354.0
+1793234574.925 PERS 0.600
+1793234574.954 CTRL 0.600
+1793234575.075 PERS 0.000
+1793234575.109 CTRL 0.000
+1793234575.375 JOINT 6.231 deg=357.0
+1793234576.950 PERS -0.600
+1793234576.968 CTRL -0.600
+1793234577.306 CONV source=personality v=-0.602 capped=False stamp=1793234577.390
+1793234577.449 JOINT 6.161 deg=353.0
+1793234577.450 PERS 0.000
+1793234577.456 CTRL 0.000
+1793234577.474 JOINT 6.091 deg=349.0
+1793234577.586 JOINT 6.039 deg=346.0
+1793234577.718 JOINT 5.986 deg=343.0
+1793234577.829 CONV source=personality v=0.000 capped=False stamp=1793234577.889
+1793234578.011 JOINT 5.917 deg=339.0
+1793234578.354 LOG dome_arbiter 20 dome: move over, coast scale 1.00 for the next
+1793234578.356 DOME state=0 owner= prio=0 src= act= id= rem=0 mood=calm dropped=0 refused=0 stamp=1793234578.363
+1793234578.357 LOG dome_arbiter 20 dome: idle
+1793234578.874 CONV source=idle v=0.000 capped=False stamp=1793234578.890
+1793234578.875 LOG dome_twist_converter 20 Dome command source: idle
+1793234580.104 JOINT 5.917 deg=339.0
+1793234582.200 JOINT 5.917 deg=339.0
+1793234583.044 SENT behavior look_at 100 {"bearing": 1.5, "profile": "lazy"} probe-9f4623ba
+1793234583.077 PERS -0.600
+1793234583.077 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-9f4623ba rem=8000 mood=calm dropped=0 refused=0 stamp=1793234583.164
+1793234583.078 LOG dome_arbiter 20 dome: running
+1793234583.078 LOG dome_arbiter 20 intent probe-9f4623ba accepted: dome look_at  from behavior
+1793234583.105 CONV source=personality v=-0.600 capped=False stamp=1793234583.190
+1793234583.106 LOG dome_twist_converter 20 Dome command source: personality
+1793234583.107 CTRL -0.600
+1793234583.502 JOINT 5.864 deg=336.0
+1793234583.601 JOINT 5.760 deg=330.0
+1793234583.852 JOINT 4.677 deg=268.0
+1793234583.875 JOINT 5.498 deg=315.0
+1793234583.974 JOINT 5.411 deg=310.0
+1793234584.131 JOINT 5.288 deg=303.0
+1793234584.251 JOINT 5.184 deg=297.0
+1793234584.274 JOINT 5.096 deg=292.0
+1793234584.279 PERS 0.000
+1793234584.307 CONV source=personality v=0.000 capped=False stamp=1793234584.389
+1793234584.307 CTRL 0.000
+1793234584.376 JOINT 4.974 deg=285.0
+1793234584.474 JOINT 4.869 deg=279.0
+1793234584.648 JOINT 4.782 deg=274.0
+1793234584.775 JOINT 4.730 deg=271.0
+1793234585.076 LOG dome_arbiter 20 dome: move over, coast scale 1.00 for the next
+1793234585.170 DOME state=0 owner= prio=0 src= act= id= rem=0 mood=calm dropped=0 refused=0 stamp=1793234585.165
+1793234585.171 LOG dome_arbiter 20 dome: idle
+1793234585.693 CONV source=idle v=0.000 capped=False stamp=1793234585.690
+1793234585.693 LOG dome_twist_converter 20 Dome command source: idle
+1793234586.040 SENT idle glance 10 {"amplitude": 0.6, "dwell_s": 1.0} probe-2313e1aa
+1793234586.047 PERS 0.600
+1793234586.049 DOME state=1 owner= prio=0 src=idle act=glance id=probe-2313e1aa rem=9000 mood=calm dropped=0 refused=0 stamp=1793234586.135
+1793234586.050 LOG dome_arbiter 20 dome: running
+1793234586.050 LOG dome_arbiter 20 intent probe-2313e1aa accepted: dome glance  from idle
+1793234586.053 CONV source=personality v=0.600 capped=False stamp=1793234586.141
+1793234586.053 LOG dome_twist_converter 20 Dome command source: personality
+1793234586.053 CTRL 0.600
+1793234586.740 JOINT 4.800 deg=275.0
+1793234586.773 JOINT 4.922 deg=282.0
+1793234586.799 PERS 0.000
+1793234586.807 CONV source=personality v=0.000 capped=False stamp=1793234586.889
+1793234586.807 CTRL 0.000
+1793234586.875 JOINT 5.009 deg=287.0
+1793234586.973 JOINT 5.061 deg=290.0
+1793234587.074 JOINT 5.149 deg=295.0
+1793234588.697 PERS -0.600
+1793234588.702 CTRL -0.600
+1793234588.841 CONV source=personality v=-0.707 capped=False stamp=1793234588.889
+1793234589.076 JOINT 5.184 deg=297.0
+1793234589.241 SENT behavior look_at 100 {"bearing": -1.5, "profile": "lazy"} probe-b8906813
+1793234589.248 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-b8906813 rem=8000 mood=calm dropped=0 refused=0 stamp=1793234589.335
+1793234589.248 PERS 0.000
+1793234589.249 LOG dome_arbiter 20 intent probe-b8906813 accepted: dome look_at  from behavior
+1793234589.265 CTRL 0.000
+1793234589.360 JOINT 5.061 deg=290.0
+1793234589.361 CONV source=personality v=0.000 capped=False stamp=1793234589.389
+1793234589.372 JOINT 4.939 deg=283.0
+1793234589.476 JOINT 4.887 deg=280.0
+1793234589.573 JOINT 4.817 deg=276.0
+1793234589.889 JOINT 4.765 deg=273.0
+1793234590.048 PERS 0.600
+1793234590.052 CTRL 0.600
+1793234590.305 CONV source=personality v=0.600 capped=False stamp=1793234590.391
+1793234590.675 JOINT 4.817 deg=276.0
+1793234590.774 JOINT 4.904 deg=281.0
+1793234590.938 JOINT 4.957 deg=284.0
+1793234590.973 JOINT 5.027 deg=288.0
+1793234591.073 JOINT 5.079 deg=291.0
+1793234591.172 JOINT 5.149 deg=295.0
+1793234591.272 JOINT 5.201 deg=298.0
+1793234591.461 JOINT 5.271 deg=302.0
+1793234591.473 JOINT 5.341 deg=306.0
+1793234591.575 JOINT 5.428 deg=311.0
+1793234591.776 JOINT 4.835 deg=277.0
+1793234591.984 JOINT 4.887 deg=280.0
+1793234592.075 JOINT 5.672 deg=325.0
+1793234592.173 JOINT 5.760 deg=330.0
+1793234592.240 SENT idle glance 10 {"amplitude": 0.6, "dwell_s": 1.0} probe-8b976e18
+1793234592.248 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-b8906813 rem=5000 mood=calm dropped=1 refused=0 stamp=1793234592.335
+1793234592.374 JOINT 5.829 deg=334.0
+1793234592.572 JOINT 5.952 deg=341.0
+1793234593.033 JOINT 6.021 deg=345.0
+1793234593.074 JOINT 6.074 deg=348.0
+1793234593.174 JOINT 6.126 deg=351.0
+1793234593.373 JOINT 6.178 deg=354.0
+1793234593.560 JOINT 0.017 deg=1.0
+1793234593.574 JOINT 0.175 deg=10.0
+1793234593.675 JOINT 0.122 deg=7.0
+1793234593.874 JOINT 0.175 deg=10.0
+1793234594.082 JOINT 0.262 deg=15.0
+1793234594.177 JOINT 0.314 deg=18.0
+1793234594.275 JOINT 0.367 deg=21.0
+1793234594.476 JOINT 0.471 deg=27.0
+1793234594.609 JOINT 0.541 deg=31.0
+1793234594.774 JOINT 0.611 deg=35.0
+1793234594.973 JOINT 0.698 deg=40.0
+1793234595.174 JOINT 0.855 deg=49.0
+1793234595.243 SENT behavior look_at 100 {"bearing": 1.5, "profile": "lazy"} probe-800b1645
+1793234595.251 PERS 0.000
+1793234595.252 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-800b1645 rem=8000 mood=calm dropped=1 refused=0 stamp=1793234595.338
+1793234595.252 CTRL 0.000
+1793234595.256 LOG dome_arbiter 20 intent probe-800b1645 accepted: dome look_at  from behavior
+1793234595.304 CONV source=personality v=0.000 capped=False stamp=1793234595.389
+1793234595.655 JOINT 0.908 deg=52.0
+1793234596.176 PERS -0.600
+1793234596.177 CTRL -0.600
+1793234596.357 CONV source=personality v=-0.600 capped=False stamp=1793234596.389
+1793234596.703 JOINT 0.855 deg=49.0
+1793234596.880 JOINT 0.733 deg=42.0
+1793234596.972 JOINT 0.611 deg=35.0
+1793234597.074 JOINT 0.506 deg=29.0
+1793234597.228 JOINT 0.454 deg=26.0
+1793234597.417 JOINT 0.384 deg=22.0
+1793234597.420 JOINT 0.244 deg=14.0
+1793234597.582 JOINT 0.175 deg=10.0
+1793234597.583 JOINT 0.000 deg=0.0
+1793234597.750 JOINT 6.144 deg=352.0
+1793234597.774 JOINT 6.091 deg=349.0
+1793234597.893 JOINT 5.986 deg=343.0
+1793234598.072 JOINT 5.917 deg=339.0
+1793234598.074 JOINT 5.760 deg=330.0
+1793234598.173 JOINT 5.637 deg=323.0
+1793234598.244 SENT idle glance 10 {"amplitude": 0.6, "dwell_s": 1.0} probe-d80a4a69
+1793234598.274 JOINT 5.533 deg=317.0
+1793234598.275 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-800b1645 rem=4974 mood=calm dropped=2 refused=0 stamp=1793234598.364
+1793234598.455 JOINT 5.411 deg=310.0
+1793234598.476 JOINT 5.288 deg=303.0
+1793234598.639 JOINT 5.184 deg=297.0
+1793234598.674 JOINT 5.061 deg=290.0
+1793234598.711 PERS 0.000
+1793234598.712 CTRL 0.000
+1793234598.803 JOINT 4.939 deg=283.0
+1793234598.805 CONV source=personality v=0.000 capped=False stamp=1793234598.890
+1793234598.982 JOINT 4.887 deg=280.0
+1793234598.984 JOINT 4.747 deg=272.0
+1793234599.074 JOINT 4.677 deg=268.0
+1793234599.512 DOME state=0 owner= prio=0 src= act= id= rem=0 mood=calm dropped=2 refused=0 stamp=1793234599.591
+1793234599.513 LOG dome_arbiter 20 dome: move over, coast scale 1.00 for the next
+1793234599.513 LOG dome_arbiter 20 dome: idle
+1793234600.026 CONV source=idle v=0.000 capped=False stamp=1793234600.090
+1793234600.027 LOG dome_twist_converter 20 Dome command source: idle
+1793234601.075 JOINT 4.643 deg=266.0
+1793234601.239 SENT behavior look_at 100 {"bearing": -1.5, "profile": "lazy"} probe-2c66d001
+1793234601.249 PERS 0.600
+1793234601.250 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-2c66d001 rem=8000 mood=calm dropped=2 refused=0 stamp=1793234601.337
+1793234601.250 LOG dome_arbiter 20 dome: running
+1793234601.251 LOG dome_arbiter 20 intent probe-2c66d001 accepted: dome look_at  from behavior
+1793234601.253 CONV source=personality v=0.600 capped=False stamp=1793234601.340
+1793234601.253 CTRL 0.600
+1793234601.254 LOG dome_twist_converter 20 Dome command source: personality
+1793234601.804 JOINT 4.695 deg=269.0
+1793234601.973 JOINT 4.800 deg=275.0
+1793234602.077 JOINT 4.869 deg=279.0
+1793234602.202 JOINT 4.939 deg=283.0
+1793234602.274 JOINT 5.009 deg=287.0
+1793234602.377 JOINT 5.061 deg=290.0
+1793234602.474 JOINT 5.131 deg=294.0
+1793234602.600 JOINT 5.236 deg=300.0
+1793234602.696 JOINT 5.288 deg=303.0
+1793234602.777 JOINT 5.341 deg=306.0
+1793234602.875 JOINT 5.428 deg=311.0
+1793234603.075 JOINT 4.835 deg=277.0
+1793234603.331 LOG r2_affect 20 stimulus being_driven from drive_stimulus i=0.07: no change -> aro=0.00 val=0.20 cur=0.40 con=0.61 (locked, not applied)
+1793234603.375 JOINT 4.887 deg=280.0
+1793234603.524 JOINT 5.777 deg=331.0
+1793234603.772 JOINT 5.847 deg=335.0
+1793234603.874 JOINT 5.899 deg=338.0
+1793234604.045 JOINT 5.952 deg=341.0
+1793234604.174 JOINT 6.004 deg=344.0
+1793234604.238 SENT idle glance 10 {"amplitude": 0.6, "dwell_s": 1.0} probe-9099804a
+1793234604.245 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-2c66d001 rem=5003 mood=calm dropped=3 refused=0 stamp=1793234604.333
+1793234604.271 JOINT 6.074 deg=348.0
+1793234604.370 JOINT 6.126 deg=351.0
+1793234604.389 DRIVE /cmd_vel_joy lin=0.158 yaw=0.034 moving=True
+1793234604.390 DRIVE /cmd_vel_joy lin=0.150 yaw=0.034 moving=False
+1793234604.573 JOINT 6.213 deg=356.0
+1793234604.573 LOG r2_affect 20 stimulus stopped from drive_stimulus i=1.00: no change -> aro=0.00 val=0.20 cur=0.40 con=0.61 (locked, not applied)
+1793234604.671 JOINT 0.035 deg=2.0
+1793234604.771 JOINT 0.122 deg=7.0
+1793234604.947 LOG r2_affect 20 stimulus being_driven from drive_stimulus dropped: refractory (2.0 s window; further drops in this window are not logged)
+1793234605.091 JOINT 0.192 deg=11.0
+1793234605.173 JOINT 0.244 deg=14.0
+1793234605.274 JOINT 0.314 deg=18.0
+1793234605.373 JOINT 0.384 deg=22.0
+1793234605.615 JOINT 0.489 deg=28.0
+1793234605.672 JOINT 0.541 deg=31.0
+1793234605.874 JOINT 0.611 deg=35.0
+1793234606.138 JOINT 0.768 deg=44.0
+1793234606.173 JOINT 0.855 deg=49.0
+1793234606.476 JOINT 0.942 deg=54.0
+1793234606.570 LOG r2_affect 20 stimulus stopped from drive_stimulus i=1.00: no change -> aro=0.00 val=0.20 cur=0.40 con=0.61 (locked, not applied)
+1793234606.573 JOINT 0.995 deg=57.0
+1793234606.773 JOINT 1.082 deg=62.0
+1793234606.874 JOINT 1.134 deg=65.0
+1793234606.972 JOINT 1.204 deg=69.0
+1793234606.997 PERS 0.000
+1793234607.002 CTRL 0.000
+1793234607.092 JOINT 1.257 deg=72.0
+1793234607.094 LOG r2_affect 20 stimulus being_driven from drive_stimulus i=0.06: no change -> aro=0.00 val=0.20 cur=0.40 con=0.61 (locked, not applied)
+1793234607.242 SENT behavior look_at 100 {"bearing": 1.5, "profile": "lazy"} probe-026698d9
+1793234607.249 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-026698d9 rem=8000 mood=calm dropped=3 refused=0 stamp=1793234607.337
+1793234607.249 PERS -0.600
+1793234607.251 CTRL -0.600
+1793234607.252 LOG dome_arbiter 20 intent probe-026698d9 accepted: dome look_at  from behavior
+1793234607.374 JOINT 1.326 deg=76.0
+1793234607.874 JOINT 1.274 deg=73.0
+1793234607.974 JOINT 1.204 deg=69.0
+1793234608.074 JOINT 1.152 deg=66.0
+1793234608.085 LOG r2_affect 20 stimulus being_driven from drive_stimulus dropped: refractory (2.0 s window; further drops in this window are not logged)
+1793234608.238 JOINT 1.082 deg=62.0
+1793234608.273 JOINT 1.030 deg=59.0
+1793234608.373 JOINT 0.960 deg=55.0
+1793234608.473 JOINT 0.890 deg=51.0
+1793234608.764 JOINT 0.768 deg=44.0
+1793234608.772 JOINT 0.628 deg=36.0
+1793234608.873 JOINT 0.524 deg=30.0
+1793234608.974 JOINT 0.454 deg=26.0
+1793234609.072 JOINT 0.332 deg=19.0
+1793234609.094 LOG r2_affect 20 stimulus being_driven from drive_stimulus i=0.06: no change -> aro=0.00 val=0.20 cur=0.40 con=0.61 (locked, not applied)
+1793234609.172 JOINT 0.244 deg=14.0
+1793234609.284 JOINT 0.175 deg=10.0
+1793234609.371 JOINT 0.000 deg=0.0
+1793234609.472 JOINT 6.144 deg=352.0
+1793234609.578 JOINT 6.074 deg=348.0
+1793234609.671 JOINT 5.986 deg=343.0
+1793234609.810 JOINT 5.864 deg=336.0
+1793234609.873 JOINT 5.742 deg=329.0
+1793234609.972 JOINT 4.852 deg=278.0
+1793234610.074 JOINT 5.515 deg=316.0
+1793234610.175 JOINT 5.411 deg=310.0
+1793234610.241 SENT idle glance 10 {"amplitude": 0.6, "dwell_s": 1.0} probe-b3043de4
+1793234610.338 JOINT 5.288 deg=303.0
+1793234610.340 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-026698d9 rem=4911 mood=calm dropped=4 refused=0 stamp=1793234610.425
+1793234610.380 JOINT 5.166 deg=296.0
+1793234610.415 LOG r2_affect 20 stimulus stopped from drive_stimulus i=1.00: no change -> aro=0.00 val=0.20 cur=0.40 con=0.61 (locked, not applied)
+1793234610.472 JOINT 5.044 deg=289.0
+1793234610.498 PERS 0.000
+1793234610.502 CTRL 0.000
+1793234610.572 JOINT 4.939 deg=283.0
+1793234610.673 JOINT 4.782 deg=274.0
+1793234610.860 CONV source=personality v=0.000 capped=False stamp=1793234610.889
+1793234610.861 JOINT 4.695 deg=269.0
+1793234611.173 JOINT 4.643 deg=266.0
+1793234611.382 DOME state=0 owner= prio=0 src= act= id= rem=0 mood=calm dropped=4 refused=0 stamp=1793234611.388
+1793234611.384 LOG dome_arbiter 20 dome: move over, coast scale 1.00 for the next
+1793234611.385 LOG dome_arbiter 20 dome: idle
+1793234611.804 CONV source=idle v=0.000 capped=False stamp=1793234611.891
+1793234611.805 LOG dome_twist_converter 20 Dome command source: idle
+1793234613.175 JOINT 4.643 deg=266.0
+1793234613.239 SENT behavior look_at 100 {"bearing": -1.5, "profile": "lazy"} probe-52d13dbb
+1793234613.249 PERS 0.600
+1793234613.252 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-52d13dbb rem=8000 mood=calm dropped=4 refused=0 stamp=1793234613.339
+1793234613.252 LOG dome_arbiter 20 dome: running
+1793234613.253 CONV source=personality v=0.600 capped=False stamp=1793234613.340
+1793234613.254 CTRL 0.600
+1793234613.254 LOG dome_twist_converter 20 Dome command source: personality
+1793234613.255 LOG dome_arbiter 20 intent probe-52d13dbb accepted: dome look_at  from behavior
+1793234614.001 JOINT 4.730 deg=271.0
+1793234614.005 JOINT 4.782 deg=274.0
+1793234614.144 JOINT 4.869 deg=279.0
+1793234614.278 JOINT 5.009 deg=287.0
+1793234614.527 JOINT 5.061 deg=290.0
+1793234614.528 JOINT 5.149 deg=295.0
+1793234614.709 JOINT 5.201 deg=298.0
+1793234614.711 JOINT 5.253 deg=301.0
+1793234614.772 JOINT 5.341 deg=306.0
+1793234614.872 JOINT 5.393 deg=309.0
+1793234615.057 JOINT 5.463 deg=313.0
+1793234615.073 JOINT 4.835 deg=277.0
+1793234615.412 JOINT 5.672 deg=325.0
+1793234615.473 JOINT 5.777 deg=331.0
+1793234615.893 JOINT 5.829 deg=334.0
+1793234615.897 JOINT 5.917 deg=339.0
+1793234616.100 JOINT 5.969 deg=342.0
+1793234616.243 SENT idle glance 10 {"amplitude": 0.6, "dwell_s": 1.0} probe-e7b418e8
+1793234616.279 JOINT 6.056 deg=347.0
+1793234616.281 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-52d13dbb rem=4968 mood=calm dropped=5 refused=0 stamp=1793234616.370
+1793234616.458 JOINT 5.411 deg=310.0
+1793234616.472 JOINT 6.126 deg=351.0
+1793234616.626 JOINT 6.178 deg=354.0
+1793234616.801 JOINT 0.000 deg=0.0
+1793234616.802 JOINT 0.087 deg=5.0
+1793234616.971 JOINT 0.140 deg=8.0
+1793234617.172 JOINT 0.209 deg=12.0
+1793234617.506 JOINT 0.332 deg=19.0
+1793234617.508 JOINT 0.384 deg=22.0
+1793234617.573 JOINT 0.436 deg=25.0
+1793234617.853 JOINT 0.541 deg=31.0
+1793234617.972 JOINT 0.593 deg=34.0
+1793234618.198 JOINT 0.733 deg=42.0
+1793234618.378 JOINT 0.855 deg=49.0
+1793234618.724 JOINT 0.908 deg=52.0
+1793234618.903 JOINT 1.030 deg=59.0
+1793234619.074 JOINT 1.082 deg=62.0
+1793234619.240 SENT behavior look_at 100 {"bearing": 1.5, "profile": "lazy"} probe-e1e772fc
+1793234619.250 JOINT 1.134 deg=65.0
+1793234619.250 PERS 0.000
+1793234619.251 CTRL 0.000
+1793234619.252 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-e1e772fc rem=8000 mood=calm dropped=5 refused=0 stamp=1793234619.338
+1793234619.252 LOG dome_arbiter 20 intent probe-e1e772fc accepted: dome look_at  from behavior
+1793234619.347 JOINT 1.187 deg=68.0
+1793234619.348 CONV source=personality v=0.000 capped=False stamp=1793234619.390
+1793234619.372 JOINT 1.239 deg=71.0
+1793234619.675 JOINT 1.309 deg=75.0
+1793234620.051 PERS -0.600
+1793234620.103 CTRL -0.600
+1793234620.301 CONV source=personality v=-0.600 capped=False stamp=1793234620.390
+1793234620.671 JOINT 1.222 deg=70.0
+1793234620.874 JOINT 1.134 deg=65.0
+1793234620.973 JOINT 1.030 deg=59.0
+1793234621.175 JOINT 0.960 deg=55.0
+1793234621.347 JOINT 0.890 deg=51.0
+1793234621.375 JOINT 0.785 deg=45.0
+1793234621.472 JOINT 0.698 deg=40.0
+1793234621.576 JOINT 0.559 deg=32.0
+1793234621.671 JOINT 0.506 deg=29.0
+1793234621.774 JOINT 0.401 deg=23.0
+1793234621.873 JOINT 0.279 deg=16.0
+1793234621.997 JOINT 0.175 deg=10.0
+1793234622.073 JOINT 0.017 deg=1.0
+1793234622.175 JOINT 6.266 deg=359.0
+1793234622.241 SENT idle glance 10 {"amplitude": 0.6, "dwell_s": 1.0} probe-cbfc832a
+1793234622.251 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-e1e772fc rem=5000 mood=calm dropped=6 refused=0 stamp=1793234622.337
+1793234622.273 JOINT 6.091 deg=349.0
+1793234622.393 JOINT 6.021 deg=345.0
+1793234622.472 JOINT 5.969 deg=342.0
+1793234622.571 JOINT 5.864 deg=336.0
+1793234622.675 JOINT 5.707 deg=327.0
+1793234622.775 JOINT 5.533 deg=317.0
+1793234622.922 JOINT 5.445 deg=312.0
+1793234622.972 JOINT 5.323 deg=305.0
+1793234623.073 JOINT 5.236 deg=300.0
+1793234623.176 JOINT 5.096 deg=292.0
+1793234623.208 PERS 0.000
+1793234623.209 CTRL 0.000
+1793234623.275 JOINT 4.957 deg=284.0
+1793234623.301 CONV source=personality v=0.000 capped=False stamp=1793234623.390
+1793234623.443 JOINT 4.869 deg=279.0
+1793234623.472 JOINT 4.747 deg=272.0
+1793234623.673 JOINT 4.695 deg=269.0
+1793234624.003 DOME state=0 owner= prio=0 src= act= id= rem=0 mood=calm dropped=6 refused=0 stamp=1793234624.090
+1793234624.004 LOG dome_arbiter 20 dome: move over, coast scale 1.00 for the next
+1793234624.005 LOG dome_arbiter 20 dome: idle
+1793234624.504 LOG dome_twist_converter 20 Dome command source: idle
+1793234624.506 CONV source=idle v=0.000 capped=False stamp=1793234624.590
+1793234625.239 SENT behavior look_at 100 {"bearing": -1.5, "profile": "lazy"} probe-c81bd48c
+1793234625.249 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-c81bd48c rem=8000 mood=calm dropped=6 refused=0 stamp=1793234625.336
+1793234625.249 PERS 0.600
+1793234625.249 LOG dome_arbiter 20 dome: running
+1793234625.250 LOG dome_arbiter 20 intent probe-c81bd48c accepted: dome look_at  from behavior
+1793234625.251 CONV source=personality v=0.600 capped=False stamp=1793234625.340
+1793234625.251 CTRL 0.600
+1793234625.251 LOG dome_twist_converter 20 Dome command source: personality
+1793234625.774 JOINT 4.712 deg=270.0
+1793234626.065 JOINT 4.800 deg=275.0
+1793234626.072 JOINT 4.904 deg=281.0
+1793234626.171 JOINT 4.974 deg=285.0
+1793234626.271 JOINT 5.027 deg=288.0
+1793234626.373 JOINT 5.096 deg=292.0
+1793234626.474 JOINT 5.184 deg=297.0
+1793234626.585 JOINT 5.253 deg=301.0
+1793234626.673 JOINT 5.323 deg=305.0
+1793234626.771 JOINT 5.393 deg=309.0
+1793234626.872 JOINT 5.445 deg=312.0
+1793234627.113 JOINT 4.835 deg=277.0
+1793234627.273 JOINT 4.887 deg=280.0
+1793234627.372 JOINT 5.760 deg=330.0
+1793234627.673 JOINT 5.829 deg=334.0
+1793234627.773 JOINT 5.882 deg=337.0
+1793234627.972 JOINT 5.952 deg=341.0
+1793234628.161 JOINT 6.004 deg=344.0
+1793234628.171 JOINT 6.056 deg=347.0
+1793234628.244 SENT idle glance 10 {"amplitude": 0.6, "dwell_s": 1.0} probe-b2c0c402
+1793234628.252 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-c81bd48c rem=4996 mood=calm dropped=7 refused=0 stamp=1793234628.339
+1793234628.375 JOINT 6.144 deg=352.0
+1793234628.574 JOINT 6.231 deg=357.0
+1793234628.686 JOINT 4.817 deg=276.0
+1793234628.772 JOINT 0.157 deg=9.0
+1793234629.073 JOINT 0.209 deg=12.0
+1793234629.271 JOINT 0.314 deg=18.0
+1793234629.374 JOINT 0.401 deg=23.0
+1793234629.573 JOINT 0.524 deg=30.0
+1793234629.874 JOINT 0.593 deg=34.0
+1793234630.073 JOINT 0.698 deg=40.0
+1793234630.275 JOINT 0.855 deg=49.0
+1793234630.574 JOINT 0.908 deg=52.0
+1793234630.673 JOINT 0.960 deg=55.0
+1793234630.788 JOINT 1.012 deg=58.0
+1793234630.874 JOINT 1.065 deg=61.0
+1793234631.074 JOINT 1.134 deg=65.0
+1793234631.174 JOINT 1.204 deg=69.0
+1793234631.197 PERS 0.000
+1793234631.200 CTRL 0.000
+1793234631.240 SENT behavior look_at 100 {"bearing": 1.5, "profile": "lazy"} probe-c3398d6c
+1793234631.305 CONV source=personality v=0.000 capped=False stamp=1793234631.389
+1793234631.309 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-c3398d6c rem=8000 mood=calm dropped=7 refused=0 stamp=1793234631.397
+1793234631.309 PERS -0.600
+1793234631.310 LOG dome_arbiter 20 intent probe-c3398d6c accepted: dome look_at  from behavior
+1793234631.350 CTRL -0.600
+1793234631.373 JOINT 1.274 deg=73.0
+1793234631.623 JOINT 1.326 deg=76.0
+1793234631.830 CONV source=personality v=-0.600 capped=False stamp=1793234631.889
+1793234632.019 JOINT 1.257 deg=72.0
+1793234632.159 JOINT 1.204 deg=69.0
+1793234632.172 JOINT 1.134 deg=65.0
+1793234632.355 JOINT 1.082 deg=62.0
+1793234632.372 JOINT 0.995 deg=57.0
+1793234632.532 JOINT 0.942 deg=54.0
+1793234632.572 JOINT 0.890 deg=51.0
+1793234632.674 JOINT 0.785 deg=45.0
+1793234632.774 JOINT 0.698 deg=40.0
+1793234632.878 JOINT 0.541 deg=31.0
+1793234633.056 JOINT 0.471 deg=27.0
+1793234633.074 JOINT 0.401 deg=23.0
+1793234633.232 JOINT 0.297 deg=17.0
+1793234633.273 JOINT 0.192 deg=11.0
+1793234633.400 JOINT 0.087 deg=5.0
+1793234633.578 JOINT 0.000 deg=0.0
+1793234633.579 JOINT 6.126 deg=351.0
+1793234633.672 JOINT 6.056 deg=347.0
+1793234633.772 JOINT 5.952 deg=341.0
+1793234633.928 JOINT 5.864 deg=336.0
+1793234634.039 JOINT 5.725 deg=328.0
+1793234634.073 JOINT 4.869 deg=279.0
+1793234634.222 JOINT 5.480 deg=314.0
+1793234634.275 JOINT 5.358 deg=307.0
+1793234634.454 JOINT 5.236 deg=300.0
+1793234634.476 JOINT 5.096 deg=292.0
+1793234634.631 PERS 0.000
+1793234634.631 CTRL 0.000
+1793234634.631 JOINT 4.957 deg=284.0
+1793234634.676 JOINT 4.904 deg=281.0
+1793234634.777 JOINT 4.782 deg=274.0
+1793234634.810 CONV source=personality v=0.000 capped=False stamp=1793234634.889
+1793234634.875 JOINT 4.712 deg=270.0
+1793234635.177 JOINT 4.660 deg=267.0
+1793234635.352 DOME state=0 owner= prio=0 src= act= id= rem=0 mood=calm dropped=7 refused=0 stamp=1793234635.437
+1793234635.352 LOG dome_arbiter 20 dome: move over, coast scale 1.00 for the next
+1793234635.353 LOG dome_arbiter 20 dome: idle
+1793234635.855 LOG dome_twist_converter 20 Dome command source: idle
+1793234635.856 CONV source=idle v=0.000 capped=False stamp=1793234635.940
+1793234637.252 JOINT 4.660 deg=267.0
+1793234639.277 JOINT 4.660 deg=267.0
+1793234641.378 JOINT 4.660 deg=267.0
+1793234643.481 JOINT 4.660 deg=267.0
+1793234644.439 SENT behavior look_at 100 {"bearing": 1.5, "profile": "lazy"} probe-e6b5c926
+1793234644.450 LOG dome_arbiter 20 intent probe-e6b5c926 accepted: dome look_at  from behavior
+1793234644.457 CONV source=personality v=0.000 capped=False stamp=1793234644.541
+1793234644.457 LOG dome_twist_converter 20 Dome command source: personality
+1793234644.960 CONV source=idle v=0.000 capped=False stamp=1793234645.041
+1793234644.960 LOG dome_twist_converter 20 Dome command source: idle
+1793234645.577 JOINT 4.660 deg=267.0
+1793234647.449 SENT idle glance 10 {"amplitude": 0.6, "dwell_s": 1.0} probe-2a4258ba
+1793234647.463 PERS -0.600
+1793234647.464 LOG dome_arbiter 20 dome: running
+1793234647.464 DOME state=1 owner= prio=0 src=idle act=glance id=probe-2a4258ba rem=9000 mood=calm dropped=7 refused=0 stamp=1793234647.546
+1793234647.464 LOG dome_arbiter 20 intent probe-2a4258ba accepted: dome glance  from idle
+1793234647.562 CONV source=personality v=-0.600 capped=False stamp=1793234647.591
+1793234647.564 CTRL -0.600
+1793234647.564 LOG dome_twist_converter 20 Dome command source: personality
+1793234647.676 JOINT 4.660 deg=267.0
+1793234647.975 JOINT 4.573 deg=262.0
+1793234648.085 JOINT 4.485 deg=257.0
+1793234648.111 PERS 0.000
+1793234648.156 CTRL 0.000
+1793234648.176 JOINT 4.398 deg=252.0
+1793234648.277 JOINT 4.328 deg=248.0
+1793234648.305 CONV source=personality v=0.000 capped=False stamp=1793234648.390
+1793234648.378 JOINT 4.224 deg=242.0
+1793234648.475 JOINT 4.154 deg=238.0
+1793234650.014 PERS 0.600
+1793234650.053 CTRL 0.600
+1793234650.309 CONV source=personality v=0.812 capped=False stamp=1793234650.389
+1793234650.438 SENT behavior look_at 100 {"bearing": -1.5, "profile": "lazy"} probe-0b7d2925
+1793234650.454 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-0b7d2925 rem=8000 mood=calm dropped=7 refused=0 stamp=1793234650.533
+1793234650.454 PERS 0.000
+1793234650.455 CTRL 0.000
+1793234650.455 LOG dome_arbiter 20 intent probe-0b7d2925 accepted: dome look_at  from behavior
+1793234650.475 JOINT 4.119 deg=236.0
+1793234650.578 JOINT 4.171 deg=239.0
+1793234650.819 CONV source=personality v=0.000 capped=False stamp=1793234650.890
+1793234650.820 JOINT 4.241 deg=243.0
+1793234651.261 PERS -0.600
+1793234651.408 CONV source=personality v=-0.600 capped=False stamp=1793234651.390
+1793234651.408 CTRL -0.600
+1793234652.112 JOINT 4.171 deg=239.0
+1793234652.115 JOINT 4.119 deg=236.0
+1793234652.176 JOINT 3.962 deg=227.0
+1793234652.459 JOINT 3.875 deg=222.0
+1793234652.478 JOINT 3.805 deg=218.0
+1793234652.580 JOINT 3.752 deg=215.0
+1793234652.676 JOINT 3.665 deg=210.0
+1793234652.802 JOINT 3.595 deg=206.0
+1793234652.983 JOINT 3.526 deg=202.0
+1793234652.985 JOINT 3.473 deg=199.0
+1793234653.090 JOINT 3.386 deg=194.0
+1793234653.175 JOINT 3.316 deg=190.0
+1793234653.326 JOINT 3.264 deg=187.0
+1793234653.445 SENT idle glance 10 {"amplitude": 0.6, "dwell_s": 1.0} probe-c19db832
+1793234653.503 JOINT 3.194 deg=183.0
+1793234653.504 JOINT 3.124 deg=179.0
+1793234653.511 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-0b7d2925 rem=4937 mood=calm dropped=8 refused=0 stamp=1793234653.595
+1793234653.576 JOINT 3.072 deg=176.0
+1793234653.679 JOINT 2.985 deg=171.0
+1793234653.852 JOINT 2.932 deg=168.0
+1793234653.878 JOINT 2.862 deg=164.0
+1793234654.209 JOINT 2.775 deg=159.0
+1793234654.211 JOINT 2.688 deg=154.0
+1793234654.277 JOINT 2.635 deg=151.0
+1793234654.554 JOINT 2.548 deg=146.0
+1793234654.577 JOINT 2.478 deg=142.0
+1793234654.677 JOINT 2.426 deg=139.0
+1793234654.907 JOINT 2.339 deg=134.0
+1793234655.079 JOINT 2.269 deg=130.0
+1793234655.080 JOINT 2.217 deg=127.0
+1793234655.275 JOINT 2.164 deg=124.0
+1793234655.424 JOINT 2.077 deg=119.0
+1793234655.604 JOINT 2.025 deg=116.0
+1793234655.678 JOINT 1.937 deg=111.0
+1793234655.777 JOINT 1.885 deg=108.0
+1793234655.976 JOINT 1.833 deg=105.0
+1793234656.307 JOINT 1.763 deg=101.0
+1793234656.308 JOINT 1.693 deg=97.0
+1793234656.315 PERS 0.000
+1793234656.354 CTRL 0.000
+1793234656.377 JOINT 1.641 deg=94.0
+1793234656.440 SENT behavior look_at 100 {"bearing": 1.5, "profile": "lazy"} probe-b1f330a9
+1793234656.478 PERS -0.600
+1793234656.480 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-b1f330a9 rem=8000 mood=calm dropped=8 refused=0 stamp=1793234656.559
+1793234656.481 LOG dome_arbiter 20 intent probe-b1f330a9 accepted: dome look_at  from behavior
+1793234656.516 CTRL -0.600
+1793234656.732 JOINT 1.571 deg=90.0
+1793234656.997 JOINT 1.518 deg=87.0
+1793234657.250 JOINT 1.466 deg=84.0
+1793234657.379 JOINT 1.396 deg=80.0
+1793234657.527 JOINT 1.344 deg=77.0
+1793234657.542 DRIVE /cmd_vel_joy lin=0.158 yaw=0.000 moving=True
+1793234657.544 PERS 0.000
+1793234657.545 DOME state=7 owner= prio=0 src= act= id= rem=0 mood=calm dropped=8 refused=0 stamp=1793234657.630
+1793234657.545 LOG dome_arbiter 20 dome: move over, coast scale 1.00 for the next
+1793234657.546 LOG dome_arbiter 20 dome: suppressed
+1793234657.554 CTRL 0.000
+1793234657.648 JOINT 1.274 deg=73.0
+1793234657.681 JOINT 1.222 deg=70.0
+1793234657.806 CONV source=personality v=0.000 capped=False stamp=1793234657.889
+1793234657.876 JOINT 1.169 deg=67.0
+1793234658.047 DRIVE /diff_cont/cmd_vel lin=0.158 yaw=0.009 moving=True
+1793234658.057 CONV source=idle v=0.000 capped=False stamp=1793234658.141
+1793234658.057 LOG dome_twist_converter 20 Dome command source: idle
+1793234658.317 LOG r2_affect 20 stimulus being_driven from drive_stimulus i=0.13: no change -> aro=0.00 val=0.20 cur=0.40 con=0.61 (locked, not applied)
+1793234658.572 DRIVE /diff_cont/cmd_vel lin=0.265 yaw=0.018 moving=True
+1793234658.628 DRIVE /diff_cont/cmd_vel lin=0.133 yaw=0.018 moving=False
+1793234659.438 SENT idle glance 10 {"amplitude": 0.6, "dwell_s": 1.0} probe-6e77f4f2
+1793234659.445 DOME state=7 owner= prio=0 src= act= id= rem=0 mood=calm dropped=9 refused=0 stamp=1793234659.530
+1793234659.637 LOG dome_arbiter 20 dome: idle
+1793234659.638 DOME state=0 owner= prio=0 src= act= id= rem=0 mood=calm dropped=9 refused=0 stamp=1793234659.719
+1793234659.879 JOINT 1.152 deg=66.0
+1793234660.191 DOME state=7 owner= prio=0 src= act= id= rem=0 mood=calm dropped=9 refused=0 stamp=1793234660.275
+1793234660.191 LOG dome_arbiter 20 dome: suppressed
+1793234660.192 DRIVE /diff_cont/cmd_vel lin=0.158 yaw=0.000 moving=True
+1793234660.347 LOG r2_affect 20 stimulus stopped from drive_stimulus i=1.00: no change -> aro=0.00 val=0.20 cur=0.40 con=0.61 (locked, not applied)
+1793234660.743 DRIVE /diff_cont/cmd_vel lin=0.554 yaw=0.075 moving=True
+1793234660.755 LOG r2_affect 20 stimulus being_driven from drive_stimulus i=0.33: no change -> aro=0.00 val=0.20 cur=0.40 con=0.61 (locked, not applied)
+1793234660.881 DRIVE /diff_cont/cmd_vel lin=0.141 yaw=0.075 moving=False
+1793234660.881 DRIVE /cmd_vel_joy lin=0.207 yaw=0.075 moving=True
+1793234660.882 DRIVE /cmd_vel_joy lin=0.141 yaw=0.075 moving=False
+1793234661.941 DOME state=0 owner= prio=0 src= act= id= rem=0 mood=calm dropped=9 refused=0 stamp=1793234662.020
+1793234661.941 LOG dome_arbiter 20 dome: idle
+1793234661.977 JOINT 1.152 deg=66.0
+1793234662.376 DRIVE /diff_cont/cmd_vel lin=0.216 yaw=0.000 moving=True
+1793234662.379 LOG dome_arbiter 20 dome: suppressed
+1793234662.380 DOME state=7 owner= prio=0 src= act= id= rem=0 mood=calm dropped=9 refused=0 stamp=1793234662.466
+1793234662.439 SENT behavior look_at 100 {"bearing": -1.5, "profile": "lazy"} probe-d022aecb
+1793234662.449 DOME state=7 owner= prio=0 src= act= id= rem=0 mood=calm dropped=10 refused=0 stamp=1793234662.532
+1793234662.669 LOG r2_affect 20 stimulus being_driven from drive_stimulus dropped: refractory (2.0 s window; further drops in this window are not logged)
+1793234662.879 DRIVE /diff_cont/cmd_vel lin=0.505 yaw=0.059 moving=True
+1793234662.967 DRIVE /diff_cont/cmd_vel lin=0.133 yaw=0.067 moving=False
+1793234663.681 LOG r2_affect 20 stimulus being_driven from drive_stimulus i=0.39: no change -> aro=0.00 val=0.20 cur=0.40 con=0.61 (locked, not applied)
+1793234663.979 DOME state=0 owner= prio=0 src= act= id= rem=0 mood=calm dropped=10 refused=0 stamp=1793234664.062
+1793234663.979 LOG dome_arbiter 20 dome: idle
+1793234664.077 JOINT 1.152 deg=66.0
+1793234664.866 LOG r2_affect 20 stimulus stopped from drive_stimulus i=1.00: no change -> aro=0.00 val=0.20 cur=0.40 con=0.61 (locked, not applied)
+1793234665.440 SENT idle glance 10 {"amplitude": 0.6, "dwell_s": 1.0} probe-9918063f
+1793234665.454 DOME state=1 owner= prio=0 src=idle act=glance id=probe-9918063f rem=9000 mood=calm dropped=10 refused=0 stamp=1793234665.537
+1793234665.455 PERS -0.600
+1793234665.455 LOG dome_arbiter 20 dome: running
+1793234665.456 LOG dome_arbiter 20 intent probe-9918063f accepted: dome glance  from idle
+1793234665.457 CONV source=personality v=-0.600 capped=False stamp=1793234665.542
+1793234665.458 CTRL -0.600
+1793234665.458 LOG dome_twist_converter 20 Dome command source: personality
+1793234665.975 JOINT 1.030 deg=59.0
+1793234666.002 PERS 0.000
+1793234666.004 CTRL 0.000
+1793234666.075 JOINT 0.960 deg=55.0
+1793234666.175 JOINT 0.908 deg=52.0
+1793234666.306 CONV source=personality v=0.000 capped=False stamp=1793234666.389
+1793234666.476 JOINT 0.855 deg=49.0
+1793234666.802 PERS -0.600
+1793234666.804 CONV source=personality v=-0.600 capped=False stamp=1793234666.889
+1793234666.804 CTRL -0.600
+1793234667.176 JOINT 0.768 deg=44.0
+1793234667.352 PERS 0.000
+1793234667.354 CTRL 0.000
+1793234667.375 JOINT 0.646 deg=37.0
+1793234667.485 JOINT 0.541 deg=31.0
+1793234667.676 JOINT 0.401 deg=23.0
+1793234667.805 CONV source=personality v=0.000 capped=False stamp=1793234667.889
+1793234668.155 PERS 0.600
+1793234668.156 CTRL 0.600
+1793234668.302 PERS 0.000
+1793234668.304 CTRL 0.000
+1793234668.438 SENT behavior look_at 100 {"bearing": 1.5, "profile": "lazy"} probe-591f57d7
+1793234668.534 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-591f57d7 rem=8000 mood=calm dropped=10 refused=0 stamp=1793234668.618
+1793234668.534 PERS -0.600
+1793234668.534 LOG dome_arbiter 20 intent probe-591f57d7 accepted: dome look_at  from behavior
+1793234668.554 CTRL -0.600
+1793234668.806 CONV source=personality v=-0.600 capped=False stamp=1793234668.890
+1793234669.075 JOINT 0.314 deg=18.0
+1793234669.176 JOINT 0.192 deg=11.0
+1793234669.376 JOINT 0.017 deg=1.0
+1793234669.475 JOINT 6.231 deg=357.0
+1793234669.584 JOINT 6.091 deg=349.0
+1793234669.679 JOINT 6.039 deg=346.0
+1793234669.860 JOINT 5.917 deg=339.0
+1793234669.876 JOINT 5.760 deg=330.0
+1793234670.106 JOINT 5.533 deg=317.0
+1793234670.218 JOINT 5.463 deg=313.0
+1793234670.353 JOINT 5.358 deg=307.0
+1793234670.380 JOINT 5.236 deg=300.0
+1793234670.475 JOINT 5.096 deg=292.0
+1793234670.505 PERS 0.000
+1793234670.506 CTRL 0.000
+1793234670.630 JOINT 5.009 deg=287.0
+1793234670.806 CONV source=personality v=0.000 capped=False stamp=1793234670.889
+1793234670.806 JOINT 4.904 deg=281.0
+1793234670.807 JOINT 4.765 deg=273.0
+1793234670.983 JOINT 4.712 deg=270.0
+1793234671.152 JOINT 4.660 deg=267.0
+1793234671.341 LOG dome_arbiter 20 dome: move over, coast scale 1.00 for the next
+1793234671.341 DOME state=0 owner= prio=0 src= act= id= rem=0 mood=calm dropped=10 refused=0 stamp=1793234671.389
+1793234671.341 LOG dome_arbiter 20 dome: idle
+1793234671.439 SENT idle glance 10 {"amplitude": 0.6, "dwell_s": 1.0} probe-03d35e7b
+1793234671.451 DOME state=1 owner= prio=0 src=idle act=glance id=probe-03d35e7b rem=9000 mood=calm dropped=10 refused=0 stamp=1793234671.535
+1793234671.452 PERS 0.600
+1793234671.452 LOG dome_arbiter 20 dome: running
+1793234671.452 LOG dome_arbiter 20 intent probe-03d35e7b accepted: dome glance  from idle
+1793234671.456 CTRL 0.600
+1793234671.859 CONV source=personality v=0.900 capped=False stamp=1793234671.890
+1793234671.974 JOINT 4.730 deg=271.0
+1793234672.048 PERS 0.000
+1793234672.054 CTRL 0.000
+1793234672.077 JOINT 4.782 deg=274.0
+1793234672.201 JOINT 4.869 deg=279.0
+1793234672.380 CONV source=personality v=0.000 capped=False stamp=1793234672.389
+1793234672.381 JOINT 4.939 deg=283.0
+1793234672.475 JOINT 5.009 deg=287.0
+1793234672.906 PERS 0.600
+1793234672.906 CTRL 0.600
+1793234673.252 PERS 0.000
+1793234673.253 CTRL 0.000
+1793234673.474 JOINT 5.061 deg=290.0
+1793234674.130 PERS 0.600
+1793234674.131 CTRL 0.600
+1793234674.150 PERS 0.000
+1793234674.153 CTRL 0.000
+1793234674.441 SENT behavior look_at 100 {"bearing": -1.5, "profile": "lazy"} probe-ac0edd91
+1793234674.480 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-ac0edd91 rem=8000 mood=calm dropped=10 refused=0 stamp=1793234674.564
+1793234674.480 JOINT 5.131 deg=294.0
+1793234674.480 LOG dome_arbiter 20 intent probe-ac0edd91 accepted: dome look_at  from behavior
+1793234674.481 PERS 0.600
+1793234674.505 CTRL 0.600
+1793234674.822 CONV source=personality v=0.600 capped=False stamp=1793234674.890
+1793234675.179 JOINT 5.201 deg=298.0
+1793234675.180 JOINT 5.253 deg=301.0
+1793234675.350 JOINT 5.306 deg=304.0
+1793234675.376 JOINT 5.358 deg=307.0
+1793234675.530 JOINT 5.428 deg=311.0
+1793234675.675 JOINT 4.835 deg=277.0
+1793234675.977 JOINT 5.760 deg=330.0
+1793234676.396 JOINT 5.829 deg=334.0
+1793234676.524 JOINT 5.899 deg=338.0
+1793234676.678 JOINT 5.969 deg=342.0
+1793234677.050 JOINT 6.091 deg=349.0
+1793234677.076 JOINT 6.144 deg=352.0
+1793234677.446 SENT idle glance 10 {"amplitude": 0.6, "dwell_s": 1.0} probe-3d2b45df
+1793234677.454 JOINT 6.231 deg=357.0
+1793234677.458 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-ac0edd91 rem=5021 mood=calm dropped=11 refused=0 stamp=1793234677.543
+1793234677.474 JOINT 4.817 deg=276.0
+1793234677.575 JOINT 0.122 deg=7.0
+1793234677.876 JOINT 0.209 deg=12.0
+1793234677.978 JOINT 0.262 deg=15.0
+1793234678.187 JOINT 0.367 deg=21.0
+1793234678.377 JOINT 0.489 deg=28.0
+1793234678.578 JOINT 0.559 deg=32.0
+1793234678.776 JOINT 0.628 deg=36.0
+1793234678.874 JOINT 0.698 deg=40.0
+1793234679.021 JOINT 0.768 deg=44.0
+1793234679.076 JOINT 0.820 deg=47.0
+1793234679.179 JOINT 0.873 deg=50.0
+1793234679.377 JOINT 0.960 deg=55.0
+1793234679.545 JOINT 1.030 deg=59.0
+1793234679.676 JOINT 1.117 deg=64.0
+1793234679.778 JOINT 1.169 deg=67.0
+1793234679.875 JOINT 1.239 deg=71.0
+1793234679.900 PERS 0.000
+1793234679.904 CTRL 0.000
+1793234680.074 JOINT 1.292 deg=74.0
+1793234680.308 CONV source=personality v=0.000 capped=False stamp=1793234680.390
+1793234680.377 JOINT 1.344 deg=77.0
+1793234680.439 SENT behavior look_at 100 {"bearing": 1.5, "profile": "lazy"} probe-dc902664
+1793234680.446 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-dc902664 rem=8000 mood=calm dropped=11 refused=0 stamp=1793234680.531
+1793234680.447 PERS -0.600
+1793234680.447 LOG dome_arbiter 20 intent probe-dc902664 accepted: dome look_at  from behavior
+1793234680.453 CTRL -0.600
+1793234680.677 JOINT 1.396 deg=80.0
+1793234680.808 CONV source=personality v=-0.600 capped=False stamp=1793234680.890
+1793234680.976 JOINT 1.344 deg=77.0
+1793234681.117 JOINT 1.274 deg=73.0
+1793234681.177 JOINT 1.222 deg=70.0
+1793234681.276 JOINT 1.169 deg=67.0
+1793234681.375 JOINT 1.100 deg=63.0
+1793234681.474 JOINT 1.030 deg=59.0
+1793234681.643 JOINT 0.960 deg=55.0
+1793234681.676 JOINT 0.890 deg=51.0
+1793234681.776 JOINT 0.820 deg=47.0
+1793234681.875 JOINT 0.698 deg=40.0
+1793234681.974 JOINT 0.576 deg=33.0
+1793234682.165 JOINT 0.506 deg=29.0
+1793234682.174 JOINT 0.419 deg=24.0
+1793234682.277 JOINT 0.297 deg=17.0
+1793234682.379 JOINT 0.192 deg=11.0
+1793234682.476 JOINT 0.035 deg=2.0
+1793234682.690 JOINT 6.126 deg=351.0
+1793234682.778 JOINT 6.056 deg=347.0
+1793234682.876 JOINT 5.952 deg=341.0
+1793234682.974 JOINT 5.760 deg=330.0
+1793234683.074 JOINT 5.620 deg=322.0
+1793234683.213 JOINT 4.852 deg=278.0
+1793234683.276 JOINT 5.445 deg=312.0
+1793234683.377 JOINT 5.341 deg=306.0
+1793234683.437 SENT idle glance 10 {"amplitude": 0.6, "dwell_s": 1.0} probe-d4ce24ff
+1793234683.444 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-dc902664 rem=5002 mood=calm dropped=12 refused=0 stamp=1793234683.529
+1793234683.476 JOINT 5.219 deg=299.0
+1793234683.574 JOINT 5.096 deg=292.0
+1793234683.601 PERS 0.000
+1793234683.605 CTRL 0.000
+1793234683.737 JOINT 4.957 deg=284.0
+1793234683.776 JOINT 4.887 deg=280.0
+1793234683.806 CONV source=personality v=0.000 capped=False stamp=1793234683.889
+1793234683.876 JOINT 4.765 deg=273.0
+1793234683.978 JOINT 4.712 deg=270.0
+1793234684.450 LOG dome_arbiter 20 dome: move over, coast scale 1.00 for the next
+1793234684.453 DOME state=0 owner= prio=0 src= act= id= rem=0 mood=calm dropped=12 refused=0 stamp=1793234684.536
+1793234684.453 LOG dome_arbiter 20 dome: idle
+1793234684.959 CONV source=idle v=0.000 capped=False stamp=1793234685.040
+1793234684.959 LOG dome_twist_converter 20 Dome command source: idle
+1793234686.077 JOINT 4.677 deg=268.0
+1793234688.175 JOINT 4.677 deg=268.0
+1793234690.204 JOINT 4.677 deg=268.0
+1793234692.308 JOINT 4.677 deg=268.0
+1793234694.401 JOINT 4.677 deg=268.0
+1793234696.476 JOINT 4.677 deg=268.0
+1793234698.477 JOINT 4.677 deg=268.0
+1793234700.515 JOINT 4.677 deg=268.0
+1793234702.609 JOINT 4.677 deg=268.0
+1793234704.478 PERS 0.600
+1793234704.479 DOME state=1 owner= prio=0 src=idle act=glance id=glance-13 rem=9155 mood=calm dropped=12 refused=0 stamp=1793234704.563
+1793234704.479 LOG dome_arbiter 20 dome: running
+1793234704.506 CONV source=personality v=0.600 capped=False stamp=1793234704.590
+1793234704.509 CTRL 0.600
+1793234704.509 LOG dome_twist_converter 20 Dome command source: personality
+1793234704.714 JOINT 4.677 deg=268.0
+1793234704.974 JOINT 4.730 deg=271.0
+1793234705.075 JOINT 4.782 deg=274.0
+1793234705.234 JOINT 4.869 deg=279.0
+1793234705.235 PERS 0.000
+1793234705.255 CTRL 0.000
+1793234705.277 JOINT 4.957 deg=284.0
+1793234705.306 CONV source=personality v=0.000 capped=False stamp=1793234705.390
+1793234705.376 JOINT 5.061 deg=290.0
+1793234705.474 JOINT 5.131 deg=294.0
+1793234705.574 JOINT 5.219 deg=299.0
+1793234705.775 JOINT 5.271 deg=302.0
+1793234707.226 PERS -0.600
+1793234707.328 CONV source=personality v=-0.675 capped=False stamp=1793234707.389
+1793234707.329 CTRL -0.600
+1793234707.855 JOINT 5.201 deg=298.0
+1793234707.878 JOINT 5.079 deg=291.0
+1793234707.878 PERS 0.000
+=== pass 2 manual looks 00:45:07
+1793234707.992 CTRL 0.000
+1793234707.993 JOINT 4.957 deg=284.0
+1793234708.043 SENT manual look_at 199 {"bearing": 1.5, "profile": "lazy"} probe-3a1bf8a4
+1793234708.129 JOINT 4.869 deg=279.0
+1793234708.131 DOME state=1 owner=manual prio=199 src=manual act=look_at id=probe-3a1bf8a4 rem=8000 mood=calm dropped=12 refused=0 stamp=1793234708.216
+1793234708.131 LOG dome_arbiter 20 intent probe-3a1bf8a4 accepted: dome look_at  from manual
+1793234708.175 JOINT 4.765 deg=273.0
+1793234708.375 CONV source=personality v=0.000 capped=False stamp=1793234708.390
+1793234708.558 JOINT 4.712 deg=270.0
+1793234708.582 LOG dome_arbiter 20 dome: move over, coast scale 1.00 for the next
+1793234708.586 DOME state=2 owner=manual prio=199 src= act= id= rem=0 mood=calm dropped=12 refused=0 stamp=1793234708.671
+1793234708.586 LOG dome_arbiter 20 dome: claimed (manual)
+1793234709.105 CONV source=idle v=0.000 capped=False stamp=1793234709.190
+1793234709.105 LOG dome_twist_converter 20 Dome command source: idle
+1793234710.440 SENT idle glance 10 {"amplitude": 0.6, "dwell_s": 1.0} probe-ab63d12e
+1793234710.480 DOME state=2 owner=manual prio=199 src= act= id= rem=0 mood=calm dropped=13 refused=0 stamp=1793234710.564
+1793234710.653 JOINT 4.712 deg=270.0
+1793234712.750 JOINT 4.712 deg=270.0
+1793234713.042 SENT manual look_at 199 {"bearing": -1.5, "profile": "lazy"} probe-145b2234
+1793234713.100 DOME state=1 owner=manual prio=199 src=manual act=look_at id=probe-145b2234 rem=8000 mood=calm dropped=13 refused=0 stamp=1793234713.184
+1793234713.101 PERS 0.600
+1793234713.102 LOG dome_arbiter 20 dome: running (manual)
+1793234713.102 LOG dome_arbiter 20 intent probe-145b2234 accepted: dome look_at  from manual
+1793234713.113 CONV source=personality v=0.600 capped=False stamp=1793234713.193
+1793234713.114 CTRL 0.600
+1793234713.114 LOG dome_twist_converter 20 Dome command source: personality
+1793234713.776 JOINT 4.800 deg=275.0
+1793234714.004 JOINT 4.939 deg=283.0
+1793234714.147 JOINT 5.009 deg=287.0
+1793234714.277 JOINT 5.131 deg=294.0
+1793234714.399 JOINT 5.201 deg=298.0
+1793234714.474 JOINT 5.253 deg=301.0
+1793234714.575 JOINT 5.323 deg=305.0
+1793234714.675 JOINT 5.393 deg=309.0
+1793234714.799 JOINT 5.463 deg=313.0
+1793234714.899 JOINT 5.533 deg=317.0
+1793234714.977 JOINT 4.852 deg=278.0
+1793234715.194 JOINT 5.672 deg=325.0
+1793234715.274 JOINT 5.777 deg=331.0
+1793234715.438 SENT idle glance 10 {"amplitude": 0.6, "dwell_s": 1.0} probe-b22ddf63
+1793234715.446 DOME state=1 owner=manual prio=199 src=manual act=look_at id=probe-145b2234 rem=5652 mood=calm dropped=14 refused=0 stamp=1793234715.531
+1793234715.577 JOINT 5.829 deg=334.0
+1793234715.718 JOINT 5.899 deg=338.0
+1793234715.776 JOINT 5.952 deg=341.0
+1793234716.075 JOINT 6.039 deg=346.0
+1793234716.243 JOINT 6.126 deg=351.0
+1793234716.477 JOINT 6.196 deg=355.0
+1793234716.575 JOINT 0.035 deg=2.0
+1793234716.677 JOINT 0.122 deg=7.0
+1793234716.977 JOINT 0.192 deg=11.0
+1793234717.176 JOINT 0.262 deg=15.0
+1793234717.292 JOINT 0.332 deg=19.0
+1793234717.375 JOINT 0.384 deg=22.0
+1793234717.474 JOINT 0.436 deg=25.0
+1793234717.576 JOINT 0.506 deg=29.0
+1793234717.815 JOINT 0.593 deg=34.0
+1793234717.878 JOINT 0.646 deg=37.0
+1793234717.977 JOINT 0.733 deg=42.0
+1793234718.040 SENT manual look_at 199 {"bearing": 1.5, "profile": "lazy"} probe-1ad7ea30
+1793234718.053 DOME state=1 owner=manual prio=199 src=manual act=look_at id=probe-1ad7ea30 rem=8000 mood=calm dropped=14 refused=0 stamp=1793234718.133
+1793234718.054 PERS 0.000
+1793234718.054 CTRL 0.000
+1793234718.054 LOG dome_arbiter 20 intent probe-1ad7ea30 accepted: dome look_at  from manual
+1793234718.174 JOINT 0.855 deg=49.0
+1793234718.341 CONV source=personality v=0.000 capped=False stamp=1793234718.389
+1793234718.863 PERS -0.600
+1793234718.863 CTRL -0.600
+1793234719.387 CONV source=personality v=-0.600 capped=False stamp=1793234719.390
+1793234719.476 JOINT 0.785 deg=45.0
+1793234719.575 JOINT 0.681 deg=39.0
+1793234719.675 JOINT 0.576 deg=33.0
+1793234719.775 JOINT 0.506 deg=29.0
+1793234719.915 JOINT 0.419 deg=24.0
+1793234719.976 JOINT 0.314 deg=18.0
+1793234720.078 JOINT 0.192 deg=11.0
+1793234720.176 JOINT 0.017 deg=1.0
+1793234720.438 JOINT 6.109 deg=350.0
+1793234720.476 JOINT 6.056 deg=347.0
+1793234720.574 JOINT 5.969 deg=342.0
+1793234720.639 SENT idle glance 10 {"amplitude": 0.6, "dwell_s": 1.0} probe-621b2fb8
+1793234720.651 DOME state=1 owner=manual prio=199 src=manual act=look_at id=probe-1ad7ea30 rem=5397 mood=calm dropped=15 refused=0 stamp=1793234720.735
+1793234720.676 JOINT 5.864 deg=336.0
+1793234720.776 JOINT 5.742 deg=329.0
+1793234720.962 JOINT 5.533 deg=317.0
+1793234720.975 JOINT 5.480 deg=314.0
+1793234721.077 JOINT 5.376 deg=308.0
+1793234721.174 JOINT 5.236 deg=300.0
+1793234721.278 JOINT 5.166 deg=296.0
+1793234721.376 JOINT 5.027 deg=288.0
+1793234721.485 PERS 0.000
+1793234721.486 CTRL 0.000
+1793234721.486 JOINT 4.904 deg=281.0
+1793234721.581 JOINT 4.765 deg=273.0
+1793234721.675 JOINT 4.695 deg=269.0
+1793234721.805 CONV source=personality v=0.000 capped=False stamp=1793234721.890
+1793234721.875 JOINT 4.643 deg=266.0
+1793234722.249 PERS 0.600
+1793234722.254 CTRL 0.600
+1793234722.304 CONV source=personality v=0.600 capped=False stamp=1793234722.390
+1793234722.399 PERS 0.000
+1793234722.406 CTRL 0.000
+1793234722.547 DRIVE /diff_cont/cmd_vel lin=0.174 yaw=0.026 moving=True
+1793234722.549 LOG dome_arbiter 20 dome: move over, coast scale 1.00 for the next
+1793234722.549 DOME state=7 owner=manual prio=199 src= act= id= rem=0 mood=calm dropped=15 refused=0 stamp=1793234722.634
+1793234722.549 LOG dome_arbiter 20 dome: suppressed (manual)
+1793234722.810 CONV source=personality v=0.000 capped=False stamp=1793234722.890
+1793234723.043 SENT manual look_at 199 {"bearing": -1.5, "profile": "lazy"} probe-2cf3e819
+1793234723.060 DRIVE /diff_cont/cmd_vel lin=0.191 yaw=0.059 moving=True
+1793234723.062 CONV source=idle v=0.000 capped=False stamp=1793234723.141
+1793234723.062 PERS -0.600
+1793234723.062 LOG dome_twist_converter 20 Dome command source: idle
+1793234723.064 DOME state=7 owner=manual prio=199 src=manual act=look_at id=probe-2cf3e819 rem=8000 mood=calm dropped=15 refused=0 stamp=1793234723.147
+1793234723.065 LOG dome_arbiter 20 intent probe-2cf3e819 accepted: dome look_at  from manual
+1793234723.105 CONV source=personality v=-0.600 capped=False stamp=1793234723.190
+1793234723.106 CTRL -0.600
+1793234723.106 LOG dome_twist_converter 20 Dome command source: personality
+1793234723.278 LOG r2_affect 20 stimulus being_driven from drive_stimulus i=0.14: no change -> aro=0.00 val=0.20 cur=0.40 con=0.61 (locked, not applied)
+1793234723.294 DRIVE /diff_cont/cmd_vel lin=0.150 yaw=0.133 moving=False
+1793234723.475 JOINT 4.573 deg=262.0
+1793234723.678 JOINT 4.485 deg=257.0
+1793234723.775 JOINT 4.381 deg=251.0
+1793234723.880 DRIVE /diff_cont/cmd_vel lin=0.430 yaw=0.092 moving=True
+1793234723.975 JOINT 4.259 deg=244.0
+1793234724.106 JOINT 4.189 deg=240.0
+1793234724.175 JOINT 4.119 deg=236.0
+1793234724.276 JOINT 3.962 deg=227.0
+1793234724.291 LOG r2_affect 20 stimulus being_driven from drive_stimulus dropped: refractory (2.0 s window; further drops in this window are not logged)
+1793234724.380 DRIVE /diff_cont/cmd_vel lin=0.769 yaw=0.273 moving=True
+1793234724.476 JOINT 3.875 deg=222.0
+1793234724.635 JOINT 3.787 deg=217.0
+1793234724.642 DRIVE /diff_cont/cmd_vel lin=0.000 yaw=0.000 moving=False
+1793234724.744 DRIVE /cmd_vel_joy lin=0.158 yaw=0.026 moving=True
+1793234724.785 JOINT 3.648 deg=209.0
+1793234724.878 JOINT 3.560 deg=204.0
+1793234724.976 JOINT 3.508 deg=201.0
+1793234725.157 JOINT 3.438 deg=197.0
+1793234725.177 JOINT 3.386 deg=194.0
+1793234725.276 JOINT 3.299 deg=189.0
+1793234725.286 DRIVE /diff_cont/cmd_vel lin=0.513 yaw=0.174 moving=True
+1793234725.308 LOG r2_affect 20 stimulus being_driven from drive_stimulus i=0.53: no change -> aro=0.00 val=0.20 cur=0.40 con=0.61 (locked, not applied)
+1793234725.376 JOINT 3.246 deg=186.0
+1793234725.476 JOINT 3.194 deg=183.0
+1793234725.575 JOINT 3.142 deg=180.0
+1793234725.640 SENT idle glance 10 {"amplitude": 0.6, "dwell_s": 1.0} probe-d1ddd91a
+1793234725.688 JOINT 3.072 deg=176.0
+1793234725.689 DOME state=7 owner=manual prio=199 src=manual act=look_at id=probe-2cf3e819 rem=5373 mood=calm dropped=16 refused=0 stamp=1793234725.772
+1793234725.690 DRIVE /diff_cont/cmd_vel lin=0.133 yaw=0.108 moving=False
+1793234725.777 JOINT 2.985 deg=171.0
+1793234725.785 DRIVE /cmd_vel_joy lin=0.158 yaw=0.034 moving=True
+1793234725.877 JOINT 2.932 deg=168.0
+1793234725.967 DRIVE /diff_cont/cmd_vel lin=0.150 yaw=0.059 moving=False
+1793234725.975 JOINT 2.845 deg=163.0
+1793234726.076 JOINT 2.793 deg=160.0
+1793234726.206 JOINT 2.705 deg=155.0
+1793234726.234 DRIVE /cmd_vel_joy lin=0.183 yaw=0.051 moving=True
+1793234726.238 DRIVE /diff_cont/cmd_vel lin=0.100 yaw=0.051 moving=False
+1793234726.239 DRIVE /diff_cont/cmd_vel lin=0.183 yaw=0.051 moving=True
+1793234726.300 JOINT 2.618 deg=150.0
+1793234726.453 LOG r2_affect 20 stimulus being_driven from drive_stimulus dropped: refractory (2.0 s window; further drops in this window are not logged)
+1793234726.554 JOINT 2.513 deg=144.0
+1793234726.577 JOINT 2.426 deg=139.0
+1793234726.728 JOINT 2.356 deg=135.0
+1793234726.744 DRIVE /cmd_vel_joy lin=0.620 yaw=0.249 moving=True
+1793234726.840 JOINT 2.286 deg=131.0
+1793234726.983 JOINT 2.234 deg=128.0
+1793234726.989 DRIVE /diff_cont/cmd_vel lin=0.141 yaw=0.207 moving=False
+1793234727.077 JOINT 2.112 deg=121.0
+1793234727.251 JOINT 2.059 deg=118.0
+1793234727.277 JOINT 2.007 deg=115.0
+1793234727.441 LOG r2_affect 20 stimulus being_driven from drive_stimulus i=0.51: no change -> aro=0.00 val=0.20 cur=0.40 con=0.61 (locked, not applied)
+1793234727.609 JOINT 1.868 deg=107.0
+1793234727.614 DRIVE /diff_cont/cmd_vel lin=0.051 yaw=0.422 moving=True
+1793234727.614 PERS 0.000
+1793234727.615 CTRL 0.000
+1793234727.781 JOINT 1.798 deg=103.0
+1793234727.816 CONV source=personality v=0.000 capped=False stamp=1793234727.890
+1793234727.957 JOINT 1.745 deg=100.0
+1793234728.045 SENT manual look_at 199 {"bearing": 1.5, "profile": "lazy"} probe-bf8fb43d
+1793234728.055 DOME state=7 owner=manual prio=199 src=manual act=look_at id=probe-bf8fb43d rem=8000 mood=calm dropped=16 refused=0 stamp=1793234728.140
+1793234728.056 PERS 0.600
+1793234728.064 LOG dome_arbiter 20 intent probe-bf8fb43d accepted: dome look_at  from manual
+1793234728.108 CTRL 0.600
+1793234728.117 DRIVE /diff_cont/cmd_vel lin=0.397 yaw=0.562 moving=True
+1793234728.312 CONV source=personality v=0.600 capped=False stamp=1793234728.390
+1793234728.482 DRIVE /diff_cont/cmd_vel lin=0.059 yaw=0.273 moving=False
+1793234728.486 JOINT 1.798 deg=103.0
+1793234728.487 LOG r2_affect 20 stimulus being_driven from drive_stimulus dropped: refractory (2.0 s window; further drops in this window are not logged)
+1793234728.590 JOINT 1.868 deg=107.0
+1793234728.675 JOINT 1.937 deg=111.0
+1793234728.825 JOINT 1.990 deg=114.0
+1793234728.868 DRIVE /diff_cont/cmd_vel lin=0.000 yaw=0.307 moving=True
+1793234729.003 JOINT 2.094 deg=120.0
+1793234729.076 JOINT 2.199 deg=126.0
+1793234729.098 DRIVE /diff_cont/cmd_vel lin=0.108 yaw=0.290 moving=False
+1793234729.175 JOINT 2.304 deg=132.0
+1793234729.228 DRIVE /diff_cont/cmd_vel lin=0.158 yaw=0.026 moving=True
+1793234729.350 JOINT 2.426 deg=139.0
+1793234729.380 JOINT 2.513 deg=144.0
+1793234729.530 JOINT 2.618 deg=150.0
+1793234729.532 LOG r2_affect 20 stimulus being_driven from drive_stimulus i=0.30: no change -> aro=0.00 val=0.20 cur=0.40 con=0.61 (locked, not applied)
+1793234729.706 JOINT 2.670 deg=153.0
+1793234729.708 JOINT 2.740 deg=157.0
+1793234729.747 DRIVE /diff_cont/cmd_vel lin=0.860 yaw=0.191 moving=True
+1793234729.775 JOINT 2.827 deg=162.0
+1793234729.882 JOINT 2.932 deg=168.0
+1793234729.884 DRIVE /diff_cont/cmd_vel lin=0.150 yaw=0.059 moving=False
+1793234730.055 JOINT 3.037 deg=174.0
+1793234730.078 JOINT 3.176 deg=182.0
+1793234730.177 JOINT 3.316 deg=190.0
+1793234730.276 JOINT 3.421 deg=196.0
+1793234730.396 JOINT 3.560 deg=204.0
+1793234730.399 DRIVE /diff_cont/cmd_vel lin=0.216 yaw=0.273 moving=True
+1793234730.575 JOINT 3.665 deg=210.0
+1793234730.575 LOG r2_affect 20 stimulus being_driven from drive_stimulus dropped: refractory (2.0 s window; further drops in this window are not logged)
+1793234730.576 JOINT 3.805 deg=218.0
+1793234730.640 SENT idle glance 10 {"amplitude": 0.6, "dwell_s": 1.0} probe-48966eba
+1793234730.754 JOINT 3.927 deg=225.0
+1793234730.761 DOME state=7 owner=manual prio=199 src=manual act=look_at id=probe-bf8fb43d rem=5298 mood=calm dropped=17 refused=0 stamp=1793234730.840
+1793234730.927 JOINT 4.189 deg=240.0
+1793234730.927 DRIVE /diff_cont/cmd_vel lin=0.480 yaw=0.364 moving=True
+1793234731.101 JOINT 4.311 deg=247.0
+1793234731.103 JOINT 4.398 deg=252.0
+1793234731.137 DRIVE /diff_cont/cmd_vel lin=0.141 yaw=0.207 moving=False
+1793234731.176 JOINT 4.538 deg=260.0
+1793234731.215 PERS 0.000
+1793234731.257 CTRL 0.000
+1793234731.280 JOINT 4.695 deg=269.0
+1793234731.315 CONV source=personality v=0.000 capped=False stamp=1793234731.390
+1793234731.446 JOINT 4.747 deg=272.0
+1793234731.451 DRIVE /diff_cont/cmd_vel lin=0.166 yaw=0.051 moving=True
+1793234731.476 JOINT 4.835 deg=277.0
+1793234731.486 LOG r2_affect 20 stimulus being_driven from drive_stimulus i=0.40: no change -> aro=0.00 val=0.20 cur=0.40 con=0.61 (locked, not applied)
+1793234731.624 JOINT 4.887 deg=280.0
+1793234731.807 JOINT 4.939 deg=283.0
+1793234731.972 DRIVE /diff_cont/cmd_vel lin=0.455 yaw=0.290 moving=True
+1793234732.014 PERS -0.600
+1793234732.152 CTRL -0.600
+1793234732.225 PERS 0.000
+1793234732.257 CTRL 0.000
+1793234732.501 DRIVE /diff_cont/cmd_vel lin=0.463 yaw=0.273 moving=True
+1793234732.503 LOG r2_affect 20 stimulus being_driven from drive_stimulus dropped: refractory (2.0 s window; further drops in this window are not logged)
+1793234732.505 DRIVE /diff_cont/cmd_vel lin=0.067 yaw=0.075 moving=False
+1793234732.757 DRIVE /diff_cont/cmd_vel lin=0.158 yaw=0.000 moving=True
+1793234733.038 SENT manual look_at 199 {"bearing": -1.5, "profile": "lazy"} probe-20a669f0
+1793234733.047 DOME state=7 owner=manual prio=199 src=manual act=look_at id=probe-20a669f0 rem=8000 mood=calm dropped=17 refused=0 stamp=1793234733.132
+1793234733.047 PERS 0.600
+1793234733.047 LOG dome_arbiter 20 intent probe-20a669f0 accepted: dome look_at  from manual
+1793234733.059 CTRL 0.600
+1793234733.275 DRIVE /diff_cont/cmd_vel lin=0.381 yaw=0.051 moving=True
+1793234733.306 CONV source=personality v=0.600 capped=False stamp=1793234733.389
+1793234733.558 LOG r2_affect 20 stimulus being_driven from drive_stimulus i=0.48: no change -> aro=0.00 val=0.20 cur=0.40 con=0.61 (locked, not applied)
+1793234733.770 DRIVE /diff_cont/cmd_vel lin=0.141 yaw=0.067 moving=False
+1793234733.776 JOINT 5.009 deg=287.0
+1793234733.876 JOINT 5.061 deg=290.0
+1793234733.976 JOINT 5.131 deg=294.0
+1793234734.079 JOINT 5.201 deg=298.0
+1793234734.183 JOINT 5.288 deg=303.0
+1793234734.376 JOINT 5.428 deg=311.0
+1793234734.393 DRIVE /diff_cont/cmd_vel lin=0.199 yaw=0.009 moving=True
+1793234734.477 JOINT 5.480 deg=314.0
+1793234734.594 JOINT 4.835 deg=277.0
+1793234734.597 LOG r2_affect 20 stimulus being_driven from drive_stimulus dropped: refractory (2.0 s window; further drops in this window are not logged)
+1793234734.689 JOINT 4.887 deg=280.0
+1793234734.776 JOINT 5.672 deg=325.0
+1793234734.876 JOINT 5.760 deg=330.0
+1793234734.923 DRIVE /diff_cont/cmd_vel lin=0.719 yaw=0.150 moving=True
+1793234735.119 JOINT 5.829 deg=334.0
+1793234735.175 JOINT 5.952 deg=341.0
+1793234735.233 DRIVE /diff_cont/cmd_vel lin=0.150 yaw=0.084 moving=False
+1793234735.375 JOINT 6.039 deg=346.0
+1793234735.442 DRIVE /diff_cont/cmd_vel lin=0.166 yaw=0.000 moving=True
+1793234735.479 JOINT 6.144 deg=352.0
+1793234735.528 LOG r2_affect 20 stimulus being_driven from drive_stimulus i=0.60: no change -> aro=0.00 val=0.20 cur=0.40 con=0.61 (locked, not applied)
+1793234735.642 SENT idle glance 10 {"amplitude": 0.6, "dwell_s": 1.0} probe-69941e34
+1793234735.656 DOME state=7 owner=manual prio=199 src=manual act=look_at id=probe-20a669f0 rem=5392 mood=calm dropped=18 refused=0 stamp=1793234735.740
+1793234735.677 JOINT 6.196 deg=355.0
+1793234735.775 JOINT 0.035 deg=2.0
+1793234735.890 JOINT 4.817 deg=276.0
+1793234735.949 DRIVE /diff_cont/cmd_vel lin=0.595 yaw=0.000 moving=True
+1793234735.974 JOINT 0.122 deg=7.0
+1793234736.275 JOINT 0.192 deg=11.0
+1793234736.375 JOINT 0.244 deg=14.0
+1793234736.456 DRIVE /diff_cont/cmd_vel lin=0.422 yaw=0.042 moving=True
+1793234736.522 DRIVE /diff_cont/cmd_vel lin=0.133 yaw=0.042 moving=False
+1793234736.540 LOG r2_affect 20 stimulus being_driven from drive_stimulus dropped: refractory (2.0 s window; further drops in this window are not logged)
+1793234736.577 JOINT 0.367 deg=21.0
+1793234736.775 JOINT 0.436 deg=25.0
+1793234736.976 JOINT 0.559 deg=32.0
+1793234737.060 DRIVE /cmd_vel_joy lin=0.158 yaw=0.000 moving=True
+1793234737.060 DRIVE /diff_cont/cmd_vel lin=0.125 yaw=0.000 moving=False
+1793234737.060 DRIVE /diff_cont/cmd_vel lin=0.158 yaw=0.000 moving=True
+1793234737.217 JOINT 0.698 deg=40.0
+1793234737.376 JOINT 0.855 deg=49.0
+1793234737.564 DRIVE /diff_cont/cmd_vel lin=0.843 yaw=0.224 moving=True
+1793234737.585 LOG r2_affect 20 stimulus being_driven from drive_stimulus i=0.55: no change -> aro=0.00 val=0.20 cur=0.40 con=0.61 (locked, not applied)
+1793234737.742 JOINT 0.942 deg=54.0
+1793234737.878 JOINT 1.030 deg=59.0
+1793234737.925 DRIVE /cmd_vel_joy lin=0.001 yaw=0.000 moving=False
+1793234737.926 DRIVE /diff_cont/cmd_vel lin=0.488 yaw=0.000 moving=True
+1793234737.927 DRIVE /diff_cont/cmd_vel lin=0.001 yaw=0.000 moving=False
+1793234737.984 JOINT 1.082 deg=62.0
+1793234738.039 SENT manual look_at 199 {"bearing": 1.5, "profile": "lazy"} probe-0d07afb5
+1793234738.050 DOME state=7 owner=manual prio=199 src=manual act=look_at id=probe-0d07afb5 rem=8000 mood=calm dropped=18 refused=0 stamp=1793234738.131
+1793234738.050 PERS 0.000
+1793234738.050 LOG dome_arbiter 20 intent probe-0d07afb5 accepted: dome look_at  from manual
+1793234738.055 CTRL 0.000
+1793234738.075 JOINT 1.152 deg=66.0
+1793234738.264 JOINT 1.222 deg=70.0
+1793234738.276 JOINT 1.274 deg=73.0
+1793234738.305 CONV source=personality v=0.000 capped=False stamp=1793234738.389
+1793234738.328 DRIVE /cmd_vel_joy lin=0.174 yaw=0.000 moving=True
+1793234738.575 JOINT 1.326 deg=76.0
+1793234738.631 LOG r2_affect 20 stimulus being_driven from drive_stimulus dropped: refractory (2.0 s window; further drops in this window are not logged)
+1793234738.863 PERS -0.600
+1793234738.867 DRIVE /diff_cont/cmd_vel lin=0.521 yaw=0.000 moving=True
+1793234738.908 CTRL -0.600
+1793234739.127 DRIVE /diff_cont/cmd_vel lin=0.084 yaw=0.000 moving=False
+1793234739.316 CONV source=personality v=-0.600 capped=False stamp=1793234739.390
+1793234739.477 JOINT 1.274 deg=73.0
+1793234739.575 JOINT 1.204 deg=69.0
+1793234739.655 LOG r2_affect 20 stimulus being_driven from drive_stimulus i=0.41: no change -> aro=0.00 val=0.20 cur=0.40 con=0.61 (locked, not applied)
+1793234739.839 JOINT 1.100 deg=63.0
+1793234739.891 JOINT 1.030 deg=59.0
+1793234739.975 JOINT 0.960 deg=55.0
+1793234740.079 JOINT 0.908 deg=52.0
+1793234740.164 DOME state=1 owner=manual prio=199 src=manual act=look_at id=probe-0d07afb5 rem=5884 mood=calm dropped=18 refused=0 stamp=1793234740.248
+1793234740.165 LOG dome_arbiter 20 dome: running (manual)
+1793234740.176 JOINT 0.855 deg=49.0
+1793234740.360 JOINT 0.768 deg=44.0
+1793234740.376 JOINT 0.611 deg=35.0
+1793234740.476 JOINT 0.524 deg=30.0
+1793234740.575 JOINT 0.436 deg=25.0
+1793234740.637 SENT idle glance 10 {"amplitude": 0.6, "dwell_s": 1.0} probe-5700fbd7
+1793234740.646 DOME state=1 owner=manual prio=199 src=manual act=look_at id=probe-0d07afb5 rem=5400 mood=calm dropped=19 refused=0 stamp=1793234740.731
+1793234740.676 JOINT 0.332 deg=19.0
+1793234740.775 JOINT 0.244 deg=14.0
+1793234740.891 JOINT 0.035 deg=2.0
+1793234740.978 LOG r2_affect 20 stimulus stopped from drive_stimulus i=1.00: no change -> aro=0.00 val=0.20 cur=0.40 con=0.61 (locked, not applied)
+1793234741.075 JOINT 6.144 deg=352.0
+1793234741.176 JOINT 6.091 deg=349.0
+1793234741.276 JOINT 5.986 deg=343.0
+1793234741.412 JOINT 5.882 deg=337.0
+1793234741.475 JOINT 5.760 deg=330.0
+1793234741.578 JOINT 5.620 deg=322.0
+1793234741.678 JOINT 5.515 deg=316.0
+1793234741.775 JOINT 5.411 deg=310.0
+1793234741.934 JOINT 5.253 deg=301.0
+1793234741.976 JOINT 5.149 deg=295.0
+1793234742.064 PERS 0.000
+1793234742.078 JOINT 5.061 deg=290.0
+1793234742.108 CTRL 0.000
+1793234742.177 JOINT 4.939 deg=283.0
+1793234742.276 JOINT 4.782 deg=274.0
+1793234742.308 CONV source=personality v=0.000 capped=False stamp=1793234742.390
+1793234742.458 JOINT 4.695 deg=269.0
+1793234742.479 JOINT 4.643 deg=266.0
+1793234742.983 PERS 0.600
+1793234742.985 CTRL 0.600
+1793234743.113 PERS 0.000
+1793234743.155 CTRL 0.000
+1793234743.242 SENT manual look_at 199 {"bearing": -1.5, "profile": "lazy"} probe-e20cacc6
+1793234743.250 DOME state=1 owner=manual prio=199 src=manual act=look_at id=probe-e20cacc6 rem=8000 mood=calm dropped=19 refused=0 stamp=1793234743.335
+1793234743.250 PERS -0.600
+1793234743.251 LOG dome_arbiter 20 intent probe-e20cacc6 accepted: dome look_at  from manual
+1793234743.255 CTRL -0.600
+1793234743.305 CONV source=personality v=-0.600 capped=False stamp=1793234743.390
+1793234743.777 JOINT 4.573 deg=262.0
+1793234743.888 JOINT 4.503 deg=258.0
+1793234744.033 JOINT 4.398 deg=252.0
+1793234744.075 JOINT 4.346 deg=249.0
+1793234744.176 JOINT 4.259 deg=244.0
+1793234744.282 JOINT 4.189 deg=240.0
+1793234744.376 JOINT 4.119 deg=236.0
+1793234744.559 JOINT 3.962 deg=227.0
+1793234744.676 JOINT 3.857 deg=221.0
+1793234744.778 JOINT 3.770 deg=216.0
+1793234744.877 JOINT 3.683 deg=211.0
+1793234744.978 JOINT 3.630 deg=208.0
+1793234745.078 JOINT 3.543 deg=203.0
+1793234745.311 JOINT 3.421 deg=196.0
+1793234745.382 JOINT 3.334 deg=191.0
+1793234745.610 JOINT 3.211 deg=184.0
+1793234745.639 SENT idle glance 10 {"amplitude": 0.6, "dwell_s": 1.0} probe-48c3f6b9
+1793234745.742 DOME state=1 owner=manual prio=199 src=manual act=look_at id=probe-e20cacc6 rem=5602 mood=calm dropped=20 refused=0 stamp=1793234745.732
+1793234745.744 JOINT 3.159 deg=181.0
+1793234745.778 JOINT 3.089 deg=177.0
+1793234745.878 JOINT 3.002 deg=172.0
+1793234745.975 JOINT 2.950 deg=169.0
+1793234746.127 JOINT 2.897 deg=166.0
+1793234746.303 JOINT 2.827 deg=162.0
+1793234746.304 JOINT 2.775 deg=159.0
+1793234746.485 JOINT 2.705 deg=155.0
+1793234746.488 JOINT 2.635 deg=151.0
+1793234746.651 JOINT 2.566 deg=147.0
+1793234746.830 JOINT 2.461 deg=141.0
+1793234746.878 JOINT 2.409 deg=138.0
+1793234746.975 JOINT 2.356 deg=135.0
+1793234747.076 JOINT 2.286 deg=131.0
+1793234747.353 JOINT 2.217 deg=127.0
+1793234747.375 JOINT 2.164 deg=124.0
+1793234747.533 JOINT 2.077 deg=119.0
+1793234747.702 JOINT 2.007 deg=115.0
+1793234747.823 JOINT 1.937 deg=111.0
+1793234748.001 JOINT 1.868 deg=107.0
+1793234748.004 PERS 0.000
+1793234748.005 CTRL 0.000
+1793234748.231 JOINT 1.815 deg=104.0
+1793234748.240 SENT manual look_at 199 {"bearing": 1.5, "profile": "lazy"} probe-f5d512cf
+1793234748.248 DOME state=1 owner=manual prio=199 src=manual act=look_at id=probe-f5d512cf rem=8000 mood=calm dropped=20 refused=0 stamp=1793234748.334
+1793234748.248 PERS 0.600
+1793234748.252 LOG dome_arbiter 20 intent probe-f5d512cf accepted: dome look_at  from manual
+1793234748.254 CTRL 0.600
+1793234748.928 JOINT 1.868 deg=107.0
+1793234748.979 JOINT 1.937 deg=111.0
+1793234749.076 JOINT 2.025 deg=116.0
+1793234749.176 JOINT 2.094 deg=120.0
+1793234749.281 JOINT 2.199 deg=126.0
+1793234749.451 JOINT 2.304 deg=132.0
+1793234749.479 JOINT 2.443 deg=140.0
+1793234749.627 JOINT 2.548 deg=146.0
+1793234749.676 JOINT 2.670 deg=153.0
+1793234749.800 JOINT 2.740 deg=157.0
+1793234749.977 JOINT 2.915 deg=167.0
+1793234749.978 JOINT 3.037 deg=174.0
+1793234750.077 JOINT 3.159 deg=181.0
+1793234750.177 JOINT 3.281 deg=188.0
+1793234750.325 JOINT 3.368 deg=193.0
+1793234750.500 JOINT 3.526 deg=202.0
+1793234750.501 JOINT 3.613 deg=207.0
+1793234750.639 SENT idle glance 10 {"amplitude": 0.6, "dwell_s": 1.0} probe-228b1224
+1793234750.676 JOINT 3.752 deg=215.0
+1793234750.677 JOINT 3.857 deg=221.0
+1793234750.680 DOME state=1 owner=manual prio=199 src=manual act=look_at id=probe-f5d512cf rem=5567 mood=calm dropped=21 refused=0 stamp=1793234750.766
+1793234750.850 JOINT 3.927 deg=225.0
+1793234750.875 JOINT 4.102 deg=235.0
+1793234751.025 JOINT 4.189 deg=240.0
+1793234751.136 JOINT 4.276 deg=245.0
+1793234751.177 JOINT 4.363 deg=250.0
+1793234751.278 JOINT 4.485 deg=257.0
+1793234751.371 PERS 0.000
+1793234751.371 CTRL 0.000
+1793234751.375 JOINT 4.608 deg=264.0
+1793234751.497 JOINT 4.677 deg=268.0
+1793234751.624 JOINT 4.765 deg=273.0
+1793234751.895 CONV source=personality v=0.000 capped=False stamp=1793234751.889
+1793234751.896 JOINT 4.817 deg=276.0
+1793234752.149 DOME state=2 owner=manual prio=199 src= act= id= rem=0 mood=calm dropped=21 refused=0 stamp=1793234752.199
+1793234752.150 LOG dome_arbiter 20 dome: move over, coast scale 1.00 for the next
+1793234752.151 LOG dome_arbiter 20 dome: claimed (manual)
+1793234752.655 CONV source=idle v=0.000 capped=False stamp=1793234752.741
+1793234752.656 LOG dome_twist_converter 20 Dome command source: idle
+1793234753.992 JOINT 4.817 deg=276.0
+1793234756.091 JOINT 4.817 deg=276.0
+1793234757.180 DOME state=0 owner= prio=0 src= act= id= rem=0 mood=calm dropped=21 refused=0 stamp=1793234757.262
+1793234757.181 LOG dome_arbiter 20 dome: idle
+1793234758.185 JOINT 4.817 deg=276.0
+1793234760.285 JOINT 4.817 deg=276.0
+1793234762.385 JOINT 4.817 deg=276.0
+1793234764.487 JOINT 4.817 deg=276.0
+1793234766.576 JOINT 4.817 deg=276.0
+1793234768.577 JOINT 4.817 deg=276.0
+1793234770.620 JOINT 4.817 deg=276.0
+1793234772.179 DOME state=1 owner= prio=0 src=idle act=glance id=glance-14 rem=8633 mood=calm dropped=21 refused=0 stamp=1793234772.262
+1793234772.180 PERS -0.600
+1793234772.180 LOG dome_arbiter 20 dome: running
+1793234772.210 CONV source=personality v=-0.600 capped=False stamp=1793234772.290
+1793234772.210 LOG dome_twist_converter 20 Dome command source: personality
+1793234772.211 CTRL -0.600
+1793234772.676 JOINT 4.800 deg=275.0
+1793234772.778 JOINT 4.730 deg=271.0
+1793234772.867 CONV source=personality v=0.000 capped=False stamp=1793234772.890
+1793234772.867 PERS 0.000
+1793234772.868 CTRL 0.000
+1793234772.877 JOINT 4.660 deg=267.0
+1793234772.976 JOINT 4.590 deg=263.0
+1793234773.075 JOINT 4.538 deg=260.0
+1793234773.276 JOINT 4.485 deg=257.0
+1793234774.278 PERS 0.600
+1793234774.321 CONV source=personality v=0.600 capped=False stamp=1793234774.389
+1793234774.321 CTRL 0.600
+1793234774.966 PERS 0.000
+1793234774.967 CTRL 0.000
+1793234774.967 JOINT 4.555 deg=261.0
+1793234774.978 JOINT 4.625 deg=265.0
+1793234775.078 JOINT 4.677 deg=268.0
+1793234775.175 JOINT 4.730 deg=271.0
+1793234775.308 CONV source=personality v=0.000 capped=False stamp=1793234775.389
+1793234775.732 LOG dome_arbiter 20 dome: move over, coast scale 1.00 for the next
+1793234775.732 DOME state=0 owner= prio=0 src= act= id= rem=0 mood=calm dropped=21 refused=0 stamp=1793234775.814
+1793234775.732 LOG dome_arbiter 20 dome: idle
+1793234776.256 CONV source=idle v=0.000 capped=False stamp=1793234776.340
+1793234776.256 LOG dome_twist_converter 20 Dome command source: idle
+1793234777.181 JOINT 4.765 deg=273.0
+1793234779.280 JOINT 4.765 deg=273.0
+1793234781.378 JOINT 4.765 deg=273.0
+1793234783.530 JOINT 4.765 deg=273.0
+1793234785.633 JOINT 4.765 deg=273.0
+1793234787.724 JOINT 4.765 deg=273.0
+1793234789.776 JOINT 4.765 deg=273.0
+1793234791.776 JOINT 4.765 deg=273.0
+1793234793.851 JOINT 4.765 deg=273.0
+1793234795.777 PERS -0.600
+1793234795.781 DOME state=1 owner= prio=0 src=idle act=glance id=glance-15 rem=9044 mood=calm dropped=21 refused=0 stamp=1793234795.865
+1793234795.781 LOG dome_arbiter 20 dome: running
+1793234795.809 CONV source=personality v=-0.600 capped=False stamp=1793234795.890
+1793234795.810 CTRL -0.600
+1793234795.810 LOG dome_twist_converter 20 Dome command source: personality
+1793234795.934 JOINT 4.765 deg=273.0
+1793234796.461 PERS 0.000
+1793234796.461 CTRL 0.000
+1793234796.462 JOINT 4.643 deg=266.0
+1793234796.476 JOINT 4.573 deg=262.0
+1793234796.580 JOINT 4.503 deg=258.0
+1793234796.775 JOINT 4.433 deg=254.0
+1793234796.807 CONV source=personality v=0.000 capped=False stamp=1793234796.889
+1793234798.231 PERS 0.600
+1793234798.255 CTRL 0.600
+1793234798.310 CONV source=personality v=0.600 capped=False stamp=1793234798.389
+1793234798.776 JOINT 4.433 deg=254.0
+1793234798.877 JOINT 4.485 deg=257.0
+1793234798.879 PERS 0.000
+1793234798.905 CTRL 0.000
+1793234798.987 JOINT 4.555 deg=261.0
+1793234799.082 JOINT 4.625 deg=265.0
+1793234799.279 JOINT 4.677 deg=268.0
+1793234799.307 CONV source=personality v=0.000 capped=False stamp=1793234799.389
+1793234799.731 DOME state=0 owner= prio=0 src= act= id= rem=0 mood=calm dropped=21 refused=0 stamp=1793234799.815
+1793234799.732 LOG dome_arbiter 20 dome: move over, coast scale 1.00 for the next
+1793234799.732 LOG dome_arbiter 20 dome: idle
+1793234800.256 CONV source=idle v=0.000 capped=False stamp=1793234800.340
+1793234800.257 LOG dome_twist_converter 20 Dome command source: idle
+=== pass 3 item 5 joystick 00:46:41
+1793234801.239 SENT behavior look_at 100 {"bearing": 1.5, "profile": "lazy"} probe-66cc45ad
+1793234801.246 LOG dome_arbiter 20 intent probe-66cc45ad accepted: dome look_at  from behavior
+1793234801.254 CONV source=personality v=0.000 capped=False stamp=1793234801.340
+1793234801.254 LOG dome_twist_converter 20 Dome command source: personality
+1793234801.349 JOINT 4.712 deg=270.0
+1793234801.790 CONV source=idle v=0.000 capped=False stamp=1793234801.840
+1793234801.791 LOG dome_twist_converter 20 Dome command source: idle
+1793234803.455 JOINT 4.712 deg=270.0
+1793234805.550 JOINT 4.712 deg=270.0
+1793234806.239 SENT behavior look_at 100 {"bearing": -1.5, "profile": "lazy"} probe-a61ae7c4
+1793234806.255 PERS 0.600
+1793234806.258 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-a61ae7c4 rem=8000 mood=calm dropped=21 refused=0 stamp=1793234806.342
+1793234806.258 LOG dome_arbiter 20 dome: running
+1793234806.259 LOG dome_arbiter 20 intent probe-a61ae7c4 accepted: dome look_at  from behavior
+1793234806.305 CONV source=personality v=0.600 capped=False stamp=1793234806.390
+1793234806.306 LOG dome_twist_converter 20 Dome command source: personality
+1793234806.306 CTRL 0.600
+1793234806.780 JOINT 4.782 deg=274.0
+1793234806.977 JOINT 4.835 deg=277.0
+1793234807.123 JOINT 4.904 deg=281.0
+1793234807.300 JOINT 4.974 deg=285.0
+1793234807.301 JOINT 5.027 deg=288.0
+1793234807.380 JOINT 5.079 deg=291.0
+1793234807.554 JOINT 5.131 deg=294.0
+1793234807.575 JOINT 5.201 deg=298.0
+1793234807.685 JOINT 5.253 deg=301.0
+1793234807.777 JOINT 5.323 deg=305.0
+1793234807.997 JOINT 5.428 deg=311.0
+1793234808.128 JOINT 5.480 deg=314.0
+1793234808.244 JOINT 4.835 deg=277.0
+1793234808.276 JOINT 5.637 deg=323.0
+1793234808.643 JOINT 5.777 deg=331.0
+1793234808.875 JOINT 5.829 deg=334.0
+1793234809.045 JOINT 5.917 deg=339.0
+1793234809.176 JOINT 5.969 deg=342.0
+1793234809.375 JOINT 6.039 deg=346.0
+1793234809.568 JOINT 5.411 deg=310.0
+1793234809.576 JOINT 6.126 deg=351.0
+1793234809.777 JOINT 6.178 deg=354.0
+1793234809.875 JOINT 0.035 deg=2.0
+1793234809.977 JOINT 0.157 deg=9.0
+1793234810.380 JOINT 0.244 deg=14.0
+1793234810.475 JOINT 0.314 deg=18.0
+1793234810.617 JOINT 0.384 deg=22.0
+1793234810.777 JOINT 0.471 deg=27.0
+1793234810.876 JOINT 0.541 deg=31.0
+1793234811.141 JOINT 0.611 deg=35.0
+1793234811.176 JOINT 0.698 deg=40.0
+1793234811.241 SENT behavior look_at 100 {"bearing": 1.5, "profile": "lazy"} probe-a394aea6
+1793234811.251 PERS 0.000
+1793234811.252 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-a394aea6 rem=8000 mood=calm dropped=21 refused=0 stamp=1793234811.337
+1793234811.254 CTRL 0.000
+1793234811.255 LOG dome_arbiter 20 intent probe-a394aea6 accepted: dome look_at  from behavior
+1793234811.275 JOINT 0.750 deg=43.0
+1793234811.306 CONV source=personality v=0.000 capped=False stamp=1793234811.390
+1793234811.376 JOINT 0.820 deg=47.0
+1793234811.672 JOINT 0.873 deg=50.0
+1793234812.056 PERS -0.600
+1793234812.189 CTRL -0.600
+1793234812.306 CONV source=personality v=-0.600 capped=False stamp=1793234812.390
+1793234812.722 JOINT 0.785 deg=45.0
+1793234812.779 JOINT 0.698 deg=40.0
+1793234812.877 JOINT 0.576 deg=33.0
+1793234812.977 JOINT 0.524 deg=30.0
+1793234813.076 JOINT 0.436 deg=25.0
+1793234813.238 JOINT 0.314 deg=18.0
+1793234813.277 JOINT 0.209 deg=12.0
+1793234813.378 JOINT 0.035 deg=2.0
+1793234813.577 JOINT 6.126 deg=351.0
+1793234813.764 JOINT 6.056 deg=347.0
+1793234813.777 JOINT 5.952 deg=341.0
+1793234813.879 JOINT 5.864 deg=336.0
+1793234813.980 JOINT 5.760 deg=330.0
+1793234814.078 JOINT 5.533 deg=317.0
+1793234814.178 JOINT 5.463 deg=313.0
+1793234814.289 JOINT 5.358 deg=307.0
+1793234814.374 JOINT 5.236 deg=300.0
+1793234814.473 JOINT 5.166 deg=296.0
+1793234814.577 JOINT 5.009 deg=287.0
+1793234814.607 PERS 0.000
+1793234814.654 CTRL 0.000
+1793234814.676 JOINT 4.904 deg=281.0
+1793234814.816 CONV source=personality v=0.000 capped=False stamp=1793234814.889
+1793234814.816 JOINT 4.747 deg=272.0
+1793234814.876 JOINT 4.660 deg=267.0
+1793234814.974 JOINT 4.573 deg=262.0
+1793234815.408 PERS 0.600
+1793234815.453 CTRL 0.600
+1793234815.855 CONV source=personality v=0.600 capped=False stamp=1793234815.889
+1793234815.855 PERS 0.000
+1793234815.856 CTRL 0.000
+1793234816.175 JOINT 4.625 deg=265.0
+1793234816.239 SENT behavior look_at 100 {"bearing": -1.5, "profile": "lazy"} probe-4f41450b
+1793234816.250 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-4f41450b rem=8000 mood=calm dropped=21 refused=0 stamp=1793234816.334
+1793234816.250 PERS -0.600
+1793234816.250 LOG dome_arbiter 20 intent probe-4f41450b accepted: dome look_at  from behavior
+1793234816.254 CTRL -0.600
+1793234816.907 JOINT 4.520 deg=259.0
+1793234816.975 JOINT 4.451 deg=255.0
+1793234817.074 JOINT 4.363 deg=250.0
+1793234817.175 JOINT 4.259 deg=244.0
+1793234817.430 JOINT 4.119 deg=236.0
+1793234817.574 JOINT 3.962 deg=227.0
+1793234817.674 JOINT 3.875 deg=222.0
+1793234817.774 JOINT 3.805 deg=218.0
+1793234817.956 JOINT 3.752 deg=215.0
+1793234817.975 JOINT 3.648 deg=209.0
+1793234818.075 JOINT 3.578 deg=205.0
+1793234818.177 JOINT 3.526 deg=202.0
+1793234818.276 JOINT 3.438 deg=197.0
+1793234818.387 JOINT 3.386 deg=194.0
+1793234818.481 JOINT 3.316 deg=190.0
+1793234818.577 JOINT 3.264 deg=187.0
+1793234818.675 JOINT 3.194 deg=183.0
+1793234818.773 JOINT 3.124 deg=179.0
+1793234818.875 JOINT 3.072 deg=176.0
+1793234819.075 JOINT 2.950 deg=169.0
+1793234819.173 JOINT 2.897 deg=166.0
+1793234819.273 JOINT 2.827 deg=162.0
+1793234819.530 JOINT 2.723 deg=156.0
+1793234819.574 JOINT 2.635 deg=151.0
+1793234819.673 JOINT 2.583 deg=148.0
+1793234819.776 JOINT 2.531 deg=145.0
+1793234819.874 JOINT 2.478 deg=142.0
+1793234820.050 JOINT 2.426 deg=139.0
+1793234820.076 JOINT 2.356 deg=135.0
+1793234820.275 JOINT 2.251 deg=129.0
+1793234820.584 JOINT 2.164 deg=124.0
+1793234820.585 JOINT 2.094 deg=120.0
+1793234820.905 JOINT 2.025 deg=116.0
+1793234820.906 JOINT 1.972 deg=113.0
+1793234820.978 JOINT 1.902 deg=109.0
+1793234821.241 SENT behavior look_at 100 {"bearing": 1.5, "profile": "lazy"} probe-cad231cb
+1793234821.278 DOME state=3 owner=joystick prio=0 src= act= id= rem=0 mood=calm dropped=21 refused=0 stamp=1793234821.293
+1793234821.278 CONV source=joystick v=-0.002 capped=False stamp=1793234821.290
+1793234821.282 JOINT 1.850 deg=106.0
+1793234821.284 LOG dome_twist_converter 20 Dome command source: joystick
+1793234821.285 PERS 0.000
+1793234821.285 JOINT 1.780 deg=102.0
+1793234821.286 LOG dome_arbiter 20 dome: move over, coast scale 1.00 for the next
+1793234821.286 DOME state=3 owner=joystick prio=0 src= act= id= rem=0 mood=calm dropped=22 refused=0 stamp=1793234821.366
+1793234821.286 LOG dome_arbiter 20 dome: foreign (joystick)
+1793234821.474 JOINT 1.728 deg=99.0
+1793234821.980 JOINT 1.658 deg=95.0
+1793234821.982 JOINT 1.606 deg=92.0
+1793234822.147 JOINT 1.553 deg=89.0
+1793234822.176 JOINT 1.466 deg=84.0
+1793234822.328 JOINT 1.344 deg=77.0
+1793234822.375 JOINT 1.222 deg=70.0
+1793234822.475 JOINT 1.134 deg=65.0
+1793234822.576 JOINT 0.995 deg=57.0
+1793234822.675 JOINT 0.908 deg=52.0
+1793234822.774 JOINT 0.785 deg=45.0
+1793234822.942 CTRL 0.000
+1793234822.943 JOINT 0.593 deg=34.0
+1793234822.974 JOINT 0.454 deg=26.0
+1793234823.196 JOINT 0.279 deg=16.0
+1793234823.198 JOINT 0.175 deg=10.0
+1793234823.377 DOME state=0 owner= prio=0 src= act= id= rem=0 mood=calm dropped=22 refused=0 stamp=1793234823.442
+1793234823.378 CONV source=joystick v=0.000 capped=False stamp=1793234823.390
+1793234823.380 JOINT 0.087 deg=5.0
+1793234823.381 LOG dome_twist_converter 20 Dome command source: idle
+1793234823.382 CONV source=idle v=0.000 capped=False stamp=1793234823.440
+1793234823.382 JOINT 0.035 deg=2.0
+1793234823.382 LOG dome_arbiter 20 dome: idle
+1793234825.473 JOINT 0.035 deg=2.0
+1793234826.239 SENT behavior look_at 100 {"bearing": -1.5, "profile": "lazy"} probe-1b4b11f0
+1793234826.249 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-1b4b11f0 rem=8000 mood=calm dropped=22 refused=0 stamp=1793234826.335
+1793234826.250 PERS 0.600
+1793234826.250 LOG dome_arbiter 20 dome: running
+1793234826.341 CONV source=personality v=0.600 capped=False stamp=1793234826.340
+1793234826.341 LOG dome_arbiter 20 intent probe-1b4b11f0 accepted: dome look_at  from behavior
+1793234826.342 CTRL 0.600
+1793234826.342 LOG dome_twist_converter 20 Dome command source: personality
+1793234826.600 JOINT 4.800 deg=275.0
+1793234826.776 JOINT 0.175 deg=10.0
+1793234826.873 JOINT 0.122 deg=7.0
+1793234827.245 JOINT 0.192 deg=11.0
+1793234827.274 JOINT 0.244 deg=14.0
+1793234827.389 JOINT 0.314 deg=18.0
+1793234827.576 JOINT 0.367 deg=21.0
+1793234827.674 JOINT 0.419 deg=24.0
+1793234827.777 JOINT 0.489 deg=28.0
+1793234827.914 JOINT 0.541 deg=31.0
+1793234828.075 JOINT 0.611 deg=35.0
+1793234828.273 JOINT 0.750 deg=43.0
+1793234828.474 JOINT 0.855 deg=49.0
+1793234828.676 JOINT 0.942 deg=54.0
+1793234828.775 JOINT 1.012 deg=58.0
+1793234828.966 JOINT 1.065 deg=61.0
+1793234828.985 JOINT 1.117 deg=64.0
+1793234829.176 JOINT 1.204 deg=69.0
+1793234829.200 PERS 0.000
+1793234829.203 CTRL 0.000
+1793234829.303 CONV source=personality v=0.000 capped=False stamp=1793234829.389
+1793234829.377 JOINT 1.292 deg=74.0
+1793234830.050 PERS 0.600
+1793234830.053 CTRL 0.600
+1793234830.250 PERS 0.000
+1793234830.254 CTRL 0.000
+1793234830.376 JOINT 1.344 deg=77.0
+1793234830.578 JOINT 1.396 deg=80.0
+1793234831.063 DOME state=0 owner= prio=0 src= act= id= rem=0 mood=calm dropped=22 refused=0 stamp=1793234831.138
+1793234831.065 LOG dome_arbiter 20 dome: move over, coast scale 1.00 for the next
+1793234831.066 LOG dome_arbiter 20 dome: idle
+1793234831.241 SENT behavior look_at 100 {"bearing": 1.5, "profile": "lazy"} probe-daec36a5
+1793234831.249 PERS -0.600
+1793234831.253 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-daec36a5 rem=8000 mood=calm dropped=22 refused=0 stamp=1793234831.336
+1793234831.253 LOG dome_arbiter 20 dome: running
+1793234831.254 CTRL -0.600
+1793234831.254 LOG dome_arbiter 20 intent probe-daec36a5 accepted: dome look_at  from behavior
+1793234831.305 CONV source=personality v=-0.600 capped=False stamp=1793234831.389
+1793234831.874 JOINT 1.326 deg=76.0
+1793234831.975 JOINT 1.257 deg=72.0
+1793234832.111 JOINT 1.204 deg=69.0
+1793234832.174 JOINT 1.134 deg=65.0
+1793234832.275 JOINT 1.082 deg=62.0
+1793234832.374 JOINT 1.012 deg=58.0
+1793234832.473 JOINT 0.960 deg=55.0
+1793234832.633 JOINT 0.873 deg=50.0
+1793234832.673 JOINT 0.785 deg=45.0
+1793234832.775 JOINT 0.698 deg=40.0
+1793234832.874 JOINT 0.576 deg=33.0
+1793234832.974 JOINT 0.454 deg=26.0
+1793234833.156 JOINT 0.401 deg=23.0
+1793234833.174 JOINT 0.279 deg=16.0
+1793234833.277 JOINT 0.175 deg=10.0
+1793234833.376 JOINT 0.017 deg=1.0
+1793234833.474 JOINT 6.266 deg=359.0
+1793234833.575 JOINT 6.091 deg=349.0
+1793234833.683 JOINT 6.039 deg=346.0
+1793234833.777 JOINT 5.917 deg=339.0
+1793234833.874 JOINT 5.760 deg=330.0
+1793234833.975 JOINT 5.655 deg=324.0
+1793234834.074 JOINT 5.533 deg=317.0
+1793234834.208 JOINT 5.428 deg=311.0
+1793234834.274 JOINT 5.288 deg=303.0
+1793234834.373 JOINT 5.184 deg=297.0
+1793234834.476 JOINT 5.079 deg=291.0
+1793234834.504 PERS 0.000
+1793234834.505 CTRL 0.000
+1793234834.575 JOINT 4.939 deg=283.0
+1793234834.732 JOINT 4.782 deg=274.0
+1793234834.774 JOINT 4.730 deg=271.0
+1793234834.805 CONV source=personality v=0.000 capped=False stamp=1793234834.889
+1793234834.974 JOINT 4.677 deg=268.0
+1793234835.358 LOG dome_arbiter 20 dome: move over, coast scale 1.00 for the next
+1793234835.358 DOME state=0 owner= prio=0 src= act= id= rem=0 mood=calm dropped=22 refused=0 stamp=1793234835.445
+1793234835.359 LOG dome_arbiter 20 dome: idle
+1793234835.904 CONV source=idle v=0.000 capped=False stamp=1793234835.990
+1793234835.905 LOG dome_twist_converter 20 Dome command source: idle
+1793234836.240 SENT behavior look_at 100 {"bearing": -1.5, "profile": "lazy"} probe-5d9e57f4
+1793234836.310 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-5d9e57f4 rem=8000 mood=calm dropped=22 refused=0 stamp=1793234836.395
+1793234836.310 PERS 0.600
+1793234836.310 LOG dome_arbiter 20 dome: running
+1793234836.310 LOG dome_arbiter 20 intent probe-5d9e57f4 accepted: dome look_at  from behavior
+1793234836.355 CONV source=personality v=0.600 capped=False stamp=1793234836.441
+1793234836.356 CTRL 0.600
+1793234836.356 LOG dome_twist_converter 20 Dome command source: personality
+1793234836.974 JOINT 4.730 deg=271.0
+1793234837.077 JOINT 4.782 deg=274.0
+1793234837.174 JOINT 4.869 deg=279.0
+1793234837.355 JOINT 4.922 deg=282.0
+1793234837.376 JOINT 5.009 deg=287.0
+1793234837.577 JOINT 5.131 deg=294.0
+1793234837.678 JOINT 5.201 deg=298.0
+1793234837.777 JOINT 5.253 deg=301.0
+1793234837.892 JOINT 5.323 deg=305.0
+1793234837.973 JOINT 5.393 deg=309.0
+1793234838.081 JOINT 5.463 deg=313.0
+1793234838.173 JOINT 5.515 deg=316.0
+1793234838.273 JOINT 4.852 deg=278.0
+1793234838.411 JOINT 5.637 deg=323.0
+1793234838.630 JOINT 5.777 deg=331.0
+1793234838.773 JOINT 5.829 deg=334.0
+1793234838.927 JOINT 5.899 deg=338.0
+1793234839.073 JOINT 5.969 deg=342.0
+1793234839.273 JOINT 6.039 deg=346.0
+1793234839.452 JOINT 6.144 deg=352.0
+1793234839.805 JOINT 0.035 deg=2.0
+1793234839.806 JOINT 4.817 deg=276.0
+1793234839.874 JOINT 0.122 deg=7.0
+1793234840.154 JOINT 0.175 deg=10.0
+1793234840.275 JOINT 0.297 deg=17.0
+1793234840.500 JOINT 0.384 deg=22.0
+1793234840.678 JOINT 0.436 deg=25.0
+1793234840.680 JOINT 0.506 deg=29.0
+1793234840.854 JOINT 0.559 deg=32.0
+1793234840.873 JOINT 0.611 deg=35.0
+1793234841.123 JOINT 0.733 deg=42.0
+1793234841.242 SENT behavior look_at 100 {"bearing": 1.5, "profile": "lazy"} probe-1d23a893
+1793234841.308 JOINT 0.855 deg=49.0
+1793234841.313 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-1d23a893 rem=8000 mood=calm dropped=22 refused=0 stamp=1793234841.394
+1793234841.313 PERS 0.000
+1793234841.314 LOG dome_arbiter 20 intent probe-1d23a893 accepted: dome look_at  from behavior
+1793234841.354 CTRL 0.000
+1793234841.546 JOINT 0.942 deg=54.0
+1793234841.577 JOINT 0.995 deg=57.0
+1793234841.900 CONV source=personality v=0.000 capped=False stamp=1793234841.890
+1793234841.901 JOINT 1.065 deg=61.0
+1793234842.248 PERS -0.600
+1793234842.249 CTRL -0.600
+1793234842.306 CONV source=personality v=-0.600 capped=False stamp=1793234842.389
+1793234842.772 JOINT 1.012 deg=58.0
+1793234842.773 JOINT 0.960 deg=55.0
+1793234842.952 JOINT 0.890 deg=51.0
+1793234843.123 JOINT 0.768 deg=44.0
+1793234843.298 JOINT 0.611 deg=35.0
+1793234843.299 JOINT 0.524 deg=30.0
+1793234843.376 JOINT 0.419 deg=24.0
+1793234843.474 JOINT 0.332 deg=19.0
+1793234843.647 JOINT 0.209 deg=12.0
+1793234843.675 JOINT 0.157 deg=9.0
+1793234843.821 JOINT 0.000 deg=0.0
+1793234843.999 JOINT 6.126 deg=351.0
+1793234844.001 JOINT 6.056 deg=347.0
+1793234844.078 JOINT 5.986 deg=343.0
+1793234844.178 JOINT 5.864 deg=336.0
+1793234844.349 JOINT 5.760 deg=330.0
+1793234844.424 JOINT 5.568 deg=319.0
+1793234844.475 JOINT 5.463 deg=313.0
+1793234844.710 JOINT 5.358 deg=307.0
+1793234844.711 JOINT 5.236 deg=300.0
+1793234844.801 JOINT 5.096 deg=292.0
+1793234844.810 PERS 0.000
+1793234844.926 CTRL 0.000
+1793234844.927 JOINT 5.027 deg=288.0
+1793234845.048 JOINT 4.904 deg=281.0
+1793234845.077 JOINT 4.765 deg=273.0
+1793234845.218 JOINT 4.695 deg=269.0
+1793234845.351 CONV source=personality v=0.000 capped=False stamp=1793234845.390
+1793234845.649 DOME state=0 owner= prio=0 src= act= id= rem=0 mood=calm dropped=22 refused=0 stamp=1793234845.697
+1793234845.651 LOG dome_arbiter 20 dome: move over, coast scale 1.00 for the next
+1793234845.652 LOG dome_arbiter 20 dome: idle
+1793234846.156 LOG dome_twist_converter 20 Dome command source: idle
+1793234846.156 CONV source=idle v=0.000 capped=False stamp=1793234846.240
+1793234847.315 JOINT 4.660 deg=267.0
+1793234849.414 JOINT 4.660 deg=267.0
+1793234851.511 JOINT 4.660 deg=267.0
+1793234853.607 JOINT 4.660 deg=267.0
+1793234855.706 JOINT 4.660 deg=267.0
+1793234857.801 JOINT 4.660 deg=267.0
+1793234859.898 JOINT 4.660 deg=267.0
+1793234861.995 JOINT 4.660 deg=267.0
+1793234864.094 JOINT 4.660 deg=267.0
+1793234865.678 PERS 0.600
+1793234865.678 DOME state=1 owner= prio=0 src=idle act=glance id=glance-16 rem=9366 mood=calm dropped=22 refused=0 stamp=1793234865.762
+1793234865.678 LOG dome_arbiter 20 dome: running
+1793234865.707 LOG dome_twist_converter 20 Dome command source: personality
+1793234865.708 CONV source=personality v=0.600 capped=False stamp=1793234865.790
+1793234865.709 CTRL 0.600
+1793234866.189 JOINT 4.677 deg=268.0
+1793234866.277 JOINT 4.730 deg=271.0
+1793234866.378 JOINT 4.800 deg=275.0
+1793234866.476 JOINT 4.922 deg=282.0
+1793234866.478 PERS 0.000
+1793234866.505 CTRL 0.000
+1793234866.582 JOINT 5.009 deg=287.0
+1793234866.719 JOINT 5.079 deg=291.0
+1793234866.777 JOINT 5.166 deg=296.0
+1793234866.812 CONV source=personality v=0.000 capped=False stamp=1793234866.890
+1793234866.977 JOINT 5.236 deg=300.0
+1793234868.677 PERS -0.600
+1793234868.706 CTRL -0.600
+1793234868.816 CONV source=personality v=-0.750 capped=False stamp=1793234868.889
+1793234868.977 JOINT 5.253 deg=301.0
+1793234869.181 JOINT 5.201 deg=298.0
+1793234869.337 CONV source=personality v=0.000 capped=False stamp=1793234869.390
+1793234869.338 PERS 0.000
+1793234869.338 JOINT 5.079 deg=291.0
+1793234869.339 CTRL 0.000
+1793234869.379 JOINT 4.957 deg=284.0
+1793234869.478 JOINT 4.869 deg=279.0
+1793234869.578 JOINT 4.747 deg=272.0
+1793234869.679 JOINT 4.695 deg=269.0
+1793234870.128 DOME state=0 owner= prio=0 src= act= id= rem=0 mood=calm dropped=22 refused=0 stamp=1793234870.214
+1793234870.129 LOG dome_arbiter 20 dome: move over, coast scale 1.00 for the next
+1793234870.129 LOG dome_arbiter 20 dome: idle
+1793234870.658 CONV source=idle v=0.000 capped=False stamp=1793234870.740
+1793234870.658 LOG dome_twist_converter 20 Dome command source: idle
+1793234871.777 JOINT 4.660 deg=267.0
+=== pass 3b item 5 joystick second pull 00:47:53
+1793234873.243 SENT behavior look_at 100 {"bearing": 1.5, "profile": "lazy"} probe-51730590
+1793234873.251 LOG dome_arbiter 20 intent probe-51730590 accepted: dome look_at  from behavior
+1793234873.256 CONV source=personality v=0.000 capped=False stamp=1793234873.340
+1793234873.256 LOG dome_twist_converter 20 Dome command source: personality
+1793234873.759 CONV source=idle v=0.000 capped=False stamp=1793234873.840
+1793234873.760 LOG dome_twist_converter 20 Dome command source: idle
+1793234873.778 JOINT 4.660 deg=267.0
+1793234875.882 JOINT 4.660 deg=267.0
+1793234877.903 JOINT 4.660 deg=267.0
+1793234878.240 SENT behavior look_at 100 {"bearing": -1.5, "profile": "lazy"} probe-d802f4eb
+1793234878.253 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-d802f4eb rem=8000 mood=calm dropped=22 refused=0 stamp=1793234878.337
+1793234878.255 PERS 0.600
+1793234878.255 LOG dome_arbiter 20 dome: running
+1793234878.256 LOG dome_arbiter 20 intent probe-d802f4eb accepted: dome look_at  from behavior
+1793234878.258 LOG dome_twist_converter 20 Dome command source: personality
+1793234878.258 CONV source=personality v=0.600 capped=False stamp=1793234878.340
+1793234878.258 CTRL 0.600
+1793234878.881 JOINT 4.730 deg=271.0
+1793234879.079 JOINT 4.817 deg=276.0
+1793234879.175 JOINT 4.922 deg=282.0
+1793234879.478 JOINT 5.027 deg=288.0
+1793234879.480 JOINT 5.079 deg=291.0
+1793234879.655 JOINT 5.184 deg=297.0
+1793234879.677 JOINT 5.253 deg=301.0
+1793234880.000 JOINT 5.341 deg=306.0
+1793234880.002 JOINT 5.428 deg=311.0
+1793234880.178 JOINT 4.835 deg=277.0
+1793234880.381 JOINT 5.637 deg=323.0
+1793234880.701 JOINT 5.794 deg=332.0
+1793234880.876 JOINT 5.882 deg=337.0
+1793234881.049 JOINT 5.952 deg=341.0
+1793234881.177 JOINT 6.004 deg=344.0
+1793234881.277 JOINT 6.074 deg=348.0
+1793234881.394 JOINT 6.126 deg=351.0
+1793234881.581 JOINT 6.178 deg=354.0
+1793234881.832 JOINT 0.035 deg=2.0
+1793234881.837 JOINT 0.157 deg=9.0
+1793234882.098 JOINT 0.209 deg=12.0
+1793234882.276 JOINT 0.297 deg=17.0
+1793234882.444 JOINT 0.384 deg=22.0
+1793234882.570 DOME state=3 owner=joystick prio=0 src= act= id= rem=0 mood=calm dropped=22 refused=0 stamp=1793234882.647
+1793234882.570 CONV source=joystick v=-0.819 capped=False stamp=1793234882.644
+1793234882.570 CTRL -0.819
+1793234882.571 LOG dome_twist_converter 20 Dome command source: joystick
+1793234882.572 PERS 0.000
+1793234882.572 LOG dome_arbiter 20 dome: move over, coast scale 1.00 for the next
+1793234882.573 LOG dome_arbiter 20 dome: foreign (joystick)
+1793234882.576 JOINT 0.436 deg=25.0
+1793234882.701 JOINT 0.506 deg=29.0
+1793234882.821 JOINT 0.559 deg=32.0
+1793234883.094 JOINT 0.454 deg=26.0
+1793234883.224 JOINT 0.332 deg=19.0
+1793234883.240 SENT behavior look_at 100 {"bearing": 1.5, "profile": "lazy"} probe-f478a5c8
+1793234883.249 DOME state=3 owner=joystick prio=0 src= act= id= rem=0 mood=calm dropped=23 refused=0 stamp=1793234883.332
+1793234883.277 JOINT 0.192 deg=11.0
+1793234883.396 JOINT 0.000 deg=0.0
+1793234883.492 JOINT 6.109 deg=350.0
+1793234883.620 JOINT 5.986 deg=343.0
+1793234883.718 JOINT 5.794 deg=332.0
+1793234883.778 JOINT 5.533 deg=317.0
+1793234883.876 JOINT 5.358 deg=307.0
+1793234884.018 JOINT 5.166 deg=296.0
+1793234884.077 JOINT 4.957 deg=284.0
+1793234884.180 JOINT 4.765 deg=273.0
+1793234884.281 JOINT 4.590 deg=263.0
+1793234884.380 JOINT 4.398 deg=252.0
+1793234884.552 JOINT 4.189 deg=240.0
+1793234884.577 JOINT 3.962 deg=227.0
+1793234884.676 JOINT 3.822 deg=219.0
+1793234884.781 JOINT 3.665 deg=210.0
+1793234884.875 JOINT 3.508 deg=201.0
+1793234885.080 JOINT 3.316 deg=190.0
+1793234885.081 JOINT 3.107 deg=178.0
+1793234885.176 JOINT 2.950 deg=169.0
+1793234885.207 CTRL 0.000
+1793234885.276 JOINT 2.810 deg=161.0
+1793234885.305 CONV source=joystick v=0.000 capped=False stamp=1793234885.390
+1793234885.379 JOINT 2.635 deg=151.0
+1793234885.479 JOINT 2.496 deg=143.0
+1793234885.590 JOINT 2.409 deg=138.0
+1793234885.707 CONV source=idle v=0.000 capped=False stamp=1793234885.790
+1793234885.708 LOG dome_twist_converter 20 Dome command source: idle
+1793234885.710 DOME state=0 owner= prio=0 src= act= id= rem=0 mood=calm dropped=23 refused=0 stamp=1793234885.794
+1793234885.711 LOG dome_arbiter 20 dome: idle
+1793234885.780 JOINT 2.356 deg=135.0
+1793234887.877 JOINT 2.339 deg=134.0
+1793234888.240 SENT behavior look_at 100 {"bearing": -1.5, "profile": "lazy"} probe-cec4b5d1
+1793234888.252 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-cec4b5d1 rem=8000 mood=calm dropped=23 refused=0 stamp=1793234888.332
+1793234888.254 PERS -0.600
+1793234888.254 LOG dome_arbiter 20 dome: running
+1793234888.254 LOG dome_arbiter 20 intent probe-cec4b5d1 accepted: dome look_at  from behavior
+1793234888.256 CONV source=personality v=-0.600 capped=False stamp=1793234888.340
+1793234888.256 LOG dome_twist_converter 20 Dome command source: personality
+1793234888.257 CTRL -0.600
+1793234888.776 JOINT 2.286 deg=131.0
+1793234888.977 JOINT 2.234 deg=128.0
+1793234889.259 JOINT 2.164 deg=124.0
+1793234889.277 JOINT 2.112 deg=121.0
+1793234889.476 JOINT 2.042 deg=117.0
+1793234889.676 JOINT 1.972 deg=113.0
+1793234889.783 JOINT 1.902 deg=109.0
+1793234889.977 JOINT 1.833 deg=105.0
+1793234890.080 JOINT 1.780 deg=102.0
+1793234890.098 PERS 0.000
+1793234890.106 CTRL 0.000
+1793234890.309 JOINT 1.728 deg=99.0
+1793234890.311 CONV source=personality v=0.000 capped=False stamp=1793234890.390
+1793234890.948 PERS -0.600
+1793234890.955 CTRL -0.600
+1793234891.198 PERS 0.000
+1793234891.206 CTRL 0.000
+1793234891.357 JOINT 1.658 deg=95.0
+1793234891.577 JOINT 1.606 deg=92.0
+1793234892.049 DOME state=0 owner= prio=0 src= act= id= rem=0 mood=calm dropped=23 refused=0 stamp=1793234892.134
+1793234892.049 LOG dome_arbiter 20 dome: move over, coast scale 1.00 for the next
+1793234892.050 LOG dome_arbiter 20 dome: idle
+1793234892.558 CONV source=idle v=0.000 capped=False stamp=1793234892.640
+1793234892.558 LOG dome_twist_converter 20 Dome command source: idle
+1793234893.241 SENT behavior look_at 100 {"bearing": 1.5, "profile": "lazy"} probe-10e4ef78
+1793234893.250 PERS -0.600
+1793234893.252 DOME state=1 owner= prio=0 src=behavior act=look_at id=probe-10e4ef78 rem=8000 mood=calm dropped=23 refused=0 stamp=1793234893.336
+1793234893.252 LOG dome_arbiter 20 dome: running
+1793234893.253 LOG dome_arbiter 20 intent probe-10e4ef78 accepted: dome look_at  from behavior
+1793234893.256 CONV source=personality v=-0.600 capped=False stamp=1793234893.340
+1793234893.256 CTRL -0.600
+1793234893.256 LOG dome_twist_converter 20 Dome command source: personality
+1793234893.680 JOINT 1.606 deg=92.0
+1793234893.980 JOINT 1.553 deg=89.0
+1793234894.076 JOINT 1.484 deg=85.0
+1793234894.177 JOINT 1.396 deg=80.0
+1793234894.276 JOINT 1.344 deg=77.0
+1793234894.376 JOINT 1.274 deg=73.0
+1793234894.508 JOINT 1.204 deg=69.0
+1793234894.578 JOINT 1.152 deg=66.0
+1793234894.679 JOINT 1.100 deg=63.0
+1793234894.775 JOINT 1.012 deg=58.0
+1793234894.875 JOINT 0.960 deg=55.0
+1793234895.030 JOINT 0.855 deg=49.0
+1793234895.144 JOINT 0.785 deg=45.0
+1793234895.177 JOINT 0.646 deg=37.0
+1793234895.317 JOINT 0.541 deg=31.0
+1793234895.456 JOINT 0.454 deg=26.0
+1793234895.552 JOINT 0.332 deg=19.0
+1793234895.583 JOINT 0.209 deg=12.0
+1793234895.802 JOINT 0.157 deg=9.0
+1793234895.803 JOINT 0.000 deg=0.0
+1793234895.877 JOINT 6.126 deg=351.0
+1793234895.976 JOINT 6.056 deg=347.0
+1793234896.078 JOINT 5.952 deg=341.0
+1793234896.252 JOINT 5.829 deg=334.0
+1793234896.276 JOINT 5.725 deg=328.0
+1793234896.429 JOINT 5.533 deg=317.0
+1793234896.478 JOINT 5.463 deg=313.0
+1793234896.608 JOINT 5.358 deg=307.0
+1793234896.781 JOINT 5.201 deg=298.0
+1793234896.783 JOINT 5.079 deg=291.0
+1793234896.802 PERS 0.000
+1793234896.807 CONV source=personality v=0.000 capped=False stamp=1793234896.890
+1793234896.807 CTRL 0.000
+1793234896.877 JOINT 4.957 deg=284.0
+1793234896.978 JOINT 4.869 deg=279.0
+1793234897.123 JOINT 4.747 deg=272.0
+1793234897.311 JOINT 4.695 deg=269.0
+1793234897.653 LOG dome_arbiter 20 dome: move over, coast scale 1.00 for the next
+1793234897.654 LOG dome_arbiter 20 dome: idle
+1793234897.654 DOME state=0 owner= prio=0 src= act= id= rem=0 mood=calm dropped=23 refused=0 stamp=1793234897.737
+1793234898.172 CONV source=idle v=0.000 capped=False stamp=1793234898.240
+1793234898.173 LOG dome_twist_converter 20 Dome command source: idle
+1793234899.398 JOINT 4.660 deg=267.0
+1793234901.446 JOINT 4.660 deg=267.0
+1793234903.477 JOINT 4.660 deg=267.0
+1793234905.515 JOINT 4.660 deg=267.0
+1793234907.610 JOINT 4.660 deg=267.0
+1793234909.706 JOINT 4.660 deg=267.0
+1793234911.806 JOINT 4.660 deg=267.0
+1793234913.899 JOINT 4.660 deg=267.0
+1793234915.999 JOINT 4.660 deg=267.0
+1793234917.750 DOME state=1 owner= prio=0 src=idle act=glance id=glance-17 rem=8599 mood=calm dropped=23 refused=0 stamp=1793234917.762
+1793234917.751 CONV source=personality v=-0.600 capped=False stamp=1793234917.790
+1793234917.752 PERS -0.600
+1793234917.752 CTRL -0.600
+1793234917.753 LOG dome_arbiter 20 dome: running
+1793234917.753 LOG dome_twist_converter 20 Dome command source: personality

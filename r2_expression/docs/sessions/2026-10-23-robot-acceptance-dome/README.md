@@ -108,4 +108,5 @@ The recording began at 23:10:46, not 23:38 as first noted.
    the dome servos by hand gave moves abandoned to the stick (by design).
 8. **Not covered**: item 9 (the base), item 5's joystick variant, item 6 and item 3's second half
    on the droid, the hand push of item 8, the acceleration cap by feel at 2 rad/s, and the
-   droid's CPU budget (item 16).
+   droid's CPU budget (item 16). Item 9 and the joystick variant of item 5 passed on
+   2026-10-29: `../2026-10-29-robot-acceptance-dome-9-5/README.md`.
