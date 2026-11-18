@@ -28,6 +28,8 @@ import sys
 
 from nav_msgs.msg import Odometry
 from r2_mocks.dome_plant import DomePlant
+from r2_mocks.dome_plant import DROID_PRESET
+from r2_mocks.dome_plant import PRESETS
 from rcl_interfaces.msg import ParameterDescriptor
 import rclpy
 from rclpy._rclpy_pybind11 import RCLError
@@ -55,7 +57,8 @@ class DomeDriveMock(Node):
         loose = ParameterDescriptor(dynamic_typing=True)
         for name, default in (('ideal', False), ('firmware_quirks', True),
                               ('publish_30hz', False), ('initial_rad', 0.0),
-                              ('state_hz', 10.0), ('body_speed_m_s', 0.0)):
+                              ('state_hz', 10.0), ('body_speed_m_s', 0.0),
+                              ('preset', DROID_PRESET)):
             self.declare_parameter(name, default, loose)
         ideal, quirks, both = (self._bool_param(n) for n in
                                ('ideal', 'firmware_quirks', 'publish_30hz'))
@@ -66,7 +69,11 @@ class DomeDriveMock(Node):
             raise ValueError('state_hz must be in (0, %g], got %r' % (MAX_STATE_HZ, state_hz))
         if body_speed < 0.0:
             raise ValueError('body_speed_m_s must be >= 0, got %r' % body_speed)
-        self.plant = DomePlant(ideal=ideal, firmware_quirks=quirks, initial_rad=initial_rad)
+        preset = self.get_parameter('preset').value
+        if preset not in PRESETS:
+            raise ValueError('preset must be one of %s, got %r' % (', '.join(PRESETS), preset))
+        self.plant = DomePlant(ideal=ideal, firmware_quirks=quirks, initial_rad=initial_rad,
+                               preset=preset)
         self._command = 0.0
         self._last_time = self.get_clock().now().nanoseconds / 1e9
         self._body_speed = body_speed
@@ -86,7 +93,7 @@ class DomeDriveMock(Node):
         self.get_logger().info(
             'dome drive mock up as %s (%s, quirks %s, state_hz %g, start %.3f rad, '
             'body speed %g m/s)' % (
-                self.get_fully_qualified_name(), 'ideal' if ideal else 'real plant',
+                self.get_fully_qualified_name(), 'ideal' if ideal else 'real plant ' + preset,
                 quirks and not ideal, state_hz, initial_rad, body_speed))
 
     def _bool_param(self, name):

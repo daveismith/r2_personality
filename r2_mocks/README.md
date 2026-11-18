@@ -16,7 +16,7 @@ without it. Today: `dome_mock`, the dome device's LED and Magic Panel ROS surfac
 | `launch/dome_mock.launch.py` | `use_sim_time`, `config`, `state_hz`, `node_name`. |
 | `r2_mocks/dome_plant.py` | the dome's motor: dead band, lag, coast, wrapped position with the firmware's crossing artefact. Pure. |
 | `r2_mocks/dome_drive_mock.py` | the node: `/dome_controller/commands` in, `~/joint_states` (and `~/odom`) out. |
-| `launch/dome_drive_mock.launch.py` | `node_name`, `use_sim_time`, `ideal`, `firmware_quirks`, `initial_rad`, `state_hz`, `publish_30hz`, `body_speed_m_s`. |
+| `launch/dome_drive_mock.launch.py` | `node_name`, `use_sim_time`, `ideal`, `firmware_quirks`, `initial_rad`, `state_hz`, `publish_30hz`, `body_speed_m_s`, `preset`. |
 
 ## Running it
 
@@ -198,12 +198,27 @@ ros2 run r2_mocks dome_drive_mock --ros-args -r __node:=dome_drive_mock_t1 -p in
 ```
 
 Parameters, read at startup: `ideal` (false), `firmware_quirks` (true), `initial_rad` (0.0),
-`state_hz` (10, up to 30), `publish_30hz` (false), `body_speed_m_s` (0.0), `use_sim_time`.
+`state_hz` (10, up to 30), `publish_30hz` (false), `body_speed_m_s` (0.0), `preset`
+(`measured_2026_11`, the droid on the velocity map of r2_bringup #10), `use_sim_time`.
 The commands topic is absolute; remap it (`-r /dome_controller/commands:=/x/commands`) to keep
 a test off a real graph.
 
 The plant (`DomePlant(ideal, firmware_quirks, initial_rad, preset, misread_at).step(command, dt)` returns the
-reported position; `position_rad`, `velocity_rad_s`, `wrapped_rad`, `reported_rad`, `coasting`):
+reported position; `position_rad`, `velocity_rad_s`, `wrapped_rad`, `reported_rad`, `coasting`).
+
+The node runs the preset `measured_2026_11` (`DROID_PRESET`), measured on the droid
+2026-11-18 (`r2_expression/docs/dome-motion-measurements.md`, "The new velocity map"):
+
+- dead band: a positive command under 0.63 rad/s or a negative one under 0.69 turns the
+  motor off (so the old personality floor of 0.6 does nothing; the shipped floor is 0.75);
+- dead time: nothing for 0.35 s after the motor comes on from off, then 90 % of the speed
+  within 0.2 s (a pulse shorter than the dead time does not turn the dome);
+- achieved speed by command and direction, from the measured table (positive 0.75, 1.0, 1.5,
+  2.0 give 0.74, 0.57, 1.11, 1.78; negative 0.53, 0.77, 1.50, 2.28);
+- coast by achieved speed and direction, from the measured table (further clockwise).
+
+`DomePlant()` itself, with no preset, is still the October plant the motion model's unit tests
+are built on (`preset:=measured_2026_10` gives it to the node):
 
 - dead band, per direction as the droid's `velocity_map` has it: a positive command under
   0.44 rad/s or a negative one under 0.567 rad/s turns the motor off;

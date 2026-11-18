@@ -23,7 +23,8 @@ from r2_expression import motion
 from r2_expression.motion import (Coast, CoastMemory, glance, Heading, Limits, look_at,
                                   MAX_TURN_RAD, Profile, RateLimiter, rest, RestHold, turn,
                                   wrap)
-from r2_mocks.dome_plant import (DEAD_BAND_NEGATIVE_RAD_S, DEAD_BAND_POSITIVE_RAD_S,
+from r2_mocks.dome_plant import (DEAD_BAND_2026_11_RAD_S, DEAD_BAND_NEGATIVE_RAD_S,
+                                 DEAD_BAND_POSITIVE_RAD_S, DROID_PRESET,
                                  GAP_HIGH_RAD, GAP_LOW_RAD)
 
 PROFILES = {'snappy': Profile(v_max=2.0, accel=4.0, k=3.0, settle_band_rad=0.10),
@@ -657,3 +658,51 @@ def test_gate_the_wrap_crossing_with_the_firmwares_9_degree_step_is_accepted_at_
         assert move._held is None, n               # the 9 degree step is under 0.4 rad
     assert plant.position > 2 * math.pi + 0.3       # it crossed 0
     assert move._u - u0 == pytest.approx(plant.position - start, abs=math.radians(9.0))
+
+
+# --- the shipped settings on the droid's plant since the velocity map of r2_bringup #10 --------
+
+def shipped_limits_and_profiles():
+    from r2_expression.config import load_config
+    import os
+    config = load_config(os.path.join(os.path.dirname(__file__), '..', 'config',
+                                      'expression.yaml'))
+    d = config.defaults.dome
+    return Limits(min_speed=d.min_speed_rad_s, max_move_s=d.max_move_s, settle_s=d.settle_s,
+                  coast=d.coast, floor=d.floor, final_pulse_below_rad=d.final_pulse_below_rad,
+                  retries=d.retries, feedback_timeout_s=d.feedback_timeout_s,
+                  max_plausible_rad_s=d.max_plausible_rad_s), config.profiles
+
+
+def test_the_shipped_floor_is_above_the_droid_plants_dead_band_and_the_code_default_is_not():
+    limits, _ = shipped_limits_and_profiles()
+    assert limits.min_speed > max(DEAD_BAND_2026_11_RAD_S)
+    assert Limits().min_speed < min(DEAD_BAND_2026_11_RAD_S)   # why the yaml carries the retune
+
+
+def test_the_shipped_settings_land_every_look_in_the_band_on_the_droid_plant():
+    # Measured on the droid 2026-11-18: 14 looks and glances, errors 0 to 8.3 degrees, mean 3.7.
+    limits, profiles = shipped_limits_and_profiles()
+    errors = []
+    for name, profile in profiles.items():
+        for deg in range(10, 181, 10):
+            for sign in (1, -1):
+                target = sign * math.radians(deg)
+                plant = PlantDouble(0.0, preset=DROID_PRESET)
+                reason, log = simulate(look_at(target, profile, limits, 0.0), plant)
+                error = abs(wrap(plant.position - target))
+                assert reason == 'reached', (name, deg, sign, reason)
+                assert error <= profile.settle_band_rad + 1e-9, (name, deg, sign, error)
+                assert all(c == 0.0 or limits.min_speed <= abs(c) <= profile.v_max + 1e-9
+                           for _, c, _ in log), (name, deg, sign)
+                errors.append(error)
+    assert math.degrees(sum(errors) / len(errors)) < 5.0
+
+
+def test_the_old_floor_stalls_on_the_droid_plant():
+    _, profiles = shipped_limits_and_profiles()
+    old = Limits()                                           # min_speed 0.6: 0 % on the new map
+    plant = PlantDouble(0.0, preset=DROID_PRESET)
+    lazy = Profile(v_max=0.6, accel=0.8, k=1.0, settle_band_rad=0.15)
+    reason, _ = simulate(look_at(0.5, lazy, old, 0.0), plant)
+    assert plant.position == 0.0 and reason != 'reached'

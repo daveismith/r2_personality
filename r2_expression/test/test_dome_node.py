@@ -138,7 +138,9 @@ class DomeRig:
         self.mock = Proc([
             'ros2', 'run', 'r2_mocks', 'dome_drive_mock', '--ros-args',
             '-r', '__node:=%s' % self.mock_name,
-            '-r', '/dome_controller/commands:=%s' % self.names['commands'], *mock_args])
+            '-r', '/dome_controller/commands:=%s' % self.names['commands'],
+            # The plant of plan 2.1, which these tests and their settings are built on.
+            '-p', 'preset:=measured_2026_10', *mock_args])
         self.arbiter = None
 
         self.node = rclpy.create_node('dome_test_%s' % self.tag)

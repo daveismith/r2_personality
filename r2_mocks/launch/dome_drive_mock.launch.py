@@ -29,6 +29,8 @@ ARGUMENTS = (
     ('state_hz', float, '10.0', 'Rate of ~/joint_states (above 0, up to 30)'),
     ('publish_30hz', bool, 'false', 'Also publish ~/joint_states_30hz'),
     ('body_speed_m_s', float, '0.0', 'Above 0: publish ~/odom with this linear speed'),
+    ('preset', str, 'measured_2026_11',
+     'The plant: measured_2026_11 (the droid now), measured_2026_10 or findings_2026_10'),
 )
 
 

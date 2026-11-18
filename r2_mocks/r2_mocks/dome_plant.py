@@ -60,6 +60,30 @@ coast ``0.37 v - 4 deg``, measured at higher speeds), kept so earlier tests keep
   10 Hz sample sees it once) and then the true angle again. The droid's numbers are
   ``(313, 331, 279)``; ``MEASURED_MISREAD`` has them. Anticlockwise never misreads.
 
+**The droid since 2026-11** (preset ``'measured_2026_11'``, ``DROID_PRESET``; what the mock
+node runs): the reprinted dome holder and the velocity map of r2_bringup #10 (positive p0
+11.38, k 12.90, ``min_percent`` 20; negative p0 12.89, k 12.46, ``min_percent`` 22), measured on
+the droid 2026-11-18 by the method of step 8b, two runs of 3 s per speed and direction
+(``r2_expression/docs/dome-motion-measurements.md``, "The new velocity map"):
+
+* **Dead band**: about 0.63 rad/s positive and 0.69 negative.
+* **Dead time, then a fast rise**: the dome does not move for about 0.35 s after the motor
+  comes on from off (0.37 to 0.52 s measured from the command to the first 10 Hz sample that
+  moved), then reaches its speed within about 0.2 s. The plant holds the dome still for
+  ``dead_time_s`` and then lags with ``lag_90_s`` 0.2.
+* **Achieved speed**, by command and direction (``speed_points``, the mean of the two runs,
+  straight lines between; outside the table the nearest point's ratio): positive 0.75, 1.0,
+  1.5, 2.0 gave 0.74, 0.57, 1.11, 1.78; negative gave 0.53, 0.77, 1.50, 2.28. The positive
+  0.75 read 0.86 and 0.62, so the dip at 1.0 is within what two runs of one command differ by.
+* **Coast**, by achieved speed and direction (``coast_points``, straight lines from (0, 0),
+  the last segment continued): positive 0.57, 0.74, 1.11, 1.78 rad/s coasted 0.157, 0.157,
+  0.585, 1.152 rad; negative 0.53, 0.77, 1.50, 2.28 coasted 0.096, 0.166, 0.402, 0.698. The
+  dome coasts further clockwise (joint positive) than the 0.52 s line says above 1 rad/s, and
+  less the other way.
+
+The older presets and the module's ``DEAD_BAND_*`` constants stay as they were measured in
+2026-10, so the tests built on them keep their intent.
+
 ``ideal=True`` is a pure integrator, like Gazebo's joint under a velocity controller: the
 velocity is the command at once (no dead band, lag or coast, and no quirks), and the position
 is still reported wrapped to [0, 2*pi). Apart from the dead band, positive and negative are
@@ -71,6 +95,8 @@ import math
 # ros2_control.xacro velocity_map: the speed at which round(p0 + k * v) reaches min_percent.
 DEAD_BAND_POSITIVE_RAD_S = (20 - 0.5 - 13.9) / 12.75    # min_percent, p0, k: about 0.44
 DEAD_BAND_NEGATIVE_RAD_S = (22 - 0.5 - 14.5) / 12.36    # about 0.567 (0.5663)
+# The same for the velocity map of r2_bringup #10 (2026-11-01): about 0.63 and 0.69.
+DEAD_BAND_2026_11_RAD_S = ((20 - 0.5 - 11.38) / 12.90, (22 - 0.5 - 12.89) / 12.46)
 # Lag and coast: the coast distance is coast_s * v - coast_offset_rad.
 PRESETS = {
     'measured_2026_10': {'lag_90_s': 0.6, 'coast_s': 0.52, 'coast_offset_rad': 0.0,
@@ -79,10 +105,20 @@ PRESETS = {
     'findings_2026_10': {'lag_90_s': 1.5, 'coast_s': 0.37, 'coast_offset_rad': math.radians(4.0),
                          'floor_gain': 1.0, 'speed_gain': (1.0, 1.0),
                          'floor_coast': None, 'coast_knee': None},
+    # The droid on the map of r2_bringup #10, measured 2026-11-18. (positive, negative) pairs.
+    'measured_2026_11': {
+        'lag_90_s': 0.2, 'dead_time_s': 0.35, 'dead_band': DEAD_BAND_2026_11_RAD_S,
+        'speed_points': (((0.75, 0.74), (1.0, 0.57), (1.5, 1.11), (2.0, 1.78)),
+                         ((0.75, 0.53), (1.0, 0.77), (1.5, 1.50), (2.0, 2.28))),
+        'coast_points': (((0.57, 0.157), (0.74, 0.157), (1.11, 0.585), (1.78, 1.152)),
+                         ((0.53, 0.096), (0.77, 0.166), (1.50, 0.402), (2.28, 0.698))),
+        'coast_s': 0.52, 'coast_offset_rad': 0.0, 'floor_gain': 1.0, 'speed_gain': (1.0, 1.0),
+        'floor_coast': None, 'coast_knee': None},
 }
 FLOOR_BAND_RAD_S = 0.7          # commands under this achieve floor_gain of the command
 GAIN_BAND_RAD_S = 1.25          # commands from FLOOR_BAND_RAD_S up to this achieve speed_gain
-DEFAULT_PRESET = 'measured_2026_10'
+DEFAULT_PRESET = 'measured_2026_10'      # what DomePlant() is: the tests are built on it
+DROID_PRESET = 'measured_2026_11'        # what the droid is now: the mock node's default
 MEASURED_MISREAD = (313.0, 331.0, 279.0)    # degrees: sector low, sector high, the bogus reading
 MISREAD_S = 0.08                # shorter than a 10 Hz sample period: one bad sample
 GAP_LOW_RAD = math.radians(355.0)       # the firmware reports neither side of 0 between these
@@ -96,9 +132,43 @@ def wrap(angle):
     return 0.0 if wrapped >= TWO_PI else wrapped
 
 
+def _along(points, x):
+    """Return y at ``x`` on the straight lines through ``points``, the end segments continued."""
+    for (x0, y0), (x1, y1) in zip(points, points[1:]):
+        if x <= x1 or (x1, y1) == points[-1]:
+            return y0 + (y1 - y0) * (x - x0) / (x1 - x0)
+    return points[0][1]
+
+
+def achieved_speed(command, preset=DEFAULT_PRESET):
+    """Return the speed in rad/s (signed) a command above the dead band settles at."""
+    fit, size = PRESETS[preset], abs(command)
+    points = fit.get('speed_points')
+    if points is None:
+        gain = fit['floor_gain'] if size < FLOOR_BAND_RAD_S else (
+            fit['speed_gain'][0 if command > 0.0 else 1] if size < GAIN_BAND_RAD_S else 1.0)
+        return command * gain
+    points = points[0 if command > 0.0 else 1]
+    (low, low_speed), (high, high_speed) = points[0], points[-1]
+    if size <= low:
+        speed = size * low_speed / low
+    elif size >= high:
+        speed = size * high_speed / high
+    else:
+        speed = _along(points, size)
+    return math.copysign(speed, command)
+
+
 def coast_distance(speed, preset=DEFAULT_PRESET):
-    """Return the distance in rad the dome coasts from ``|speed|`` rad/s under ``preset``."""
-    fit, speed = PRESETS[preset], abs(speed)
+    """
+    Return the distance in rad the dome coasts from ``speed`` rad/s under ``preset``.
+
+    The sign of ``speed`` matters only where the preset's coast differs by direction.
+    """
+    fit, positive, speed = PRESETS[preset], speed >= 0.0, abs(speed)
+    if fit.get('coast_points') is not None:
+        points = ((0.0, 0.0),) + fit['coast_points'][0 if positive else 1]
+        return max(0.0, _along(points, speed))
     if fit['floor_coast'] is not None and speed < fit['coast_knee'][0]:
         # Measured: 0.35 rad/s coasted 0.12, less than the line's 0.18. Straight lines from 0 to
         # that point and on to the line at the knee.
@@ -119,6 +189,11 @@ class DomePlant:
         self.lag_90_s = fit['lag_90_s']
         self._floor_gain = fit['floor_gain']
         self._speed_gain = fit['speed_gain'] if speed_gain is None else tuple(speed_gain)
+        self._speed_points = fit.get('speed_points') if speed_gain is None else None
+        self._dead_band = fit.get('dead_band',
+                                  (DEAD_BAND_POSITIVE_RAD_S, DEAD_BAND_NEGATIVE_RAD_S))
+        self._dead_time = fit.get('dead_time_s', 0.0)
+        self._on_for = 0.0              # how long the motor has been on since it was last off
         self._tau = self.lag_90_s / math.log(10.0)
         self.ideal = ideal
         self.firmware_quirks = firmware_quirks and not ideal
@@ -169,11 +244,15 @@ class DomePlant:
             if self.ideal:
                 self._velocity = command_rad_s
                 self._position += command_rad_s * dt
-            elif abs(command_rad_s) < (DEAD_BAND_NEGATIVE_RAD_S if command_rad_s < 0.0
-                                       else DEAD_BAND_POSITIVE_RAD_S):
+            elif abs(command_rad_s) < self._dead_band[1 if command_rad_s < 0.0 else 0]:
+                self._on_for = 0.0
                 self._coast(dt)
             else:
-                self._drive(command_rad_s, dt)
+                self._on_for += dt
+                if self._on_for <= self._dead_time:
+                    self._coast(dt)         # the motor has not bitten yet
+                else:
+                    self._drive(command_rad_s, min(dt, self._on_for - self._dead_time))
             self._track_misread(before, dt)
         return self.reported_rad
 
@@ -188,7 +267,9 @@ class DomePlant:
     def _drive(self, target, dt):
         """Lag first-order toward ``target``, integrating the position exactly."""
         self._coast_decel = 0.0
-        if abs(target) < FLOOR_BAND_RAD_S:
+        if self._speed_points is not None:
+            target = achieved_speed(target, self.preset)
+        elif abs(target) < FLOOR_BAND_RAD_S:
             target *= self._floor_gain
         elif abs(target) < GAIN_BAND_RAD_S:
             target *= self._speed_gain[0 if target > 0.0 else 1]
@@ -203,7 +284,7 @@ class DomePlant:
             self._coast_decel = 0.0
             return
         if not self.coasting:
-            distance = coast_distance(speed, self.preset)
+            distance = coast_distance(self._velocity, self.preset)
             if distance == 0.0:
                 self._velocity = 0.0
                 return

@@ -25,9 +25,14 @@ The 355-to-4 deg step at each crossing of 0.
 import math
 
 import pytest
+from r2_mocks.dome_plant import achieved_speed
+from r2_mocks.dome_plant import coast_distance
+from r2_mocks.dome_plant import DEAD_BAND_2026_11_RAD_S
 from r2_mocks.dome_plant import DEAD_BAND_NEGATIVE_RAD_S
 from r2_mocks.dome_plant import DEAD_BAND_POSITIVE_RAD_S
 from r2_mocks.dome_plant import DomePlant
+from r2_mocks.dome_plant import DROID_PRESET
+from r2_mocks.dome_plant import PRESETS
 from r2_mocks.dome_plant import wrap
 
 DT = 1.0 / 30.0
@@ -342,3 +347,90 @@ def test_coast_below_the_line_near_the_floor_is_continuous():
     speeds = [0.01 * n for n in range(0, 200)]
     values = [coast_distance(v) for v in speeds]
     assert all(b >= a and b - a < 0.02 for a, b in zip(values, values[1:]))
+
+
+# --- the droid on the velocity map of r2_bringup #10 (preset measured_2026_11) -----------------
+
+def droid_plant(**kwargs):
+    return DomePlant(preset=DROID_PRESET, firmware_quirks=False, **kwargs)
+
+
+def droid_settle(plant, command, seconds=3.0, dt=1.0 / 60.0):
+    for _ in range(int(seconds / dt)):
+        plant.step(command, dt)
+    return plant.velocity_rad_s
+
+
+def test_the_2026_11_dead_bands_are_the_new_maps_floors():
+    positive, negative = DEAD_BAND_2026_11_RAD_S
+    assert positive == pytest.approx(0.629, abs=0.001)
+    assert negative == pytest.approx(0.691, abs=0.001)
+    for floor, (p0, k, min_percent) in ((positive, (11.38, 12.90, 20)),
+                                        (negative, (12.89, 12.46, 22))):
+        assert round(p0 + k * (floor + 0.001)) >= min_percent > round(p0 + k * (floor - 0.01))
+
+
+@pytest.mark.parametrize('command', [0.6, 0.62, -0.6, -0.68])
+def test_the_old_floor_of_0_6_does_not_turn_the_droid_plant(command):
+    plant = droid_plant(initial_rad=1.0)
+    assert droid_settle(plant, command) == 0.0 and plant.position_rad == 1.0
+
+
+@pytest.mark.parametrize(('command', 'speed'), [
+    (0.75, 0.74), (1.0, 0.57), (1.5, 1.11), (2.0, 1.78),
+    (-0.75, -0.53), (-1.0, -0.77), (-1.5, -1.50), (-2.0, -2.28)])
+def test_the_droid_plant_settles_at_the_measured_speed_of_each_command(command, speed):
+    assert droid_settle(droid_plant(), command) == pytest.approx(speed, abs=0.01)
+    assert achieved_speed(command, DROID_PRESET) == pytest.approx(speed)
+
+
+def test_the_droid_plant_does_nothing_for_the_dead_time_then_rises_within_0_2_s():
+    plant, dt = droid_plant(), 0.01
+    for _ in range(34):                                  # 0.34 s: inside the 0.35 s
+        plant.step(1.5, dt)
+    assert plant.position_rad == 0.0 and plant.velocity_rad_s == 0.0
+    for _ in range(22):                                  # to 0.56 s: 0.2 s after it bit
+        plant.step(1.5, dt)
+    assert plant.velocity_rad_s >= 0.9 * 1.11
+    plant.step(0.0, dt)                                  # off: the dead time starts again
+    for _ in range(200):
+        plant.step(0.0, dt)
+    at_rest = plant.position_rad
+    for _ in range(30):
+        plant.step(1.5, dt)
+    assert plant.position_rad == at_rest
+
+
+def test_a_pulse_shorter_than_the_dead_time_does_not_turn_the_droid_plant():
+    plant = droid_plant()
+    for _ in range(18):                                  # 0.3 s at 60 Hz
+        plant.step(0.75, 1.0 / 60.0)
+    droid_settle(plant, 0.0, 2.0)
+    assert plant.position_rad == 0.0
+
+
+@pytest.mark.parametrize(('speed', 'coast'), [
+    (0.57, 0.157), (1.11, 0.585), (1.78, 1.152),
+    (-0.53, 0.096), (-0.77, 0.166), (-1.50, 0.402), (-2.28, 0.698)])
+def test_the_droid_plant_coasts_the_measured_distance_by_direction(speed, coast):
+    assert coast_distance(speed, DROID_PRESET) == pytest.approx(coast)
+    command = {0.57: 1.0, 1.11: 1.5, 1.78: 2.0, -0.53: -0.75, -0.77: -1.0, -1.50: -1.5,
+               -2.28: -2.0}[speed]
+    plant = droid_plant()
+    droid_settle(plant, command)
+    at_stop = plant.position_rad
+    droid_settle(plant, 0.0, 6.0)
+    assert abs(plant.position_rad - at_stop) == pytest.approx(coast, abs=0.02)
+    assert plant.velocity_rad_s == 0.0
+
+
+def test_droid_coast_is_zero_at_rest_and_never_shrinks_with_speed():
+    for sign in (1.0, -1.0):
+        values = [coast_distance(sign * v / 20.0, DROID_PRESET) for v in range(0, 61)]
+        assert values[0] == 0.0
+        assert all(b >= a for a, b in zip(values, values[1:])), sign
+
+
+def test_the_default_plant_is_still_the_2026_10_one_and_the_droid_preset_is_named():
+    assert DomePlant().preset == 'measured_2026_10'
+    assert DROID_PRESET == 'measured_2026_11' and DROID_PRESET in PRESETS
