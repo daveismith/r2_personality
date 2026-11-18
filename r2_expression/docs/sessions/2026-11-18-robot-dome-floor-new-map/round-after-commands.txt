@@ -1,0 +1,14 @@
+1795040232.095225585 look --profile smooth -- 1.0
+1795040243.949409299 look --profile smooth -- -1.0
+1795040256.408449346 look --profile smooth -- 3.0
+1795040269.512878213 look --profile snappy -- 0.0
+1795040281.579617052 glance --amplitude 0.6 --dwell 1
+1795040294.614846461 look --profile lazy -- 0.5
+1795040305.741947216 look --profile lazy -- 0.0
+1795040316.848581013 look --profile smooth -- 1.0
+1795040328.844466463 look --profile smooth -- -1.0
+1795040340.873887719 look --profile smooth -- 3.0
+1795040353.916126044 look --profile snappy -- 0.0
+1795040365.977107883 glance --amplitude 0.6 --dwell 1
+1795040379.064897500 look --profile lazy -- 0.5
+1795040390.102183505 look --profile lazy -- 0.0

@@ -126,12 +126,15 @@ def _picked(mood):
 def test_shipped_dome_defaults_are_the_plan_4_5_values():
     d = load_config(SHIPPED).defaults.dome
     assert (d.min_speed_rad_s, d.max_speed_rad_s, d.max_accel_rad_s2, d.max_move_s,
-            d.settle_s, d.rest_recheck_s) == (0.6, 2.0, 6.0, 8.0, 0.8, 30.0)
+            d.settle_s, d.rest_recheck_s) == (0.75, 2.0, 6.0, 8.0, 0.8, 30.0)
     assert (d.retries, d.feedback_timeout_s, d.max_plausible_rad_s) == (2, 0.5, 4.0)
-    assert d == DomeDefaults()                       # the yaml and the code agree
+    # The yaml and the code agree, except for the droid's retune of 2026-11-18 (velocity map of
+    # r2_bringup #10): the floor speed and the floor pulse. The code defaults still match the
+    # mock's plant, which models the older map.
+    assert dataclasses.replace(d, min_speed_rad_s=0.6, floor=Floor(0.12, 0.35)) == DomeDefaults()
     assert d.coast == Coast(0.52, 0.0) and d.heading == Heading(-1, 0.0)
     assert (d.coast.learn, d.coast.scale_limits, d.coast.learn_rate) == (False, (0.7, 1.4), 0.3)
-    assert (d.floor, d.final_pulse_below_rad) == (Floor(0.12, 0.35), 0.35)
+    assert (d.floor, d.final_pulse_below_rad) == (Floor(0.0, 0.35), 0.35)
     assert (d.body_speed_m_s, d.body_yaw_rad_s, d.after_foreign_s, d.after_still_s) == (
         0.15, 0.3, 3.0, 1.0)
 
@@ -141,7 +144,7 @@ def test_shipped_every_mood_has_a_dome_entry_and_profiles_within_the_caps():
     assert config.dome_warnings == ()
     assert config.profiles['snappy'] == Profile(2.0, 4.0, 3.0, 0.15)
     assert config.profiles['smooth'] == Profile(1.0, 1.5, 1.5, 0.15)
-    assert config.profiles['lazy'] == Profile(0.6, 0.8, 1.0, 0.15)
+    assert config.profiles['lazy'] == Profile(0.75, 0.8, 1.0, 0.15)
     assert config.neutral.dome.profile == 'smooth'
     assert config.neutral.dome.glance is None and config.neutral.dome.rest_rad is None
     for name, mood in config.moods.items():

@@ -1,0 +1,14 @@
+look --profile smooth -- 1.0       from    2.0 to  -56.0 deg  err  +1.3 deg  motion 1.1s  bursts 1  |cmd| 0.75..1.00
+look --profile smooth -- -1.0      from  -56.0 to   49.0 deg  err  -8.3 deg  motion 4.7s  bursts 3  |cmd| 0.75..1.00
+look --profile smooth -- 3.0       from   49.0 to -168.0 deg  err  +3.9 deg  motion 5.6s  bursts 2  |cmd| 0.75..1.00
+look --profile snappy -- 0.0       from -168.0 to   -4.0 deg  err  -4.0 deg  motion 1.5s  bursts 1  |cmd| 0.75..2.00
+glance --amplitude 0.6 --dwell 1   from   -4.0 to   -4.0 deg  err  +0.0 deg  motion 4.7s  bursts 3  |cmd| 0.75..0.90
+look --profile lazy -- 0.5         from   -4.0 to  -23.0 deg  err  +5.7 deg  motion 0.7s  bursts 1  |cmd| 0.75..0.75
+look --profile lazy -- 0.0         from  -23.0 to   -5.0 deg  err  -5.0 deg  motion 0.7s  bursts 1  |cmd| 0.75..0.75
+look --profile smooth -- 1.0       from   -5.0 to  -57.0 deg  err  +0.3 deg  motion 2.4s  bursts 2  |cmd| 0.75..1.00
+look --profile smooth -- -1.0      from  -57.0 to   50.0 deg  err  -7.3 deg  motion 3.4s  bursts 2  |cmd| 0.75..1.00
+look --profile smooth -- 3.0       from   50.0 to -171.0 deg  err  +0.9 deg  motion 5.9s  bursts 2  |cmd| 0.75..1.00
+look --profile snappy -- 0.0       from -171.0 to   -3.0 deg  err  -3.0 deg  motion 2.8s  bursts 2  |cmd| 0.75..2.00
+glance --amplitude 0.6 --dwell 1   from   -3.0 to   -9.0 deg  err  -6.0 deg  motion 3.5s  bursts 2  |cmd| 0.75..0.90
+look --profile lazy -- 0.5         from   -9.0 to  -26.0 deg  err  +2.6 deg  motion 0.8s  bursts 1  |cmd| 0.75..0.75
+look --profile lazy -- 0.0         from  -26.0 to   -3.0 deg  err  -3.0 deg  motion 0.8s  bursts 1  |cmd| 0.75..0.75

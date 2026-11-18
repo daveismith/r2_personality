@@ -32,9 +32,10 @@ defaults:
   max_lease_s: 60.0        # cap on a ClaimChannel lease
   device_stale_s: 5.0      # no state message for this long: OFFLINE
   dome:
-    # Every command is 0 or at least min_speed. The droid's velocity_map zeroes a positive
-    # command under about 0.44 rad/s and a negative one under about 0.567 rad/s: above both.
-    min_speed_rad_s: 0.6
+    # Every command is 0 or at least min_speed. The droid's velocity_map (r2_bringup #10,
+    # 2026-11-01) zeroes a positive command under about 0.63 rad/s and a negative one under
+    # about 0.69 rad/s: above both. 0.75 sends 21 % and 22 %.
+    min_speed_rad_s: 0.75
     # The renderer's own clamps. The converter's personality_max_speed_rad_s and
     # personality_max_accel_rad_s2 are the authority; keep these equal to them.
     max_speed_rad_s: 2.0
@@ -49,10 +50,14 @@ defaults:
     # scale at 1.0 (the fit is trusted; five consecutive moves learned 0.2 to 1.2 from noise). With
     # learn: true each lesson moves the scale learn_rate of the way to the observed ratio, within scale_limits.
     coast: {c1_s: 0.52, c2_rad: 0.0, learn: false, scale_limits: [0.7, 1.4], learn_rate: 0.3}
-    # What the dome does at min_speed (0.6 gave 0.35 rad/s and a 0.12 rad run-on): a retry from
+    # What the dome does at min_speed: a retry from
     # closer than final_pulse_below_rad is one pulse of min_speed for
     # clamp((|err| - coast_rad) / speed_rad_s, 0.1, 0.6) s, then the stop and the check again.
-    floor: {coast_rad: 0.12, speed_rad_s: 0.35}   # speed_rad_s is the ACHIEVED speed
+    # Retuned on the droid 2026-11-18 with the new map: the motor does nothing for about the
+    # first 0.3 s of a pulse, so pulses under 0.35 s did not turn the dome; coast_rad 0 makes a
+    # 10 degree error a 0.5 s pulse. speed_rad_s is the average over such a pulse, not the cruise
+    # speed (0.43 rad/s positive, 0.6 negative at 0.75).
+    floor: {coast_rad: 0.0, speed_rad_s: 0.35}
     final_pulse_below_rad: 0.35
     heading: {sign: -1, offset_rad: 0.0}  # joint positive = clockwise, bearings +ve left
     body_speed_m_s: 0.15   # body faster than this (or yawing faster than below): SUPPRESSED
@@ -67,7 +72,7 @@ defaults:
 profiles:
   snappy: {v_max: 2.0, accel: 4.0, k: 3.0, settle_band_rad: 0.15}
   smooth: {v_max: 1.0, accel: 1.5, k: 1.5, settle_band_rad: 0.15}
-  lazy:   {v_max: 0.6, accel: 0.8, k: 1.0, settle_band_rad: 0.15}
+  lazy:   {v_max: 0.75, accel: 0.8, k: 1.0, settle_band_rad: 0.15}
 
 # While the mood is stale, and for any mood without an entry: the device's own default
 # look. The Magic Panel is left untouched.

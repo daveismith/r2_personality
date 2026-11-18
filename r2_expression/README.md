@@ -305,12 +305,12 @@ It also takes `/expression/intent`, `/mood/state`, serves **`/expression/claim/d
 publishes `/expression/status`, as the others. The verbs (`look_at`, `glance`, `turn`, `rest`,
 `stop`; `track` is refused `not in this phase`) and the motion settings are in
 `expression.yaml` (`defaults.dome`, `profiles`, each mood's `dome`). `defaults.dome`'s
-`min_speed_rad_s` (0.6) sits above both floors of the droid's velocity map (a positive command
-under about 0.44 rad/s and a negative one under about 0.567 rad/s send 0 %); `retries` (2) and
+`min_speed_rad_s` (0.75) sits above both floors of the droid's velocity map (a positive command
+under about 0.63 rad/s and a negative one under about 0.69 rad/s send 0 %); `retries` (2) and
 `feedback_timeout_s` (0.5) are the moves' retry budget and feedback timeout. A retry from
 closer than `final_pulse_below_rad` (0.35) is a timed pulse at `min_speed`,
-`clamp((|err| - floor.coast_rad) / floor.speed_rad_s, 0.1, 0.6)` s, because the floor speed
-itself coasts 0.12 rad (`floor: {coast_rad: 0.12, speed_rad_s: 0.35}`, measured); every
+`clamp((|err| - floor.coast_rad) / floor.speed_rad_s, 0.1, 0.6)` s, because a short
+pulse must outlast the motor's start (`floor: {coast_rad: 0.0, speed_rad_s: 0.35}`, retuned 2026-11-18); every
 profile's `settle_band_rad` is 0.10 (5.7 degrees). `coast.learn` (false) keeps the coast
 scale at 1.0, trusting the measured fit; true lets each stop move the scale `learn_rate`
 (0.3) of the way to the observed ratio, within `scale_limits` ([0.7, 1.4]), and the
