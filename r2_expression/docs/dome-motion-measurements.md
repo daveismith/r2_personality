@@ -152,3 +152,52 @@ the 144 moves ends within the 0.10 band after at most two retries, with no timeo
 miss 5.5 degrees); with the firmware quirks and the ring misread on top, 143 of 144 (a
 snappy 0.6 rad move whose start sits in the 355 to 4 degree gap, 9.6 degrees). To be
 confirmed on the droid: item 8b of the plan, the same five moves again.
+
+## The new velocity map (2026-11-18)
+
+r2_bringup #10 (2026-11-01) re-fitted the velocity map on the reprinted dome holder: positive
+k 12.90, p0 11.38, `min_percent` 20; negative k 12.46, p0 12.89, `min_percent` 22. The floors
+moved to about 0.63 rad/s positive and 0.69 negative, so the personality floor of 0.6 sent
+0 %. The floor is 0.75 since 2026-11-18 (session note
+`sessions/2026-11-18-robot-dome-floor-new-map/`), and the dome was measured again the same day.
+
+Method as above, with three differences: the driver and the recorder ran **on the body Pi**
+(from the dev container over Wi-Fi the publisher stalled for seconds and runs were lost), each
+speed was run twice in each direction, and the table adds the **dead time**: from the first
+non-zero value on `/dome_controller/commands` to the first 10 Hz sample that had moved more
+than 0.02 rad. t90 is counted from that sample, as before.
+
+| commanded rad/s | achieved rad/s (two runs) | mean | dead time | t90 | coast rad (two runs) | mean |
+|---|---|---|---|---|---|---|
+| +0.75 | +0.86, +0.62 | +0.74 | 0.47 s | 0.1 s | 0.209, 0.105 | 0.157 |
+| +1.0 | +0.59, +0.55 | +0.57 | 0.42 s | 0.1 s | 0.157, 0.157 | 0.157 |
+| +1.5 | +1.11, +1.10 | +1.11 | 0.42 s | 0.1 to 0.2 s | 0.576, 0.593 | 0.585 |
+| +2.0 | +1.78, +1.78 | +1.78 | 0.37 s | 0.1 to 0.2 s | 1.187, 1.117 | 1.152 |
+| -0.75 | -0.50, -0.55 | -0.53 | 0.47 s | 0.1 s | 0.087, 0.105 | 0.096 |
+| -1.0 | -0.76, -0.78 | -0.77 | 0.52 s | 0.1 s | 0.175, 0.157 | 0.166 |
+| -1.5 | -1.51, -1.49 | -1.50 | 0.42 s | 0.2 to 0.3 s | 0.384, 0.419 | 0.402 |
+| -2.0 | -2.28, -2.27 | -2.28 | 0.47 s | 0.3 to 0.8 s | 0.681, 0.715 | 0.698 |
+
+What it says:
+
+- **The response is a dead time and then a fast rise**, not the first-order lag of the October
+  model: nothing for 0.37 to 0.52 s (one 10 Hz sample of that is the sampling), then the speed
+  within one to three samples. This is why retry pulses under 0.35 s did not turn the dome.
+- **Achieved speed is loose and differs by direction**, as before. Positive commands run slow
+  (0.57 to 0.89 of the command above the floor), negative ones run close to or above the
+  command from 1.5 up (1.0 and 1.14). The two +0.75 runs differ by 0.24 rad/s, so the dip at
+  +1.0 is not established.
+- **The coast differs by direction.** Positive (joint clockwise): 0.16 rad up to 0.74 rad/s,
+  then steeply to 1.15 rad at 1.78 rad/s (0.65 s * v). Negative: 0.096 rad at 0.53 rad/s to
+  0.70 rad at 2.28 rad/s (about 0.31 s * v). The shipped `coast` (0.52 s * v, one line for
+  both) sits between them and was left alone: with it, and the retries, 14 of 14 looks and
+  glances ended inside the band on the droid (mean 3.7 degrees).
+
+What came of it: `r2_mocks` `DomePlant` has the preset `measured_2026_11` (`DROID_PRESET`):
+the new dead bands, a 0.35 s dead time and 0.2 s to 90 %, and the two tables above by
+direction. `dome_drive_mock` runs it by default (parameter `preset`). `DomePlant()` and the
+module's `DEAD_BAND_*` constants stay on the October numbers, because the unit tests of the
+motion model are built on that plant; the code defaults (`Limits`, `DomeDefaults`, the
+converter's 0.6) stay with them, and the shipped `expression.yaml` and `dome_teleop.launch.py`
+carry the droid's values. `test_motion.py` checks the shipped settings against the new plant:
+every look of a 10 degree grid in the three profiles ends inside the band.

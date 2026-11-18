@@ -19,10 +19,12 @@ import pytest
 
 # Lint this package wherever pytest is started from.
 PKG_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# The code, not docs/: the session notes keep the probe scripts as they were run.
+CODE = [os.path.join(PKG_ROOT, name) for name in ('r2_expression', 'test', 'launch', 'setup.py')]
 
 
 @pytest.mark.linter
 @pytest.mark.pep257
 def test_pep257():
-    rc = main(argv=[PKG_ROOT])
+    rc = main(argv=CODE)
     assert rc == 0, 'Found code style errors / warnings'

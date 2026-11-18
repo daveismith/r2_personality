@@ -19,10 +19,12 @@ import pytest
 
 # Lint this package wherever pytest is started from.
 PKG_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# The code, not docs/: the session notes keep the probe scripts as they were run.
+CODE = [os.path.join(PKG_ROOT, name) for name in ('r2_expression', 'test', 'launch', 'setup.py')]
 
 
 @pytest.mark.copyright
 @pytest.mark.linter
 def test_copyright():
-    rc = main(argv=[PKG_ROOT])
+    rc = main(argv=CODE)
     assert rc == 0, 'Found errors'

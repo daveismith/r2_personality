@@ -19,12 +19,14 @@ import pytest
 
 # Lint this package wherever pytest is started from.
 PKG_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# The code, not docs/: the session notes keep the probe scripts as they were run.
+CODE = [os.path.join(PKG_ROOT, name) for name in ('r2_expression', 'test', 'launch', 'setup.py')]
 
 
 @pytest.mark.flake8
 @pytest.mark.linter
 def test_flake8():
-    rc, errors = main_with_errors(argv=[PKG_ROOT])
+    rc, errors = main_with_errors(argv=CODE)
     assert rc == 0, \
         'Found %d code style errors / warnings:\n' % len(errors) + \
         '\n'.join(errors)

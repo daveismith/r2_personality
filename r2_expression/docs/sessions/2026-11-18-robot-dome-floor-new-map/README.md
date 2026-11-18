@@ -38,10 +38,41 @@ values: the mock's plant still models the old map and the unit tests are built o
 - Every non-zero personality command in the after-round and the idle run was between 0.75
   and 2.00 rad/s (141 in the idle run).
 
+## The simulator, the same day
+
+- **The dome measured again by the method of step 8b** (`constant-speed.txt`, `drive.py`,
+  `char.py`; driver and recorder on the body Pi, dome arbiter stopped): the table and what it
+  says are in `docs/dome-motion-measurements.md`, "The new velocity map". In short: a dead time
+  of about 0.35 s and then a fast rise, achieved speed and coast both different by direction.
+- **`r2_mocks` `DomePlant` has the preset `measured_2026_11`** built from that table, and
+  `dome_drive_mock` runs it by default (`preset`). `DomePlant()` and the code defaults stay on
+  the October plant, which the motion model's unit tests are built on; `test_dome_node.py`
+  pins that preset. New unit tests: the preset itself (`test_dome_plant.py`), and the shipped
+  settings on it (`test_motion.py`): every look of a 10 degree grid in the three profiles
+  ends inside the band (mean 3.0 degrees, against 3.7 on the droid), and the old 0.6 floor
+  does not turn it.
+- **Gazebo keeps its own floor.** Gazebo's dome is an ideal velocity joint (no dead band, dead
+  time or coast). With the droid's floor the looks in the headless sim ended 7 to 15 degrees
+  off (the 0.5 s retry pulse overshoots); on an ideal plant in the unit harness 90 of 108
+  looks ended outside the band. `r2_sim`'s `launch_sim.launch.py` now generates its
+  `expression_config` from the shipped file with `min_speed_rad_s` 0.6 and `floor`
+  `{0.12, 0.35}`, and passes the converter 0.6. With that, two rounds in the headless sim
+  (`sim-round.txt`): 14 moves, final error 0.1 to 3.0 degrees.
+- **Tests** (on `ROS_DOMAIN_ID` 42, the robot stack stopped, so nothing could reach the dome's
+  MCU, which was still on domain 0): `r2_mocks` 248 passed, `r2_expression` 771 passed.
+  `r2_expression`'s flake8, pep257 and copyright tests now lint the code directories only:
+  they had been failing on the probe scripts kept under `docs/sessions/`.
+- Not from this work, seen in the same run and left: `r2_sim`
+  `test_sim_forwards_wav_backend_and_mock_level_topic` fails (it compares a
+  `LaunchConfiguration` with `'wav'`), and the flake8 tests of `r2_bringup` and `r2_sim` fail
+  on the launch files' quoting style.
+
 ## Open
 
-- The mock's plant (`r2_mocks/dome_plant.py`) and the code defaults still describe the old
-  map; the sim has not been re-run with the shipped 0.75 floor (no node tests while the robot
-  is connected).
-- The floor's `speed_rad_s` is now a pulse-length constant, not the cruise speed.
+- The code defaults (`Limits`, `DomeDefaults`, `Floor`, the converter's parameter default) are
+  the October values, which now suit Gazebo and the old plant, not the droid; the shipped
+  `expression.yaml` and `dome_teleop.launch.py` carry the droid's.
+- The floor's `speed_rad_s` is a pulse-length constant, not the cruise speed.
+- The shipped `coast` is one line for both directions; the droid's coast differs by
+  direction (see the measurements).
 - David did not watch these moves; judged from the joint telemetry only.
