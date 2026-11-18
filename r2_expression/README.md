@@ -66,7 +66,7 @@ overlapping channels, because the device replaces any run sharing a display.
    someone else's run. A hold ends when its time runs out; a refusal's hold covers every
    display the request touched, so overlapping channels see it too.
    `ConfigureMagicPanel` (which takes no priority) is only sent while the panel's
-   `held_by` is empty; a panel run `started_by: other` (rotary switch, another master) is
+   `held_by` is empty; a panel run `started_by: other` (another I2C master) is
    `FOREIGN` owner `other`.
 8. **Palette.** Each palette channel (`fld`, `rld`, `psi`, `magic`) is re-styled at
    priority 10 when the label changes, when the mood goes stale or returns, on reload, and
@@ -540,8 +540,7 @@ testing the arbiter's ladder only.
 
 **The dome's own console is not routed.** `express dome` and the mock's console topic exist
 only in the sim, where the mock is `/dome_mock` and `express dome` sends to it by default
-(`--device /r2_dome` for a mock running under the device's own name); on the robot, a line typed at the dome's console (or the touchscreen, or
-the panel's rotary switch) holds those lights directly, and the arbiters show the channel as
+(`--device /r2_dome` for a mock running under the device's own name); on the robot, a line typed at the dome's console (or the touchscreen) holds those lights directly, and the arbiters show the channel as
 `foreign` until it ends. The real device has no `mock/console` topic, so `express dome` there prints the "nobody subscribes" note and exits 1.
 
 ## Tests

@@ -27,7 +27,7 @@ David. `probe.py` logged changes (`probe.log`); the bag (`bag/`) holds `/express
 | 6 sequences | PASS | 44 Smile `--duration 3`: device `state` 1 then 2 (ended by itself after about 1 s), channel `claimed` 5 s, `idle`. 56 Random show `--duration 3`: stopped by the arbiter at 3.0 s (`state` 3). David, panel facing him: smile, blank, then a busy pattern that stopped and left the panel dark |
 | 7 foreign LED write | PASS (second attempt) | console `leds run rld rainbow`: `rld` `foreign owner=console lease 4.2s`; `express effect rld fire` 40 ms after the status refused `held by console` (`refused` 0 to 1); `leds stop rld`: `idle` and the palette 4.3 s later. No `rld` flourish came up to be dropped (excited does not pick `rld`). First attempt: the effect went 16 s after the rainbow and was accepted (finding 2 of the 2026-10-20 note) |
 | 8 foreign display change | PASS | console `leds mode tfld off`: `fld` and `tfld` `foreign owner=console lease 4.6s`, `idle` 4.6 s later, `tfld` back to mode 0 by `r2_expression` |
-| 9 foreign Magic Panel | PASS (console) | console `magic_panel start 44`: device `source` 1, `held_by: console`; `magic` `foreign owner=console`, `idle` 5 s after the image ended. A mood flourish had started in the same second and lost to the console. The rotary switch was not tried |
+| 9 foreign Magic Panel | PASS | console `magic_panel start 44`: device `source` 1, `held_by: console`; `magic` `foreign owner=console`, `idle` 5 s after the image ended. A mood flourish had started in the same second and lost to the console |
 | 10 `/dome/text/line0` | PASS | `hello`: `fld` `foreign owner=text_topic`, both front logics running; cleared with `''`: `idle` 4 s later. With `leds rostext off` the same publish changed nothing |
 | 10a sticky manual | PASS | `leds owner manual`: `manual: true`, every LED channel `foreign owner=manual`, lease forever (the console lists `magic` as held too); `mood set sleepy --lock` left the excited 100/lively; `express effect fld fire` refused `held: manual` (`refused` 0 to 1); `--override` (200) ran 4 s; `leds owner auto`: all `idle` |
 | 10b strip off | PASS | `leds enable off`: `strip_enabled: false`, LED channels `dark` for 28 s under `excited --lock`, no run sent; `leds enable on`: `idle`, a flourish 1.6 s later |
@@ -36,7 +36,7 @@ David. `probe.py` logged changes (`probe.log`); the bag (`bag/`) holds `/express
 | 13 kill `led_arbiter` | PASS | 20 s manual `rld cycle` started 04:26:17.49, arbiter killed 04:26:20.9: the device ended the run at 04:26:37.7 (its duration); restart 04:26:45: `offline`, `answered list; catalogue loaded`, `idle` 0.5 s after it came up, the nine missing-clip WARNs again. Panel part: see finding 1 |
 | 14 stop the device | PASS | console `ros stop` 04:28:42.0: every channel `offline` 04:28:47.7 (5.7 s), nothing logged by either arbiter in the 43 s outage; `ros start` 04:29:25.1: `idle` 04:29:27.2 |
 | 15 graph check | PASS | `item15-graph.txt`: the clients of `/r2_dome/leds/*` are `/led_arbiter` and `/foxglove_bridge`, of `/r2_dome/magic/*` `/magic_arbiter` and `/foxglove_bridge`; no other node |
-| 16 load | **FAIL, narrowly** (3.20 %); PASS (rate) | `/proc/<pid>/stat` on the Pi over a quiet 600 s window (04:39:38 to 04:49:38, calm, unlocked): `led_arbiter` 1.71 %, `magic_arbiter` 1.49 %, together **3.20 %** of a core, target 3 % (`dome_arbiter` 3.04 %, `r2_affect` 0.77 % for reference). `/dome/joint_states` 10.0 Hz. See finding 7 |
+| 16 load | PASS (3.20 %, accepted); PASS (rate) | `/proc/<pid>/stat` on the Pi over a quiet 600 s window (04:39:38 to 04:49:38, calm, unlocked): `led_arbiter` 1.71 %, `magic_arbiter` 1.49 %, together **3.20 %** of a core against the 3 % target of the day; David made 3.20 % the budget the same day (`dome_arbiter` 3.04 %, `r2_affect` 0.77 % for reference). `/dome/joint_states` 10.0 Hz. See finding 7 |
 
 ## Findings
 
@@ -46,8 +46,7 @@ David. `probe.py` logged changes (`probe.log`); the bag (`bag/`) holds `/express
    no such limit for a looping sequence, so the random show ran on (iteration 1 and counting)
    for the 44 s the arbiter was down. The restarted arbiter adopted it (`active_source:
    adopted`, 30 s) and stopped it at 04:28:23.9. So the panel is tidied up when the arbiter
-   returns, not before. Not a defect of the arbiter; if the bound matters, it needs a duration
-   on the device side.
+   returns, not before. David, 2026-11-18: fine as it is.
 2. **The droid's dome has none of the palette clips.** `led_arbiter` drops nine flourish picks
    at start (`hscan`, `vscan`, `colourswap`, `flipflop`, `flipflop-alt`, `alarm`,
    `alarm-twinkle`, `fadescroll`), as the 2026-11-10 catalogue capture predicted. Calm,
@@ -68,7 +67,7 @@ David. `probe.py` logged changes (`probe.log`); the bag (`bag/`) holds `/express
    `tcp/[fd50:43e1:cede::1]:7447` (`.env`); the old `r2-body.davidiansmith.ca:7447` is
    refused because the boot-time `zenohd.service` listens only on `::1` and that address.
 
-7. **Item 16: the two arbiters cost 3.20 % of a core, target 3 %.** The bench run measured
+7. **Item 16: the two arbiters cost 3.20 % of a core against a 3 % target; accepted.** The bench run measured
    2.74 % after its fix, with no panel (`magic` `offline`). Here the panel is live, so
    `magic_arbiter` handles a real 1 Hz state and runs flourishes; it is the likely source of
    the extra 0.5 %, though that was not measured. The first attempt at this item timed the
@@ -77,5 +76,4 @@ David. `probe.py` logged changes (`probe.log`); the bag (`bag/`) holds `/express
 
 ## Not done
 
-- Item 9 with the panel's rotary switch.
 - The five moods whose flourishes need the missing clips, by eye.

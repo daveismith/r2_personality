@@ -34,4 +34,4 @@ container through the peered routers), phase 1 step 0's droid part.
   the 16 clips to the droid's `/data/clips` restores them.
 - **Magic Panel**: `link` 1, firmware 0.12.1, protocol 1.1, the same 58 sequences with the
   same names and lengths as the bench simulator, `has_eeprom_config` and `has_orientation`
-  besides; `inputs` enabled (rotary), `rotated`, `legacy`, brightness 5 (default 15).
+  besides; `inputs` enabled (the droid's panel has no rotary switch fitted), `rotated`, `legacy`, brightness 5 (default 15).
