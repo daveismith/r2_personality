@@ -1,0 +1,1190 @@
+1794974853.915 CH dome state=1 owner= prio=0 lease=0.0 src=idle act=glance id=glance-7 rem=8626 mood=calm dropped=0 refused=0
+1794974853.983 MOOD calm locked=False str=0.99
+1794974854.184 CH magic state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794974854.385 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794974854.386 CH rld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794974854.387 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794974854.787 LED rpsi brightness=65 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794974854.787 LED rld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=rld text=
+1794974854.787 LED bfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=bfld text=
+1794974854.787 LED tfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=tfld text=
+1794974854.787 LED fpsi brightness=65 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794974854.787 LEDS level=128 level_set=False manual=False strip_enabled=True
+1794974854.795 MAGIC end=0 end_known=False error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=0 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=False owner= proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=False repeat=1 rotary_code=0 run_counter=0 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=255 source=0 started_by= state=0 sub_seq=255 takeovers=0 unsupported=0
+1794974859.873 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794974872.183 MOOD calm locked=False str=0.95
+1794974880.215 CH dome state=1 owner= prio=0 lease=0.0 src=idle act=glance id=glance-8 rem=9069 mood=calm dropped=0 refused=0
+1794974881.154 CH psi state=1 owner= prio=0 lease=0.0 src=idle act=clip id=flourish-3 rem=2560 mood=calm dropped=0 refused=0
+1794974881.155 LOG led_arbiter 20 psi: running
+1794974881.788 LED rpsi brightness=65 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=rpsi text=
+1794974881.788 LED fpsi brightness=65 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=fpsi text=
+1794974883.790 LED rpsi brightness=65 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794974883.791 LED fpsi brightness=65 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794974883.798 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794974883.799 LOG led_arbiter 20 psi: idle
+1794974884.667 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794974899.184 MOOD calm locked=False str=0.85
+1794974905.216 CH dome state=1 owner= prio=0 lease=0.0 src=idle act=glance id=glance-9 rem=8808 mood=calm dropped=0 refused=0
+1794974911.320 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794974920.584 MOOD calm locked=False str=0.75
+1794974934.402 CH dome state=3 owner=foxglove prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794974936.051 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794974939.117 CH dome state=1 owner= prio=0 lease=0.0 src=idle act=glance id=glance-10 rem=8585 mood=calm dropped=0 refused=0
+1794974939.984 MOOD calm locked=False str=0.65
+1794974947.415 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794974947.776 LOG r2_affect 20 mood forced excited by mood_cli
+1794974947.783 MOOD excited locked=False str=0.99
+1794974947.787 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794974947.788 LOG magic_arbiter 20 mood: calm -> excited
+1794974947.798 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794974947.799 LOG led_arbiter 20 mood: calm -> excited
+1794974947.801 CH tfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794974947.801 CH bfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794974947.805 CH rld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794974947.810 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794974947.812 CH magic state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794974948.584 MOOD excited locked=False str=0.95
+1794974948.798 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794974948.799 LED rld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=rld text=
+1794974948.799 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=bfld text=
+1794974948.799 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=tfld text=
+1794974948.799 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794974950.782 MOOD excited locked=False str=0.84
+1794974951.914 CH dome state=1 owner= prio=0 lease=0.0 src=idle act=glance id=glance-11 rem=8578 mood=excited dropped=0 refused=0
+1794974952.782 MOOD excited locked=False str=0.75
+1794974954.151 CH fld state=1 owner= prio=0 lease=0.0 src=idle act=effect id=flourish-4 rem=4000 mood=excited dropped=0 refused=0
+1794974954.152 LOG led_arbiter 20 fld: running
+1794974954.792 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=bfld text=
+1794974954.792 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=tfld text=
+1794974954.984 MOOD excited locked=False str=0.65
+1794974956.965 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794974957.382 MOOD excited locked=False str=0.55
+1794974958.148 LOG led_arbiter 20 fld: idle
+1794974958.149 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794974958.790 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=bfld text=
+1794974958.790 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=tfld text=
+1794974959.782 MOOD excited locked=False str=0.45
+1794974961.713 CH dome state=1 owner= prio=0 lease=0.0 src=idle act=glance id=glance-12 rem=8443 mood=excited dropped=0 refused=0
+1794974962.384 MOOD excited locked=False str=0.34
+1794974964.151 CH psi state=1 owner= prio=0 lease=0.0 src=idle act=clip id=flourish-5 rem=1200 mood=excited dropped=0 refused=0
+1794974964.151 LOG led_arbiter 20 psi: running
+1794974964.790 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=rpsi text=
+1794974964.790 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=fpsi text=
+1794974964.986 MOOD excited locked=False str=0.25
+1794974965.399 LOG led_arbiter 20 psi: idle
+1794974965.400 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794974965.790 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794974965.790 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794974967.786 MOOD excited locked=False str=0.15
+1794974968.317 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794974970.792 MOOD excited locked=False str=0.04
+1794974973.518 CH dome state=1 owner= prio=0 lease=0.0 src=idle act=glance id=glance-13 rem=8301 mood=excited dropped=0 refused=0
+1794974981.817 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794974982.979 MOOD calm locked=False str=0.05
+1794974982.979 LOG r2_affect 20 mood: excited -> calm (d=0.47)
+1794974982.980 LOG magic_arbiter 20 mood: excited -> calm
+1794974982.985 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794974982.986 CH magic state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794974982.986 LOG led_arbiter 20 mood: excited -> calm
+1794974982.986 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794974982.986 CH tfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794974982.987 CH bfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794974982.987 CH rld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794974982.987 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794974983.786 LED rpsi brightness=51 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794974983.787 LED rld brightness=51 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=rld text=
+1794974983.787 LED bfld brightness=51 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=bfld text=
+1794974983.787 LED tfld brightness=51 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=tfld text=
+1794974983.787 LED fpsi brightness=51 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794974990.580 MOOD calm locked=False str=0.15
+1794975005.927 LOG r2_affect 20 mood forced and locked sleepy by mood_cli
+1794975005.978 MOOD sleepy locked=True str=1.00
+1794975005.979 LOG magic_arbiter 20 mood: calm -> sleepy
+1794975005.981 CH magic state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=sleepy dropped=0 refused=0
+1794975005.981 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=sleepy dropped=0 refused=0
+1794975005.983 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=sleepy dropped=0 refused=0
+1794975005.983 LOG led_arbiter 20 mood: calm -> sleepy
+1794975005.983 CH tfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=sleepy dropped=0 refused=0
+1794975005.984 CH bfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=sleepy dropped=0 refused=0
+1794975005.984 CH rld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=sleepy dropped=0 refused=0
+1794975005.984 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=sleepy dropped=0 refused=0
+1794975006.790 LED rpsi brightness=30 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794975006.790 LED rld brightness=35 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=rld text=
+1794975006.790 LED bfld brightness=35 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=bfld text=
+1794975006.790 LED tfld brightness=35 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=tfld text=
+1794975006.790 LED fpsi brightness=30 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794975058.701 LOG r2_affect 20 mood forced and locked excited by mood_cli
+1794975058.781 MOOD excited locked=True str=1.00
+1794975058.784 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975058.784 LOG magic_arbiter 20 mood: sleepy -> excited
+1794975058.784 CH tfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975058.784 LOG led_arbiter 20 mood: sleepy -> excited
+1794975058.785 CH bfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975058.785 CH rld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975058.785 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975058.785 CH magic state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975058.786 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975059.792 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794975059.792 LED rld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=rld text=
+1794975059.792 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=bfld text=
+1794975059.792 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=tfld text=
+1794975059.792 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794975062.814 CH dome state=1 owner= prio=0 lease=0.0 src=idle act=glance id=glance-15 rem=8400 mood=excited dropped=0 refused=0
+1794975063.475 INTENT manual fld effect 199 5000 {"name": "fire"} express-605e2dbf
+1794975063.487 LOG led_arbiter 20 fld: running (manual)
+1794975063.493 CH fld state=1 owner=manual prio=199 lease=10.0 src=manual act=effect id=express-605e2dbf rem=5000 mood=excited dropped=0 refused=0
+1794975063.493 LOG led_arbiter 20 tfld: claimed (manual)
+1794975063.493 CH tfld state=2 owner=manual prio=199 lease=10.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975063.494 CH bfld state=2 owner=manual prio=199 lease=10.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975063.494 LOG led_arbiter 20 bfld: claimed (manual)
+1794975063.495 LOG led_arbiter 20 intent express-605e2dbf accepted: fld effect  from manual
+1794975063.798 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=bfld text=
+1794975063.798 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=tfld text=
+1794975068.395 CH fld state=1 owner=manual prio=199 lease=5.1 src=manual act=effect id=express-605e2dbf rem=90 mood=excited dropped=1 refused=0
+1794975068.648 CH fld state=2 owner=manual prio=199 lease=5.0 src= act= id= rem=0 mood=excited dropped=1 refused=0
+1794975068.649 LOG led_arbiter 20 fld: claimed (manual)
+1794975068.794 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=bfld text=
+1794975068.795 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=tfld text=
+1794975069.026 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975070.034 LOG magic_arbiter 20 magic: running
+1794975070.035 CH magic state=1 owner= prio=0 lease=0.0 src=idle act=sequence id=flourish-1 rem=3500 mood=excited dropped=0 refused=0
+1794975070.803 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=0 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=True repeat=1 rotary_code=0 run_counter=1 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=27 source=1 started_by=ros state=1 sub_seq=27 takeovers=0 unsupported=0
+1794975073.112 CH dome state=1 owner= prio=0 lease=0.0 src=idle act=glance id=glance-16 rem=8239 mood=excited dropped=0 refused=0
+1794975073.541 CH magic state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975073.542 LOG magic_arbiter 20 magic: idle
+1794975073.650 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=1 refused=0
+1794975073.651 LOG led_arbiter 20 fld: idle
+1794975073.652 CH tfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975073.652 LOG led_arbiter 20 tfld: idle
+1794975073.653 CH bfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975073.653 LOG led_arbiter 20 bfld: idle
+1794975073.854 CH dome state=3 owner=foxglove prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975074.801 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975074.802 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=1 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=False repeat=1 rotary_code=0 run_counter=1 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=27 source=1 started_by=ros state=2 sub_seq=27 takeovers=0 unsupported=0
+1794975074.902 CH dome state=3 owner=foxglove prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975076.300 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975079.314 CH dome state=1 owner= prio=0 lease=0.0 src=idle act=glance id=glance-17 rem=8284 mood=excited dropped=0 refused=0
+1794975086.018 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975088.649 CH psi state=1 owner= prio=0 lease=0.0 src=idle act=clip id=flourish-7 rem=1200 mood=excited dropped=0 refused=0
+1794975088.650 LOG led_arbiter 20 psi: running
+1794975088.793 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=rpsi text=
+1794975088.793 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=fpsi text=
+1794975089.897 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975089.898 LOG led_arbiter 20 psi: idle
+1794975090.115 CH dome state=1 owner= prio=0 lease=0.0 src=idle act=glance id=glance-18 rem=8517 mood=excited dropped=0 refused=0
+1794975090.792 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794975090.793 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794975096.317 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975100.414 CH dome state=1 owner= prio=0 lease=0.0 src=idle act=glance id=glance-19 rem=8555 mood=excited dropped=0 refused=0
+1794975103.648 LOG led_arbiter 20 fld: running
+1794975103.649 CH fld state=1 owner= prio=0 lease=0.0 src=idle act=effect id=flourish-8 rem=4000 mood=excited dropped=1 refused=0
+1794975103.792 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=bfld text=
+1794975103.792 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=tfld text=
+1794975106.915 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975107.793 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=bfld text=
+1794975107.793 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=tfld text=
+1794975107.794 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=1 refused=0
+1794975107.794 LOG led_arbiter 20 fld: idle
+1794975110.990 CH dome state=1 owner= prio=0 lease=0.0 src=idle act=glance id=glance-20 rem=8522 mood=excited dropped=0 refused=0
+1794975116.793 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975120.812 CH dome state=1 owner= prio=0 lease=0.0 src=idle act=glance id=glance-21 rem=8328 mood=excited dropped=0 refused=0
+1794975123.649 LOG led_arbiter 20 psi: running
+1794975123.650 CH psi state=1 owner= prio=0 lease=0.0 src=idle act=clip id=flourish-9 rem=1200 mood=excited dropped=0 refused=0
+1794975123.790 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=rpsi text=
+1794975123.790 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=fpsi text=
+1794975124.900 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975124.901 LOG led_arbiter 20 psi: idle
+1794975125.798 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794975125.799 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794975126.564 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975130.613 CH dome state=1 owner= prio=0 lease=0.0 src=idle act=glance id=glance-22 rem=8212 mood=excited dropped=0 refused=0
+1794975138.865 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975142.916 CH dome state=1 owner= prio=0 lease=0.0 src=idle act=glance id=glance-23 rem=8522 mood=excited dropped=0 refused=0
+1794975146.533 CH magic state=1 owner= prio=0 lease=0.0 src=idle act=sequence id=flourish-2 rem=3500 mood=excited dropped=0 refused=0
+1794975146.534 LOG magic_arbiter 20 magic: running
+1794975146.803 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=0 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=True repeat=1 rotary_code=0 run_counter=2 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=27 source=1 started_by=ros state=1 sub_seq=27 takeovers=0 unsupported=0
+1794975147.148 CH psi state=1 owner= prio=0 lease=0.0 src=idle act=clip id=flourish-10 rem=1200 mood=excited dropped=0 refused=0
+1794975147.151 LOG led_arbiter 20 psi: running
+1794975147.793 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=rpsi text=
+1794975147.794 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=fpsi text=
+1794975148.398 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975148.398 LOG led_arbiter 20 psi: idle
+1794975148.665 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975148.796 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794975148.796 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794975150.044 CH magic state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975150.044 LOG magic_arbiter 20 magic: idle
+1794975150.803 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=1 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=False repeat=1 rotary_code=0 run_counter=2 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=27 source=1 started_by=ros state=2 sub_seq=27 takeovers=0 unsupported=0
+1794975152.713 CH dome state=1 owner= prio=0 lease=0.0 src=idle act=glance id=glance-24 rem=8341 mood=excited dropped=0 refused=0
+1794975156.284 LOG magic_arbiter 20 magic: running
+1794975156.285 CH magic state=1 owner= prio=0 lease=0.0 src=idle act=sequence id=flourish-3 rem=3500 mood=excited dropped=0 refused=0
+1794975156.803 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=0 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=True repeat=1 rotary_code=0 run_counter=3 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=27 source=1 started_by=ros state=1 sub_seq=27 takeovers=0 unsupported=0
+1794975159.365 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975159.793 CH magic state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975159.793 LOG magic_arbiter 20 magic: idle
+1794975160.147 LOG led_arbiter 20 fld: running
+1794975160.148 CH fld state=1 owner= prio=0 lease=0.0 src=idle act=effect id=flourish-11 rem=4000 mood=excited dropped=1 refused=0
+1794975160.802 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=bfld text=
+1794975160.802 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=tfld text=
+1794975160.803 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=1 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=False repeat=1 rotary_code=0 run_counter=3 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=27 source=1 started_by=ros state=2 sub_seq=27 takeovers=0 unsupported=0
+1794975163.308 CH dome state=1 owner= prio=0 lease=0.0 src=idle act=glance id=glance-25 rem=8486 mood=excited dropped=0 refused=0
+1794975164.040 LOG led_arbiter 20 fld: idle
+1794975164.041 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=1 refused=0
+1794975164.687 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=bfld text=
+1794975164.688 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=tfld text=
+1794975165.956 INTENT manual dome look_at 199 0 {"bearing": -1.57} express-2e0abe91
+1794975165.965 CH dome state=1 owner=manual prio=199 lease=13.0 src=manual act=look_at id=express-2e0abe91 rem=8000 mood=excited dropped=0 refused=0
+1794975170.415 CH dome state=2 owner=manual prio=199 lease=5.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975173.505 INTENT manual fld effect 199 5000 {"name": "fire"} express-bbc375a9
+1794975173.514 LOG led_arbiter 20 fld: running (manual)
+1794975173.514 CH fld state=1 owner=manual prio=199 lease=10.0 src=manual act=effect id=express-bbc375a9 rem=5000 mood=excited dropped=1 refused=0
+1794975173.517 LOG led_arbiter 20 tfld: claimed (manual)
+1794975173.518 CH tfld state=2 owner=manual prio=199 lease=10.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975173.520 CH bfld state=2 owner=manual prio=199 lease=10.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975173.520 LOG led_arbiter 20 bfld: claimed (manual)
+1794975173.522 LOG led_arbiter 20 intent express-bbc375a9 accepted: fld effect  from manual
+1794975173.691 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=bfld text=
+1794975173.691 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=tfld text=
+1794975174.509 CH dome state=2 owner=manual prio=199 lease=0.9 src= act= id= rem=0 mood=excited dropped=1 refused=0
+1794975175.041 CH fld state=1 owner=manual prio=199 lease=8.5 src=manual act=effect id=express-bbc375a9 rem=3473 mood=excited dropped=2 refused=0
+1794975175.489 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=1 refused=0
+1794975178.541 CH fld state=2 owner=manual prio=199 lease=5.0 src= act= id= rem=0 mood=excited dropped=2 refused=0
+1794975178.542 LOG led_arbiter 20 fld: claimed (manual)
+1794975178.606 CH dome state=1 owner= prio=0 lease=0.0 src=idle act=glance id=glance-27 rem=8596 mood=excited dropped=1 refused=0
+1794975178.690 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=bfld text=
+1794975178.691 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=tfld text=
+1794975178.928 CH magic state=1 owner= prio=0 lease=0.0 src=idle act=sequence id=flourish-4 rem=3500 mood=excited dropped=0 refused=0
+1794975178.929 LOG magic_arbiter 20 magic: running
+1794975179.698 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=0 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=True repeat=1 rotary_code=0 run_counter=4 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=27 source=1 started_by=ros state=1 sub_seq=27 takeovers=0 unsupported=0
+1794975182.040 CH fld state=2 owner=manual prio=199 lease=1.5 src= act= id= rem=0 mood=excited dropped=3 refused=0
+1794975182.685 CH magic state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975182.686 LOG magic_arbiter 20 magic: idle
+1794975183.679 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=3 refused=0
+1794975183.680 LOG led_arbiter 20 fld: idle
+1794975183.680 CH tfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975183.680 LOG led_arbiter 20 tfld: idle
+1794975183.681 CH bfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975183.682 LOG led_arbiter 20 bfld: idle
+1794975183.698 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=1 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=False repeat=1 rotary_code=0 run_counter=4 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=27 source=1 started_by=ros state=2 sub_seq=27 takeovers=0 unsupported=0
+1794975184.464 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=1 refused=0
+1794975188.508 CH dome state=1 owner= prio=0 lease=0.0 src=idle act=glance id=glance-28 rem=8421 mood=excited dropped=1 refused=0
+1794975192.791 CH psi state=1 owner= prio=0 lease=0.0 src=idle act=clip id=flourish-14 rem=1200 mood=excited dropped=0 refused=0
+1794975192.792 LOG led_arbiter 20 psi: running
+1794975193.691 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=rpsi text=
+1794975193.691 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=fpsi text=
+1794975194.042 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975194.042 LOG led_arbiter 20 psi: idle
+1794975194.691 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794975194.691 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794975194.757 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=1 refused=0
+1794975198.805 CH dome state=1 owner= prio=0 lease=0.0 src=idle act=glance id=glance-29 rem=8478 mood=excited dropped=1 refused=0
+1794975206.769 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=1 refused=0
+1794975210.811 CH dome state=1 owner= prio=0 lease=0.0 src=idle act=glance id=glance-30 rem=8208 mood=excited dropped=1 refused=0
+1794975215.962 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=1 refused=0
+1794975220.006 CH dome state=1 owner= prio=0 lease=0.0 src=idle act=glance id=glance-31 rem=8353 mood=excited dropped=1 refused=0
+1794975223.793 CH fld state=1 owner= prio=0 lease=0.0 src=idle act=effect id=flourish-15 rem=4000 mood=excited dropped=3 refused=0
+1794975223.794 LOG led_arbiter 20 fld: running
+1794975224.691 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=bfld text=
+1794975224.692 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=tfld text=
+1794975224.856 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=1 refused=0
+1794975228.040 LOG led_arbiter 20 fld: idle
+1794975228.041 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=3 refused=0
+1794975228.689 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=bfld text=
+1794975228.691 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=tfld text=
+1794975228.883 CH dome state=1 owner= prio=0 lease=0.0 src=idle act=glance id=glance-32 rem=8233 mood=excited dropped=1 refused=0
+1794975233.496 CH dome state=2 owner=express prio=199 lease=60.0 src= act= id= rem=0 mood=excited dropped=1 refused=0
+1794975234.039 CH fld state=1 owner= prio=0 lease=0.0 src=idle act=effect id=flourish-16 rem=4000 mood=excited dropped=3 refused=0
+1794975234.039 LOG led_arbiter 20 fld: running
+1794975234.690 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=bfld text=
+1794975234.690 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=tfld text=
+1794975237.506 CH dome state=2 owner=express prio=199 lease=56.0 src= act= id= rem=0 mood=excited dropped=2 refused=0
+1794975238.290 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=3 refused=0
+1794975238.291 LOG led_arbiter 20 fld: idle
+1794975238.697 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=bfld text=
+1794975238.698 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=tfld text=
+1794975241.504 CH dome state=2 owner=express prio=199 lease=52.0 src= act= id= rem=0 mood=excited dropped=3 refused=0
+1794975241.901 INTENT manual dome look_at 199 0 {"bearing": -1.57} express-f184a94b
+1794975241.911 CH dome state=1 owner=express prio=199 lease=51.6 src=manual act=look_at id=express-f184a94b rem=8000 mood=excited dropped=3 refused=0
+1794975243.763 CH dome state=2 owner=express prio=199 lease=49.7 src= act= id= rem=0 mood=excited dropped=3 refused=0
+1794975247.806 CH dome state=2 owner=express prio=199 lease=45.7 src= act= id= rem=0 mood=excited dropped=4 refused=0
+1794975248.792 CH psi state=1 owner= prio=0 lease=0.0 src=idle act=clip id=flourish-17 rem=1200 mood=excited dropped=0 refused=0
+1794975248.793 LOG led_arbiter 20 psi: running
+1794975249.689 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=rpsi text=
+1794975249.689 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=fpsi text=
+1794975250.039 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975250.039 LOG led_arbiter 20 psi: idle
+1794975250.690 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794975250.690 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794975251.879 CH dome state=2 owner=express prio=199 lease=59.2 src= act= id= rem=0 mood=excited dropped=5 refused=0
+1794975255.905 CH dome state=2 owner=express prio=199 lease=55.2 src= act= id= rem=0 mood=excited dropped=6 refused=0
+1794975259.541 LOG led_arbiter 20 psi: running
+1794975259.542 CH psi state=1 owner= prio=0 lease=0.0 src=idle act=clip id=flourish-18 rem=1200 mood=excited dropped=0 refused=0
+1794975259.690 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=rpsi text=
+1794975259.690 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=fpsi text=
+1794975259.903 CH dome state=2 owner=express prio=199 lease=58.4 src= act= id= rem=0 mood=excited dropped=7 refused=0
+1794975260.813 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975260.827 LOG led_arbiter 20 psi: idle
+1794975261.690 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794975261.690 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794975264.004 CH dome state=2 owner=express prio=199 lease=54.3 src= act= id= rem=0 mood=excited dropped=8 refused=0
+1794975268.104 CH dome state=2 owner=express prio=199 lease=50.2 src= act= id= rem=0 mood=excited dropped=9 refused=0
+1794975272.205 CH dome state=2 owner=express prio=199 lease=46.1 src= act= id= rem=0 mood=excited dropped=10 refused=0
+1794975276.202 CH dome state=2 owner=express prio=199 lease=42.1 src= act= id= rem=0 mood=excited dropped=11 refused=0
+1794975280.205 CH dome state=2 owner=express prio=199 lease=38.1 src= act= id= rem=0 mood=excited dropped=12 refused=0
+1794975284.306 CH dome state=2 owner=express prio=199 lease=34.0 src= act= id= rem=0 mood=excited dropped=13 refused=0
+1794975285.039 CH fld state=1 owner= prio=0 lease=0.0 src=idle act=effect id=flourish-19 rem=4000 mood=excited dropped=3 refused=0
+1794975285.040 LOG led_arbiter 20 fld: running
+1794975285.690 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=bfld text=
+1794975285.691 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=tfld text=
+1794975288.404 CH dome state=2 owner=express prio=199 lease=29.9 src= act= id= rem=0 mood=excited dropped=14 refused=0
+1794975288.927 CH magic state=1 owner= prio=0 lease=0.0 src=idle act=sequence id=flourish-5 rem=3500 mood=excited dropped=0 refused=0
+1794975288.927 LOG magic_arbiter 20 magic: running
+1794975289.038 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=3 refused=0
+1794975289.038 LOG led_arbiter 20 fld: idle
+1794975289.691 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=bfld text=
+1794975289.692 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=tfld text=
+1794975289.700 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=0 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=True repeat=1 rotary_code=0 run_counter=5 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=27 source=1 started_by=ros state=1 sub_seq=27 takeovers=0 unsupported=0
+1794975292.405 CH dome state=2 owner=express prio=199 lease=25.9 src= act= id= rem=0 mood=excited dropped=15 refused=0
+1794975292.437 CH magic state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975292.438 LOG magic_arbiter 20 magic: idle
+1794975293.701 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=1 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=False repeat=1 rotary_code=0 run_counter=5 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=27 source=1 started_by=ros state=2 sub_seq=27 takeovers=0 unsupported=0
+1794975294.246 INTENT manual dome look_at 199 0 {"bearing": 1.57} express-fd762b11
+1794975294.255 CH dome state=1 owner=express prio=199 lease=24.0 src=manual act=look_at id=express-fd762b11 rem=8000 mood=excited dropped=15 refused=0
+1794975296.538 CH fld state=1 owner= prio=0 lease=0.0 src=idle act=effect id=flourish-20 rem=4000 mood=excited dropped=3 refused=0
+1794975296.538 LOG led_arbiter 20 fld: running
+1794975296.692 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=bfld text=
+1794975296.692 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=tfld text=
+1794975297.509 CH dome state=2 owner=express prio=199 lease=20.8 src= act= id= rem=0 mood=excited dropped=15 refused=0
+1794975300.540 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=3 refused=0
+1794975300.540 LOG led_arbiter 20 fld: idle
+1794975300.693 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=bfld text=
+1794975300.694 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=tfld text=
+1794975301.603 CH dome state=2 owner=express prio=199 lease=16.7 src= act= id= rem=0 mood=excited dropped=16 refused=0
+1794975305.602 CH dome state=2 owner=express prio=199 lease=59.8 src= act= id= rem=0 mood=excited dropped=17 refused=0
+1794975305.992 CH magic state=2 owner=console prio=199 lease=30.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975305.992 LOG magic_arbiter 20 magic: claimed (console)
+1794975305.992 LOG magic_arbiter 20 claim magic by console at 199 for 30.0 s: accepted
+1794975306.611 LOG r2_affect 20 mood forced and locked excited by mood_cli
+1794975308.039 CH fld state=1 owner= prio=0 lease=0.0 src=idle act=effect id=flourish-21 rem=4000 mood=excited dropped=3 refused=0
+1794975308.039 LOG led_arbiter 20 fld: running
+1794975308.690 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=bfld text=
+1794975308.690 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=tfld text=
+1794975309.701 CH dome state=2 owner=express prio=199 lease=55.7 src= act= id= rem=0 mood=excited dropped=18 refused=0
+1794975312.038 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=3 refused=0
+1794975312.040 LOG led_arbiter 20 fld: idle
+1794975312.690 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=bfld text=
+1794975312.690 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=tfld text=
+1794975313.703 CH dome state=2 owner=express prio=199 lease=51.7 src= act= id= rem=0 mood=excited dropped=19 refused=0
+1794975317.700 CH dome state=2 owner=express prio=199 lease=47.7 src= act= id= rem=0 mood=excited dropped=20 refused=0
+1794975321.801 CH dome state=2 owner=express prio=199 lease=43.6 src= act= id= rem=0 mood=excited dropped=21 refused=0
+1794975325.801 CH dome state=2 owner=express prio=199 lease=39.6 src= act= id= rem=0 mood=excited dropped=22 refused=0
+1794975327.500 LOG magic_arbiter 20 claim magic by express at 199 for 0.0 s: refused, no claim by 'express' on magic
+1794975328.209 CH magic state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975328.209 LOG magic_arbiter 20 magic: idle
+1794975328.211 LOG magic_arbiter 20 claim magic by console at 199 for 0.0 s: accepted
+1794975329.925 CH dome state=2 owner=express prio=199 lease=35.5 src= act= id= rem=0 mood=excited dropped=23 refused=0
+1794975333.878 CH dome state=2 owner=express prio=199 lease=31.5 src= act= id= rem=0 mood=excited dropped=24 refused=0
+1794975336.787 LOG led_arbiter 20 psi: running
+1794975336.788 CH psi state=1 owner= prio=0 lease=0.0 src=idle act=clip id=flourish-22 rem=1200 mood=excited dropped=0 refused=0
+1794975337.698 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=rpsi text=
+1794975337.698 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=fpsi text=
+1794975337.900 CH dome state=2 owner=express prio=199 lease=27.5 src= act= id= rem=0 mood=excited dropped=25 refused=0
+1794975338.040 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975338.041 LOG led_arbiter 20 psi: idle
+1794975338.692 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794975338.692 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794975340.096 LOG r2_affect 20 mood forced and locked calm by mood_cli
+1794975340.273 MOOD calm locked=True str=1.00
+1794975340.273 CH dome state=2 owner=express prio=199 lease=59.5 src= act= id= rem=0 mood=calm dropped=25 refused=0
+1794975340.274 LOG led_arbiter 20 mood: excited -> calm
+1794975340.274 LOG magic_arbiter 20 mood: excited -> calm
+1794975340.276 CH magic state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794975340.276 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=3 refused=0
+1794975340.277 CH tfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794975340.277 CH bfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794975340.277 CH rld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794975340.277 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794975340.693 LED rpsi brightness=65 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794975340.693 LED rld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=rld text=
+1794975340.693 LED bfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=bfld text=
+1794975340.693 LED tfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=tfld text=
+1794975340.693 LED fpsi brightness=65 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794975343.862 INTENT manual magic sequence 199 3000 {"id": 44, "repeat": 1, "end": "blank"} express-27052328
+1794975343.875 LOG magic_arbiter 20 magic: running (manual)
+1794975343.878 CH magic state=1 owner=manual prio=199 lease=8.0 src=manual act=sequence id=express-27052328 rem=3000 mood=calm dropped=0 refused=0
+1794975343.878 LOG magic_arbiter 20 intent express-27052328 accepted: magic sequence  from manual
+1794975344.706 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=0 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=True repeat=1 rotary_code=0 run_counter=6 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=44 source=1 started_by=ros state=1 sub_seq=44 takeovers=0 unsupported=0
+1794975345.701 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=1 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=False repeat=1 rotary_code=0 run_counter=6 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=44 source=1 started_by=ros state=2 sub_seq=44 takeovers=0 unsupported=0
+1794975345.703 CH magic state=2 owner=manual prio=199 lease=5.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794975345.703 LOG magic_arbiter 20 magic: claimed (manual)
+1794975350.887 CH magic state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794975350.888 LOG magic_arbiter 20 magic: idle
+1794975351.908 INTENT manual magic sequence 199 3000 {"id": 56, "repeat": 1, "end": "blank"} express-04eb6c59
+1794975351.917 LOG magic_arbiter 20 magic: running (manual)
+1794975351.920 CH magic state=1 owner=manual prio=199 lease=8.0 src=manual act=sequence id=express-04eb6c59 rem=3000 mood=calm dropped=0 refused=0
+1794975351.920 LOG magic_arbiter 20 intent express-04eb6c59 accepted: magic sequence  from manual
+1794975352.698 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=0 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=False repeat=1 rotary_code=0 run_counter=7 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=56 source=1 started_by=ros state=1 sub_seq=36 takeovers=0 unsupported=0
+1794975354.933 CH magic state=2 owner=manual prio=199 lease=5.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794975354.933 LOG magic_arbiter 20 magic: claimed (manual)
+1794975355.700 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=0 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=False repeat=1 rotary_code=0 run_counter=7 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=56 source=1 started_by=ros state=3 sub_seq=56 takeovers=0 unsupported=0
+1794975360.073 CH magic state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794975360.074 LOG magic_arbiter 20 magic: idle
+1794975360.300 CH dome state=2 owner=express prio=199 lease=39.5 src= act= id= rem=0 mood=calm dropped=26 refused=0
+1794975380.409 CH dome state=2 owner=express prio=199 lease=19.4 src= act= id= rem=0 mood=calm dropped=27 refused=0
+1794975400.402 CH dome state=2 owner=express prio=199 lease=40.1 src= act= id= rem=0 mood=calm dropped=28 refused=0
+1794975420.498 CH dome state=2 owner=express prio=199 lease=20.0 src= act= id= rem=0 mood=calm dropped=29 refused=0
+1794975429.535 LOG led_arbiter 20 fld: running
+1794975429.538 CH fld state=1 owner= prio=0 lease=0.0 src=idle act=clip id=flourish-23 rem=2560 mood=calm dropped=3 refused=0
+1794975429.691 LED bfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=5 name=bfld text=
+1794975429.691 LED tfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=5 name=tfld text=
+1794975432.287 LOG led_arbiter 20 fld: idle
+1794975432.288 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=3 refused=0
+1794975432.690 LED bfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=bfld text=
+1794975432.691 LED tfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=tfld text=
+1794975440.499 CH dome state=2 owner=express prio=199 lease=40.7 src= act= id= rem=0 mood=calm dropped=30 refused=0
+1794975460.499 CH dome state=2 owner=express prio=199 lease=20.7 src= act= id= rem=0 mood=calm dropped=31 refused=0
+1794975480.598 CH dome state=2 owner=express prio=199 lease=41.4 src= act= id= rem=0 mood=calm dropped=32 refused=0
+1794975484.286 CH fld state=1 owner= prio=0 lease=0.0 src=idle act=clip id=flourish-24 rem=2560 mood=calm dropped=3 refused=0
+1794975484.287 LOG led_arbiter 20 fld: running
+1794975484.693 LED bfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=5 name=bfld text=
+1794975484.694 LED tfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=5 name=tfld text=
+1794975487.042 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=3 refused=0
+1794975487.043 LOG led_arbiter 20 fld: idle
+1794975487.692 LED bfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=bfld text=
+1794975487.692 LED tfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=tfld text=
+1794975500.697 CH dome state=2 owner=express prio=199 lease=21.3 src= act= id= rem=0 mood=calm dropped=33 refused=0
+1794975520.796 CH dome state=2 owner=express prio=199 lease=41.9 src= act= id= rem=0 mood=calm dropped=34 refused=0
+1794975540.795 CH dome state=2 owner=express prio=199 lease=21.9 src= act= id= rem=0 mood=calm dropped=35 refused=0
+1794975541.282 CH fld state=1 owner= prio=0 lease=0.0 src=idle act=clip id=flourish-25 rem=2560 mood=calm dropped=3 refused=0
+1794975541.284 LOG led_arbiter 20 fld: running
+1794975541.689 LED bfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=5 name=bfld text=
+1794975541.690 LED tfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=5 name=tfld text=
+1794975544.030 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=3 refused=0
+1794975544.031 LOG led_arbiter 20 fld: idle
+1794975544.697 LED bfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=bfld text=
+1794975544.702 LED tfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=tfld text=
+1794975560.798 CH dome state=2 owner=express prio=199 lease=42.5 src= act= id= rem=0 mood=calm dropped=36 refused=0
+1794975580.796 CH dome state=2 owner=express prio=199 lease=22.5 src= act= id= rem=0 mood=calm dropped=37 refused=0
+1794975589.031 CH fld state=1 owner= prio=0 lease=0.0 src=idle act=clip id=flourish-26 rem=2560 mood=calm dropped=3 refused=0
+1794975589.033 LOG led_arbiter 20 fld: running
+1794975589.693 LED bfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=5 name=bfld text=
+1794975589.694 LED tfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=5 name=tfld text=
+1794975591.695 LED bfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=bfld text=
+1794975591.696 LED tfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=tfld text=
+1794975591.698 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=3 refused=0
+1794975591.700 LOG led_arbiter 20 fld: idle
+1794975600.797 CH dome state=2 owner=express prio=199 lease=43.5 src= act= id= rem=0 mood=calm dropped=38 refused=0
+1794975620.875 CH dome state=2 owner=express prio=199 lease=23.4 src= act= id= rem=0 mood=calm dropped=39 refused=0
+1794975640.894 CH dome state=2 owner=express prio=199 lease=44.1 src= act= id= rem=0 mood=calm dropped=40 refused=0
+1794975643.774 LOG r2_affect 20 mood forced and locked excited by mood_cli
+1794975643.861 MOOD excited locked=True str=1.00
+1794975643.869 CH magic state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975643.869 LOG magic_arbiter 20 mood: calm -> excited
+1794975643.871 CH dome state=2 owner=express prio=199 lease=41.1 src= act= id= rem=0 mood=excited dropped=40 refused=0
+1794975643.872 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=3 refused=0
+1794975643.872 LOG led_arbiter 20 mood: calm -> excited
+1794975643.872 CH tfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975643.873 CH bfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975643.873 CH rld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975643.873 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975644.692 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794975644.692 LED rld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=rld text=
+1794975644.692 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=bfld text=
+1794975644.692 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=tfld text=
+1794975644.693 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794975647.868 CH dome state=2 owner=express prio=199 lease=37.1 src= act= id= rem=0 mood=excited dropped=41 refused=0
+1794975648.693 LED rld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by=console hue=0 mode=5 name=rld text=
+1794975648.696 CH rld state=3 owner=console prio=0 lease=4.7 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975648.696 LOG led_arbiter 20 rld: foreign (console)
+1794975651.868 CH dome state=2 owner=express prio=199 lease=33.1 src= act= id= rem=0 mood=excited dropped=42 refused=0
+1794975653.693 LED rld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=rld text=
+1794975655.892 CH dome state=2 owner=express prio=199 lease=29.1 src= act= id= rem=0 mood=excited dropped=43 refused=0
+1794975656.417 CH magic state=1 owner= prio=0 lease=0.0 src=idle act=sequence id=flourish-6 rem=3500 mood=excited dropped=0 refused=0
+1794975656.417 LOG magic_arbiter 20 magic: running
+1794975656.703 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=0 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=True repeat=1 rotary_code=0 run_counter=8 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=27 source=1 started_by=ros state=1 sub_seq=27 takeovers=0 unsupported=0
+1794975658.530 CH psi state=1 owner= prio=0 lease=0.0 src=idle act=clip id=flourish-27 rem=1200 mood=excited dropped=0 refused=0
+1794975658.531 LOG led_arbiter 20 psi: running
+1794975658.693 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=rpsi text=
+1794975658.694 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=fpsi text=
+1794975659.778 LOG led_arbiter 20 psi: idle
+1794975659.779 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975659.900 CH dome state=2 owner=express prio=199 lease=25.1 src= act= id= rem=0 mood=excited dropped=44 refused=0
+1794975659.926 CH magic state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975659.931 LOG magic_arbiter 20 magic: idle
+1794975660.692 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794975660.692 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794975660.701 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=1 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=False repeat=1 rotary_code=0 run_counter=8 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=27 source=1 started_by=ros state=2 sub_seq=27 takeovers=0 unsupported=0
+1794975663.891 CH dome state=2 owner=express prio=199 lease=21.1 src= act= id= rem=0 mood=excited dropped=45 refused=0
+1794975664.989 INTENT manual rld effect 199 5000 {"name": "fire"} express-643e909d
+1794975664.996 CH rld state=3 owner=console prio=0 lease=0.0 src=manual act=effect id=express-643e909d rem=5000 mood=excited dropped=0 refused=0
+1794975665.000 LOG led_arbiter 20 intent express-643e909d accepted: rld effect  from manual
+1794975665.704 CH rld state=1 owner=manual prio=199 lease=9.3 src=manual act=effect id=express-643e909d rem=4301 mood=excited dropped=0 refused=0
+1794975665.707 LOG led_arbiter 20 rld: running (manual)
+1794975667.991 CH dome state=2 owner=express prio=199 lease=58.0 src= act= id= rem=0 mood=excited dropped=46 refused=0
+1794975670.029 LOG led_arbiter 20 rld: claimed (manual)
+1794975670.030 CH rld state=2 owner=manual prio=199 lease=5.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975670.285 CH psi state=1 owner= prio=0 lease=0.0 src=idle act=clip id=flourish-28 rem=1200 mood=excited dropped=0 refused=0
+1794975670.285 LOG led_arbiter 20 psi: running
+1794975670.694 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=rpsi text=
+1794975670.694 LED rld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=rld text=
+1794975670.694 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=fpsi text=
+1794975671.527 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975671.528 LOG led_arbiter 20 psi: idle
+1794975671.694 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794975671.694 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794975671.990 CH dome state=2 owner=express prio=199 lease=54.0 src= act= id= rem=0 mood=excited dropped=47 refused=0
+1794975672.419 CH magic state=1 owner= prio=0 lease=0.0 src=idle act=sequence id=flourish-7 rem=3500 mood=excited dropped=0 refused=0
+1794975672.420 LOG magic_arbiter 20 magic: running
+1794975672.702 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=0 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=True repeat=1 rotary_code=0 run_counter=9 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=27 source=1 started_by=ros state=1 sub_seq=27 takeovers=0 unsupported=0
+1794975675.048 CH rld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975675.049 LOG led_arbiter 20 rld: idle
+1794975675.924 CH magic state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975675.925 LOG magic_arbiter 20 magic: idle
+1794975676.102 CH dome state=2 owner=express prio=199 lease=49.9 src= act= id= rem=0 mood=excited dropped=48 refused=0
+1794975676.702 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=1 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=False repeat=1 rotary_code=0 run_counter=9 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=27 source=1 started_by=ros state=2 sub_seq=27 takeovers=0 unsupported=0
+1794975680.190 CH dome state=2 owner=express prio=199 lease=45.8 src= act= id= rem=0 mood=excited dropped=49 refused=0
+1794975680.780 CH fld state=1 owner= prio=0 lease=0.0 src=idle act=effect id=flourish-29 rem=4000 mood=excited dropped=3 refused=0
+1794975680.780 LOG led_arbiter 20 fld: running
+1794975681.693 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=bfld text=
+1794975681.694 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=tfld text=
+1794975684.192 CH dome state=2 owner=express prio=199 lease=41.8 src= act= id= rem=0 mood=excited dropped=50 refused=0
+1794975685.030 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=3 refused=0
+1794975685.031 LOG led_arbiter 20 fld: idle
+1794975685.702 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=bfld text=
+1794975685.703 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=tfld text=
+1794975688.295 CH dome state=2 owner=express prio=199 lease=37.7 src= act= id= rem=0 mood=excited dropped=51 refused=0
+1794975688.666 CH magic state=1 owner= prio=0 lease=0.0 src=idle act=sequence id=flourish-8 rem=3500 mood=excited dropped=0 refused=0
+1794975688.667 LOG magic_arbiter 20 magic: running
+1794975688.702 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=0 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=True repeat=1 rotary_code=0 run_counter=10 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=27 source=1 started_by=ros state=1 sub_seq=27 takeovers=0 unsupported=0
+1794975689.277 CH psi state=1 owner= prio=0 lease=0.0 src=idle act=clip id=flourish-30 rem=1200 mood=excited dropped=0 refused=0
+1794975689.277 LOG led_arbiter 20 psi: running
+1794975689.695 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=rpsi text=
+1794975689.696 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=fpsi text=
+1794975690.526 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975690.527 LOG led_arbiter 20 psi: idle
+1794975690.695 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794975690.696 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794975692.176 LOG magic_arbiter 20 magic: idle
+1794975692.178 CH magic state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975692.291 CH dome state=2 owner=express prio=199 lease=33.7 src= act= id= rem=0 mood=excited dropped=52 refused=0
+1794975692.702 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=1 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=False repeat=1 rotary_code=0 run_counter=10 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=27 source=1 started_by=ros state=2 sub_seq=27 takeovers=0 unsupported=0
+1794975695.699 LED rld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by=console hue=0 mode=5 name=rld text=
+1794975695.700 CH rld state=3 owner=console prio=0 lease=4.2 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975695.700 LOG led_arbiter 20 rld: foreign (console)
+1794975695.729 INTENT manual rld effect 199 5000 {"name": "fire"} express-dbc7d1fa
+1794975695.736 CH rld state=3 owner=console prio=0 lease=4.1 src=manual act=effect id=express-dbc7d1fa rem=5000 mood=excited dropped=0 refused=0
+1794975695.738 LOG led_arbiter 20 intent express-dbc7d1fa accepted: rld effect  from manual
+1794975695.741 CH rld state=3 owner=console prio=0 lease=4.1 src= act= id= rem=0 mood=excited dropped=0 refused=1
+1794975695.742 LOG led_arbiter 20 rld: run on rld refused 'held by console': channel foreign (console)
+1794975696.392 CH dome state=2 owner=express prio=199 lease=29.6 src= act= id= rem=0 mood=excited dropped=53 refused=0
+1794975700.494 CH dome state=2 owner=express prio=199 lease=25.5 src= act= id= rem=0 mood=excited dropped=54 refused=0
+1794975700.694 LED rld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=rld text=
+1794975703.028 LOG led_arbiter 20 psi: running
+1794975703.028 CH psi state=1 owner= prio=0 lease=0.0 src=idle act=clip id=flourish-31 rem=1200 mood=excited dropped=0 refused=0
+1794975703.807 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=rpsi text=
+1794975703.807 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=fpsi text=
+1794975704.277 LOG led_arbiter 20 psi: idle
+1794975704.277 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975704.490 CH dome state=2 owner=express prio=199 lease=21.5 src= act= id= rem=0 mood=excited dropped=55 refused=0
+1794975704.695 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794975704.695 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794975705.693 LED rld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by=console hue=0 mode=0 name=rld text=
+1794975708.594 CH dome state=2 owner=express prio=199 lease=58.1 src= act= id= rem=0 mood=excited dropped=56 refused=0
+1794975710.027 LOG led_arbiter 20 rld: idle
+1794975710.028 CH rld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=1
+1794975710.693 LED rld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=rld text=
+1794975710.780 CH psi state=1 owner= prio=0 lease=0.0 src=idle act=clip id=flourish-32 rem=1200 mood=excited dropped=0 refused=0
+1794975710.780 LOG led_arbiter 20 psi: running
+1794975711.696 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=rpsi text=
+1794975711.696 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=fpsi text=
+1794975712.028 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975712.029 LOG led_arbiter 20 psi: idle
+1794975712.690 CH dome state=2 owner=express prio=199 lease=54.0 src= act= id= rem=0 mood=excited dropped=57 refused=0
+1794975712.695 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794975712.695 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794975716.691 CH dome state=2 owner=express prio=199 lease=50.0 src= act= id= rem=0 mood=excited dropped=58 refused=0
+1794975717.028 LOG led_arbiter 20 psi: running
+1794975717.028 CH psi state=1 owner= prio=0 lease=0.0 src=idle act=clip id=flourish-33 rem=1200 mood=excited dropped=0 refused=0
+1794975717.696 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=rpsi text=
+1794975717.696 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=fpsi text=
+1794975718.280 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975718.281 LOG led_arbiter 20 psi: idle
+1794975718.414 CH magic state=1 owner= prio=0 lease=0.0 src=idle act=sequence id=flourish-9 rem=3500 mood=excited dropped=0 refused=0
+1794975718.414 LOG magic_arbiter 20 magic: running
+1794975718.692 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794975718.692 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794975718.703 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=0 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=True repeat=1 rotary_code=0 run_counter=11 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=27 source=1 started_by=ros state=1 sub_seq=27 takeovers=0 unsupported=0
+1794975720.790 CH dome state=2 owner=express prio=199 lease=45.9 src= act= id= rem=0 mood=excited dropped=59 refused=0
+1794975722.171 CH magic state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975722.171 LOG magic_arbiter 20 magic: idle
+1794975722.699 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=1 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=False repeat=1 rotary_code=0 run_counter=11 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=27 source=1 started_by=ros state=2 sub_seq=27 takeovers=0 unsupported=0
+1794975723.694 LED tfld brightness=100 changed_by=console changed_by_owner= drift=lively held_by=console hue=0 mode=4 name=tfld text=
+1794975723.698 CH fld state=3 owner=console prio=0 lease=4.6 src= act= id= rem=0 mood=excited dropped=3 refused=0
+1794975723.699 LOG led_arbiter 20 fld: foreign (console)
+1794975723.700 CH tfld state=3 owner=console prio=0 lease=4.6 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975723.700 LOG led_arbiter 20 tfld: foreign (console)
+1794975724.793 CH dome state=2 owner=express prio=199 lease=41.9 src= act= id= rem=0 mood=excited dropped=60 refused=0
+1794975728.272 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=3 refused=0
+1794975728.273 LOG led_arbiter 20 fld: idle
+1794975728.274 CH tfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975728.274 LOG led_arbiter 20 tfld: idle
+1794975728.694 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=tfld text=
+1794975728.867 CH dome state=2 owner=express prio=199 lease=37.8 src= act= id= rem=0 mood=excited dropped=61 refused=0
+1794975731.277 LOG led_arbiter 20 psi: running
+1794975731.277 CH psi state=1 owner= prio=0 lease=0.0 src=idle act=clip id=flourish-34 rem=1200 mood=excited dropped=0 refused=0
+1794975731.688 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=rpsi text=
+1794975731.688 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=fpsi text=
+1794975732.525 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975732.526 LOG led_arbiter 20 psi: idle
+1794975732.687 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794975732.688 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794975732.889 CH dome state=2 owner=express prio=199 lease=33.8 src= act= id= rem=0 mood=excited dropped=62 refused=0
+1794975735.909 CH magic state=1 owner= prio=0 lease=0.0 src=idle act=sequence id=flourish-10 rem=3500 mood=excited dropped=0 refused=0
+1794975735.910 LOG magic_arbiter 20 magic: running
+1794975736.701 MAGIC end=0 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by=console hold_remaining_ms=4346 in_pause=False interrogations=1 iteration=0 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner= proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=True repeat=1 rotary_code=0 run_counter=13 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=44 source=1 started_by=console state=1 sub_seq=44 takeovers=0 unsupported=0
+1794975736.703 CH magic state=3 owner=console prio=0 lease=4.3 src=idle act=sequence id=flourish-10 rem=2707 mood=excited dropped=0 refused=0
+1794975736.703 LOG magic_arbiter 20 magic: foreign (console)
+1794975736.887 CH dome state=2 owner=express prio=199 lease=29.8 src= act= id= rem=0 mood=excited dropped=63 refused=0
+1794975737.702 CH magic state=3 owner=console prio=0 lease=3.3 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975737.703 MAGIC end=0 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by=console hold_remaining_ms=3346 in_pause=False interrogations=1 iteration=0 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner= proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=True repeat=1 rotary_code=0 run_counter=13 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=44 source=1 started_by=console state=1 sub_seq=44 takeovers=0 unsupported=0
+1794975738.698 MAGIC end=0 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by=console hold_remaining_ms=2350 in_pause=False interrogations=1 iteration=1 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner= proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=False repeat=1 rotary_code=0 run_counter=13 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=44 source=1 started_by=console state=2 sub_seq=44 takeovers=0 unsupported=0
+1794975739.701 MAGIC end=0 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by=console hold_remaining_ms=1346 in_pause=False interrogations=1 iteration=1 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner= proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=False repeat=1 rotary_code=0 run_counter=13 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=44 source=1 started_by=console state=2 sub_seq=44 takeovers=0 unsupported=0
+1794975739.780 CH fld state=1 owner= prio=0 lease=0.0 src=idle act=effect id=flourish-35 rem=4000 mood=excited dropped=3 refused=0
+1794975739.781 LOG led_arbiter 20 fld: running
+1794975740.690 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=bfld text=
+1794975740.691 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=tfld text=
+1794975740.702 MAGIC end=0 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by=console hold_remaining_ms=346 in_pause=False interrogations=1 iteration=1 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner= proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=False repeat=1 rotary_code=0 run_counter=13 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=44 source=1 started_by=console state=2 sub_seq=44 takeovers=0 unsupported=0
+1794975740.886 CH dome state=2 owner=express prio=199 lease=25.8 src= act= id= rem=0 mood=excited dropped=64 refused=0
+1794975741.058 LOG magic_arbiter 20 magic: idle
+1794975741.059 CH magic state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975741.701 MAGIC end=0 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=1 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner= proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=False repeat=1 rotary_code=0 run_counter=13 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=44 source=1 started_by=console state=2 sub_seq=44 takeovers=0 unsupported=0
+1794975743.773 LOG led_arbiter 20 fld: idle
+1794975743.774 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=3 refused=0
+1794975744.689 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=bfld text=
+1794975744.689 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=tfld text=
+1794975744.999 CH dome state=2 owner=express prio=199 lease=21.7 src= act= id= rem=0 mood=excited dropped=65 refused=0
+1794975749.089 CH dome state=2 owner=express prio=199 lease=58.3 src= act= id= rem=0 mood=excited dropped=66 refused=0
+1794975753.087 CH dome state=2 owner=express prio=199 lease=54.3 src= act= id= rem=0 mood=excited dropped=67 refused=0
+1794975756.691 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by=text_topic hue=0 mode=5 name=bfld text=
+1794975756.692 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by=text_topic hue=0 mode=5 name=tfld text=
+1794975756.696 LOG led_arbiter 20 fld: foreign (text_topic)
+1794975756.697 CH fld state=3 owner=text_topic prio=0 lease=4.6 src= act= id= rem=0 mood=excited dropped=3 refused=0
+1794975756.699 CH tfld state=3 owner=text_topic prio=0 lease=4.6 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975756.699 LOG led_arbiter 20 tfld: foreign (text_topic)
+1794975756.701 LOG led_arbiter 20 bfld: foreign (text_topic)
+1794975756.702 CH bfld state=3 owner=text_topic prio=0 lease=4.6 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975757.187 CH dome state=2 owner=express prio=199 lease=50.2 src= act= id= rem=0 mood=excited dropped=68 refused=0
+1794975761.187 CH dome state=2 owner=express prio=199 lease=46.2 src= act= id= rem=0 mood=excited dropped=69 refused=0
+1794975761.692 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=bfld text=
+1794975761.692 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=tfld text=
+1794975762.283 LOG led_arbiter 20 psi: running
+1794975762.285 CH psi state=1 owner= prio=0 lease=0.0 src=idle act=clip id=flourish-36 rem=1200 mood=excited dropped=0 refused=0
+1794975762.694 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=rpsi text=
+1794975762.695 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=fpsi text=
+1794975763.543 LOG led_arbiter 20 psi: idle
+1794975763.547 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975763.697 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794975763.698 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794975764.731 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by=text_topic hue=0 mode=0 name=bfld text=
+1794975764.734 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by=text_topic hue=0 mode=0 name=tfld text=
+1794975765.291 CH dome state=2 owner=express prio=199 lease=42.1 src= act= id= rem=0 mood=excited dropped=70 refused=0
+1794975768.776 LOG led_arbiter 20 fld: idle
+1794975768.777 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=3 refused=0
+1794975768.779 LOG led_arbiter 20 tfld: idle
+1794975768.780 CH tfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975768.780 LOG led_arbiter 20 bfld: idle
+1794975768.780 CH bfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975769.388 CH dome state=2 owner=express prio=199 lease=38.0 src= act= id= rem=0 mood=excited dropped=71 refused=0
+1794975769.706 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=bfld text=
+1794975769.709 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=tfld text=
+1794975773.390 CH dome state=2 owner=express prio=199 lease=34.0 src= act= id= rem=0 mood=excited dropped=72 refused=0
+1794975777.491 CH dome state=2 owner=express prio=199 lease=29.9 src= act= id= rem=0 mood=excited dropped=73 refused=0
+1794975781.590 CH dome state=2 owner=express prio=199 lease=25.8 src= act= id= rem=0 mood=excited dropped=74 refused=0
+1794975785.024 CH fld state=1 owner= prio=0 lease=0.0 src=idle act=effect id=flourish-37 rem=4000 mood=excited dropped=3 refused=0
+1794975785.025 LOG led_arbiter 20 fld: running
+1794975785.588 CH dome state=2 owner=express prio=199 lease=21.8 src= act= id= rem=0 mood=excited dropped=75 refused=0
+1794975785.690 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=bfld text=
+1794975785.690 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=tfld text=
+1794975789.025 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=3 refused=0
+1794975789.026 LOG led_arbiter 20 fld: idle
+1794975789.588 CH dome state=2 owner=express prio=199 lease=58.6 src= act= id= rem=0 mood=excited dropped=76 refused=0
+1794975789.691 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=bfld text=
+1794975789.691 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=tfld text=
+1794975793.689 CH dome state=2 owner=express prio=199 lease=54.5 src= act= id= rem=0 mood=excited dropped=77 refused=0
+1794975797.163 CH magic state=1 owner= prio=0 lease=0.0 src=idle act=sequence id=flourish-11 rem=3500 mood=excited dropped=0 refused=0
+1794975797.164 LOG magic_arbiter 20 magic: running
+1794975797.686 CH dome state=2 owner=express prio=199 lease=50.5 src= act= id= rem=0 mood=excited dropped=78 refused=0
+1794975797.690 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by=manual hue=0 mode=0 name=rpsi text=
+1794975797.690 LED rld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by=manual hue=0 mode=0 name=rld text=
+1794975797.690 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by=manual hue=0 mode=0 name=bfld text=
+1794975797.691 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by=manual hue=0 mode=0 name=tfld text=
+1794975797.691 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by=manual hue=0 mode=0 name=fpsi text=
+1794975797.691 LEDS level=128 level_set=False manual=True strip_enabled=True
+1794975797.691 CH fld state=3 owner=manual prio=0 lease=-1.0 src= act= id= rem=0 mood=excited dropped=3 refused=0
+1794975797.691 LOG led_arbiter 20 fld: foreign (manual)
+1794975797.692 CH tfld state=3 owner=manual prio=0 lease=-1.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975797.692 LOG led_arbiter 20 tfld: foreign (manual)
+1794975797.693 CH bfld state=3 owner=manual prio=0 lease=-1.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975797.694 LOG led_arbiter 20 bfld: foreign (manual)
+1794975797.694 CH rld state=3 owner=manual prio=0 lease=-1.0 src= act= id= rem=0 mood=excited dropped=0 refused=1
+1794975797.694 LOG led_arbiter 20 rld: foreign (manual)
+1794975797.695 CH psi state=3 owner=manual prio=0 lease=-1.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975797.695 LOG led_arbiter 20 psi: foreign (manual)
+1794975797.703 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by=manual hold_remaining_ms=4294967295 in_pause=False interrogations=1 iteration=0 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=True ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=True repeat=1 rotary_code=0 run_counter=14 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=27 source=1 started_by=ros state=1 sub_seq=27 takeovers=0 unsupported=0
+1794975797.704 CH magic state=3 owner=manual prio=0 lease=-1.0 src=idle act=sequence id=flourish-11 rem=2955 mood=excited dropped=0 refused=0
+1794975797.705 LOG magic_arbiter 20 magic: foreign (manual)
+1794975799.527 CH psi state=3 owner=manual prio=0 lease=-1.0 src= act= id= rem=0 mood=excited dropped=1 refused=0
+1794975801.704 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by=manual hold_remaining_ms=4294967295 in_pause=False interrogations=1 iteration=1 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=True ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=False repeat=1 rotary_code=0 run_counter=14 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=27 source=1 started_by=ros state=2 sub_seq=27 takeovers=0 unsupported=0
+1794975801.707 CH magic state=3 owner=manual prio=0 lease=-1.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975801.788 CH dome state=2 owner=express prio=199 lease=46.4 src= act= id= rem=0 mood=excited dropped=79 refused=0
+1794975802.840 LOG r2_affect 20 mood forced and locked sleepy by mood_cli
+1794975802.871 CH dome state=2 owner=express prio=199 lease=45.3 src= act= id= rem=0 mood=sleepy dropped=79 refused=0
+1794975802.871 MOOD sleepy locked=True str=1.00
+1794975802.872 CH magic state=3 owner=manual prio=0 lease=-1.0 src= act= id= rem=0 mood=sleepy dropped=0 refused=0
+1794975802.872 LOG magic_arbiter 20 mood: excited -> sleepy
+1794975802.872 CH fld state=3 owner=manual prio=0 lease=-1.0 src= act= id= rem=0 mood=sleepy dropped=3 refused=0
+1794975802.872 LOG led_arbiter 20 mood: excited -> sleepy
+1794975802.872 CH tfld state=3 owner=manual prio=0 lease=-1.0 src= act= id= rem=0 mood=sleepy dropped=0 refused=0
+1794975802.872 CH bfld state=3 owner=manual prio=0 lease=-1.0 src= act= id= rem=0 mood=sleepy dropped=0 refused=0
+1794975802.872 CH rld state=3 owner=manual prio=0 lease=-1.0 src= act= id= rem=0 mood=sleepy dropped=0 refused=1
+1794975802.872 CH psi state=3 owner=manual prio=0 lease=-1.0 src= act= id= rem=0 mood=sleepy dropped=1 refused=0
+1794975808.429 INTENT manual fld effect 199 4000 {"name": "fire"} express-2153804f
+1794975808.440 CH fld state=3 owner=manual prio=0 lease=-1.0 src=manual act=effect id=express-2153804f rem=4000 mood=sleepy dropped=3 refused=0
+1794975808.443 LOG led_arbiter 20 intent express-2153804f accepted: fld effect  from manual
+1794975808.445 CH fld state=3 owner=manual prio=0 lease=-1.0 src= act= id= rem=0 mood=sleepy dropped=3 refused=1
+1794975808.448 LOG led_arbiter 20 fld: run on fld refused 'held: manual': channel foreign (manual)
+1794975812.465 INTENT manual fld effect 200 4000 {"name": "fire"} express-25334a5b
+1794975812.478 CH fld state=3 owner=manual prio=0 lease=-1.0 src=manual act=effect id=express-25334a5b rem=4000 mood=sleepy dropped=3 refused=1
+1794975812.479 LOG led_arbiter 20 intent express-25334a5b accepted: fld effect  from manual
+1794975812.690 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by=manual hue=0 mode=5 name=bfld text=
+1794975812.690 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by=manual hue=0 mode=5 name=tfld text=
+1794975816.525 CH fld state=3 owner=manual prio=0 lease=-1.0 src= act= id= rem=0 mood=sleepy dropped=3 refused=1
+1794975816.691 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by=manual hue=0 mode=0 name=bfld text=
+1794975816.692 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by=manual hue=0 mode=0 name=tfld text=
+1794975820.691 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794975820.692 LED rld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=rld text=
+1794975820.692 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=bfld text=
+1794975820.693 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=tfld text=
+1794975820.693 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794975820.693 LEDS level=128 level_set=False manual=False strip_enabled=True
+1794975820.695 CH fld state=2 owner=manual prio=200 lease=0.8 src= act= id= rem=0 mood=sleepy dropped=3 refused=1
+1794975820.696 LOG led_arbiter 20 fld: claimed (manual)
+1794975820.697 CH tfld state=2 owner=manual prio=200 lease=0.8 src= act= id= rem=0 mood=sleepy dropped=0 refused=0
+1794975820.698 LOG led_arbiter 20 tfld: claimed (manual)
+1794975820.698 CH bfld state=2 owner=manual prio=200 lease=0.8 src= act= id= rem=0 mood=sleepy dropped=0 refused=0
+1794975820.699 LOG led_arbiter 20 bfld: claimed (manual)
+1794975820.699 CH rld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=sleepy dropped=0 refused=1
+1794975820.699 LOG led_arbiter 20 rld: idle
+1794975820.700 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=sleepy dropped=1 refused=0
+1794975820.700 LOG led_arbiter 20 psi: idle
+1794975820.705 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=1 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=False repeat=1 rotary_code=0 run_counter=14 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=27 source=1 started_by=ros state=2 sub_seq=27 takeovers=0 unsupported=0
+1794975820.709 CH magic state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=sleepy dropped=0 refused=0
+1794975820.709 LOG magic_arbiter 20 magic: idle
+1794975821.663 LOG led_arbiter 20 fld: idle
+1794975821.668 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=sleepy dropped=3 refused=1
+1794975821.668 LOG led_arbiter 20 tfld: idle
+1794975821.668 LOG led_arbiter 20 bfld: idle
+1794975821.669 CH tfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=sleepy dropped=0 refused=0
+1794975821.669 CH bfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=sleepy dropped=0 refused=0
+1794975821.692 LED rpsi brightness=30 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794975821.692 LED rld brightness=35 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=rld text=
+1794975821.692 LED bfld brightness=35 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=bfld text=
+1794975821.692 LED tfld brightness=35 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=tfld text=
+1794975821.692 LED fpsi brightness=30 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794975832.450 LOG r2_affect 20 mood forced and locked excited by mood_cli
+1794975832.475 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=3 refused=1
+1794975832.475 MOOD excited locked=True str=1.00
+1794975832.475 LOG led_arbiter 20 mood: sleepy -> excited
+1794975832.476 CH tfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975832.476 CH bfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975832.476 CH rld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=1
+1794975832.477 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=1 refused=0
+1794975832.493 CH dome state=2 owner=express prio=199 lease=56.4 src= act= id= rem=0 mood=excited dropped=79 refused=0
+1794975832.493 LOG magic_arbiter 20 mood: sleepy -> excited
+1794975832.495 CH magic state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975832.695 LED rpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794975832.695 LED rld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=rld text=
+1794975832.695 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=bfld text=
+1794975832.695 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=tfld text=
+1794975832.695 LED fpsi brightness=100 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794975836.488 CH dome state=2 owner=express prio=199 lease=52.4 src= act= id= rem=0 mood=excited dropped=80 refused=0
+1794975836.692 LEDS level=128 level_set=False manual=False strip_enabled=False
+1794975836.699 CH fld state=6 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=3 refused=1
+1794975836.699 LOG led_arbiter 20 fld: dark
+1794975836.700 CH tfld state=6 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975836.700 LOG led_arbiter 20 tfld: dark
+1794975836.700 CH bfld state=6 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975836.700 LOG led_arbiter 20 bfld: dark
+1794975836.701 CH rld state=6 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=1
+1794975836.701 LOG led_arbiter 20 rld: dark
+1794975836.701 CH psi state=6 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=1 refused=0
+1794975836.701 LOG led_arbiter 20 psi: dark
+1794975839.167 CH magic state=1 owner= prio=0 lease=0.0 src=idle act=sequence id=flourish-12 rem=3500 mood=excited dropped=0 refused=0
+1794975839.168 LOG magic_arbiter 20 magic: running
+1794975839.705 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=0 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=True repeat=1 rotary_code=0 run_counter=15 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=27 source=1 started_by=ros state=1 sub_seq=27 takeovers=0 unsupported=0
+1794975840.486 CH dome state=2 owner=express prio=199 lease=48.4 src= act= id= rem=0 mood=excited dropped=81 refused=0
+1794975842.921 CH magic state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975842.921 LOG magic_arbiter 20 magic: idle
+1794975843.706 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=1 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=False repeat=1 rotary_code=0 run_counter=15 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=27 source=1 started_by=ros state=2 sub_seq=27 takeovers=0 unsupported=0
+1794975844.589 CH dome state=2 owner=express prio=199 lease=44.3 src= act= id= rem=0 mood=excited dropped=82 refused=0
+1794975848.590 CH dome state=2 owner=express prio=199 lease=40.3 src= act= id= rem=0 mood=excited dropped=83 refused=0
+1794975852.687 CH dome state=2 owner=express prio=199 lease=36.2 src= act= id= rem=0 mood=excited dropped=84 refused=0
+1794975856.691 CH dome state=2 owner=express prio=199 lease=32.2 src= act= id= rem=0 mood=excited dropped=85 refused=0
+1794975860.788 CH dome state=2 owner=express prio=199 lease=28.1 src= act= id= rem=0 mood=excited dropped=86 refused=0
+1794975864.689 LEDS level=128 level_set=False manual=False strip_enabled=True
+1794975864.690 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=3 refused=1
+1794975864.690 LOG led_arbiter 20 fld: idle
+1794975864.692 CH tfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975864.692 LOG led_arbiter 20 tfld: idle
+1794975864.693 CH bfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=0
+1794975864.694 LOG led_arbiter 20 bfld: idle
+1794975864.694 CH rld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=0 refused=1
+1794975864.694 LOG led_arbiter 20 rld: idle
+1794975864.695 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=1 refused=0
+1794975864.695 LOG led_arbiter 20 psi: idle
+1794975864.787 CH dome state=2 owner=express prio=199 lease=24.1 src= act= id= rem=0 mood=excited dropped=87 refused=0
+1794975866.273 CH fld state=1 owner= prio=0 lease=0.0 src=idle act=effect id=flourish-39 rem=4000 mood=excited dropped=3 refused=1
+1794975866.273 LOG led_arbiter 20 fld: running
+1794975866.689 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=bfld text=
+1794975866.689 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=tfld text=
+1794975868.789 CH dome state=2 owner=express prio=199 lease=20.1 src= act= id= rem=0 mood=excited dropped=88 refused=0
+1794975870.271 LOG led_arbiter 20 fld: idle
+1794975870.272 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=3 refused=1
+1794975870.698 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=bfld text=
+1794975870.698 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=tfld text=
+1794975872.863 CH dome state=2 owner=express prio=199 lease=56.8 src= act= id= rem=0 mood=excited dropped=89 refused=0
+1794975876.866 CH dome state=2 owner=express prio=199 lease=52.8 src= act= id= rem=0 mood=excited dropped=90 refused=0
+1794975877.526 LOG led_arbiter 20 fld: running
+1794975877.527 CH fld state=1 owner= prio=0 lease=0.0 src=idle act=effect id=flourish-40 rem=4000 mood=excited dropped=3 refused=1
+1794975877.697 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=bfld text=
+1794975877.697 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=5 name=tfld text=
+1794975880.885 CH dome state=2 owner=express prio=199 lease=48.8 src= act= id= rem=0 mood=excited dropped=91 refused=0
+1794975881.697 LED bfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=bfld text=
+1794975881.697 LED tfld brightness=100 changed_by=ros changed_by_owner=r2_expression drift=lively held_by= hue=0 mode=0 name=tfld text=
+1794975881.699 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=excited dropped=3 refused=1
+1794975881.699 LOG led_arbiter 20 fld: idle
+1794975884.886 CH dome state=2 owner=express prio=199 lease=44.8 src= act= id= rem=0 mood=excited dropped=92 refused=0
+1794975888.771 LOG led_arbiter 20 fld: running
+1794975888.771 CH fld state=1 owner= prio=0 lease=0.0 src=idle act=effect id=flourish-41 rem=4000 mood=excited dropped=3 refused=1
+1794975888.984 CH dome state=2 owner=express prio=199 lease=40.7 src= act= id= rem=0 mood=excited dropped=93 refused=0
+1794975889.363 LOG r2_affect 20 mood forced and locked calm by mood_cli
+1794975889.455 MOOD calm locked=True str=1.00
+1794975889.458 CH magic state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794975889.458 LOG magic_arbiter 20 mood: excited -> calm
+1794975889.458 LOG led_arbiter 20 mood: excited -> calm
+1794975889.460 CH dome state=2 owner=express prio=199 lease=40.2 src= act= id= rem=0 mood=calm dropped=93 refused=0
+1794975889.460 CH fld state=1 owner= prio=0 lease=0.0 src=idle act=effect id=flourish-41 rem=3312 mood=calm dropped=3 refused=1
+1794975889.460 CH tfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794975889.461 CH bfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794975889.461 CH rld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=1
+1794975889.461 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=1 refused=0
+1794975889.689 LED rpsi brightness=65 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794975889.689 LED rld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=rld text=
+1794975889.689 LED bfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=5 name=bfld text=
+1794975889.689 LED tfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=5 name=tfld text=
+1794975889.689 LED fpsi brightness=65 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794975893.021 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=3 refused=1
+1794975893.022 LOG led_arbiter 20 fld: idle
+1794975893.696 LED bfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=bfld text=
+1794975893.697 LED tfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=tfld text=
+1794975898.747 INTENT manual fld effect 199 2000 {"name": "fire"} express-2ca17bf2
+1794975898.760 CH fld state=1 owner=manual prio=199 lease=7.0 src=manual act=effect id=express-2ca17bf2 rem=2000 mood=calm dropped=3 refused=1
+1794975898.760 LOG led_arbiter 20 fld: running (manual)
+1794975898.760 CH tfld state=2 owner=manual prio=199 lease=7.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794975898.760 LOG led_arbiter 20 tfld: claimed (manual)
+1794975898.762 CH bfld state=2 owner=manual prio=199 lease=7.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794975898.762 LOG led_arbiter 20 bfld: claimed (manual)
+1794975898.762 LOG led_arbiter 20 intent express-2ca17bf2 accepted: fld effect  from manual
+1794975899.696 LED bfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=5 name=bfld text=
+1794975899.696 LED tfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=5 name=tfld text=
+1794975899.699 INTENT manual rld effect 199 2000 {"name": "fire"} express-35345929
+1794975899.711 CH rld state=1 owner=manual prio=199 lease=7.0 src=manual act=effect id=express-35345929 rem=2000 mood=calm dropped=0 refused=1
+1794975899.711 LOG led_arbiter 20 rld: running (manual)
+1794975899.712 LOG led_arbiter 20 intent express-35345929 accepted: rld effect  from manual
+1794975900.631 INTENT manual psi effect 199 2000 {"name": "fire"} express-6c1cf5b2
+1794975900.641 CH psi state=1 owner=manual prio=199 lease=7.0 src=manual act=effect id=express-6c1cf5b2 rem=2000 mood=calm dropped=1 refused=0
+1794975900.641 LOG led_arbiter 20 psi: running (manual)
+1794975900.643 LOG led_arbiter 20 intent express-6c1cf5b2 accepted: psi effect  from manual
+1794975900.688 LED rpsi brightness=65 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=rpsi text=
+1794975900.688 LED rld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=5 name=rld text=
+1794975900.689 LED fpsi brightness=65 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=fpsi text=
+1794975900.772 LOG led_arbiter 20 fld: claimed (manual)
+1794975900.772 CH fld state=2 owner=manual prio=199 lease=5.0 src= act= id= rem=0 mood=calm dropped=3 refused=1
+1794975901.690 LED bfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=bfld text=
+1794975901.690 LED tfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=tfld text=
+1794975901.774 LOG led_arbiter 20 rld: claimed (manual)
+1794975901.775 CH rld state=2 owner=manual prio=199 lease=5.0 src= act= id= rem=0 mood=calm dropped=0 refused=1
+1794975901.844 INTENT manual magic sequence 199 2000 {"id": 44, "repeat": 1, "end": "blank"} express-d569d32c
+1794975901.855 CH magic state=1 owner=manual prio=199 lease=7.0 src=manual act=sequence id=express-d569d32c rem=2000 mood=calm dropped=0 refused=0
+1794975901.855 LOG magic_arbiter 20 magic: running (manual)
+1794975901.856 LOG magic_arbiter 20 intent express-d569d32c accepted: magic sequence  from manual
+1794975902.704 LED rpsi brightness=65 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794975902.705 LED rld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=rld text=
+1794975902.706 LED fpsi brightness=65 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794975902.707 CH psi state=2 owner=manual prio=199 lease=5.0 src= act= id= rem=0 mood=calm dropped=1 refused=0
+1794975902.709 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=0 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=True repeat=1 rotary_code=0 run_counter=16 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=44 source=1 started_by=ros state=1 sub_seq=44 takeovers=0 unsupported=0
+1794975902.709 LOG led_arbiter 20 psi: claimed (manual)
+1794975903.704 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=1 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=False repeat=1 rotary_code=0 run_counter=16 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=44 source=1 started_by=ros state=2 sub_seq=44 takeovers=0 unsupported=0
+1794975903.708 CH magic state=2 owner=manual prio=199 lease=5.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794975903.708 LOG magic_arbiter 20 magic: claimed (manual)
+1794975905.857 LOG led_arbiter 20 fld: idle
+1794975905.858 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=3 refused=1
+1794975905.860 CH tfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794975905.860 LOG led_arbiter 20 tfld: idle
+1794975905.860 CH bfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794975905.860 LOG led_arbiter 20 bfld: idle
+1794975906.772 LOG led_arbiter 20 rld: idle
+1794975906.773 CH rld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=1
+1794975907.771 LOG led_arbiter 20 psi: idle
+1794975907.772 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=1 refused=0
+1794975908.860 CH magic state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794975908.861 LOG magic_arbiter 20 magic: idle
+1794975909.488 CH dome state=2 owner=express prio=199 lease=20.2 src= act= id= rem=0 mood=calm dropped=94 refused=0
+1794975921.936 LOG r2_affect 20 stimulus bump from acceptance i=1.00: no change -> aro=0.00 val=0.20 cur=0.40 con=0.60 (locked, not applied)
+1794975925.111 LOG r2_affect 20 stimulus bump from acceptance i=1.00: no change -> aro=0.00 val=0.20 cur=0.40 con=0.60 (locked, not applied)
+1794975929.584 CH dome state=2 owner=express prio=199 lease=40.9 src= act= id= rem=0 mood=calm dropped=95 refused=0
+1794975947.272 CH fld state=4 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=neutral dropped=3 refused=1
+1794975947.273 LOG led_arbiter 20 fld: stale
+1794975947.275 CH tfld state=4 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=neutral dropped=0 refused=0
+1794975947.276 LOG led_arbiter 20 tfld: stale
+1794975947.277 CH bfld state=4 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=neutral dropped=0 refused=0
+1794975947.277 LOG led_arbiter 20 bfld: stale
+1794975947.278 CH rld state=4 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=neutral dropped=0 refused=1
+1794975947.278 LOG led_arbiter 20 rld: stale
+1794975947.278 CH psi state=4 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=neutral dropped=1 refused=0
+1794975947.278 LOG led_arbiter 20 psi: stale
+1794975947.284 CH dome state=2 owner=express prio=199 lease=23.2 src= act= id= rem=0 mood=neutral dropped=95 refused=0
+1794975947.407 CH magic state=4 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=neutral dropped=0 refused=0
+1794975947.408 LOG magic_arbiter 20 magic: stale
+1794975947.697 LED rpsi brightness=40 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794975947.698 LED rld brightness=40 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=rld text=
+1794975947.698 LED bfld brightness=40 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=bfld text=
+1794975947.698 LED tfld brightness=40 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=tfld text=
+1794975947.698 LED fpsi brightness=40 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794975958.805 LOG r2_affect 20 r2_affect up: config /home/pi/r2_ws/install/r2_affect/share/r2_affect/config/affect.yaml, 5.0 Hz, mood calm (aro=0.00 val=0.20 cur=0.40 con=0.60)
+1794975958.983 MOOD calm locked=False str=1.00
+1794975958.985 CH dome state=2 owner=express prio=199 lease=52.5 src= act= id= rem=0 mood=calm dropped=95 refused=0
+1794975958.986 CH magic state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794975958.987 LOG magic_arbiter 20 magic: idle
+1794975958.991 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=3 refused=1
+1794975958.992 LOG led_arbiter 20 fld: idle
+1794975958.992 CH tfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794975958.993 LOG led_arbiter 20 tfld: idle
+1794975958.993 CH bfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794975958.993 LOG led_arbiter 20 bfld: idle
+1794975958.993 CH rld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=1
+1794975958.994 LOG led_arbiter 20 rld: idle
+1794975958.994 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=1 refused=0
+1794975958.994 LOG led_arbiter 20 psi: idle
+1794975959.697 LED rpsi brightness=65 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794975959.697 LED rld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=rld text=
+1794975959.697 LED bfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=bfld text=
+1794975959.697 LED tfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=tfld text=
+1794975959.697 LED fpsi brightness=65 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794975977.485 INTENT manual rld effect 199 20000 {"name": "cycle"} express-486d6f43
+1794975977.494 LOG led_arbiter 20 rld: running (manual)
+1794975977.494 CH rld state=1 owner=manual prio=199 lease=25.0 src=manual act=effect id=express-486d6f43 rem=20000 mood=calm dropped=0 refused=1
+1794975977.494 LOG led_arbiter 20 intent express-486d6f43 accepted: rld effect  from manual
+1794975977.696 LED rld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=5 name=rld text=
+1794975978.984 CH dome state=2 owner=express prio=199 lease=32.5 src= act= id= rem=0 mood=calm dropped=96 refused=0
+1794975997.696 LED rld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=rld text=
+1794975999.082 CH dome state=2 owner=express prio=199 lease=53.0 src= act= id= rem=0 mood=calm dropped=97 refused=0
+1794976009.202 LOG led_arbiter 20 led_arbiter up: config /home/pi/r2_ws/install/r2_expression/share/r2_expression/config/expression.yaml, device /r2_dome, channels fld tfld bfld rld psi
+1794976009.207 LOG led_arbiter 20 mood: - -> calm
+1794976009.207 CH fld state=5 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794976009.207 LOG led_arbiter 20 fld: offline
+1794976009.207 CH tfld state=5 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794976009.208 LOG led_arbiter 20 tfld: offline
+1794976009.208 CH bfld state=5 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794976009.208 LOG led_arbiter 20 bfld: offline
+1794976009.208 CH rld state=5 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794976009.208 LOG led_arbiter 20 rld: offline
+1794976009.209 CH psi state=5 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794976009.209 LOG led_arbiter 20 psi: offline
+1794976009.210 LOG led_arbiter 30 moods.curious.flourish.picks[0]: the device has no clip 'hscan' for fld; pick dropped
+1794976009.210 LOG led_arbiter 30 moods.curious.flourish.picks[3]: the device has no clip 'vscan' for rld; pick dropped
+1794976009.211 LOG led_arbiter 30 moods.playful.flourish.picks[0]: the device has no clip 'colourswap' for fld; pick dropped
+1794976009.214 LOG led_arbiter 30 moods.playful.flourish.picks[1]: the device has no clip 'flipflop' for rld; pick dropped
+1794976009.216 LOG led_arbiter 30 moods.playful.flourish.picks[2]: the device has no clip 'flipflop-alt' for psi; pick dropped
+1794976009.228 LOG led_arbiter 30 moods.annoyed.flourish.picks[0]: the device has no clip 'alarm' for fld; pick dropped
+1794976009.228 LOG led_arbiter 30 moods.annoyed.flourish.picks[2]: the device has no clip 'hscan' for rld; pick dropped
+1794976009.229 LOG led_arbiter 30 moods.scared.flourish.picks[0]: the device has no clip 'alarm-twinkle' for fld; pick dropped
+1794976009.229 LOG led_arbiter 30 moods.sulking.flourish.picks[1]: the device has no clip 'fadescroll' for fld; pick dropped
+1794976009.229 LOG led_arbiter 20 device /r2_dome answered list; catalogue loaded
+1794976009.698 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794976009.699 LOG led_arbiter 20 fld: idle
+1794976009.700 LOG led_arbiter 20 tfld: idle
+1794976009.700 CH tfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794976009.702 CH bfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794976009.702 LOG led_arbiter 20 bfld: idle
+1794976009.703 CH rld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794976009.703 LOG led_arbiter 20 rld: idle
+1794976009.703 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794976009.703 LOG led_arbiter 20 psi: idle
+1794976019.086 CH dome state=2 owner=express prio=199 lease=33.0 src= act= id= rem=0 mood=calm dropped=98 refused=0
+1794976026.013 INTENT manual magic sequence 199 15000 {"id": 56, "repeat": 1, "end": "blank"} express-4a1e15aa
+1794976026.024 LOG magic_arbiter 20 magic: running (manual)
+1794976026.025 CH magic state=1 owner=manual prio=199 lease=20.0 src=manual act=sequence id=express-4a1e15aa rem=15000 mood=calm dropped=0 refused=0
+1794976026.027 LOG magic_arbiter 20 intent express-4a1e15aa accepted: magic sequence  from manual
+1794976026.704 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=0 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=False repeat=1 rotary_code=0 run_counter=17 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=56 source=1 started_by=ros state=1 sub_seq=11 takeovers=0 unsupported=0
+1794976035.706 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=True interrogations=1 iteration=1 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=False repeat=1 rotary_code=0 run_counter=17 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=56 source=1 started_by=ros state=1 sub_seq=254 takeovers=0 unsupported=0
+1794976039.182 CH dome state=2 owner=express prio=199 lease=53.5 src= act= id= rem=0 mood=calm dropped=99 refused=0
+1794976059.285 CH dome state=2 owner=express prio=199 lease=33.4 src= act= id= rem=0 mood=calm dropped=100 refused=0
+1794976073.693 LOG magic_arbiter 20 magic_arbiter up: config /home/pi/r2_ws/install/r2_expression/share/r2_expression/config/expression.yaml, device /r2_dome, channels magic
+1794976073.697 LOG magic_arbiter 20 magic: offline
+1794976073.698 CH magic state=5 owner= prio=0 lease=0.0 src= act= id= rem=0 mood= dropped=0 refused=0
+1794976073.698 LOG magic_arbiter 20 device /r2_dome answered list; catalogue loaded
+1794976073.707 LOG magic_arbiter 20 magic: running
+1794976073.709 CH magic state=1 owner= prio=0 lease=0.0 src=adopted act=sequence id=adopted rem=30000 mood= dropped=0 refused=0
+1794976073.781 LOG magic_arbiter 20 mood: - -> calm
+1794976073.781 CH magic state=1 owner= prio=0 lease=0.0 src=adopted act=sequence id=adopted rem=29926 mood=calm dropped=0 refused=0
+1794976079.381 CH dome state=2 owner=express prio=199 lease=53.9 src= act= id= rem=0 mood=calm dropped=101 refused=0
+1794976084.913 LOG led_arbiter 20 fld: running
+1794976084.914 CH fld state=1 owner= prio=0 lease=0.0 src=idle act=clip id=flourish-1 rem=2560 mood=calm dropped=0 refused=0
+1794976085.697 LED bfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=5 name=bfld text=
+1794976085.697 LED tfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=5 name=tfld text=
+1794976087.661 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794976087.662 LOG led_arbiter 20 fld: idle
+1794976087.698 LED bfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=bfld text=
+1794976087.699 LED tfld brightness=65 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=tfld text=
+1794976099.382 CH dome state=2 owner=express prio=199 lease=33.9 src= act= id= rem=0 mood=calm dropped=102 refused=0
+1794976099.706 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=1 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=False repeat=1 rotary_code=0 run_counter=17 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=56 source=1 started_by=ros state=1 sub_seq=18 takeovers=0 unsupported=0
+1794976103.906 CH magic state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794976103.907 LOG magic_arbiter 20 magic: idle
+1794976104.707 MAGIC end=1 end_known=True error_count=0 fw_major=0 fw_minor=12 fw_patch=1 have_saved=True have_status=True held_by= hold_remaining_ms=0 in_pause=False interrogations=1 iteration=2 last_error=0 last_error_name=NONE last_read_failed=False link=1 manual=False ours=True owner=r2_expression proto_major=1 proto_minor=1 read_errors=0 refusal_age_ms=4294967295 refusal_confirmed=False refusal_op= refusal_reason= refusal_seq=0 rejections=0 remaining_known=False repeat=1 rotary_code=0 run_counter=17 saved=astromech_msgs.msg.MagicPanelSettings(brightness=15, default_brightness=15, rotated=True, legacy=True, inputs=True, resume=True) sequence_id=56 source=1 started_by=ros state=3 sub_seq=56 takeovers=0 unsupported=0
+1794976119.484 CH dome state=2 owner=express prio=199 lease=54.6 src= act= id= rem=0 mood=calm dropped=103 refused=0
+1794976127.724 CH fld state=5 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794976127.725 LOG magic_arbiter 20 magic: offline
+1794976127.725 CH tfld state=5 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794976127.726 LOG led_arbiter 20 fld: offline
+1794976127.726 CH magic state=5 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794976127.726 LOG led_arbiter 20 tfld: offline
+1794976127.726 CH bfld state=5 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794976127.726 LOG led_arbiter 20 bfld: offline
+1794976127.726 CH rld state=5 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794976127.726 LOG led_arbiter 20 rld: offline
+1794976127.727 CH psi state=5 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794976127.727 LOG led_arbiter 20 psi: offline
+1794976139.521 CH dome state=2 owner=express prio=199 lease=34.5 src= act= id= rem=0 mood=calm dropped=104 refused=0
+1794976159.516 CH dome state=2 owner=express prio=199 lease=55.2 src= act= id= rem=0 mood=calm dropped=105 refused=0
+1794976163.346 CH fld state=5 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=1 refused=0
+1794976167.195 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=1 refused=0
+1794976167.195 LOG led_arbiter 20 fld: idle
+1794976167.196 CH magic state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794976167.196 LOG magic_arbiter 20 magic: idle
+1794976167.197 CH tfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794976167.197 LOG led_arbiter 20 tfld: idle
+1794976167.197 CH bfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794976167.198 LOG led_arbiter 20 bfld: idle
+1794976167.198 CH rld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794976167.198 LOG led_arbiter 20 rld: idle
+1794976167.198 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=0 refused=0
+1794976167.198 LOG led_arbiter 20 psi: idle
+1794976168.176 LED rpsi brightness=64 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794976168.176 LED rld brightness=64 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=rld text=
+1794976168.176 LED bfld brightness=64 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=bfld text=
+1794976168.176 LED tfld brightness=64 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=tfld text=
+1794976168.176 LED fpsi brightness=64 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794976169.313 MOOD calm locked=False str=0.95
+1794976179.719 CH dome state=2 owner=express prio=199 lease=35.0 src= act= id= rem=0 mood=calm dropped=106 refused=0
+1794976196.318 MOOD calm locked=False str=0.85
+1794976201.623 CH dome state=2 owner=express prio=199 lease=53.9 src= act= id= rem=0 mood=calm dropped=107 refused=0
+1794976203.849 CH fld state=1 owner= prio=0 lease=0.0 src=idle act=clip id=flourish-3 rem=2560 mood=calm dropped=1 refused=0
+1794976203.849 LOG led_arbiter 20 fld: running
+1794976204.181 LED bfld brightness=64 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=5 name=bfld text=
+1794976204.181 LED tfld brightness=64 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=5 name=tfld text=
+1794976206.597 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=1 refused=0
+1794976206.614 LOG led_arbiter 20 fld: idle
+1794976207.182 LED bfld brightness=64 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=bfld text=
+1794976207.182 LED tfld brightness=64 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=tfld text=
+1794976217.713 MOOD calm locked=False str=0.75
+1794976225.516 CH dome state=2 owner=express prio=199 lease=30.0 src= act= id= rem=0 mood=calm dropped=108 refused=0
+1794976237.116 MOOD calm locked=False str=0.65
+1794976254.117 CH dome state=2 owner=express prio=199 lease=42.1 src= act= id= rem=0 mood=calm dropped=109 refused=0
+1794976255.512 MOOD calm locked=False str=0.55
+1794976258.844 CH fld state=1 owner= prio=0 lease=0.0 src=idle act=clip id=flourish-4 rem=2560 mood=calm dropped=1 refused=0
+1794976258.845 LOG led_arbiter 20 fld: running
+1794976259.181 LED bfld brightness=64 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=5 name=bfld text=
+1794976259.182 LED tfld brightness=64 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=5 name=tfld text=
+1794976261.597 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=1 refused=0
+1794976261.598 LOG led_arbiter 20 fld: idle
+1794976262.182 LED bfld brightness=64 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=bfld text=
+1794976262.183 LED tfld brightness=64 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=tfld text=
+1794976273.311 MOOD calm locked=False str=0.45
+1794976290.314 CH dome state=2 owner=express prio=199 lease=46.6 src= act= id= rem=0 mood=calm dropped=110 refused=0
+1794976290.712 MOOD calm locked=False str=0.35
+1794976307.712 MOOD calm locked=False str=0.25
+1794976307.844 CH fld state=1 owner= prio=0 lease=0.0 src=idle act=clip id=flourish-5 rem=2560 mood=calm dropped=1 refused=0
+1794976307.845 LOG led_arbiter 20 fld: running
+1794976308.182 LED bfld brightness=64 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=5 name=bfld text=
+1794976308.183 LED tfld brightness=64 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=5 name=tfld text=
+1794976310.594 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=calm dropped=1 refused=0
+1794976310.595 LOG led_arbiter 20 fld: idle
+1794976311.184 LED bfld brightness=64 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=bfld text=
+1794976311.184 LED tfld brightness=64 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=tfld text=
+1794976322.813 CH dome state=2 owner=express prio=199 lease=54.8 src= act= id= rem=0 mood=calm dropped=111 refused=0
+1794976324.712 MOOD calm locked=False str=0.15
+1794976341.711 MOOD calm locked=False str=0.05
+1794976353.513 MOOD sleepy locked=False str=0.30
+1794976353.514 LOG r2_affect 20 mood: calm -> sleepy (d=0.35)
+1794976353.516 LOG led_arbiter 20 mood: calm -> sleepy
+1794976353.518 CH fld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=sleepy dropped=1 refused=0
+1794976353.519 CH dome state=2 owner=express prio=199 lease=24.0 src= act= id= rem=0 mood=sleepy dropped=111 refused=0
+1794976353.520 LOG magic_arbiter 20 mood: calm -> sleepy
+1794976353.520 CH tfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=sleepy dropped=0 refused=0
+1794976353.520 CH bfld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=sleepy dropped=0 refused=0
+1794976353.521 CH rld state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=sleepy dropped=0 refused=0
+1794976353.521 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=sleepy dropped=0 refused=0
+1794976353.521 CH magic state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=sleepy dropped=0 refused=0
+1794976354.180 LED rpsi brightness=23 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794976354.180 LED rld brightness=28 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=rld text=
+1794976354.180 LED bfld brightness=28 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=bfld text=
+1794976354.181 LED tfld brightness=28 changed_by=ros changed_by_owner=r2_expression drift=calm held_by= hue=0 mode=0 name=tfld text=
+1794976354.181 LED fpsi brightness=23 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794976364.711 MOOD sleepy locked=False str=0.35
+1794976387.308 MOOD sleepy locked=False str=0.45
+1794976416.109 MOOD sleepy locked=False str=0.55
+1794976524.207 CH dome state=2 owner=express prio=199 lease=56.7 src= act= id= rem=0 mood=sleepy dropped=112 refused=0
+1794976528.087 LOG led_arbiter 20 psi: running
+1794976528.089 CH psi state=1 owner= prio=0 lease=0.0 src=idle act=clip id=flourish-6 rem=5120 mood=sleepy dropped=0 refused=0
+1794976528.179 LED rpsi brightness=23 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=rpsi text=
+1794976528.179 LED fpsi brightness=23 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=fpsi text=
+1794976533.338 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=sleepy dropped=0 refused=0
+1794976533.339 LOG led_arbiter 20 psi: idle
+1794976534.178 LED rpsi brightness=23 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794976534.178 LED fpsi brightness=23 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794976679.401 CH dome state=2 owner=express prio=199 lease=23.7 src= act= id= rem=0 mood=sleepy dropped=113 refused=0
+1794976703.074 CH psi state=1 owner= prio=0 lease=0.0 src=idle act=clip id=flourish-7 rem=5120 mood=sleepy dropped=0 refused=0
+1794976703.075 LOG led_arbiter 20 psi: running
+1794976703.175 LED rpsi brightness=23 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=rpsi text=
+1794976703.175 LED fpsi brightness=23 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=fpsi text=
+1794976708.336 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=sleepy dropped=0 refused=0
+1794976708.337 LOG led_arbiter 20 psi: idle
+1794976709.176 LED rpsi brightness=23 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794976709.177 LED fpsi brightness=23 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794976872.192 CH dome state=2 owner=express prio=199 lease=34.7 src= act= id= rem=0 mood=sleepy dropped=114 refused=0
+1794976906.910 CH dome state=1 owner= prio=0 lease=0.0 src=idle act=rest id=rest-146 rem=8000 mood=sleepy dropped=114 refused=0
+1794976910.244 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=sleepy dropped=114 refused=0
+1794976914.572 LOG led_arbiter 20 psi: running
+1794976914.574 CH psi state=1 owner= prio=0 lease=0.0 src=idle act=clip id=flourish-8 rem=5120 mood=sleepy dropped=0 refused=0
+1794976915.180 LED rpsi brightness=23 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=rpsi text=
+1794976915.180 LED fpsi brightness=23 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=fpsi text=
+1794976919.822 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=sleepy dropped=0 refused=0
+1794976919.823 LOG led_arbiter 20 psi: idle
+1794976920.180 LED rpsi brightness=23 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794976920.180 LED fpsi brightness=23 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794977084.622 CH psi state=1 owner= prio=0 lease=0.0 src=idle act=clip id=flourish-9 rem=5120 mood=sleepy dropped=0 refused=0
+1794977084.625 LOG led_arbiter 20 psi: running
+1794977085.234 LED rpsi brightness=23 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=rpsi text=
+1794977085.234 LED fpsi brightness=23 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=5 name=fpsi text=
+1794977089.871 CH psi state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=sleepy dropped=0 refused=0
+1794977089.872 LOG led_arbiter 20 psi: idle
+1794977090.240 LED rpsi brightness=23 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=rpsi text=
+1794977090.240 LED fpsi brightness=23 changed_by=ros changed_by_owner=r2_expression drift= held_by= hue=0 mode=0 name=fpsi text=
+1794977110.442 CH dome state=1 owner= prio=0 lease=0.0 src=idle act=glance id=glance-147 rem=11949 mood=sleepy dropped=114 refused=0
+1794977117.392 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=sleepy dropped=114 refused=0
+1794977307.036 CH dome state=1 owner= prio=0 lease=0.0 src=idle act=glance id=glance-148 rem=10617 mood=sleepy dropped=114 refused=0
+1794977312.639 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=sleepy dropped=114 refused=0
+1794977409.874 INTENT manual dome rest 199 0  express-707be691
+1794977409.885 CH dome state=2 owner=manual prio=199 lease=5.0 src= act= id= rem=0 mood=sleepy dropped=114 refused=0
+1794977414.932 CH dome state=0 owner= prio=0 lease=0.0 src= act= id= rem=0 mood=sleepy dropped=114 refused=0

@@ -1,0 +1,10 @@
+/r2_dome/leds/configure <- /foxglove_bridge, /led_arbiter
+/r2_dome/leds/list <- /foxglove_bridge, /led_arbiter
+/r2_dome/leds/run <- /foxglove_bridge, /led_arbiter
+/r2_dome/leds/say <- /foxglove_bridge, /led_arbiter
+/r2_dome/leds/stop <- /foxglove_bridge, /led_arbiter
+/r2_dome/magic/configure <- /foxglove_bridge, /magic_arbiter
+/r2_dome/magic/list <- /foxglove_bridge, /magic_arbiter
+/r2_dome/magic/start <- /foxglove_bridge, /magic_arbiter
+/r2_dome/magic/stop <- /foxglove_bridge, /magic_arbiter
+nodes seen: 30
